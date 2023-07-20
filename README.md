@@ -2,7 +2,7 @@
 
 Editor features such as IntelliSense, build integration, among others for TailwindCSS to enhance the development experience in Visual Studio 2022.
 
-Download from the [Visual Studio Marketplace](link).
+Download from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=TheronWang.TailwindCSSIntellisense).
 
 ## Disclaimer
 
