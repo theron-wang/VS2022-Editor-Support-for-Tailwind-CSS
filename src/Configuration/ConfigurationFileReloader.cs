@@ -45,6 +45,11 @@ namespace TailwindCSSIntellisense.Configuration
 
                 _subscribed = true;
             }
+
+            if (fromNewProject)
+            {
+                await _config.ReloadCustomAttributesAsync();
+            }
         }
 
         private void OnFileSave(string file)

@@ -23,6 +23,8 @@ namespace TailwindCSSIntellisense.Configuration
         [Import]
         internal SettingsProvider SettingsProvider { get; set; }
 
+        internal bool HasConfigurationFile { get; set; }
+
         /// <summary>
         /// Searches through the solution to find a TailwindCSS configuration file.
         /// </summary>
@@ -37,12 +39,15 @@ namespace TailwindCSSIntellisense.Configuration
                 }
             }
 
+            HasConfigurationFile = false;
+
             // Must override default if settings is specified:
 
             var settings = await SettingsProvider.GetSettingsAsync();
             if (string.IsNullOrEmpty(settings.TailwindConfigurationFile) == false)
             {
                 _configFilePath = settings.TailwindConfigurationFile;
+                HasConfigurationFile = true;
                 return _configFilePath;
             }
 
@@ -53,6 +58,7 @@ namespace TailwindCSSIntellisense.Configuration
 
             if (_configFilePath != null)
             {
+                HasConfigurationFile = true;
                 return _configFilePath;
             }
 
@@ -74,18 +80,29 @@ namespace TailwindCSSIntellisense.Configuration
 
             if (cssTargetFile != null)
             {
+                HasConfigurationFile = true;
                 _configFilePath = await ExtractConfigJsPathAsync(cssTargetFile);
             }
 
             if (_configFilePath != null && File.Exists(_configFilePath))
             {
+                HasConfigurationFile = true;
                 return _configFilePath;
             }
 
             // Last case scenario: return first javascript file with "tailwind" in its name, or else, null
 
             _configFilePath = jsFiles.FirstOrDefault(f => Path.GetFileNameWithoutExtension(f).ToLower().Contains("tailwind"));
-            return _configFilePath;
+
+            if (_configFilePath != null)
+            {
+                HasConfigurationFile = true;
+                return _configFilePath;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         private async Task<bool> DoesFileContainAsync(string filePath, string text)

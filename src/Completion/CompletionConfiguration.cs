@@ -49,15 +49,18 @@ namespace TailwindCSSIntellisense.Completions
         /// </summary>
         public async Task ReloadCustomAttributesAsync()
         {
-            await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-            await VS.StatusBar.ShowProgressAsync("Reloading TailwindCSS configuration", 1, 2);
-            await LoadCustomAttributesAsync();
-            _completionBase.Spacing = _completionBase.Spacing.Distinct().ToList();
-            _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
+            if (Scanner.HasConfigurationFile)
+            {
+                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
+                await VS.StatusBar.ShowProgressAsync("Reloading TailwindCSS configuration", 1, 2);
+                await LoadCustomAttributesAsync();
+                _completionBase.Spacing = _completionBase.Spacing.Distinct().ToList();
+                _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
 
-            await VS.StatusBar.ShowProgressAsync("", 2, 2);
-            await VS.StatusBar.ShowMessageAsync("Finished reloading TailwindCSS configuration");
-            await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+                await VS.StatusBar.ShowProgressAsync("", 2, 2);
+                await VS.StatusBar.ShowMessageAsync("Finished reloading TailwindCSS configuration");
+                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+            }
         }
 
         /// <summary>

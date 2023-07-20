@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Documents;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
@@ -24,6 +25,8 @@ namespace TailwindCSSIntellisense.Node
     {
         [Import]
         internal SettingsProvider SettingsProvider { get; set; }
+        [Import]
+        internal ConfigFileScanner ConfigFileScanner { get; set; }
 
         private List<string> _configFilesChecked = new List<string>();
 
@@ -33,6 +36,12 @@ namespace TailwindCSSIntellisense.Node
         /// <param name="project">The folder to update</param>
         public async Task UpdateIfNeededAsync(string folder)
         {
+            // ConfigFileScanner.HasConfigurationFile is guaranteed to already have been updated by now
+            if (ConfigFileScanner.HasConfigurationFile == false)
+            {
+                return;
+            }
+
             var general = await General.GetLiveInstanceAsync();
 
             if (general.AutomaticallyUpdateLibrary == false)

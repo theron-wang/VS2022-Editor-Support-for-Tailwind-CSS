@@ -27,6 +27,7 @@ namespace TailwindCSSIntellisense.Settings
         {
             General.Saved += GeneralSettingsChanged;
             VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCache;
+            VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCache;
         }
 
         [Import]
@@ -262,6 +263,11 @@ namespace TailwindCSSIntellisense.Settings
         }
 
         private void InvalidateCache(string file)
+        {
+            _cacheValid = false;
+        }
+
+        private void InvalidateCache(Project project)
         {
             _cacheValid = false;
         }

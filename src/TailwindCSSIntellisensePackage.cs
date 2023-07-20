@@ -78,7 +78,7 @@ namespace TailwindCSSIntellisense
             _completionUtils = await VS.GetMefServiceAsync<CompletionUtilities>();
 
             // Reload Intellisense and build so everything starts clean in the new project/folder
-            VS.Events.SolutionEvents.OnAfterLoadProject += ProjectLoaded;
+            VS.Events.SolutionEvents.OnAfterOpenProject += ProjectLoaded;
             VS.Events.SolutionEvents.OnAfterOpenFolder += FolderOpened;
 
             // Just in case this extension loads after projects are loaded, initialize:
@@ -119,8 +119,8 @@ namespace TailwindCSSIntellisense
                 await _completionUtils.InitializeAsync();
 
                 // Resets tailwind.config.js configuration styles
-                await _completionUtils.Configuration.ReloadCustomAttributesAsync();
                 await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
+                await _completionUtils.Configuration.ReloadCustomAttributesAsync();
 
                 // Check for updates again
                 await _checkForUpdates.UpdateIfNeededAsync(folderName);
@@ -138,7 +138,7 @@ namespace TailwindCSSIntellisense
         {
             if (_checkForUpdates != null)
             {
-                VS.Events.SolutionEvents.OnAfterLoadProject -= ProjectLoaded;
+                VS.Events.SolutionEvents.OnAfterOpenProject -= ProjectLoaded;
             }
         }
 

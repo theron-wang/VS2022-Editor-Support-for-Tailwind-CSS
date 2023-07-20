@@ -5,6 +5,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Build;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
@@ -16,13 +17,15 @@ namespace TailwindCSSIntellisense
         protected override async Task InitializeCompletedAsync()
         {
             BuildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
+            ConfigFileScanner = await VS.GetMefServiceAsync<ConfigFileScanner>();
         }
 
         internal TailwindBuildProcess BuildProcess { get; set; }
+        internal ConfigFileScanner ConfigFileScanner { get; set; }
 
         protected override void BeforeQueryStatus(EventArgs e)
         {
-            Command.Visible = BuildProcess.IsProcessActive;
+            Command.Visible = BuildProcess.IsProcessActive && ConfigFileScanner.HasConfigurationFile;
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
