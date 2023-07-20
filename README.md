@@ -86,6 +86,7 @@ From here, you can choose to do the following:
 If you notice that your build file is not being updated, check the Build output window to see if you have any syntax errors:
 
 ![Build Error Output](art/Troubleshooting-Build.png)
+
 <small>
 *Build output modified for brevity*
 </small>
