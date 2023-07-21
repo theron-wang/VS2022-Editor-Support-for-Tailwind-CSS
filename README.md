@@ -1,4 +1,4 @@
-# VS2022 Editor Support for Tailwind CSS
+# Tailwind CSS VS2022 Editor Support 
 
 Editor features such as IntelliSense, build integration, among others for TailwindCSS to enhance the development experience in Visual Studio 2022.
 
@@ -64,7 +64,9 @@ Likewise, for the build file and the output file, you can also explicitly state 
 
 ![Customizability Build 2](art/Customizability-Build-2.png)
 
-There is a respective removal option for each action, which can be accessed by clicking on the same file in the solution explorer to reset it back to default.
+If you click on each file again, you will find a remove option to set it back to the default.
+
+Please note that if you click any of these buttons, a tailwind.extension.json file will be created in your project root.
 
 #### Extension Options
 
