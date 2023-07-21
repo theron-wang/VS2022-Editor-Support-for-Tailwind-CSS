@@ -103,7 +103,7 @@ namespace TailwindCSSIntellisense.Build
                 return;
             }
 
-            if (IsProcessActive == false)
+            if (IsProcessActive == false && Scanner.HasConfigurationFile)
             {
                 var dir = Path.GetDirectoryName(_configPath);
                 var cssFile = GetRelativePath(_cssFilePath, dir);
