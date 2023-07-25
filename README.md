@@ -1,8 +1,15 @@
 # Tailwind CSS VS2022 Editor Support 
 
-Editor features such as IntelliSense, build integration, among others for TailwindCSS to enhance the development experience in Visual Studio 2022.
+![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/TheronWang.TailwindCSSIntellisense)
+![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/TheronWang.TailwindCSSIntellisense)
+
+Editor features such as IntelliSense, build integration, among others for Tailwind CSS to enhance the development experience in Visual Studio 2022.
 
 Download from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=TheronWang.TailwindCSSIntellisense).
+
+## Changelog
+
+For information on recent updates, see [the changelog](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/master/CHANGELOG.md).
 
 ## Disclaimer
 
@@ -22,13 +29,13 @@ If you do not have npm installed, follow [this tutorial](https://docs.npmjs.com/
 
 Tailwind CSS classes show up in the IntelliSense completion menus in Razor, HTML, and CSS files:
 
-![Intellisense Demo](art/IntelliSense-Demo-1.gif)
+![Intellisense Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/IntelliSense-Demo-1.gif)
 
 Customization support for `theme.colors`, `theme.screens`, and `theme.spacing` as well as their `theme.extension` counterparts:
 
-![Custom Configuration File](art/IntelliSense-Demo-2-Configuration.png)
+![Custom Configuration File](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/IntelliSense-Demo-2-Configuration.png)
 
-![Intellisense Demo 2](art/IntelliSense-Demo-3.png)
+![Intellisense Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/IntelliSense-Demo-3.png)
 
 Other attributes, such as `borderRadius` and `fontFamily`, are not yet supported.
 
@@ -36,33 +43,33 @@ Other attributes, such as `borderRadius` and `fontFamily`, are not yet supported
 
 In a project, simply run the project to build Tailwind CSS or access it via the Build menu:
 
-![Build Demo 1](art/Build-Demo-1.png)
+![Build Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/Build-Demo-1.png)
 
 Or in an open folder, go directly to the Build menu to start the build process:
 
-![Open Folder Build Demo](art/Build-Demo-3.png)
+![Open Folder Build Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/Build-Demo-3.png)
 
 After the process has started, the process will continue to build and output data to the Build window pane:
 
-![Build Demo 2](art/Build-Demo-2.png)
+![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/Build-Demo-2.png)
 
 ### NPM Shortcuts
 
 When getting started in a new project, you can import the necessary modules by right-clicking on the project node:
 
-![Screenshot](art/NPM-Shortcuts-1.png)
+![Screenshot](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/NPM-Shortcuts-1.png)
 
 ### Customizability
 
 #### Build
 
-If you want to explicitly state the configuration file, you can right click any Javascript file as follows:
+If you want to explicitly state the configuration file, you can right click any JavaScript file as follows:
 
-![Customizability Build 1](art/Customizability-Build-1.png)
+![Customizability Build 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/Customizability-Build-1.png)
 
 Likewise, for the build file and the output file, you can also explicitly state what CSS files you want:
 
-![Customizability Build 2](art/Customizability-Build-2.png)
+![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/Customizability-Build-2.png)
 
 If you click on each file again, you will find a remove option to set it back to the default.
 
@@ -72,7 +79,7 @@ Please note that if you click any of these buttons, a tailwind.extension.json fi
 
 By going into Tools > Options > TailwindCSS Intellisense, you can alter the global behavior for the extension:
 
-![Options](art/Options-Demo.png)
+![Options](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/Options-Demo.png)
 
 From here, you can choose to do the following:
 
@@ -87,7 +94,7 @@ From here, you can choose to do the following:
 
 If you notice that your build file is not being updated, check the Build output window to see if you have any syntax errors:
 
-![Build Error Output](art/Troubleshooting-Build.png)<br>
+![Build Error Output](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/master/art/Troubleshooting-Build.png)<br>
 *Build output modified for brevity*
 
 ### Extension
@@ -102,4 +109,4 @@ As of right now, Visual Studio does not provide an API to override error tagging
 
 ## Bugs / Suggestions
 
-If you run into any issues or come up with any ideas while using this extension, please create  an issue!
+If you run into any issues or come up with any feature suggestions while using this extension, please create an issue [on GitHub](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/new).

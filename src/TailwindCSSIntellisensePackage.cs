@@ -1,17 +1,10 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Threading;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text.Json;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Documents;
 using TailwindCSSIntellisense.Build;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Node;

@@ -266,7 +266,7 @@ namespace TailwindCSSIntellisense.Completions
                 return result;
             }
 
-            if (ColorToRgbMapper.TryGetValue(color, out string value) == false || value == null)
+            if (ColorToRgbMapper.TryGetValue(color, out string value) == false || string.IsNullOrWhiteSpace(value))
             {
                 return TailwindLogo;
             }
@@ -292,7 +292,7 @@ namespace TailwindCSSIntellisense.Completions
             var geometry = new DrawingGroup();
             geometry.Children.Add(mainImage);
             geometry.Children.Add(vsPrevent);
-            
+
             result = new DrawingImage
             {
                 Drawing = geometry
@@ -310,12 +310,12 @@ namespace TailwindCSSIntellisense.Completions
         /// <returns>A 6-digit hex code representing the color</returns>
         internal string GetColorDescription(string color)
         {
-            // Invalid color or value is null when color is current, inherit, or transparent
-            if (ColorToRgbMapper.TryGetValue(color, out string value) == false || value == null)
+            // Invalid color or value is empty when color is current, inherit, or transparent
+            if (ColorToRgbMapper.TryGetValue(color, out string value) == false || string.IsNullOrWhiteSpace(value))
             {
                 return null;
             }
-            
+
             var rgb = value.Split(',');
 
             if (rgb.Length == 0)

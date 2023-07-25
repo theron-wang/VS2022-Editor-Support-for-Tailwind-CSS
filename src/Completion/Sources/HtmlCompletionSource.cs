@@ -1,15 +1,13 @@
 ﻿using Microsoft.VisualStudio.Imaging.Interop;
-using Microsoft.VisualStudio.Imaging;
 using Microsoft.VisualStudio.Language.Intellisense;
-using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
-using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Completions.Sources
 {
@@ -92,7 +90,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var segments = currentClass.Split('-');
 
             var completions = new List<Completion>();
-            
+
             // Prevent Intellisense from showing up for invalid statements like px-0:
             if (modifiers.Count != 0 && modifiers.Any(m => ((m.StartsWith("[") && m.EndsWith("]")) || _completionUtils.Modifiers.Contains(m)) == false))
             {
@@ -243,7 +241,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var quotationMarkAfterLastClassAttribute = text.IndexOf('\"', indexOfCurrentClassAttribute);
             var lastQuotationMark = text.LastIndexOf('\"');
 
-            if (lastQuotationMark == quotationMarkAfterLastClassAttribute) 
+            if (lastQuotationMark == quotationMarkAfterLastClassAttribute)
             {
                 classText = text.Substring(lastQuotationMark + 1);
                 return true;

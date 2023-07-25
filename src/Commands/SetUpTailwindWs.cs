@@ -1,18 +1,11 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Documents;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Node;
-using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
@@ -79,7 +72,7 @@ namespace TailwindCSSIntellisense
                     hierarchy.ParseCanonicalName(directory, out var itemId);
 
                     var folder = await SolutionItem.FromHierarchyAsync(hierarchy, itemId);
-                    
+
                     // Include the created file if the current iterated folder/project is the same as the one that is selected
                     if (Path.GetDirectoryName(folder.FullPath) == directory)
                     {

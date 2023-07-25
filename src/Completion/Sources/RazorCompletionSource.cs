@@ -5,18 +5,10 @@ using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Threading;
-using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Remoting.Contexts;
 using System.Threading.Tasks;
-using System.Windows.Controls;
-using System.Windows.Media;
-using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Sources

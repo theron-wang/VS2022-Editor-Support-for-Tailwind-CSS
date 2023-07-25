@@ -1,10 +1,8 @@
-﻿using Microsoft.VisualStudio.Package;
-using System;
+﻿using System;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Documents;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Configuration
@@ -162,7 +160,7 @@ namespace TailwindCSSIntellisense.Configuration
             try
             {
                 var relPath = scanText.Split(' ')[1].Trim('\'').Trim('\"');
-                
+
                 // @config provides a relative path to configuration file
                 // To find the path of the config file, we must take the relative path in terms
                 // of the absolute path of the css file

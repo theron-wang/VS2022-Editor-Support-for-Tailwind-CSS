@@ -1,11 +1,7 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.Shell;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Settings;

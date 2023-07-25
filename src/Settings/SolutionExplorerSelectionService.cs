@@ -1,17 +1,13 @@
-﻿using Microsoft.Internal.VisualStudio.PlatformUI;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Threading;
+﻿using Microsoft;
+using Microsoft.Internal.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio;
-using Microsoft;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.Threading;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel.Composition;
-using Community.VisualStudio.Toolkit;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Settings
 {

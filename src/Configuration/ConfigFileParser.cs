@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 
 namespace TailwindCSSIntellisense.Configuration
 {
@@ -64,7 +61,7 @@ namespace TailwindCSSIntellisense.Configuration
 
             return config;
         }
-        
+
         private string GetBlockOrValue(string scope, string key, out bool isBlock)
         {
             var cutoff = scope.IndexOf($"{key}:");
@@ -74,7 +71,7 @@ namespace TailwindCSSIntellisense.Configuration
                 isBlock = false;
                 return null;
             }
-            
+
             scope = scope.Substring(cutoff);
 
             var index = scope.IndexOf('{') + 1;

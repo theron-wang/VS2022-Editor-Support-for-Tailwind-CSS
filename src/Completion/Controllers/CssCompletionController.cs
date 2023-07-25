@@ -2,19 +2,15 @@
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
-using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
-using static Microsoft.VisualStudio.Shell.ThreadedWaitDialogHelper;
 
 namespace TailwindCSSIntellisense.Completions.Controllers
 {

@@ -1,13 +1,9 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
-using System.ComponentModel.Composition;
-using System.IO;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Build;
 using TailwindCSSIntellisense.Configuration;
-using TailwindCSSIntellisense.Options;
-using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
 {

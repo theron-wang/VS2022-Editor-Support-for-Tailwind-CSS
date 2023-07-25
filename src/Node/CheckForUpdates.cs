@@ -1,5 +1,4 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio.RpcContracts.Commands;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System;
@@ -7,10 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Documents;
-using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;

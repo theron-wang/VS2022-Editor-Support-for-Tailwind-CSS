@@ -1,12 +1,8 @@
-﻿using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.Language.Intellisense;
+﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Options;
 
 namespace TailwindCSSIntellisense.Completions
@@ -62,7 +58,7 @@ namespace TailwindCSSIntellisense.Completions
             else
             {
                 _completions.AddRangeToBeginning(completions
-                    .Where(c => _completions.Any(c2 => c2.DisplayText == c.DisplayText) == false));   
+                    .Where(c => _completions.Any(c2 => c2.DisplayText == c.DisplayText) == false));
             }
         }
 

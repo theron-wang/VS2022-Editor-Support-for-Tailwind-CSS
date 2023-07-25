@@ -1,14 +1,9 @@
 ﻿using Community.VisualStudio.Toolkit;
-using EnvDTE80;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Configuration

@@ -1,8 +1,6 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Classification;
-using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions.Sources;

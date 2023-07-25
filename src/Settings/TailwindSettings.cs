@@ -1,6 +1,4 @@
-﻿using TailwindCSSIntellisense.Options;
-
-namespace TailwindCSSIntellisense.Settings
+﻿namespace TailwindCSSIntellisense.Settings
 {
     public class TailwindSettings
     {

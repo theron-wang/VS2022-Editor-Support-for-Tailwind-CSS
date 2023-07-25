@@ -4,9 +4,9 @@ using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using TailwindCSSIntellisense.Settings;
-using TailwindCSSIntellisense.Options;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Options;
+using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Sources
 {
@@ -50,7 +50,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             if (!_completionUtils.Initialized || _initializeSuccess == false)
             {
                 _initializeSuccess = ThreadHelper.JoinableTaskFactory.Run(() => _completionUtils.InitializeAsync());
-                
+
                 if (_initializeSuccess == false)
                 {
                     return;

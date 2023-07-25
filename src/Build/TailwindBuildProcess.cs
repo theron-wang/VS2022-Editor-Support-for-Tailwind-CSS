@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Settings;
 
@@ -224,7 +223,7 @@ namespace TailwindCSSIntellisense.Build
         private async Task LogSuccessAsync()
         {
             await VS.StatusBar.ShowMessageAsync("TailwindCSS build succeeded");
-            
+
             await WriteToBuildPaneAsync("TailwindCSS: Build completed successfully.");
         }
 

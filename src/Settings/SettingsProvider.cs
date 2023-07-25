@@ -1,16 +1,10 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio.PlatformUI;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.ComponentModel.Composition;
 using System.IO;
-using System.Runtime;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 
