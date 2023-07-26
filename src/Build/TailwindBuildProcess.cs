@@ -290,7 +290,7 @@ namespace TailwindCSSIntellisense.Build
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
-                    await LogSuccessAsync();
+                    await LogSuccessAsync(e.Data.Replace("Done in", "").Trim().Trim('.'));
                 });
             }
         }
@@ -301,11 +301,11 @@ namespace TailwindCSSIntellisense.Build
             await WriteToBuildPaneAsync(error);
         }
 
-        private async Task LogSuccessAsync()
+        private async Task LogSuccessAsync(string seconds)
         {
-            await VS.StatusBar.ShowMessageAsync("TailwindCSS build succeeded");
+            await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: Build succeeded in {seconds} at {DateTime.Now.ToLongTimeString()}.");
 
-            await WriteToBuildPaneAsync("Tailwind CSS: Build completed successfully.");
+            await WriteToBuildPaneAsync($"Tailwind CSS: Build succeeded in {seconds} at {DateTime.Now.ToLongTimeString()}.");
         }
 
         private async Task WriteToBuildPaneAsync(string message)
