@@ -61,15 +61,16 @@
     <Compile Include="Commands\SetAsOutputFile.cs" />
     <Compile Include="Commands\SetAsInputFile.cs" />
     <Compile Include="Commands\SetAsConfigFile.cs" />
-    <Compile Include="Completion\BulkInsertObservableCollection.cs" />
-    <Compile Include="Completion\CompletionConfiguration.cs" />
-    <Compile Include="Completion\Controllers\CssCompletionController.cs" />
-    <Compile Include="Completion\Controllers\HtmlCompletionController.cs" />
-    <Compile Include="Completion\Providers\RazorCompletionSourceProvider.cs" />
-    <Compile Include="Completion\Providers\HtmlCompletionSourceProvider.cs" />
-    <Compile Include="Completion\Controllers\RazorCompletionController.cs" />
-    <Compile Include="Completion\Sources\RazorCompletionSource.cs" />
-    <Compile Include="Completion\TailwindCssCompletionSet.cs" />
+    <Compile Include="Completions\BulkInsertObservableCollection.cs" />
+    <Compile Include="Completions\CompletionConfiguration.cs" />
+    <Compile Include="Completions\Controllers\CssCompletionController.cs" />
+    <Compile Include="Completions\Controllers\HtmlCompletionController.cs" />
+    <Compile Include="Completions\Providers\RazorCompletionSourceProvider.cs" />
+    <Compile Include="Completions\Providers\HtmlCompletionSourceProvider.cs" />
+    <Compile Include="Completions\Controllers\RazorCompletionController.cs" />
+    <Compile Include="Completions\Sources\ClassCompletionGeneratorHelper.cs" />
+    <Compile Include="Completions\Sources\RazorCompletionSource.cs" />
+    <Compile Include="Completions\TailwindCssCompletionSet.cs" />
     <Compile Include="Configuration\ConfigFileParser.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
@@ -89,24 +90,24 @@
     <Content Include="Resources\tailwindlogo.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Compile Include="Completion\TailwindClass.cs" />
+    <Compile Include="Completions\TailwindClass.cs" />
     <Compile Include="Configuration\ConfigurationFileReloader.cs" />
     <Compile Include="Options\General.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Completion\Subvariant.cs" />
+    <Compile Include="Completions\Subvariant.cs" />
     <Compile Include="Configuration\ConfigFileScanner.cs" />
     <Compile Include="Configuration\FileFinder.cs" />
-    <Compile Include="Completion\Sources\CssCompletionSource.cs" />
-    <Compile Include="Completion\Sources\HtmlCompletionSource.cs" />
+    <Compile Include="Completions\Sources\CssCompletionSource.cs" />
+    <Compile Include="Completions\Sources\HtmlCompletionSource.cs" />
     <Compile Include="Configuration\TailwindConfiguration.cs" />
-    <Compile Include="Completion\Providers\CssCompletionSourceProvider.cs" />
+    <Compile Include="Completions\Providers\CssCompletionSourceProvider.cs" />
     <Compile Include="Settings\SettingsProvider.cs" />
     <Compile Include="Settings\SolutionExplorerSelectionService.cs" />
     <Compile Include="Settings\TailwindSettings.cs" />
     <Compile Include="Settings\TailwindSettingsProjectOnly.cs" />
     <Compile Include="TailwindCSSIntellisensePackage.cs" />
-    <Compile Include="Completion\CompletionUtilities.cs" />
-    <Compile Include="Completion\Variant.cs" />
+    <Compile Include="Completions\CompletionUtilities.cs" />
+    <Compile Include="Completions\Variant.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\tailwindmodifiers.json">
@@ -148,7 +149,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.507" ExcludeAssets="Runtime">
-	<IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Text.Json">
       <Version>7.0.3</Version>

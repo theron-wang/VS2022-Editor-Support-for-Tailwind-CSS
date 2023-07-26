@@ -1,8 +1,20 @@
 # Changelog
 
+## 1.1.1 (July 26th, 2023)
+
+### Enhancements
+
+- Better IntelliSense color sorting ([#1](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/1))
+- Contains IntelliSense filtering instead of starts with ([#1](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/1))
+- Status bar and output pane now shows more information on build (time taken, time when built)
+
+### Fixes
+
+- Fixed a bug where CSS completion would not commit
+
 ## 1.1.0 (July 25th, 2023)
 
-### New Features
+### Additions
 
 - IntelliSense transparency support for colors (i.e. `bg-green-700/50`)
 - New build option - On Save: runs an `npx` build command on each file save; can be used if default build option is not reliable

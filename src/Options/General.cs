@@ -34,7 +34,7 @@ namespace TailwindCSSIntellisense.Options
         public string TailwindOutputFileName { get; set; } = "{0}.output.css";
         [Category(category: "Build")]
         [DisplayName("Build type")]
-        [Description("Files can be built in three ways: Default (using npx tailwindcss --watch), OnSave (manually on file save, more reliable but may come with a performance cost), and None (no building)")]
+        [Description("Files can be built in three ways: Default (Tailwind JIT), OnSave (manually on file save, more reliable but may come with a performance cost), and None (no building)")]
         [TypeConverter(typeof(EnumConverter))]
         [DefaultValue(BuildProcessOptions.Default)]
         public BuildProcessOptions BuildProcessType { get; set; } = BuildProcessOptions.Default;
