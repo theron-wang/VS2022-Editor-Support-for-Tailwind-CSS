@@ -161,7 +161,7 @@ namespace TailwindCSSIntellisense.Node
         private async Task LogErrorAsync(Exception exception)
         {
             await exception.LogAsync();
-            await VS.StatusBar.ShowMessageAsync("An error occurred while updating TailwindCSS: check the 'Extensions' output window for more details");
+            await VS.StatusBar.ShowMessageAsync("An error occurred while updating Tailwind CSS: check the 'Extensions' output window for more details");
         }
     }
 }

@@ -121,7 +121,7 @@ namespace TailwindCSSIntellisense
             catch (Exception ex)
             {
                 // Catch so process does not crash (as per VSTHRD100)
-                await VS.StatusBar.ShowMessageAsync("TailwindCSS: An error occurred while loading in this project");
+                await VS.StatusBar.ShowMessageAsync("Tailwind CSS: An error occurred while loading in this project");
                 await ex.LogAsync();
             }
         }

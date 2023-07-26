@@ -122,6 +122,9 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <None Include=".editorconfig" />
+    <Content Include="Resources\tailwindopacity.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>

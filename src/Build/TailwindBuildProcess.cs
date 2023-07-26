@@ -6,7 +6,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Build
@@ -30,6 +32,8 @@ namespace TailwindCSSIntellisense.Build
         private bool _initialized;
         private bool _subscribed;
         private Process _process;
+
+        private BuildProcessOptions _buildType;
 
         private Guid _buildWindowGuid;
 
@@ -59,6 +63,7 @@ namespace TailwindCSSIntellisense.Build
             if (_subscribed == false)
             {
                 VS.Events.BuildEvents.ProjectBuildStarted += StartProcess;
+                VS.Events.DocumentEvents.Saved += OnFileSave;
                 SettingsProvider.OnSettingsChanged += SettingsChangedAsync;
                 _subscribed = true;
             }
@@ -68,13 +73,27 @@ namespace TailwindCSSIntellisense.Build
         public void Dispose()
         {
             VS.Events.BuildEvents.ProjectBuildStarted -= StartProcess;
+            VS.Events.DocumentEvents.Saved -= OnFileSave;
             SettingsProvider.OnSettingsChanged -= SetFilePathsAsync;
         }
 
         /// <summary>
         /// A <see cref="bool"/> representing whether or not the build process is currently active
         /// </summary>
-        internal bool IsProcessActive => _process != null && _process.HasExited == false;
+        internal bool IsProcessActive
+        {
+            get
+            {
+                if (_buildType == BuildProcessOptions.None)
+                {
+                    return false;
+                }
+                else
+                {
+                    return _process != null && _process.HasExited == false;
+                }
+            }
+        }
 
         /// <summary>
         /// Binds to <see cref="SettingsProvider.OnSettingsChanged"/> which updates the file paths and restarts the process if needed
@@ -95,14 +114,64 @@ namespace TailwindCSSIntellisense.Build
         /// <summary>
         /// Starts the build process
         /// </summary>
+        internal void OnFileSave(string filePath = null)
+        {
+            var extension = Path.GetExtension(filePath);
+            if (IsProcessActive &&
+                _buildType == BuildProcessOptions.OnSave &&
+                (extension == ".css" ||
+                extension == ".html" ||
+                extension == ".cshtml" ||
+                extension == ".razor" ||
+                extension == ".js"))
+            {
+                StartProcess();
+            }
+        }
+
+        /// <summary>
+        /// Starts the build process
+        /// </summary>
         internal void StartProcess(Project project = null)
         {
-            if (_cssFilePath == null)
+            if (Scanner.HasConfigurationFile == false || _cssFilePath == null || _buildType == BuildProcessOptions.None)
             {
                 return;
             }
 
-            if (IsProcessActive == false && Scanner.HasConfigurationFile)
+            if (_buildType == BuildProcessOptions.OnSave)
+            {
+                var dir = Path.GetDirectoryName(_configPath);
+                var cssFile = GetRelativePath(_cssFilePath, dir);
+                var outputFile = GetRelativePath(_cssOutputFilePath, dir);
+                if (IsProcessActive == false)
+                {
+                    var processInfo = new ProcessStartInfo()
+                    {
+                        UseShellExecute = false,
+                        RedirectStandardOutput = true,
+                        RedirectStandardInput = true,
+                        RedirectStandardError = true,
+                        CreateNoWindow = true,
+                        FileName = "cmd",
+                        WorkingDirectory = dir
+                    };
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
+
+                    _process = Process.Start(processInfo);
+                    _process.BeginOutputReadLine();
+                    _process.BeginErrorReadLine();
+
+                    _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
+                    _process.OutputDataReceived += OutputDataReceived;
+                    _process.ErrorDataReceived += OutputDataReceived;
+                }
+                else
+                {
+                    _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
+                }
+            }
+            else if (_buildType == BuildProcessOptions.Default && IsProcessActive == false)
             {
                 var dir = Path.GetDirectoryName(_configPath);
                 var cssFile = GetRelativePath(_cssFilePath, dir);
@@ -119,7 +188,7 @@ namespace TailwindCSSIntellisense.Build
                     WorkingDirectory = dir
                 };
 
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("TailwindCSS: Build started..."));
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
                 _process = Process.Start(processInfo);
                 _process.BeginOutputReadLine();
                 _process.BeginErrorReadLine();
@@ -137,14 +206,24 @@ namespace TailwindCSSIntellisense.Build
         {
             if (IsProcessActive)
             {
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("TailwindCSS: Build stopped"));
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
 
-                // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
-                // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
-                _process.StandardInput.WriteLine("\x3");
-                _process.StandardInput.Close();
-                _process.Kill();
-                _process = null;
+                if (_buildType == BuildProcessOptions.Default)
+                {
+                    // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
+                    // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
+                    _process.StandardInput.WriteLine("\x3");
+                    _process.StandardInput.Close();
+                    _process.Kill();
+                    _process = null;
+                }
+                else if (_buildType == BuildProcessOptions.OnSave)
+                {
+                    _process.StandardInput.WriteLine("exit");
+                    _process.StandardInput.Close();
+                    _process.Kill();
+                    _process = null;
+                }
             }
         }
 
@@ -154,6 +233,8 @@ namespace TailwindCSSIntellisense.Build
         /// <param name="settings">The settings to consume</param>
         private async Task SetFilePathsAsync(TailwindSettings settings)
         {
+            _buildType = settings.BuildType;
+
             if (string.IsNullOrEmpty(settings.TailwindCssFile))
             {
                 // Check the smallest css files first since tailwind css files (should) be small
@@ -202,7 +283,7 @@ namespace TailwindCSSIntellisense.Build
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
-                    await LogErrorAsync("TailwindCSS: " + e.Data);
+                    await LogErrorAsync("Tailwind CSS: " + e.Data);
                 });
             }
             else if (e.Data.Contains("Done in"))
@@ -216,7 +297,7 @@ namespace TailwindCSSIntellisense.Build
 
         private async Task LogErrorAsync(string error)
         {
-            await VS.StatusBar.ShowMessageAsync("TailwindCSS: An error occurred while building. Check the build output window for more details.");
+            await VS.StatusBar.ShowMessageAsync("Tailwind CSS: An error occurred while building. Check the build output window for more details.");
             await WriteToBuildPaneAsync(error);
         }
 
@@ -224,7 +305,7 @@ namespace TailwindCSSIntellisense.Build
         {
             await VS.StatusBar.ShowMessageAsync("TailwindCSS build succeeded");
 
-            await WriteToBuildPaneAsync("TailwindCSS: Build completed successfully.");
+            await WriteToBuildPaneAsync("Tailwind CSS: Build completed successfully.");
         }
 
         private async Task WriteToBuildPaneAsync(string message)

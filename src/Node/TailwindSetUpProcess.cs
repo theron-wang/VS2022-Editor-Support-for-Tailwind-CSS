@@ -78,7 +78,7 @@ namespace TailwindCSSIntellisense.Node
         private async Task LogErrorAsync(Exception exception)
         {
             await exception.LogAsync();
-            await VS.StatusBar.ShowMessageAsync("An error occurred while setting up TailwindCSS: check the 'Extensions' output window for more details");
+            await VS.StatusBar.ShowMessageAsync("An error occurred while setting up Tailwind CSS: check the 'Extensions' output window for more details");
         }
     }
 }

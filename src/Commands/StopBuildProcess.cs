@@ -4,6 +4,8 @@ using System;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Build;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Options;
+using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
 {
@@ -14,14 +16,17 @@ namespace TailwindCSSIntellisense
         {
             BuildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
             ConfigFileScanner = await VS.GetMefServiceAsync<ConfigFileScanner>();
+            SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
         }
 
         internal TailwindBuildProcess BuildProcess { get; set; }
         internal ConfigFileScanner ConfigFileScanner { get; set; }
+        internal SettingsProvider SettingsProvider { get; set; }
 
         protected override void BeforeQueryStatus(EventArgs e)
         {
-            Command.Visible = BuildProcess.IsProcessActive && ConfigFileScanner.HasConfigurationFile;
+            var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
+            Command.Visible = BuildProcess.IsProcessActive && ConfigFileScanner.HasConfigurationFile && settings.BuildType != BuildProcessOptions.None;
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)

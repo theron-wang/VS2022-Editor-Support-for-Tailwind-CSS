@@ -60,7 +60,8 @@ namespace TailwindCSSIntellisense.Settings
                     return new TailwindSettings()
                     {
                         EnableTailwindCss = general.UseTailwindCss,
-                        DefaultOutputCssName = general.TailwindOutputFileName.Trim()
+                        DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
+                        BuildType = general.BuildProcessType
                     };
                 }
 
@@ -101,6 +102,7 @@ namespace TailwindCSSIntellisense.Settings
                 {
                     EnableTailwindCss = general.UseTailwindCss,
                     DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
+                    BuildType = general.BuildProcessType,
                     TailwindConfigurationFile = GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
                     TailwindCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
                     TailwindOutputCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim())
@@ -209,10 +211,12 @@ namespace TailwindCSSIntellisense.Settings
             var origSettings = ThreadHelper.JoinableTaskFactory.Run(GetSettingsAsync);
 
             if (settings.UseTailwindCss != origSettings.EnableTailwindCss ||
-                settings.TailwindOutputFileName != origSettings.DefaultOutputCssName)
+                settings.TailwindOutputFileName != origSettings.DefaultOutputCssName ||
+                settings.BuildProcessType != origSettings.BuildType)
             {
                 origSettings.EnableTailwindCss = settings.UseTailwindCss;
                 origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
+                origSettings.BuildType = settings.BuildProcessType;
 
                 ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
             }

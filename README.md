@@ -83,8 +83,9 @@ By going into Tools > Options > TailwindCSS Intellisense, you can alter the glob
 
 From here, you can choose to do the following:
 
-* Disable/enable automatic Tailwind module updates
+* Change how Tailwind files are built
 * Alter the default build output file name
+* Disable/enable automatic Tailwind module updates
 * Disable/enable extension features globally
 * Change the order in which completions are appended
 
