@@ -29,7 +29,7 @@ namespace TailwindCSSIntellisense.Completions
 
         internal ImageSource TailwindLogo { get; private set; } = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindlogo.png"), UriKind.Relative));
         internal bool Initialized { get; private set; }
-        internal Dictionary<string, List<TailwindClass>> StemToClassesMatch { get; private set; }
+        internal List<TailwindClass> Classes { get; private set; }
         internal List<string> Modifiers { get; set; }
         internal List<string> Spacing { get; set; }
         internal List<int> Opacity { get; set; }
@@ -120,7 +120,7 @@ namespace TailwindCSSIntellisense.Completions
                 Opacity = await JsonSerializer.DeserializeAsync<List<int>>(fs);
             }
 
-            StemToClassesMatch = new Dictionary<string, List<TailwindClass>>();
+            Classes = new List<TailwindClass>();
 
             foreach (var variant in variants)
             {
@@ -277,7 +277,7 @@ namespace TailwindCSSIntellisense.Completions
                     });
                 }
 
-                StemToClassesMatch.Add(variant.Stem, classes);
+                Classes.AddRange(classes);
 
                 if (variant.HasNegative == true)
                 {
@@ -292,7 +292,7 @@ namespace TailwindCSSIntellisense.Completions
                         };
                     }).ToList();
 
-                    StemToClassesMatch.Add($"-{variant.Stem}", negativeClasses);
+                    Classes.AddRange(negativeClasses);
                 }
             }
         }
