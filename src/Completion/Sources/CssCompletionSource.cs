@@ -57,7 +57,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 }
             }
 
-            var completionList = new List<Completion>();
+            var completions = new List<Completion>();
 
             var position = session.TextView.Caret.Position.BufferPosition.Position;
             var snapshot = _textBuffer.CurrentSnapshot;
@@ -77,7 +77,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     switch (directive)
                     {
                         case "@tailwind":
-                            completionList = new List<Completion>()
+                            completions = new List<Completion>()
                             {
                                 new Completion("base", "base", "base", _completionUtils.TailwindLogo, null),
                                 new Completion("components", "components", "components", _completionUtils.TailwindLogo, null),
@@ -86,7 +86,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             };
                             break;
                         case "@layer":
-                            completionList = new List<Completion>()
+                            completions = new List<Completion>()
                             {
                                 new Completion("base", "base", "base", _completionUtils.TailwindLogo, null),
                                 new Completion("components", "components", "components", _completionUtils.TailwindLogo, null),
@@ -94,7 +94,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             };
                             break;
                         case "@media":
-                            completionList = new List<Completion>()
+                            completions = new List<Completion>()
                             {
                                 new Completion("screen()", "screen()", "screen([breakpoint])", _completionUtils.TailwindLogo, null)
                             };
@@ -103,7 +103,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 }
                 else
                 {
-                    completionList = new List<Completion>()
+                    completions = new List<Completion>()
                     {
                         // Directive completions are hard-coded in as there are only two of them
                         new Completion("@tailwind", "@tailwind", "Use the @tailwind directive to insert Tailwind’s base, components, utilities and variants styles into your CSS.", _completionUtils.TailwindLogo, null),
@@ -133,8 +133,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     }
                     var segments = currentClass.Split('-');
 
-                    var completions = new List<Completion>();
-
                     if (modifiers.Count != 0 && modifiers.Any(m => ((m.StartsWith("[") && m.EndsWith("]")) || _completionUtils.Modifiers.Contains(m)) == false))
                     {
                         return;
@@ -158,13 +156,33 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                     foreach (var color in _completionUtils.ColorToRgbMapper.Keys)
                                     {
                                         var className = string.Format(twClass.Name, color);
+                                        completions.Add(
+                                                        new Completion(modifiersAsString + className,
+                                                                            modifiersAsString + className,
+                                                                            _completionUtils.GetColorDescription(color) ?? className,
+                                                                            _completionUtils.GetImageFromColor(color),
+                                                                            null));
+                                        if (twClass.UseOpacity && currentClass.Contains('/'))
+                                        {
+                                            foreach (var opacity in _completionUtils.Opacity)
+                                            {
 
-                                        completionList.Add(
-                                                    new Completion(modifiersAsString + className,
-                                                                        modifiersAsString + className,
-                                                                        _completionUtils.GetColorDescription(color) ?? className,
-                                                                        _completionUtils.GetImageFromColor(color),
-                                                                        null));
+                                                completions.Add(
+                                                            new Completion(modifiersAsString + className + $"/{opacity}",
+                                                                                modifiersAsString + className + $"/{opacity}",
+                                                                                _completionUtils.GetColorDescription(color, opacity) ?? className,
+                                                                                _completionUtils.GetImageFromColor(color, opacity),
+                                                                                null));
+                                            }
+                                            completions.Add(
+                                                        new Completion(modifiersAsString + className + "/[...]",
+                                                                            modifiersAsString + className + "/[]",
+                                                                            className + "/[...]",
+                                                                            _completionUtils.TailwindLogo,
+                                                                            null));
+                                        }
+
+                                        
                                     }
                                 }
                                 else if (twClass.UseSpacing)
@@ -173,7 +191,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                     {
                                         var className = string.Format(twClass.Name, spacing);
 
-                                        completionList.Add(
+                                        completions.Add(
                                             new Completion(modifiersAsString + className,
                                                                 modifiersAsString + className,
                                                                 className,
@@ -185,7 +203,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                 {
                                     var className = twClass.Name + "-";
 
-                                    completionList.Add(
+                                    completions.Add(
                                     new Completion(modifiersAsString + className + "[...]",
                                                         modifiersAsString + className + "[]",
                                                         className + "[...]",
@@ -194,7 +212,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                 }
                                 else
                                 {
-                                    completionList.Add(
+                                    completions.Add(
                                     new Completion(modifiersAsString + twClass.Name,
                                                         modifiersAsString + twClass.Name,
                                                         twClass.Name,
@@ -209,7 +227,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     {
                         if (modifiers.Contains(modifier) == false)
                         {
-                            completionList.Add(
+                            completions.Add(
                                 new Completion(modifiersAsString + modifier,
                                                     modifiersAsString + modifier + ":",
                                                     modifier,
@@ -220,14 +238,14 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 }
                 else if (CanShowApplyDirective(session))
                 {
-                    completionList.Add(
+                    completions.Add(
                         // @apply completion is the only completion in this context
                         new Completion("@apply", "@apply", "Use @apply to inline any existing utility classes into your own custom CSS.", _completionUtils.TailwindLogo, null)
                     );
                 }
                 else
                 {
-                    completionList = new List<Completion>()
+                    completions = new List<Completion>()
                     {
                         new Completion("theme()", "theme()", "Use the theme() function to access your Tailwind config values using dot notation.", _completionUtils.TailwindLogo, null)
                     };
@@ -246,11 +264,11 @@ namespace TailwindCSSIntellisense.Completions.Sources
 
                     if (addToBeginning)
                     {
-                        completionList.AddRange(defaultCompletionSet.Completions);
+                        completions.AddRange(defaultCompletionSet.Completions);
                     }
                     else
                     {
-                        completionList.InsertRange(0, defaultCompletionSet.Completions);
+                        completions.InsertRange(0, defaultCompletionSet.Completions);
                     }
                 }
 
@@ -258,7 +276,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     defaultCompletionSet.Moniker,
                     defaultCompletionSet.DisplayName,
                     applicableTo,
-                    completionList,
+                    completions,
                     defaultCompletionSet.CompletionBuilders);
 
                 // Overrides the original completion set so there aren't two different completion tabs
@@ -271,7 +289,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     "All",
                     "All",
                     applicableTo,
-                    completionList,
+                    completions,
                     new List<Completion>()));
             }
         }

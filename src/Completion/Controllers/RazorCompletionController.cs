@@ -114,7 +114,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     {
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             var character = GetTypeChar(pvaIn);
-                            if (CharsAfterSignificantPoint(classText) <= 1 || character == ' ' || character == ':')
+                            if (CharsAfterSignificantPoint(classText) <= 1 || character == ' ' || character == ':' || character == '/')
                             {
                                 _currentSession?.Collapse();
                                 StartSession();
@@ -128,7 +128,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
                             // backspace is applied after this function is called, so this is actually
                             // equivalent to <= 1 (like above)
-                            if (CharsAfterSignificantPoint(classText) <= 2)
+                            if (CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
                             {
                                 _currentSession?.Collapse();
                                 StartSession();

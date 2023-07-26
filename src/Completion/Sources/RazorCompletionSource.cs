@@ -122,13 +122,32 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             foreach (var color in _completionUtils.ColorToRgbMapper.Keys)
                             {
                                 var className = string.Format(twClass.Name, color);
-
                                 completions.Add(
-                                            new Completion(modifiersAsString + className,
-                                                                modifiersAsString + className,
-                                                                _completionUtils.GetColorDescription(color) ?? className,
-                                                                _completionUtils.GetImageFromColor(color),
-                                                                null));
+                                                new Completion(modifiersAsString + className,
+                                                                    modifiersAsString + className,
+                                                                    _completionUtils.GetColorDescription(color) ?? className,
+                                                                    _completionUtils.GetImageFromColor(color),
+                                                                    null));
+                                if (twClass.UseOpacity && currentClass.Contains('/'))
+                                {
+                                    foreach (var opacity in _completionUtils.Opacity)
+                                    {
+
+                                        completions.Add(
+                                                    new Completion(modifiersAsString + className + $"/{opacity}",
+                                                                        modifiersAsString + className + $"/{opacity}",
+                                                                        _completionUtils.GetColorDescription(color, opacity) ?? className,
+                                                                        _completionUtils.GetImageFromColor(color, opacity),
+                                                                        null));
+                                    }
+
+                                    completions.Add(
+                                                new Completion(modifiersAsString + className + "/[...]",
+                                                                    modifiersAsString + className + "/[]",
+                                                                    className + "/[...]",
+                                                                    _completionUtils.TailwindLogo,
+                                                                    null));
+                                }
                             }
                         }
                         else if (twClass.UseSpacing)

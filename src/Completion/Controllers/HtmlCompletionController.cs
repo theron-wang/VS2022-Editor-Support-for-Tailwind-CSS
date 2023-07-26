@@ -114,7 +114,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     {
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             var character = GetTypeChar(pvaIn);
-                            if (CharsAfterSignificantPoint(classText) <= 2 || character == ':')
+                            if (CharsAfterSignificantPoint(classText) <= 2 || character == ':' || character == '/')
                             {
                                 _currentSession?.Collapse();
                                 StartSession(true);
@@ -127,7 +127,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             break;
                         case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
-                            if (CharsAfterSignificantPoint(classText) <= 2)
+                            if (CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
                             {
                                 _currentSession?.Collapse();
                                 StartSession(true);

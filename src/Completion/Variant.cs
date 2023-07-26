@@ -15,5 +15,9 @@ namespace TailwindCSSIntellisense.Completions
         public bool? UseColors { get; set; }
         [JsonPropertyName("sp")]
         public bool? UseSpacing { get; set; }
+        [JsonPropertyName("o")]
+        public bool? UseOpacity { get; set; }
+        [JsonPropertyName("n")]
+        public bool? HasNegative { get; set; }
     }
 }

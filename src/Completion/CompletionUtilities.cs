@@ -1,4 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -31,6 +32,7 @@ namespace TailwindCSSIntellisense.Completions
         internal Dictionary<string, List<TailwindClass>> StemToClassesMatch { get; private set; }
         internal List<string> Modifiers { get; set; }
         internal List<string> Spacing { get; set; }
+        internal List<int> Opacity { get; set; }
         internal Dictionary<string, string> ColorToRgbMapper { get; set; }
         internal Dictionary<string, ImageSource> ColorToRgbMapperCache { get; private set; } = new Dictionary<string, ImageSource>();
 
@@ -112,6 +114,10 @@ namespace TailwindCSSIntellisense.Completions
             using (var fs = File.Open(Path.Combine(baseFolder, "tailwindspacing.json"), FileMode.Open, FileAccess.Read))
             {
                 Spacing = await JsonSerializer.DeserializeAsync<List<string>>(fs);
+            }
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindopacity.json"), FileMode.Open, FileAccess.Read))
+            {
+                Opacity = await JsonSerializer.DeserializeAsync<List<int>>(fs);
             }
 
             StemToClassesMatch = new Dictionary<string, List<TailwindClass>>();
@@ -207,7 +213,8 @@ namespace TailwindCSSIntellisense.Completions
                             {
                                 Name = variant.Stem + "-" + subvariant.Stem.Replace("{c}", "{0}"),
                                 // Notify the completion provider to show color options
-                                UseColors = true
+                                UseColors = true,
+                                UseOpacity = variant.UseOpacity == true
                             });
                         }
                         else if (subvariant.Stem.Contains("{s}"))
@@ -222,13 +229,34 @@ namespace TailwindCSSIntellisense.Completions
                     }
                 }
 
+                if ((variant.DirectVariants == null || variant.DirectVariants.Count == 0) && (variant.Subvariants == null || variant.Subvariants.Count == 0))
+                {
+                    var newClass = new TailwindClass()
+                    {
+                        Name = variant.Stem
+                    };
+                    if (variant.UseColors == true)
+                    {
+                        newClass.UseColors = true;
+                        newClass.UseOpacity = variant.UseOpacity == true;
+                        newClass.Name += "-{0}";
+                    }
+                    else if (variant.UseSpacing == true)
+                    {
+                        newClass.UseSpacing = true;
+                        newClass.Name += "-{0}";
+                    }
+                    classes.Add(newClass);
+                }
+
                 if (variant.UseColors == true)
                 {
                     classes.Add(new TailwindClass()
                     {
                         // When displaying to user, string.Format is used to insert colors
                         Name = variant.Stem + "-{0}",
-                        UseColors = true
+                        UseColors = true,
+                        UseOpacity = variant.UseOpacity == true
                     });
                 }
                 if (variant.UseSpacing == true)
@@ -249,8 +277,23 @@ namespace TailwindCSSIntellisense.Completions
                     });
                 }
 
-
                 StemToClassesMatch.Add(variant.Stem, classes);
+
+                if (variant.HasNegative == true)
+                {
+                    var negativeClasses = classes.Select(c =>
+                    {
+                        return new TailwindClass()
+                        {
+                            Name = $"-{c.Name}",
+                            SupportsBrackets = c.SupportsBrackets,
+                            UseColors = c.UseColors,
+                            UseSpacing = c.UseSpacing
+                        };
+                    }).ToList();
+
+                    StemToClassesMatch.Add($"-{variant.Stem}", negativeClasses);
+                }
             }
         }
 
@@ -258,10 +301,11 @@ namespace TailwindCSSIntellisense.Completions
         /// Gets the corresponding icon for a certain color class
         /// </summary>
         /// <param name="color">The color to generate an icon for (i.e. amber-100, blue-500)</param>
+        /// <param name="opacity">The opacity of the color (0-100)</param>
         /// <returns>An <see cref="ImageSource"/> which contains a square displaying the requested color</returns>
-        internal ImageSource GetImageFromColor(string color)
+        internal ImageSource GetImageFromColor(string color, int opacity = 100)
         {
-            if (ColorToRgbMapperCache.TryGetValue(color, out var result))
+            if (ColorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out var result))
             {
                 return result;
             }
@@ -281,8 +325,9 @@ namespace TailwindCSSIntellisense.Completions
             var r = byte.Parse(rgb[0]);
             var g = byte.Parse(rgb[1]);
             var b = byte.Parse(rgb[2]);
+            var a = (byte)Math.Round(opacity / 100d * 255);
 
-            var pen = new Pen() { Thickness = 7, Brush = new SolidColorBrush(Color.FromArgb(255, r, g, b)) };
+            var pen = new Pen() { Thickness = 7, Brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)) };
             var mainImage = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(11, 2, 5, 8)), Pen = pen };
 
             // https://stackoverflow.com/questions/37663993/preventing-icon-color-and-size-distortions-when-bundling-a-visual-studio-project
@@ -298,7 +343,7 @@ namespace TailwindCSSIntellisense.Completions
                 Drawing = geometry
             };
 
-            ColorToRgbMapperCache.Add(color, result);
+            ColorToRgbMapperCache.Add($"{color}/{opacity}", result);
 
             return result;
         }
@@ -307,8 +352,9 @@ namespace TailwindCSSIntellisense.Completions
         /// Gets the hex code for a certain color
         /// </summary>
         /// <param name="color">The color to generate an description for (i.e. amber-100, blue-500)</param>
+        /// <param name="opacity">The opacity of the color (0-100)</param>
         /// <returns>A 6-digit hex code representing the color</returns>
-        internal string GetColorDescription(string color)
+        internal string GetColorDescription(string color, int opacity = 100)
         {
             // Invalid color or value is empty when color is current, inherit, or transparent
             if (ColorToRgbMapper.TryGetValue(color, out string value) == false || string.IsNullOrWhiteSpace(value))
@@ -326,8 +372,9 @@ namespace TailwindCSSIntellisense.Completions
             var r = byte.Parse(rgb[0]);
             var g = byte.Parse(rgb[1]);
             var b = byte.Parse(rgb[2]);
+            var a = (byte)Math.Round(opacity / 100d * 255);
 
-            return $"#{r:x2}{g:x2}{b:x2}";
+            return $"#{r:X2}{g:X2}{b:X2}{a:X2}";
         }
     }
 }

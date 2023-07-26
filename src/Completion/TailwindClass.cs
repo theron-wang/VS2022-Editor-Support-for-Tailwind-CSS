@@ -5,6 +5,7 @@
         public string Name { get; set; }
 
         public bool UseColors { get; set; }
+        public bool UseOpacity { get; set; }
 
         public bool UseSpacing { get; set; }
 
