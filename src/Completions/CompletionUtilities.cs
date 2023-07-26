@@ -147,6 +147,15 @@ namespace TailwindCSSIntellisense.Completions
                                     UseSpacing = true
                                 });
                             }
+                            else if (v.Contains("{c}"))
+                            {
+                                classes.Add(new TailwindClass()
+                                {
+                                    Name = variant.Stem + "-" + v.Replace("{c}", "{0}"),
+                                    UseColors = true,
+                                    UseOpacity = variant.UseOpacity == true
+                                });
+                            }
                             else
                             {
                                 classes.Add(new TailwindClass()
@@ -247,34 +256,6 @@ namespace TailwindCSSIntellisense.Completions
                         newClass.Name += "-{0}";
                     }
                     classes.Add(newClass);
-                }
-
-                if (variant.UseColors == true)
-                {
-                    classes.Add(new TailwindClass()
-                    {
-                        // When displaying to user, string.Format is used to insert colors
-                        Name = variant.Stem + "-{0}",
-                        UseColors = true,
-                        UseOpacity = variant.UseOpacity == true
-                    });
-                }
-                if (variant.UseSpacing == true)
-                {
-                    classes.Add(new TailwindClass()
-                    {
-                        // When displaying to user, string.Format is used to insert spacing
-                        Name = variant.Stem + "-{0}",
-                        UseSpacing = true
-                    });
-                }
-                if (variant.UseSpacing == true || variant.UseColors == true)
-                {
-                    classes.Add(new TailwindClass()
-                    {
-                        Name = variant.Stem,
-                        SupportsBrackets = true
-                    });
                 }
 
                 Classes.AddRange(classes);

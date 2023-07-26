@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2 (July 26th, 2023)
+
+### Fixes
+
+- Added missing classes
+
 ## 1.1.1 (July 26th, 2023)
 
 ### Enhancements
