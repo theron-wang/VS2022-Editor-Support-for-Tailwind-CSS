@@ -72,6 +72,7 @@
     <Compile Include="Completions\Sources\RazorCompletionSource.cs" />
     <Compile Include="Completions\TailwindCssCompletionSet.cs" />
     <Compile Include="Configuration\ConfigFileParser.cs" />
+    <Compile Include="Configuration\ConfigurationClassGenerator.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
     <Compile Include="source.extension.cs">
@@ -126,6 +127,7 @@
     <Content Include="Resources\tailwindopacity.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <None Include="Resources\tailwindconfig.json" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
