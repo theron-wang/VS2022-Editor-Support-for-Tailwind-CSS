@@ -74,7 +74,7 @@ namespace TailwindCSSIntellisense.Build
         {
             VS.Events.BuildEvents.ProjectBuildStarted -= StartProcess;
             VS.Events.DocumentEvents.Saved -= OnFileSave;
-            SettingsProvider.OnSettingsChanged -= SetFilePathsAsync;
+            SettingsProvider.OnSettingsChanged -= SettingsChangedAsync;
         }
 
         /// <summary>
