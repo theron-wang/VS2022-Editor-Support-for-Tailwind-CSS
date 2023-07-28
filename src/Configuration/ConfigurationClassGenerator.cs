@@ -132,8 +132,8 @@ namespace TailwindCSSIntellisense.Configuration
 
         private void LoadIndividualConfigurationOverride(TailwindConfiguration config)
         {
-            var applicable = ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
-            var oldApplicable = ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
+            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
+            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
 
             if (ShouldRegenerate(applicable, oldApplicable, config))
             {
@@ -146,7 +146,7 @@ namespace TailwindCSSIntellisense.Configuration
 
                 foreach (var key in applicable)
                 {
-                    var stems = ConfigurationValueToClassStems[key];
+                    var stems = _completionBase.ConfigurationValueToClassStems[key];
 
                     foreach (var stem in stems)
                     {
@@ -179,11 +179,11 @@ namespace TailwindCSSIntellisense.Configuration
                             {
                                 s = stem.Replace("-{*}", "");
 
-                                classesToRemove.AddRange(_completionBase.Classes.Where(c => c.Name.StartsWith(s)));
+                                classesToRemove.AddRange(_completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false));
                             }
                             else
                             {
-                                classesToRemove.AddRange(_completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0));
+                                classesToRemove.AddRange(_completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false));
                             }
 
                             if (GetDictionary(config.OverridenValues[key], out var dict))
@@ -228,8 +228,8 @@ namespace TailwindCSSIntellisense.Configuration
 
         private void LoadIndividualConfigurationExtend(TailwindConfiguration config)
         {
-            var applicable = ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
-            var oldApplicable = ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
+            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
+            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
 
             if (ShouldRegenerate(applicable, oldApplicable, config))
             {
@@ -237,7 +237,7 @@ namespace TailwindCSSIntellisense.Configuration
 
                 foreach (var key in applicable)
                 {
-                    var stems = ConfigurationValueToClassStems[key];
+                    var stems = _completionBase.ConfigurationValueToClassStems[key];
 
                     foreach (var stem in stems)
                     {
@@ -273,14 +273,14 @@ namespace TailwindCSSIntellisense.Configuration
                                 s = stem.Replace("-{*}", "");
                             }
 
+                            var insertStem = s;
+                            // row-span and col-span are actually row and col internally
+                            if (s.EndsWith("-span"))
+                            {
+                                insertStem = s.Replace("-span", "");
+                            }
                             if (GetDictionary(config.ExtendedValues[key], out var dict))
                             {
-                                var insertStem = s;
-                                // row-span and col-span are actually row and col internally
-                                if (s.EndsWith("-span"))
-                                {
-                                    insertStem = s.Replace("-span", "");
-                                }
                                 classesToAdd.AddRange(dict.Keys
                                     .Where(k => _completionBase.Classes.Any(c => c.Name == $"{s}-{k}") == false)
                                     .Select(k =>
@@ -300,6 +300,8 @@ namespace TailwindCSSIntellisense.Configuration
                 // fix weird order if both theme and theme.extend are specify
                 _completionBase.Classes.Sort((x, y) => x.Name.CompareTo(y.Name));
             }
+
+            _lastConfig = config;
         }
 
         private bool ShouldRegenerate(IEnumerable<string> applicable, IEnumerable<string> oldApplicable, TailwindConfiguration config)

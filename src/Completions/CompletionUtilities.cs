@@ -35,6 +35,7 @@ namespace TailwindCSSIntellisense.Completions
         internal List<int> Opacity { get; set; }
         internal Dictionary<string, string> ColorToRgbMapper { get; set; }
         internal Dictionary<string, ImageSource> ColorToRgbMapperCache { get; private set; } = new Dictionary<string, ImageSource>();
+        internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; }
 
         internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; }
         internal Dictionary<string, List<string>> CustomSpacings { get; set; }

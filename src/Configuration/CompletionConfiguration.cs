@@ -33,8 +33,6 @@ namespace TailwindCSSIntellisense.Configuration
         private Dictionary<string, string> ColorToRgbMapperOrig { get; set; }
         private List<string> Screen { get; set; } = new List<string>() { "sm", "md", "lg", "xl", "2xl" };
 
-        private Dictionary<string, List<string>> ConfigurationValueToClassStems { get; set; }
-
         /// <summary>
         /// Initializes the configuration file (tailwind.config.js) for completion
         /// </summary>
@@ -46,11 +44,6 @@ namespace TailwindCSSIntellisense.Configuration
             SpacingOrig = _completionBase.Spacing.ToList();
             ClassesOrig = _completionBase.Classes.ToList();
             ColorToRgbMapperOrig = _completionBase.ColorToRgbMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
-
-            using (var fs = File.Open(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindconfig.json"), FileMode.Open, FileAccess.Read))
-            {
-                ConfigurationValueToClassStems = await JsonSerializer.DeserializeAsync<Dictionary<string, List<string>>>(fs);
-            }
 
             var config = await Parser.GetConfigurationAsync();
             LoadGlobalConfiguration(config);
