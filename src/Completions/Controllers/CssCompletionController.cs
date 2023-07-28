@@ -18,7 +18,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
     [Export(typeof(IVsTextViewCreationListener))]
     [ContentType("css")]
-    [TextViewRole(PredefinedTextViewRoles.Interactive)]
+    [TextViewRole(PredefinedTextViewRoles.Editable)]
     internal sealed class CssCompletionController : IVsTextViewCreationListener
     {
         [Import]

@@ -13,6 +13,7 @@ namespace TailwindCSSIntellisense.Completions.Providers
     /// </summary>
     [Export(typeof(ICompletionSourceProvider))]
     [ContentType("razor")]
+    [ContentType("LegacyRazorCSharp")]
     [Name("TailwindCSS Razor Token Completion")]
     internal class RazorCompletionSourceProvider : ICompletionSourceProvider
     {

@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="TailwindCSSIntellisense.b29696d4-76a4-43d1-a203-c8e692368847" Version="1.1.2" Language="en-US" Publisher="Theron Wang" />
+        <Identity Id="TailwindCSSIntellisense.b29696d4-76a4-43d1-a203-c8e692368847" Version="1.1.3" Language="en-US" Publisher="Theron Wang" />
         <DisplayName>Tailwind CSS VS2022 Editor Support</DisplayName>
         <Description xml:space="preserve">Unofficial VS2022 extension for Tailwind CSS, offering editor features such as IntelliSense, build integration, and more.</Description>
         <MoreInfo>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS</MoreInfo>

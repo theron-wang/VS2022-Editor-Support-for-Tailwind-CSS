@@ -18,7 +18,8 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
     [Export(typeof(IVsTextViewCreationListener))]
     [ContentType("razor")]
-    [TextViewRole(PredefinedTextViewRoles.Interactive)]
+    [ContentType("LegacyRazorCSharp")]
+    [TextViewRole(PredefinedTextViewRoles.Editable)]
     internal sealed class RazorCompletionController : IVsTextViewCreationListener
     {
         [Import]

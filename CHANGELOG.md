@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.3 (Unreleased)
+## 1.1.3 (July 28th, 2023)
 
 ### Fixes
 
