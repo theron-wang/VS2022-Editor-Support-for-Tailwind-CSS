@@ -12,9 +12,11 @@ namespace TailwindCSSIntellisense.Configuration
     public sealed partial class CompletionConfiguration
     {
         private TailwindConfiguration _lastConfig;
+        private bool _overrideLoaded;
+        private bool _shouldRegenerate;
 
         /// <summary>
-        /// Method called by <see cref="ReloadCustomAttributesAsync"/> to reconfigure colors, spacing, and screen
+        /// Reconfigures colors, spacing, and screen
         /// </summary>
         private void LoadGlobalConfiguration(TailwindConfiguration config)
         {
@@ -130,12 +132,18 @@ namespace TailwindCSSIntellisense.Configuration
             _areValuesDefault = false;
         }
 
+        /// <summary>
+        /// Reconfigures all classes based on the specified configuration (configures theme.____)
+        /// </summary>
+        /// <param name="config">The configuration object</param>
         private void LoadIndividualConfigurationOverride(TailwindConfiguration config)
         {
-            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
-            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
+            _overrideLoaded = false;
 
-            if (ShouldRegenerate(applicable, oldApplicable, config))
+            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
+            _shouldRegenerate = ShouldRegenerate(config);
+
+            if (_shouldRegenerate)
             {
                 _completionBase.Classes = ClassesOrig.ToList();
                 var classesToRemove = new List<TailwindClass>();
@@ -211,11 +219,6 @@ namespace TailwindCSSIntellisense.Configuration
                                         };
                                     }
                                 }));
-                                classesToAdd.Add(new TailwindClass()
-                                {
-                                    Name = s,
-                                    SupportsBrackets = true
-                                });
                             }
                         }
                     }
@@ -223,16 +226,30 @@ namespace TailwindCSSIntellisense.Configuration
 
                 _completionBase.Classes.RemoveAll(c => classesToRemove.Contains(c));
                 _completionBase.Classes.AddRange(classesToAdd);
+                _overrideLoaded = true;
             }
         }
 
+        /// <summary>
+        /// Reconfigures all classes based on the specified configuration (configures theme.extend.____).
+        /// </summary>
+        /// <remarks>
+        /// Should be called after <see cref="LoadIndividualConfigurationOverride(TailwindConfiguration)"/>.
+        /// </remarks>
+        /// <param name="config">The configuration object</param>
         private void LoadIndividualConfigurationExtend(TailwindConfiguration config)
         {
             var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
-            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
 
-            if (ShouldRegenerate(applicable, oldApplicable, config))
+            if (_shouldRegenerate)
             {
+                if (_overrideLoaded == false)
+                {
+                    _completionBase.Classes = ClassesOrig.ToList();
+                    _completionBase.CustomSpacings = new Dictionary<string, List<string>>();
+                    _completionBase.CustomColorMappers = new Dictionary<string, Dictionary<string, string>>();
+                }
+
                 var classesToAdd = new List<TailwindClass>();
 
                 foreach (var key in applicable)
@@ -247,7 +264,7 @@ namespace TailwindCSSIntellisense.Configuration
                             if (GetDictionary(config.ExtendedValues[key], out var dict))
                             {
                                 newSpacing.AddRange(dict.Keys);
-                                _completionBase.CustomSpacings[stem.Replace("{c}", "{0}")] = newSpacing.Distinct().ToList();
+                                _completionBase.CustomSpacings[stem.Replace("{s}", "{0}")] = newSpacing.Distinct().ToList();
                             }
                             // no else because that would just be using the default spacing scheme
                         }
@@ -297,14 +314,25 @@ namespace TailwindCSSIntellisense.Configuration
 
                 _completionBase.Classes.AddRange(classesToAdd);
 
-                // fix weird order if both theme and theme.extend are specify
+                // fix order
                 _completionBase.Classes.Sort((x, y) => x.Name.CompareTo(y.Name));
             }
 
             _lastConfig = config;
         }
 
-        private bool ShouldRegenerate(IEnumerable<string> applicable, IEnumerable<string> oldApplicable, TailwindConfiguration config)
+        private bool ShouldRegenerate(TailwindConfiguration config)
+        {
+            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
+            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.OverridenValues.ContainsKey(k));
+
+            var applicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
+            var oldApplicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.ExtendedValues.ContainsKey(k));
+
+            return ShouldRegenerate(applicable, oldApplicable, config, true) && ShouldRegenerate(applicableToExtend, oldApplicableToExtend, config, false);
+        }
+
+        private bool ShouldRegenerate(IEnumerable<string> applicable, IEnumerable<string> oldApplicable, TailwindConfiguration config, bool isOverride)
         {
             var regenerate = false;
 
@@ -320,14 +348,17 @@ namespace TailwindCSSIntellisense.Configuration
             // Same count, same keys, maybe content keys changed
             else
             {
+                var newValues = isOverride ? config.OverridenValues : config.ExtendedValues;
+                var oldValues = isOverride ? _lastConfig.OverridenValues : _lastConfig.ExtendedValues;
+
                 foreach (var key in applicable)
                 {
                     // both are null / empty string
-                    if (config.OverridenValues[key] == _lastConfig.OverridenValues[key])
+                    if (newValues[key] == oldValues[key])
                     {
                         continue;
                     }
-                    if (GetDictionary(config.OverridenValues[key], out var dict1) && GetDictionary(config.OverridenValues[key], out var dict2))
+                    if (GetDictionary(newValues[key], out var dict1) && GetDictionary(oldValues[key], out var dict2))
                     {
                         if (dict1.Keys.Count == dict2.Keys.Count && dict1.Keys.All(k => dict2.ContainsKey(k)))
                         {

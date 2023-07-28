@@ -153,12 +153,10 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     }
                     else if (twClass.SupportsBrackets)
                     {
-                        var className = twClass.Name + "-";
-
                         completions.Add(
-                        new Completion(modifiersAsString + className + "[...]",
-                                            modifiersAsString + className + "[]",
-                                            className + "[...]",
+                        new Completion(modifiersAsString + twClass.Name + "[...]",
+                                            modifiersAsString + twClass.Name + "[]",
+                                            twClass.Name + "[...]",
                                             completionUtils.TailwindLogo,
                                             null));
                     }

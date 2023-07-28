@@ -83,7 +83,7 @@ namespace TailwindCSSIntellisense.Configuration
                     isInComment = false;
                 }
 
-                if (alreadyProcessed == false)
+                if (alreadyProcessed == false && isInComment == false)
                 {
                     stringBuilder.AppendLine(line);
                 }
