@@ -1,5 +1,8 @@
 # Unsupported theme attributes
 
+- aria
+- supports
+- data
 - fontFamily
 - fontWeight
 - fontSize

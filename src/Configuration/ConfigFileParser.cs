@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Configuration
@@ -38,6 +40,56 @@ namespace TailwindCSSIntellisense.Configuration
                     fileText = await reader.ReadToEndAsync();
                 }
             }
+
+            var stringBuilder = new StringBuilder();
+            var isInComment = false;
+
+            foreach (var l in fileText.Split('\n'))
+            {
+                var line = l.Trim();
+                var alreadyProcessed = false;
+                if (line.Contains("/*") && isInComment == false)
+                {
+                    line = line.Split(new string[] { "/*" }, StringSplitOptions.None)[0];
+
+                    if (string.IsNullOrWhiteSpace(line) == false)
+                    {
+                        stringBuilder.AppendLine(line);
+                    }
+
+                    alreadyProcessed = true;
+                    isInComment = true;
+                }
+                if (line.Contains("//") && isInComment == false)
+                {
+                    line = line.Split(new string[] { "//" }, StringSplitOptions.None)[0];
+
+                    if (string.IsNullOrWhiteSpace(line) == false)
+                    {
+                        stringBuilder.AppendLine(line);
+                    }
+                    alreadyProcessed = true;
+                }
+                if (line.Contains("*/") && isInComment) 
+                {
+                    line = line.Split(new string[] { "*/" }, StringSplitOptions.None).Last();
+
+                    if (string.IsNullOrWhiteSpace(line) == false)
+                    {
+                        stringBuilder.AppendLine(line);
+                    }
+
+                    alreadyProcessed = true;
+                    isInComment = false;
+                }
+
+                if (alreadyProcessed == false)
+                {
+                    stringBuilder.AppendLine(line);
+                }
+            }
+
+            fileText = stringBuilder.ToString();
 
             var mainBlock = GetBlockOrValue(fileText, "theme", out _);
 
@@ -166,7 +218,7 @@ namespace TailwindCSSIntellisense.Configuration
 
         private bool IsCharAcceptedLetter(char character)
         {
-            return char.IsLetterOrDigit(character) || character == '\'' || character == '-' || character == '_';
+            return char.IsLetterOrDigit(character) || character == '\'' || character == '-' || character == '_' || character == '/';
         }
 
         private Dictionary<string, object> GetTotalValue(string scope)

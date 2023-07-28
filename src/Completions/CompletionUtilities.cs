@@ -29,12 +29,15 @@ namespace TailwindCSSIntellisense.Completions
 
         internal ImageSource TailwindLogo { get; private set; } = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindlogo.png"), UriKind.Relative));
         internal bool Initialized { get; private set; }
-        internal List<TailwindClass> Classes { get; private set; }
+        internal List<TailwindClass> Classes { get; set; }
         internal List<string> Modifiers { get; set; }
         internal List<string> Spacing { get; set; }
         internal List<int> Opacity { get; set; }
         internal Dictionary<string, string> ColorToRgbMapper { get; set; }
         internal Dictionary<string, ImageSource> ColorToRgbMapperCache { get; private set; } = new Dictionary<string, ImageSource>();
+
+        internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; }
+        internal Dictionary<string, List<string>> CustomSpacings { get; set; }
 
         /// <summary>
         /// Initializes the necessary utilities to provide completion
@@ -49,6 +52,9 @@ namespace TailwindCSSIntellisense.Completions
 
             try
             {
+                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
+                await VS.StatusBar.ShowProgressAsync("Searching for TailwindCSS configuration file", 1, 4);
+
                 if ((await ShouldInitializeAsync()) == false)
                 {
                     Initialized = false;
@@ -72,14 +78,14 @@ namespace TailwindCSSIntellisense.Completions
                 await ex.LogAsync();
 
                 // Clear progress
-                await VS.StatusBar.ShowProgressAsync("", 4, 4);
+                await VS.StatusBar.ShowProgressAsync("", 3, 3);
                 await VS.StatusBar.ShowMessageAsync("TailwindCSS initialization failed: check extension output");
 
                 return false;
             }
             finally
             {
-                await VS.StatusBar.ShowProgressAsync("", 4, 4);
+                await VS.StatusBar.ShowProgressAsync("", 3, 3);
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
         }
@@ -160,17 +166,6 @@ namespace TailwindCSSIntellisense.Completions
                             }
                         }
                     }
-
-                    // Generally speaking, tailwind classes with a number as a variant support arbitrary values;
-                    // however, there are still some exceptions but those classes are not as commonly used.
-                    if (variant.DirectVariants.Any(x => int.TryParse(x, out _)) && variant.UseColors != true && variant.UseSpacing != true)
-                    {
-                        classes.Add(new TailwindClass()
-                        {
-                            Name = variant.Stem,
-                            SupportsBrackets = true
-                        });
-                    }
                 }
 
                 if (variant.Subvariants != null && variant.Subvariants.Count > 0)
@@ -197,17 +192,6 @@ namespace TailwindCSSIntellisense.Completions
                                         Name = variant.Stem + "-" + subvariant.Stem + "-" + v
                                     });
                                 }
-                            }
-
-                            // Generally speaking, tailwind classes with a number as a variant support arbitrary values;
-                            // however, there are still some exceptions but those classes are not as commonly used.
-                            if (subvariant.Variants.Any(x => int.TryParse(x, out _)))
-                            {
-                                classes.Add(new TailwindClass()
-                                {
-                                    Name = variant.Stem + "-" + subvariant.Stem,
-                                    SupportsBrackets = true
-                                });
                             }
                         }
 
@@ -262,13 +246,23 @@ namespace TailwindCSSIntellisense.Completions
                         return new TailwindClass()
                         {
                             Name = $"-{c.Name}",
-                            SupportsBrackets = c.SupportsBrackets,
                             UseColors = c.UseColors,
                             UseSpacing = c.UseSpacing
                         };
                     }).ToList();
 
                     Classes.AddRange(negativeClasses);
+                }
+            }
+            foreach (var stems in ConfigurationValueToClassStems.Values)
+            {
+                foreach (var stem in stems)
+                {
+                    Classes.Add(new TailwindClass()
+                    {
+                        Name = stem.Replace("-{*}", "").Replace("-{c}", "").Replace("-{s}", "") + "-",
+                        SupportsBrackets = true
+                    });
                 }
             }
         }
@@ -334,6 +328,118 @@ namespace TailwindCSSIntellisense.Completions
         {
             // Invalid color or value is empty when color is current, inherit, or transparent
             if (ColorToRgbMapper.TryGetValue(color, out string value) == false || string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var rgb = value.Split(',');
+
+            if (rgb.Length == 0)
+            {
+                // Something wrong happened: return null which the caller can interpret
+                return null;
+            }
+            var r = byte.Parse(rgb[0]);
+            var g = byte.Parse(rgb[1]);
+            var b = byte.Parse(rgb[2]);
+            var a = (byte)Math.Round(opacity / 100d * 255);
+
+            return $"#{r:X2}{g:X2}{b:X2}{a:X2}";
+        }
+
+        /// <summary>
+        /// Gets the corresponding icon for a certain color class
+        /// </summary>
+        /// <param name="stem">The extended stem</param>
+        /// <param name="color">The color to generate an icon for (i.e. amber-100, blue-500)</param>
+        /// <param name="opacity">The opacity of the color (0-100)</param>
+        /// <returns>An <see cref="ImageSource"/> which contains a square displaying the requested color</returns>
+        internal ImageSource GetCustomImageFromColor(string stem, string color, int opacity = 100)
+        {
+            if (ColorToRgbMapperCache.TryGetValue($"{stem}/{color}/{opacity}", out var result))
+            {
+                return result;
+            }
+            else
+            {
+                if (ColorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out result))
+                {
+                    return result;
+                }
+            }
+
+            string value;
+            if (CustomColorMappers.TryGetValue(stem, out var dict) == false)
+            {
+                return GetImageFromColor(color, opacity);
+            }
+            else if (dict.TryGetValue(color, out value))
+            {
+                if (ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
+                {
+                    return GetImageFromColor(color, opacity);
+                }
+            }
+            else if (string.IsNullOrWhiteSpace(value))
+            {
+                return TailwindLogo;
+            }
+
+            var rgb = value.Split(',');
+
+            if (rgb.Length == 0)
+            {
+                // Something wrong happened: fall back to default tailwind icon
+                return TailwindLogo;
+            }
+            var r = byte.Parse(rgb[0]);
+            var g = byte.Parse(rgb[1]);
+            var b = byte.Parse(rgb[2]);
+            var a = (byte)Math.Round(opacity / 100d * 255);
+
+            var pen = new Pen() { Thickness = 7, Brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)) };
+            var mainImage = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(11, 2, 5, 8)), Pen = pen };
+
+            // https://stackoverflow.com/questions/37663993/preventing-icon-color-and-size-distortions-when-bundling-a-visual-studio-project
+            var pen2 = new Pen() { Thickness = 1, Brush = new SolidColorBrush(Color.FromArgb(1, 0, 255, 255)) };
+            var vsPrevent = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(18, -2, 1, 1)), Pen = pen2 };
+
+            var geometry = new DrawingGroup();
+            geometry.Children.Add(mainImage);
+            geometry.Children.Add(vsPrevent);
+
+            result = new DrawingImage
+            {
+                Drawing = geometry
+            };
+
+            ColorToRgbMapperCache.Add($"{stem}/{color}/{opacity}", result);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the hex code for a certain color
+        /// </summary>
+        /// <param name="color">The color to generate an description for (i.e. amber-100, blue-500)</param>
+        /// <param name="opacity">The opacity of the color (0-100)</param>
+        /// <returns>A 6-digit hex code representing the color</returns>
+        internal string GetCustomColorDescription(string stem, string color, int opacity = 100)
+        {
+            string value;
+            if (CustomColorMappers.TryGetValue(stem, out var dict) == false)
+            {
+                return GetColorDescription(color, opacity);
+            }
+            else if (dict.TryGetValue(color, out value))
+            {
+                if (ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
+                {
+                    return GetColorDescription(color, opacity);
+                }
+            }
+            // Invalid color or value is empty when color is current, inherit, or transparent
+            else if (string.IsNullOrWhiteSpace(value))
             {
                 return null;
             }

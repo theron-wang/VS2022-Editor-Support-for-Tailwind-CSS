@@ -62,7 +62,7 @@
     <Compile Include="Commands\SetAsInputFile.cs" />
     <Compile Include="Commands\SetAsConfigFile.cs" />
     <Compile Include="Completions\BulkInsertObservableCollection.cs" />
-    <Compile Include="Completions\CompletionConfiguration.cs" />
+    <Compile Include="Configuration\CompletionConfiguration.cs" />
     <Compile Include="Completions\Controllers\CssCompletionController.cs" />
     <Compile Include="Completions\Controllers\HtmlCompletionController.cs" />
     <Compile Include="Completions\Providers\RazorCompletionSourceProvider.cs" />
@@ -127,7 +127,9 @@
     <Content Include="Resources\tailwindopacity.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <None Include="Resources\tailwindconfig.json" />
+    <Content Include="Resources\tailwindconfig.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>

@@ -33,12 +33,12 @@ namespace TailwindCSSIntellisense.Completions.Sources
             }
             var segments = currentClass.Split('-');
 
+            // Prevent Intellisense from showing up for invalid statements like px-0:
             if (modifiers.Count != 0 && modifiers.Any(m => ((m.StartsWith("[") && m.EndsWith("]")) || completionUtils.Modifiers.Contains(m)) == false))
             {
                 return null;
             }
 
-            // Prevent Intellisense from showing up for invalid statements like px-0:
             if (string.IsNullOrWhiteSpace(currentClass) == false)
             {
                 var currentClassStem = currentClass.Split('-')[0];
@@ -55,7 +55,19 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 {
                     if (twClass.UseColors)
                     {
-                        IEnumerable<string> colors = completionUtils.ColorToRgbMapper.Keys;
+                        IEnumerable<string> colors;
+                        var useCustom = false;
+
+                        if (completionUtils.CustomColorMappers != null && completionUtils.CustomColorMappers.ContainsKey(twClass.Name))
+                        {
+                            colors = completionUtils.CustomColorMappers[twClass.Name].Keys;
+                            useCustom = true;
+                        }
+                        else
+                        {
+                            colors = completionUtils.ColorToRgbMapper.Keys;
+                        }
+
                         if (twClass.Name.StartsWith(currentClassStem) == false)
                         {
                             // If you're typing in 'tra' to get transform, you don't need a bunch of
@@ -66,23 +78,46 @@ namespace TailwindCSSIntellisense.Completions.Sources
                         foreach (var color in colors)
                         {
                             var className = string.Format(twClass.Name, color);
-                            completions.Add(
-                                            new Completion(modifiersAsString + className,
-                                                                modifiersAsString + className,
-                                                                completionUtils.GetColorDescription(color) ?? className,
-                                                                completionUtils.GetImageFromColor(color, color == "transparent" ? 0 : 100),
-                                                                null));
+                            if (useCustom)
+                            {
+                                completions.Add(
+                                                new Completion(modifiersAsString + className,
+                                                                    modifiersAsString + className,
+                                                                    completionUtils.GetCustomColorDescription(twClass.Name, color) ?? className,
+                                                                    completionUtils.GetCustomImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
+                                                                    null));
+                            }
+                            else
+                            {
+                                completions.Add(
+                                                new Completion(modifiersAsString + className,
+                                                                    modifiersAsString + className,
+                                                                    completionUtils.GetColorDescription(color) ?? className,
+                                                                    completionUtils.GetImageFromColor(color, color == "transparent" ? 0 : 100),
+                                                                    null));
+                            }
                             if (twClass.UseOpacity && currentClass.Contains('/'))
                             {
                                 foreach (var opacity in completionUtils.Opacity)
                                 {
-
-                                    completions.Add(
+                                    if (useCustom)
+                                    {
+                                        completions.Add(
+                                                new Completion(modifiersAsString + className + $"/{opacity}",
+                                                                    modifiersAsString + className + $"/{opacity}",
+                                                                    completionUtils.GetCustomColorDescription(twClass.Name, color, opacity) ?? className,
+                                                                    completionUtils.GetCustomImageFromColor(twClass.Name, color, opacity),
+                                                                    null));
+                                    }
+                                    else
+                                    {
+                                        completions.Add(
                                                 new Completion(modifiersAsString + className + $"/{opacity}",
                                                                     modifiersAsString + className + $"/{opacity}",
                                                                     completionUtils.GetColorDescription(color, opacity) ?? className,
                                                                     completionUtils.GetImageFromColor(color, opacity),
                                                                     null));
+                                    }
                                 }
                                 completions.Add(
                                             new Completion(modifiersAsString + className + "/[...]",
@@ -97,7 +132,14 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     }
                     else if (twClass.UseSpacing)
                     {
-                        foreach (var spacing in completionUtils.Spacing)
+                        var spacings = completionUtils.Spacing;
+
+                        if (completionUtils.CustomSpacings != null && completionUtils.CustomSpacings.TryGetValue(twClass.Name, out var value))
+                        {
+                            spacings = value;
+                        }
+
+                        foreach (var spacing in spacings)
                         {
                             var className = string.Format(twClass.Name, spacing);
 
