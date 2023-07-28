@@ -51,15 +51,26 @@ namespace TailwindCSSIntellisense.Completions
         {
             if (Scanner.HasConfigurationFile)
             {
-                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-                await VS.StatusBar.ShowProgressAsync("Reloading TailwindCSS configuration", 1, 2);
-                await LoadCustomAttributesAsync();
-                _completionBase.Spacing = _completionBase.Spacing.Distinct().ToList();
-                _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
+                try
+                {
+                    await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
+                    await VS.StatusBar.ShowProgressAsync("Reloading Tailwind CSS configuration", 1, 2);
+                    await LoadCustomAttributesAsync();
+                    _completionBase.Spacing = _completionBase.Spacing.Distinct().ToList();
+                    _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
 
-                await VS.StatusBar.ShowProgressAsync("", 2, 2);
-                await VS.StatusBar.ShowMessageAsync("Finished reloading TailwindCSS configuration");
-                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+                    await VS.StatusBar.ShowProgressAsync("", 2, 2);
+                    await VS.StatusBar.ShowMessageAsync("Finished reloading Tailwind CSS configuration");
+                }
+                catch (Exception e)
+                {
+                    await e.LogAsync();
+                    await VS.StatusBar.ShowMessageAsync("An error occurred while loading Tailwind CSS configuration: check the 'Extensions' output window for more details");
+                }
+                finally
+                {
+                    await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+                }
             }
         }
 

@@ -70,15 +70,11 @@ namespace TailwindCSSIntellisense.Completions
                 await Configuration.InitializeAsync(this);
                 await VS.StatusBar.ShowProgressAsync("TailwindCSS Intellisense initialized", 4, 4);
 
-                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
-
                 Initialized = true;
                 return true;
             }
             catch (Exception ex)
             {
-                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
-
                 await ex.LogAsync();
 
                 // Clear progress
@@ -86,6 +82,11 @@ namespace TailwindCSSIntellisense.Completions
                 await VS.StatusBar.ShowMessageAsync("TailwindCSS initialization failed: check extension output");
 
                 return false;
+            }
+            finally
+            {
+                await VS.StatusBar.ShowProgressAsync("", 4, 4);
+                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
         }
 
