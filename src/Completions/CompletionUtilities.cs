@@ -51,24 +51,18 @@ namespace TailwindCSSIntellisense.Completions
             {
                 if ((await ShouldInitializeAsync()) == false)
                 {
-                    if (Initialized)
-                    {
-                        await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
-                        await VS.StatusBar.ShowProgressAsync("No TailwindCSS configuration file found: Intellisense disabled", 4, 4);
-                    }
                     Initialized = false;
                     return false;
                 }
 
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-                await VS.StatusBar.ShowProgressAsync("Searching for TailwindCSS configuration file", 1, 4);
 
-                await VS.StatusBar.ShowProgressAsync("Loading TailwindCSS classes", 2, 4);
+                await VS.StatusBar.ShowProgressAsync("Loading TailwindCSS classes", 1, 3);
                 await LoadClassesAsync();
-                await VS.StatusBar.ShowProgressAsync("Loading TailwindCSS configuration", 3, 4);
+                await VS.StatusBar.ShowProgressAsync("Loading TailwindCSS configuration", 2, 3);
 
                 await Configuration.InitializeAsync(this);
-                await VS.StatusBar.ShowProgressAsync("TailwindCSS Intellisense initialized", 4, 4);
+                await VS.StatusBar.ShowProgressAsync("TailwindCSS Intellisense initialized", 3, 3);
 
                 Initialized = true;
                 return true;
