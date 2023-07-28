@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.3 (Unreleased)
+
+### Fixes
+
+- Minor bug fix: wrong method being unsubscribed in `TailwindBuildProcess` ([#3](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/pull/3))
+- Fixed an issue where the status bar loading animation would continue to play
+
 ## 1.1.2 (July 26th, 2023)
 
 ### Fixes
