@@ -39,6 +39,8 @@ namespace TailwindCSSIntellisense.Completions
         internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; }
         internal Dictionary<string, List<string>> CustomSpacings { get; set; }
 
+        internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; }
+
         /// <summary>
         /// Initializes the necessary utilities to provide completion
         /// </summary>
@@ -119,6 +121,10 @@ namespace TailwindCSSIntellisense.Completions
             using (var fs = File.Open(Path.Combine(baseFolder, "tailwindopacity.json"), FileMode.Open, FileAccess.Read))
             {
                 Opacity = await JsonSerializer.DeserializeAsync<List<int>>(fs);
+            }
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindconfig.json"), FileMode.Open, FileAccess.Read))
+            {
+                ConfigurationValueToClassStems = await JsonSerializer.DeserializeAsync<Dictionary<string, List<string>>>(fs);
             }
 
             Classes = new List<TailwindClass>();

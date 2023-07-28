@@ -296,6 +296,9 @@ namespace TailwindCSSIntellisense.Configuration
                 }
 
                 _completionBase.Classes.AddRange(classesToAdd);
+
+                // fix weird order if both theme and theme.extend are specify
+                _completionBase.Classes.Sort((x, y) => x.Name.CompareTo(y.Name));
             }
         }
 
