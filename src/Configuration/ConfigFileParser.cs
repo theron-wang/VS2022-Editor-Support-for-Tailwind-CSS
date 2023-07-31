@@ -48,7 +48,7 @@ namespace TailwindCSSIntellisense.Configuration
             {
                 var line = l.Trim();
                 var alreadyProcessed = false;
-                if (line.Contains("/*") && isInComment == false)
+                if (l.Contains("/*") && isInComment == false)
                 {
                     line = line.Split(new string[] { "/*" }, StringSplitOptions.None)[0];
 
@@ -60,7 +60,7 @@ namespace TailwindCSSIntellisense.Configuration
                     alreadyProcessed = true;
                     isInComment = true;
                 }
-                if (line.Contains("//") && isInComment == false)
+                if (l.Contains("//") && isInComment == false)
                 {
                     line = line.Split(new string[] { "//" }, StringSplitOptions.None)[0];
 
@@ -70,9 +70,9 @@ namespace TailwindCSSIntellisense.Configuration
                     }
                     alreadyProcessed = true;
                 }
-                if (line.Contains("*/") && isInComment) 
+                if (l.Contains("*/") && isInComment) 
                 {
-                    line = line.Split(new string[] { "*/" }, StringSplitOptions.None).Last();
+                    line = l.Split(new string[] { "*/" }, StringSplitOptions.None).Last();
 
                     if (string.IsNullOrWhiteSpace(line) == false)
                     {
@@ -147,11 +147,12 @@ namespace TailwindCSSIntellisense.Configuration
              */
 
             var nearestColon = scope.IndexOf(':');
+            var nearestArrow = scope.IndexOf("=>");
             var nearestTheme = scope.IndexOf("theme");
             var nearestThemeCall = scope.IndexOf("theme(");
             var needToTrimEndingParenthesis = false;
             // If we are looking at the theme base block then this will be true and we don't want that
-            if (nearestTheme != -1 && nearestColon > nearestTheme && nearestThemeCall != nearestTheme)
+            if (nearestArrow != -1 && nearestTheme != -1 && nearestColon < nearestTheme && nearestTheme < nearestArrow)
             {
                 var nextOpenBracket = scope.IndexOf('{', nearestTheme);
                 scope = scope.Substring(nextOpenBracket);

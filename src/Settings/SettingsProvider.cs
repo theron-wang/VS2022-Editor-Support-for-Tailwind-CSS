@@ -272,21 +272,27 @@ namespace TailwindCSSIntellisense.Settings
         private void InvalidateCacheAndSettingsChanged(string file)
         {
             _cacheValid = false;
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            if (OnSettingsChanged != null)
             {
-                var settings = await GetSettingsAsync();
-                await OnSettingsChanged(settings);
-            });
+                ThreadHelper.JoinableTaskFactory.Run(async () =>
+                {
+                    var settings = await GetSettingsAsync();
+                    await OnSettingsChanged(settings);
+                });
+            }
         }
 
         private void InvalidateCacheAndSettingsChanged(Project project)
         {
             _cacheValid = false;
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            if (OnSettingsChanged != null)
             {
-                var settings = await GetSettingsAsync();
-                await OnSettingsChanged(settings);
-            });
+                ThreadHelper.JoinableTaskFactory.Run(async () =>
+                {
+                    var settings = await GetSettingsAsync();
+                    await OnSettingsChanged(settings);
+                });
+            }
         }
     }
 }

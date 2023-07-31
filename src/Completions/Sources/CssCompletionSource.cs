@@ -190,7 +190,15 @@ namespace TailwindCSSIntellisense.Completions.Sources
         private ITrackingSpan GetApplicableTo(SnapshotPoint triggerPoint, ITextSnapshot snapshot)
         {
             SnapshotPoint end = triggerPoint;
-            SnapshotPoint start = triggerPoint - 1;
+            SnapshotPoint start;
+            if (end.Position == 0)
+            {
+                start = end;
+            }
+            else
+            {
+                start = triggerPoint - 1;
+            }
 
             while (start.Position > 0 && start.GetChar() != '"' && !char.IsWhiteSpace(start.GetChar()))
             {

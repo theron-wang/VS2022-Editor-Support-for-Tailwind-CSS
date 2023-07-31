@@ -94,7 +94,7 @@ namespace TailwindCSSIntellisense.Build
         /// </summary>
         private bool IsProcessActive(Process process)
         {
-            if (_settings.BuildType == BuildProcessOptions.None)
+            if (_settings?.BuildType == BuildProcessOptions.None)
             {
                 return false;
             }
