@@ -138,9 +138,13 @@ namespace TailwindCSSIntellisense.Configuration
         /// <param name="config">The configuration object</param>
         private void LoadIndividualConfigurationOverride(TailwindConfiguration config)
         {
+            if (config is null)
+            {
+                return;
+            }
             _overrideLoaded = false;
 
-            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
+            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
             _shouldRegenerate = ShouldRegenerate(config);
 
             if (_shouldRegenerate)
@@ -239,7 +243,12 @@ namespace TailwindCSSIntellisense.Configuration
         /// <param name="config">The configuration object</param>
         private void LoadIndividualConfigurationExtend(TailwindConfiguration config)
         {
-            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
+            if (config is null)
+            {
+                return;
+            }
+
+            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
 
             if (_shouldRegenerate)
             {
@@ -323,11 +332,11 @@ namespace TailwindCSSIntellisense.Configuration
 
         private bool ShouldRegenerate(TailwindConfiguration config)
         {
-            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues.ContainsKey(k));
-            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.OverridenValues.ContainsKey(k));
+            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
+            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.OverridenValues?.ContainsKey(k) == true);
 
-            var applicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues.ContainsKey(k));
-            var oldApplicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.ExtendedValues.ContainsKey(k));
+            var applicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
+            var oldApplicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.ExtendedValues?.ContainsKey(k) == true);
 
             return ShouldRegenerate(applicable, oldApplicable, config, true) && ShouldRegenerate(applicableToExtend, oldApplicableToExtend, config, false);
         }

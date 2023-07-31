@@ -53,9 +53,6 @@ namespace TailwindCSSIntellisense.Completions
 
             try
             {
-                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-                await VS.StatusBar.ShowProgressAsync("Searching for TailwindCSS configuration file", 1, 4);
-
                 if ((await ShouldInitializeAsync()) == false)
                 {
                     Initialized = false;

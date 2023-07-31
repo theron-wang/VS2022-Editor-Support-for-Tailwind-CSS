@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.4.1 (July 31st, 2023)
+
+### Fixes
+
+- Fixed a bug where completions would not show up
+
 ## 1.1.4 (July 31st, 2023)
 
 ### Additions
