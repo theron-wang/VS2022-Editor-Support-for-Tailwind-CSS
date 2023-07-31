@@ -34,7 +34,7 @@ namespace TailwindCSSIntellisense.Options
         public string TailwindOutputFileName { get; set; } = "{0}.output.css";
         [Category("Build")]
         [DisplayName("Build type")]
-        [Description("Files can be built in three ways: Default (Tailwind JIT), OnSave (manually on file save, more reliable but may come with a performance cost), and None (no building)")]
+        [Description("Files can be built in three ways: Default (Tailwind JIT), OnSave (on file save), and None (no building)")]
         [TypeConverter(typeof(EnumConverter))]
         [DefaultValue(BuildProcessOptions.Default)]
         public BuildProcessOptions BuildProcessType { get; set; } = BuildProcessOptions.Default;
@@ -44,7 +44,7 @@ namespace TailwindCSSIntellisense.Options
         public string BuildScript { get; set; }
         [Category("Custom Build")]
         [DisplayName("Override build")]
-        [Description("Only runs the script defined in \"Build script\" when set to true; both run simultaneously when set to false; only the default tailwind build will run if the package.json script is not found")]
+        [Description("Only runs the script defined in \"Build script\" when set to true; both run simultaneously when set to false; only the default Tailwind build will run if the package.json script is not found")]
         [DefaultValue(false)]
         public bool OverrideBuild { get; set; } = false;
     }

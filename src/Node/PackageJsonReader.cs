@@ -14,35 +14,42 @@ namespace TailwindCSSIntellisense.Node
         [Import]
         internal ConfigFileScanner ConfigFileScanner { get; set; }
 
-        internal async Task<(string script, string fileName)> GetScriptAsync(string scriptName)
+        internal async Task<(bool exists, string fileName)> ScriptExistsAsync(string scriptName)
         {
             if (scriptName == null)
             {
-                return (script: null, fileName: null);
+                return (exists: false, fileName: null);
             }
 
             var configFileName = await ConfigFileScanner.FindConfigurationFilePathAsync();
 
             if (configFileName == null)
             {
-                return (script: null, fileName: null);
+                return (exists: false, fileName: null);
             }
 
             var packageJsonFileName = Path.Combine(Path.GetDirectoryName(configFileName), "package.json");
 
             if (packageJsonFileName == null || File.Exists(packageJsonFileName) == false)
             {
-                return (script: null, fileName: null);
+                return (exists: false, fileName: null);
             }
 
-            JsonObject file;
-            
-            using (var fs = File.Open(packageJsonFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            try
             {
-                file = await JsonSerializer.DeserializeAsync<JsonObject>(fs);
-            }
+                JsonObject file;
 
-            return (script: file["scripts"]?[scriptName]?.ToString(), fileName: packageJsonFileName);
+                using (var fs = File.Open(packageJsonFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    file = await JsonSerializer.DeserializeAsync<JsonObject>(fs);
+                }
+
+                return (exists: file["scripts"]?[scriptName] != null, fileName: packageJsonFileName);
+            }
+            catch
+            {
+                return (exists: false, fileName: packageJsonFileName);
+            }
         }
     }
 }

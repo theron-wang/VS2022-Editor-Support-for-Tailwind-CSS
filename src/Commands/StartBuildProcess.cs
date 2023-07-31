@@ -26,7 +26,7 @@ namespace TailwindCSSIntellisense
         protected override void BeforeQueryStatus(EventArgs e)
         {
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync); 
-            Command.Visible = BuildProcess.AreProcessesActive() && ConfigFileScanner.HasConfigurationFile && settings.BuildType != BuildProcessOptions.None;
+            Command.Visible = BuildProcess.AreProcessesActive() == false && ConfigFileScanner.HasConfigurationFile && settings.BuildType != BuildProcessOptions.None;
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
