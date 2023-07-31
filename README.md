@@ -31,13 +31,13 @@ Tailwind CSS classes show up in the IntelliSense completion menus in Razor, HTML
 
 ![Intellisense Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-1.gif)
 
-Customization support for `theme.colors`, `theme.screens`, and `theme.spacing` as well as their `theme.extension` counterparts:
+Customization support for most `theme` and `theme.extension` values:
 
 ![Custom Configuration File](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-2-Configuration.png)
 
 ![Intellisense Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-3.png)
 
-Other attributes, such as `borderRadius` and `fontFamily`, are not yet supported.
+See [this list](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/ConfigSupported.md) to see what is and is not currently supported.
 
 ### Build Integration
 
@@ -45,23 +45,27 @@ In a project, simply run the project to build Tailwind CSS or access it via the 
 
 ![Build Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-1.png)
 
-Or in an open folder, go directly to the Build menu to start the build process:
-
-![Open Folder Build Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-3.png)
-
 After the process has started, the process will continue to build and output data to the Build window pane:
 
 ![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-2.png)
 
-### NPM Shortcuts
+### NPM Integration
 
 When getting started in a new project, you can import the necessary modules by right-clicking on the project node:
 
-![Screenshot](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-Shortcuts-1.png)
+![NPM Shortcut 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-Shortcuts-1.png)
+
+Custom package.json scripts are also supported on build:
+
+![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
+
+You can customize the behavior in Tools > Options > TailwindCSS IntelliSense > Custom Build.
 
 ### Customizability
 
 #### Build
+
+When using the default Tailwind build process, you can set the following:
 
 If you want to explicitly state the configuration file, you can right click any JavaScript file as follows:
 
@@ -77,17 +81,7 @@ Please note that if you click any of these buttons, a tailwind.extension.json fi
 
 #### Extension Options
 
-By going into Tools > Options > TailwindCSS Intellisense, you can alter the global behavior for the extension:
-
-![Options](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Options-Demo.png)
-
-From here, you can choose to do the following:
-
-* Change how Tailwind files are built
-* Alter the default build output file name
-* Disable/enable automatic Tailwind module updates
-* Disable/enable extension features globally
-* Change the order in which completions are appended
+Extension settings are located in Tools > Options > TailwindCSS Intellisense.
 
 ## Troubleshooting
 
