@@ -82,9 +82,9 @@ namespace TailwindCSSIntellisense.Configuration
                     alreadyProcessed = true;
                     isInComment = false;
                 }
-
                 if (alreadyProcessed == false && isInComment == false)
                 {
+
                     stringBuilder.AppendLine(line);
                 }
             }
@@ -124,7 +124,39 @@ namespace TailwindCSSIntellisense.Configuration
                 return null;
             }
 
+
+            /*
+             * backgroundSize: ({ theme }) => ({
+                auto: 'auto',
+                cover: 'cover',
+                contain: 'contain',
+                ...theme('spacing')
+            })
+             */
+
             scope = scope.Substring(cutoff);
+
+            /*({ theme }) => ({
+                auto: 'auto',
+                cover: 'cover',
+                contain: 'contain',
+                ...theme('spacing')
+            }),
+            borderRadius: {
+            }
+             */
+
+            var nearestColon = scope.IndexOf(':');
+            var nearestTheme = scope.IndexOf("theme");
+            var nearestThemeCall = scope.IndexOf("theme(");
+            var needToTrimEndingParenthesis = false;
+            // If we are looking at the theme base block then this will be true and we don't want that
+            if (nearestTheme != -1 && nearestColon > nearestTheme && nearestThemeCall != nearestTheme)
+            {
+                var nextOpenBracket = scope.IndexOf('{', nearestTheme);
+                scope = scope.Substring(nextOpenBracket);
+                needToTrimEndingParenthesis = true;
+            }
 
             var index = scope.IndexOf('{') + 1;
             var nearestComma = scope.IndexOf(',');
@@ -154,6 +186,18 @@ namespace TailwindCSSIntellisense.Configuration
                 isBlock = false;
                 var colon = scope.IndexOf(':') + 1;
                 return scope.Substring(colon, nearestTerminator - colon).TrimEnd('}').Trim();
+            }
+
+            /*{
+                auto: 'auto',
+                cover: 'cover',
+                contain: 'contain',
+                ...theme('spacing')
+            })
+             */
+            if (needToTrimEndingParenthesis)
+            {
+                scope = scope.Trim().TrimEnd(')');
             }
 
             var blocksIn = 1;

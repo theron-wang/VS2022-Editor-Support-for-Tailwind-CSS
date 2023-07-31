@@ -20,8 +20,8 @@ namespace TailwindCSSIntellisense.Settings
         public SettingsProvider()
         {
             General.Saved += GeneralSettingsChanged;
-            VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCache;
-            VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCache;
+            VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCacheAndSettingsChanged;
+            VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
         }
 
         [Import]
@@ -61,7 +61,9 @@ namespace TailwindCSSIntellisense.Settings
                     {
                         EnableTailwindCss = general.UseTailwindCss,
                         DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
-                        BuildType = general.BuildProcessType
+                        BuildType = general.BuildProcessType,
+                        BuildScript = general.BuildScript,
+                        OverrideBuild = general.OverrideBuild
                     };
                 }
 
@@ -93,7 +95,7 @@ namespace TailwindCSSIntellisense.Settings
                     {
                         // Json file is malformed/empty
 
-                        await VS.StatusBar.ShowMessageAsync("TailwindCSS extension configuration file failed to load properly (check 'Extensions' output window for more details)");
+                        await VS.StatusBar.ShowMessageAsync("Tailwind CSS extension configuration file failed to load properly (check 'Extensions' output window for more details)");
                         await ex.LogAsync();
                     }
                 }
@@ -103,6 +105,8 @@ namespace TailwindCSSIntellisense.Settings
                     EnableTailwindCss = general.UseTailwindCss,
                     DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
                     BuildType = general.BuildProcessType,
+                    BuildScript = general.BuildScript,
+                    OverrideBuild = general.OverrideBuild,
                     TailwindConfigurationFile = GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
                     TailwindCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
                     TailwindOutputCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim())
@@ -181,7 +185,8 @@ namespace TailwindCSSIntellisense.Settings
         public void Dispose()
         {
             General.Saved -= GeneralSettingsChanged;
-            VS.Events.SolutionEvents.OnAfterOpenFolder -= InvalidateCache;
+            VS.Events.SolutionEvents.OnAfterOpenFolder -= InvalidateCacheAndSettingsChanged;
+            VS.Events.SolutionEvents.OnAfterOpenProject -= InvalidateCacheAndSettingsChanged;
         }
 
         private async Task<string> GetActiveProjectDirectoryAsync()
@@ -212,11 +217,15 @@ namespace TailwindCSSIntellisense.Settings
 
             if (settings.UseTailwindCss != origSettings.EnableTailwindCss ||
                 settings.TailwindOutputFileName != origSettings.DefaultOutputCssName ||
-                settings.BuildProcessType != origSettings.BuildType)
+                settings.BuildProcessType != origSettings.BuildType ||
+                settings.BuildScript != origSettings.BuildScript ||
+                settings.OverrideBuild != origSettings.OverrideBuild)
             {
                 origSettings.EnableTailwindCss = settings.UseTailwindCss;
                 origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
                 origSettings.BuildType = settings.BuildProcessType;
+                origSettings.BuildScript = settings.BuildScript;
+                origSettings.OverrideBuild = settings.OverrideBuild;
 
                 ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
             }
@@ -260,14 +269,24 @@ namespace TailwindCSSIntellisense.Settings
             return Uri.UnescapeDataString(absUri.AbsolutePath.Replace('/', Path.DirectorySeparatorChar));
         }
 
-        private void InvalidateCache(string file)
+        private void InvalidateCacheAndSettingsChanged(string file)
         {
             _cacheValid = false;
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                var settings = await GetSettingsAsync();
+                await OnSettingsChanged(settings);
+            });
         }
 
-        private void InvalidateCache(Project project)
+        private void InvalidateCacheAndSettingsChanged(Project project)
         {
             _cacheValid = false;
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                var settings = await GetSettingsAsync();
+                await OnSettingsChanged(settings);
+            });
         }
     }
 }

@@ -88,19 +88,7 @@ namespace TailwindCSSIntellisense.Configuration
                 return _configFilePath;
             }
 
-            // Last case scenario: return first javascript file with "tailwind" in its name, or else, null
-
-            _configFilePath = jsFiles.FirstOrDefault(f => Path.GetFileNameWithoutExtension(f).ToLower().Contains("tailwind"));
-
-            if (_configFilePath != null)
-            {
-                HasConfigurationFile = true;
-                return _configFilePath;
-            }
-            else
-            {
-                return null;
-            }
+            return null;
         }
 
         private async Task<bool> DoesFileContainAsync(string filePath, string text)

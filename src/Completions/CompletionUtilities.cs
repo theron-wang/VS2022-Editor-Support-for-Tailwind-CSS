@@ -40,8 +40,6 @@ namespace TailwindCSSIntellisense.Completions
         internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; }
         internal Dictionary<string, List<string>> CustomSpacings { get; set; }
 
-        internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; }
-
         /// <summary>
         /// Initializes the necessary utilities to provide completion
         /// </summary>

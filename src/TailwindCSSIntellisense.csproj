@@ -73,6 +73,7 @@
     <Compile Include="Completions\TailwindCssCompletionSet.cs" />
     <Compile Include="Configuration\ConfigFileParser.cs" />
     <Compile Include="Configuration\ConfigurationClassGenerator.cs" />
+    <Compile Include="Node\PackageJsonReader.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
     <Compile Include="source.extension.cs">
