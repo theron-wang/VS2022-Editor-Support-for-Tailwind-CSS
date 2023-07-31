@@ -10,5 +10,7 @@ namespace TailwindCSSIntellisense.Settings
         public string TailwindOutputCssFile { get; set; }
         public bool EnableTailwindCss { get; set; }
         public BuildProcessOptions BuildType { get; set; }
+        public string BuildScript { get; set; }
+        public bool OverrideBuild { get; set; }
     }
 }

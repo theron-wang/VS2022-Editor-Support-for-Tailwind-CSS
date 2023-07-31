@@ -6,8 +6,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
@@ -24,16 +24,22 @@ namespace TailwindCSSIntellisense.Build
         internal ConfigFileScanner Scanner { get; set; }
         [Import]
         internal SettingsProvider SettingsProvider { get; set; }
+        [Import]
+        internal PackageJsonReader PackageJsonReader { get; set; }
 
         private string _cssFilePath;
         private string _cssOutputFilePath;
         private string _configPath;
 
+        private string _packageJsonPath;
+        private string _buildScript = null;
+
         private bool _initialized;
         private bool _subscribed;
         private Process _process;
+        private Process _otherProcess;
 
-        private BuildProcessOptions _buildType;
+        private TailwindSettings _settings;
 
         private Guid _buildWindowGuid;
 
@@ -77,21 +83,23 @@ namespace TailwindCSSIntellisense.Build
             SettingsProvider.OnSettingsChanged -= SettingsChangedAsync;
         }
 
+        internal bool AreProcessesActive()
+        {
+            return IsProcessActive(_process) || IsProcessActive(_otherProcess);
+        }
+
         /// <summary>
         /// A <see cref="bool"/> representing whether or not the build process is currently active
         /// </summary>
-        internal bool IsProcessActive
+        private bool IsProcessActive(Process process)
         {
-            get
+            if (_settings.BuildType == BuildProcessOptions.None)
             {
-                if (_buildType == BuildProcessOptions.None)
-                {
-                    return false;
-                }
-                else
-                {
-                    return _process != null && _process.HasExited == false;
-                }
+                return false;
+            }
+            else
+            {
+                return process != null && process.HasExited == false;
             }
         }
 
@@ -101,7 +109,7 @@ namespace TailwindCSSIntellisense.Build
         /// <param name="settings">The settings to pass on to <see cref="SetFilePathsAsync(TailwindSettings)"/></param>
         internal async Task SettingsChangedAsync(TailwindSettings settings)
         {
-            var processActive = IsProcessActive;
+            var processActive = AreProcessesActive();
             await SetFilePathsAsync(settings);
 
             // Restart process since SetFilePathsAsync stops the process
@@ -114,11 +122,16 @@ namespace TailwindCSSIntellisense.Build
         /// <summary>
         /// Starts the build process
         /// </summary>
-        internal void OnFileSave(string filePath = null)
+        internal void OnFileSave(string filePath)
         {
+            if (filePath.Equals(_packageJsonPath, StringComparison.InvariantCultureIgnoreCase))
+            {
+                _buildScript = null;
+            }
+
             var extension = Path.GetExtension(filePath);
-            if (IsProcessActive &&
-                _buildType == BuildProcessOptions.OnSave &&
+            if ((AreProcessesActive()) &&
+                _settings.BuildType == BuildProcessOptions.OnSave &&
                 (extension == ".css" ||
                 extension == ".html" ||
                 extension == ".cshtml" ||
@@ -134,44 +147,24 @@ namespace TailwindCSSIntellisense.Build
         /// </summary>
         internal void StartProcess(Project project = null)
         {
-            if (Scanner.HasConfigurationFile == false || _cssFilePath == null || _buildType == BuildProcessOptions.None)
+            if (Scanner.HasConfigurationFile == false || _cssFilePath == null || _settings.BuildType == BuildProcessOptions.None)
             {
                 return;
             }
 
-            if (_buildType == BuildProcessOptions.OnSave)
+            if (_buildScript == null)
             {
-                var dir = Path.GetDirectoryName(_configPath);
-                var cssFile = GetRelativePath(_cssFilePath, dir);
-                var outputFile = GetRelativePath(_cssOutputFilePath, dir);
-                if (IsProcessActive == false)
-                {
-                    var processInfo = new ProcessStartInfo()
-                    {
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardInput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true,
-                        FileName = "cmd",
-                        WorkingDirectory = dir
-                    };
-                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
+                (var script, var fileName) = ThreadHelper.JoinableTaskFactory.Run(() => PackageJsonReader.GetScriptAsync(_settings.BuildScript));
 
-                    _process = Process.Start(processInfo);
-                    _process.BeginOutputReadLine();
-                    _process.BeginErrorReadLine();
-
-                    _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
-                    _process.OutputDataReceived += OutputDataReceived;
-                    _process.ErrorDataReceived += OutputDataReceived;
-                }
-                else
-                {
-                    _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
-                }
+                _packageJsonPath = fileName;
+                // Set to empty so we don't keep checking the file
+                // When the file is saved, it is set back to null so we know to check it again
+                _buildScript = script ?? string.Empty;
             }
-            else if (_buildType == BuildProcessOptions.Default && IsProcessActive == false)
+
+            var needOtherProcess = _settings.OverrideBuild == false && string.IsNullOrWhiteSpace(_settings.BuildScript) == false;
+
+            if (_settings.BuildType == BuildProcessOptions.OnSave)
             {
                 var dir = Path.GetDirectoryName(_configPath);
                 var cssFile = GetRelativePath(_cssFilePath, dir);
@@ -188,14 +181,116 @@ namespace TailwindCSSIntellisense.Build
                     WorkingDirectory = dir
                 };
 
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
-                _process = Process.Start(processInfo);
-                _process.BeginOutputReadLine();
-                _process.BeginErrorReadLine();
-                _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" --watch & exit");
+                // Is the default process active?
+                #region Default process
+                if (IsProcessActive(_process))
+                {
+                    if (_settings.OverrideBuild == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                    {
+                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
+                    }
+                    else if (_settings.OverrideBuild)
+                    {
+                        _process.StandardInput.WriteLine($"npm run {_buildScript}");
+                    }
+                }
+                else
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
 
-                _process.OutputDataReceived += OutputDataReceived;
-                _process.ErrorDataReceived += OutputDataReceived;
+                    _process = Process.Start(processInfo);
+                    _process.BeginOutputReadLine();
+                    _process.BeginErrorReadLine();
+
+                    if (_settings.OverrideBuild == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                    {
+                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
+                    }
+                    else if (_settings.OverrideBuild)
+                    {
+                        _process.StandardInput.WriteLine($"npm run {_buildScript}");
+                    }
+
+                    _process.OutputDataReceived += OutputDataReceived;
+                    _process.ErrorDataReceived += OutputDataReceived;
+                }
+                #endregion
+                #region Secondary process
+                if (IsProcessActive(_otherProcess) && needOtherProcess)
+                {
+                    _otherProcess.StandardInput.WriteLine($"npm run {_buildScript}");
+                }
+                else
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
+
+                    _otherProcess = Process.Start(processInfo);
+                    _otherProcess.BeginOutputReadLine();
+                    _otherProcess.BeginErrorReadLine();
+
+                    _otherProcess.StandardInput.WriteLine($"npm run {_buildScript}");
+
+                    _otherProcess.OutputDataReceived += OutputDataReceived;
+                    _otherProcess.ErrorDataReceived += OutputDataReceived;
+                }
+                #endregion
+            }
+            else if (_settings.BuildType == BuildProcessOptions.Default)
+            {
+                var dir = Path.GetDirectoryName(_configPath);
+                var cssFile = GetRelativePath(_cssFilePath, dir);
+                var outputFile = GetRelativePath(_cssOutputFilePath, dir);
+
+                var processInfo = new ProcessStartInfo()
+                {
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardInput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    FileName = "cmd",
+                    WorkingDirectory = dir
+                };
+
+                #region Default process
+
+                if (IsProcessActive(_process) == false)
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
+                    _process = Process.Start(processInfo);
+                    _process.BeginOutputReadLine();
+                    _process.BeginErrorReadLine();
+
+                    if (_settings.OverrideBuild == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                    {
+                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" --watch & exit");
+                    }
+                    else if (_settings.OverrideBuild)
+                    {
+                        _process.StandardInput.WriteLine($"npm run {_buildScript}");
+                    }
+
+                    _process.OutputDataReceived += OutputDataReceived;
+                    _process.ErrorDataReceived += OutputDataReceived;
+                }
+
+                #endregion
+                #region Secondary process
+
+                if (IsProcessActive(_otherProcess) == false && needOtherProcess)
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
+                    _otherProcess = Process.Start(processInfo);
+                    _otherProcess.BeginOutputReadLine();
+                    _otherProcess.BeginErrorReadLine();
+
+                    _otherProcess.StandardInput.WriteLine($"npm run {_buildScript}");
+
+                    _otherProcess.OutputDataReceived += OutputDataReceived;
+                    _otherProcess.ErrorDataReceived += OutputDataReceived;
+                }
+
+                #endregion
             }
         }
 
@@ -204,11 +299,11 @@ namespace TailwindCSSIntellisense.Build
         /// </summary>
         internal void EndProcess()
         {
-            if (IsProcessActive)
+            if (IsProcessActive(_process))
             {
                 ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
 
-                if (_buildType == BuildProcessOptions.Default)
+                if (_settings.BuildType == BuildProcessOptions.Default)
                 {
                     // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
                     // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
@@ -217,12 +312,33 @@ namespace TailwindCSSIntellisense.Build
                     _process.Kill();
                     _process = null;
                 }
-                else if (_buildType == BuildProcessOptions.OnSave)
+                else if (_settings.BuildType == BuildProcessOptions.OnSave)
                 {
                     _process.StandardInput.WriteLine("exit");
                     _process.StandardInput.Close();
                     _process.Kill();
                     _process = null;
+                }
+            }
+            if (IsProcessActive(_otherProcess))
+            {
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
+
+                if (_settings.BuildType == BuildProcessOptions.Default)
+                {
+                    // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
+                    // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
+                    _otherProcess.StandardInput.WriteLine("\x3");
+                    _otherProcess.StandardInput.Close();
+                    _otherProcess.Kill();
+                    _otherProcess = null;
+                }
+                else if (_settings.BuildType == BuildProcessOptions.OnSave)
+                {
+                    _otherProcess.StandardInput.WriteLine("exit");
+                    _otherProcess.StandardInput.Close();
+                    _otherProcess.Kill();
+                    _otherProcess = null;
                 }
             }
         }
@@ -233,7 +349,7 @@ namespace TailwindCSSIntellisense.Build
         /// <param name="settings">The settings to consume</param>
         private async Task SetFilePathsAsync(TailwindSettings settings)
         {
-            _buildType = settings.BuildType;
+            _settings = settings;
 
             if (string.IsNullOrEmpty(settings.TailwindCssFile))
             {
@@ -279,19 +395,41 @@ namespace TailwindCSSIntellisense.Build
             {
                 return;
             }
-            if (e.Data.Contains("Error"))
+
+            if (string.IsNullOrEmpty(_buildScript))
             {
-                ThreadHelper.JoinableTaskFactory.Run(async () =>
+                if (e.Data.Contains("Error"))
                 {
-                    await LogErrorAsync("Tailwind CSS: " + e.Data);
-                });
+                    ThreadHelper.JoinableTaskFactory.Run(async () =>
+                    {
+                        await LogErrorAsync("Tailwind CSS: " + e.Data);
+                    });
+                }
+                else if (e.Data.Contains("Done in"))
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(async () =>
+                    {
+                        await LogSuccessAsync(e.Data.Replace("Done in", "").Trim().Trim('.'));
+                    });
+                }
             }
-            else if (e.Data.Contains("Done in"))
+            else
             {
-                ThreadHelper.JoinableTaskFactory.Run(async () =>
+                if (e.Data.ToLower().Contains("error"))
                 {
-                    await LogSuccessAsync(e.Data.Replace("Done in", "").Trim().Trim('.'));
-                });
+                    ThreadHelper.JoinableTaskFactory.Run(async () =>
+                    {
+                        await LogErrorAsync("Tailwind CSS: " + e.Data);
+                    });
+                }
+                else
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(async () =>
+                    {
+                        await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: {e.Data}");
+                        await WriteToBuildPaneAsync($"Tailwind CSS: {e.Data}");
+                    });
+                }
             }
         }
 

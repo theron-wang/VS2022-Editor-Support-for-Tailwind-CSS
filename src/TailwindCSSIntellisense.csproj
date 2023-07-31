@@ -62,7 +62,7 @@
     <Compile Include="Commands\SetAsInputFile.cs" />
     <Compile Include="Commands\SetAsConfigFile.cs" />
     <Compile Include="Completions\BulkInsertObservableCollection.cs" />
-    <Compile Include="Completions\CompletionConfiguration.cs" />
+    <Compile Include="Configuration\CompletionConfiguration.cs" />
     <Compile Include="Completions\Controllers\CssCompletionController.cs" />
     <Compile Include="Completions\Controllers\HtmlCompletionController.cs" />
     <Compile Include="Completions\Providers\RazorCompletionSourceProvider.cs" />
@@ -72,6 +72,8 @@
     <Compile Include="Completions\Sources\RazorCompletionSource.cs" />
     <Compile Include="Completions\TailwindCssCompletionSet.cs" />
     <Compile Include="Configuration\ConfigFileParser.cs" />
+    <Compile Include="Configuration\ConfigurationClassGenerator.cs" />
+    <Compile Include="Node\PackageJsonReader.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
     <Compile Include="source.extension.cs">
@@ -124,6 +126,9 @@
     </Content>
     <None Include=".editorconfig" />
     <Content Include="Resources\tailwindopacity.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\tailwindconfig.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <None Include="source.extension.vsixmanifest">

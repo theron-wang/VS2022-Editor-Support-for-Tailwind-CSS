@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.4 (Unreleased)
+
+### Additions
+
+- Support for most configuration specifications (see what is and is not supported in [here](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/ConfigSupported.md))
+- Added ability to override the default build process or supplement it with a package.json script ([#5](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/5))
+
+### Enhancements
+
+- Added arbitrary completions for all those that support it
+
+### Fixes
+
+- Tailwind completions would persist when switching to another project, even if it does not have Tailwind enabled
+
 ## 1.1.3 (July 28th, 2023)
 
 ### Fixes

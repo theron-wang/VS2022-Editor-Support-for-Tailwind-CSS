@@ -27,17 +27,26 @@ namespace TailwindCSSIntellisense.Options
         [Description("Set to true if the Tailwind CSS module should update on project load; false if not")]
         [DefaultValue(true)]
         public bool AutomaticallyUpdateLibrary { get; set; } = true;
-        [Category(category: "Build")]
+        [Category("Build")]
         [DisplayName("Default output file name")]
         [Description("Sets the default name of the built Tailwind CSS file; use {0} if you want to reference the content file name")]
         [DefaultValue("{0}.output.css")]
         public string TailwindOutputFileName { get; set; } = "{0}.output.css";
-        [Category(category: "Build")]
+        [Category("Build")]
         [DisplayName("Build type")]
         [Description("Files can be built in three ways: Default (Tailwind JIT), OnSave (manually on file save, more reliable but may come with a performance cost), and None (no building)")]
         [TypeConverter(typeof(EnumConverter))]
         [DefaultValue(BuildProcessOptions.Default)]
         public BuildProcessOptions BuildProcessType { get; set; } = BuildProcessOptions.Default;
+        [Category("Custom Build")]
+        [DisplayName("Build script")]
+        [Description("The name of the script to execute on build (defined in package.json); leave blank to use the default Tailwind CSS build")]
+        public string BuildScript { get; set; }
+        [Category("Custom Build")]
+        [DisplayName("Override build")]
+        [Description("Only runs the script defined in \"Build script\" when set to true; both run simultaneously when set to false; only the default tailwind build will run if the package.json script is not found")]
+        [DefaultValue(false)]
+        public bool OverrideBuild { get; set; } = false;
     }
 
     public enum BuildProcessOptions

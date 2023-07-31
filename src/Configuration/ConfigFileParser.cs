@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Configuration
@@ -39,6 +41,56 @@ namespace TailwindCSSIntellisense.Configuration
                 }
             }
 
+            var stringBuilder = new StringBuilder();
+            var isInComment = false;
+
+            foreach (var l in fileText.Split('\n'))
+            {
+                var line = l.Trim();
+                var alreadyProcessed = false;
+                if (line.Contains("/*") && isInComment == false)
+                {
+                    line = line.Split(new string[] { "/*" }, StringSplitOptions.None)[0];
+
+                    if (string.IsNullOrWhiteSpace(line) == false)
+                    {
+                        stringBuilder.AppendLine(line);
+                    }
+
+                    alreadyProcessed = true;
+                    isInComment = true;
+                }
+                if (line.Contains("//") && isInComment == false)
+                {
+                    line = line.Split(new string[] { "//" }, StringSplitOptions.None)[0];
+
+                    if (string.IsNullOrWhiteSpace(line) == false)
+                    {
+                        stringBuilder.AppendLine(line);
+                    }
+                    alreadyProcessed = true;
+                }
+                if (line.Contains("*/") && isInComment) 
+                {
+                    line = line.Split(new string[] { "*/" }, StringSplitOptions.None).Last();
+
+                    if (string.IsNullOrWhiteSpace(line) == false)
+                    {
+                        stringBuilder.AppendLine(line);
+                    }
+
+                    alreadyProcessed = true;
+                    isInComment = false;
+                }
+                if (alreadyProcessed == false && isInComment == false)
+                {
+
+                    stringBuilder.AppendLine(line);
+                }
+            }
+
+            fileText = stringBuilder.ToString();
+
             var mainBlock = GetBlockOrValue(fileText, "theme", out _);
 
             if (mainBlock is null)
@@ -72,7 +124,39 @@ namespace TailwindCSSIntellisense.Configuration
                 return null;
             }
 
+
+            /*
+             * backgroundSize: ({ theme }) => ({
+                auto: 'auto',
+                cover: 'cover',
+                contain: 'contain',
+                ...theme('spacing')
+            })
+             */
+
             scope = scope.Substring(cutoff);
+
+            /*({ theme }) => ({
+                auto: 'auto',
+                cover: 'cover',
+                contain: 'contain',
+                ...theme('spacing')
+            }),
+            borderRadius: {
+            }
+             */
+
+            var nearestColon = scope.IndexOf(':');
+            var nearestTheme = scope.IndexOf("theme");
+            var nearestThemeCall = scope.IndexOf("theme(");
+            var needToTrimEndingParenthesis = false;
+            // If we are looking at the theme base block then this will be true and we don't want that
+            if (nearestTheme != -1 && nearestColon > nearestTheme && nearestThemeCall != nearestTheme)
+            {
+                var nextOpenBracket = scope.IndexOf('{', nearestTheme);
+                scope = scope.Substring(nextOpenBracket);
+                needToTrimEndingParenthesis = true;
+            }
 
             var index = scope.IndexOf('{') + 1;
             var nearestComma = scope.IndexOf(',');
@@ -102,6 +186,18 @@ namespace TailwindCSSIntellisense.Configuration
                 isBlock = false;
                 var colon = scope.IndexOf(':') + 1;
                 return scope.Substring(colon, nearestTerminator - colon).TrimEnd('}').Trim();
+            }
+
+            /*{
+                auto: 'auto',
+                cover: 'cover',
+                contain: 'contain',
+                ...theme('spacing')
+            })
+             */
+            if (needToTrimEndingParenthesis)
+            {
+                scope = scope.Trim().TrimEnd(')');
             }
 
             var blocksIn = 1;
@@ -166,7 +262,7 @@ namespace TailwindCSSIntellisense.Configuration
 
         private bool IsCharAcceptedLetter(char character)
         {
-            return char.IsLetterOrDigit(character) || character == '\'' || character == '-' || character == '_';
+            return char.IsLetterOrDigit(character) || character == '\'' || character == '-' || character == '_' || character == '/';
         }
 
         private Dictionary<string, object> GetTotalValue(string scope)
