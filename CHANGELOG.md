@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.4.2 (July 31st, 2023)
+
+### Fixes
+
+- Fixed a bug where configuration values would not update
+- Fixed an error which would occur when backspacing in empty CSS files
+
 ## 1.1.4.1 (July 31st, 2023)
 
 ### Fixes
