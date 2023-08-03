@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.6 (August 3rd, 2023)
+
+### Additions
+
+- Support for Web Forms files (.aspx, .ascx, .master) ([#6](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/6))
+
+### Fixes
+
+- `package.json` script would sometimes not update correctly
+
 ## 1.1.5 (August 2nd, 2023)
 
 ### Enhancements

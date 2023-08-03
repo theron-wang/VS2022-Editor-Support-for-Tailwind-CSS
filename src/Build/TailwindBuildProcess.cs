@@ -361,6 +361,7 @@ namespace TailwindCSSIntellisense.Build
         private async Task SetFilePathsAsync(TailwindSettings settings)
         {
             _settings = settings;
+            _hasScript = null;
 
             if (string.IsNullOrEmpty(settings.TailwindCssFile))
             {

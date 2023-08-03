@@ -18,6 +18,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
     [Export(typeof(IVsTextViewCreationListener))]
     [ContentType("html")]
+    [ContentType("WebForms")]
     [TextViewRole(PredefinedTextViewRoles.Editable)]
     internal sealed class HtmlCompletionController : IVsTextViewCreationListener
     {
@@ -80,7 +81,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 {
                     case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
                     case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                        handled = StartSession();
+                        handled = StartSession(true);
                         Filter();
                         break;
                     case VSConstants.VSStd2KCmdID.RETURN:
@@ -263,7 +264,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         /// <summary>
         /// Display list of potential tokens
         /// </summary>
-        bool StartSession(bool shouldStartNew = false)
+        bool StartSession()
         {
             if (_currentSession != null)
                 return false;
@@ -278,7 +279,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 _currentSession = Broker.GetSessions(TextView)[0];
                 _currentSession.Dismissed += (sender, args) => _currentSession = null;
             }
-            else if (shouldStartNew)
+            else
             {
                 DismissOtherSessions();
                 _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
@@ -287,10 +288,6 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
                 // Sometimes, creating another session will have irrelevant completions, so we need to filter
                 Filter();
-            }
-            else
-            {
-                return false;
             }
 
             return true;

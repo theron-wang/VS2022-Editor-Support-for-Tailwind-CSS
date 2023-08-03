@@ -12,6 +12,7 @@ namespace TailwindCSSIntellisense.Completions.Providers
     /// </summary>
     [Export(typeof(ICompletionSourceProvider))]
     [ContentType("html")]
+    [ContentType("WebForms")]
     [Name("TailwindCSS HTML Token Completion")]
     internal class HtmlCompletionSourceProvider : ICompletionSourceProvider
     {
