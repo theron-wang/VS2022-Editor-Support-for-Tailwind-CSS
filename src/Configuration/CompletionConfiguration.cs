@@ -29,9 +29,9 @@ namespace TailwindCSSIntellisense.Configuration
 
         private List<string> ModifiersOrig { get; set; }
         private List<string> SpacingOrig { get; set; }
+        private List<string> ScreenOrig { get; set; }
         private List<TailwindClass> ClassesOrig { get; set; }
         private Dictionary<string, string> ColorToRgbMapperOrig { get; set; }
-        private List<string> Screen { get; set; } = new List<string>() { "sm", "md", "lg", "xl", "2xl" };
 
         /// <summary>
         /// Initializes the configuration file (tailwind.config.js) for completion
@@ -43,6 +43,7 @@ namespace TailwindCSSIntellisense.Configuration
             ModifiersOrig = _completionBase.Modifiers.ToList();
             SpacingOrig = _completionBase.Spacing.ToList();
             ClassesOrig = _completionBase.Classes.ToList();
+            ScreenOrig = _completionBase.Screen.ToList();
             ColorToRgbMapperOrig = _completionBase.ColorToRgbMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
 
             var config = await Parser.GetConfigurationAsync();

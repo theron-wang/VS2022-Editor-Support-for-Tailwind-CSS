@@ -263,7 +263,7 @@ namespace TailwindCSSIntellisense.Configuration
 
         private bool IsCharAcceptedLetter(char character)
         {
-            return char.IsLetterOrDigit(character) || character == '\'' || character == '-' || character == '_' || character == '/';
+            return char.IsLetterOrDigit(character) || character == '\'' || character == '"' || character == '-' || character == '_' || character == '/';
         }
 
         private Dictionary<string, object> GetTotalValue(string scope)
@@ -276,11 +276,11 @@ namespace TailwindCSSIntellisense.Configuration
 
                 if (isBlock)
                 {
-                    result[key.Trim('\'')] = GetTotalValue(value);
+                    result[key.Trim('\'', '"')] = GetTotalValue(value);
                 }
                 else if (string.IsNullOrWhiteSpace(value) == false)
                 {
-                    result[key.Trim('\'')] = value.Trim('\'');
+                    result[key.Trim('\'', '"')] = value.Trim('\'', '"');
                 }
             }
 

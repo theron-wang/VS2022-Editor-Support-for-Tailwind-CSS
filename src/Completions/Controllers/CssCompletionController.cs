@@ -120,10 +120,11 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     {
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             var character = GetTypeChar(pvaIn);
-                            if (character == ' ' || (isInApply && (CharsAfterSignificantPoint(classText) <= 1 || character == ':' || character == '/')))
+                            if (character == ' ' || (isInApply && (_currentSession == null || CharsAfterSignificantPoint(classText) <= 1 || character == ':' || character == '/')))
                             {
                                 _currentSession?.Dismiss();
                                 StartSession(true);
+                                Filter();
                             }
                             else if (_currentSession != null)
                             {
@@ -138,10 +139,11 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
                             // backspace is applied after this function is called, so this is actually
                             // equivalent to <= 1 (like above)
-                            if (isInApply && (CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/")))
+                            if (isInApply && (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/")))
                             {
                                 _currentSession?.Dismiss();
                                 StartSession(true);
+                                Filter();
                             }
                             else if (_currentSession != null)
                             {
@@ -256,6 +258,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
             else if (shouldStartNew)
             {
+                DismissOtherSessions();
                 _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
                 _currentSession.Dismissed += (sender, args) => _currentSession = null;
                 _currentSession.Start();

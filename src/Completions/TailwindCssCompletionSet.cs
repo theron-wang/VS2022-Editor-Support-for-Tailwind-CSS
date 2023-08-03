@@ -70,6 +70,7 @@ namespace TailwindCSSIntellisense.Completions
         /// <inheritdoc />
         public override IList<Completion> Completions => _filteredCompletions;
 
+        /// <inheritdoc />
         public override void Filter()
         {
             if (string.IsNullOrEmpty(FilterBufferText))
@@ -78,7 +79,13 @@ namespace TailwindCSSIntellisense.Completions
                 return;
             }
 
-            _filteredCompletions.Filter(c => c.DisplayText.Contains(FilterBufferText));
+            _filteredCompletions.Filter(c => c.DisplayText.Contains(FilterBufferText.Split(':').Last()));
+        }
+
+        /// <inheritdoc />
+        public override void SelectBestMatch()
+        {
+            SelectBestMatch(CompletionMatchType.MatchInsertionText, false);
         }
     }
 }

@@ -22,6 +22,7 @@ namespace TailwindCSSIntellisense.Configuration
         {
             _completionBase.Modifiers = ModifiersOrig.ToList();
             _completionBase.Spacing = SpacingOrig.ToList();
+            _completionBase.Screen = ScreenOrig.ToList();
             _completionBase.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
 
             if (config is null && _areValuesDefault == false)
@@ -94,9 +95,7 @@ namespace TailwindCSSIntellisense.Configuration
 
             if (config.OverridenValues.ContainsKey("screens") && GetDictionary(config.OverridenValues["screens"], out dict))
             {
-                _completionBase.Modifiers.RemoveAll(m => Screen.Contains(m));
-
-                _completionBase.Modifiers.AddRange(dict.Keys.ToList());
+                _completionBase.Screen = dict.Keys.ToList();
             }
             if (config.ExtendedValues.ContainsKey("screens") && GetDictionary(config.ExtendedValues["screens"], out dict))
             {
@@ -104,8 +103,7 @@ namespace TailwindCSSIntellisense.Configuration
                 if (config.OverridenValues.ContainsKey("screens") == false)
                 {
                     // Clear out any other values and put in the defaults
-                    _completionBase.Modifiers.Clear();
-                    _completionBase.Modifiers.AddRange(ModifiersOrig);
+                    _completionBase.Screen = ScreenOrig.ToList();
                 }
 
                 _completionBase.Modifiers.AddRange(dict.Keys.Where(k => _completionBase.Modifiers.Contains(k) == false));
@@ -113,17 +111,14 @@ namespace TailwindCSSIntellisense.Configuration
 
             if (config.OverridenValues.ContainsKey("spacing") && GetDictionary(config.OverridenValues["spacing"], out dict))
             {
-                _completionBase.Spacing.Clear();
-                _completionBase.Spacing.AddRange(dict.Keys);
+                _completionBase.Spacing = dict.Keys.ToList();
             }
             if (config.ExtendedValues.ContainsKey("spacing") && GetDictionary(config.ExtendedValues["spacing"], out dict))
             {
                 // In case user changes / removes overriden or extended values
                 if (config.OverridenValues.ContainsKey("spacing") == false)
                 {
-                    // Clear out any other values and put in the defaults
-                    _completionBase.Spacing.Clear();
-                    _completionBase.Spacing.AddRange(SpacingOrig);
+                    _completionBase.Spacing = SpacingOrig.ToList();
                 }
 
                 _completionBase.Spacing.AddRange(dict.Keys.Where(k => _completionBase.Spacing.Contains(k) == false));

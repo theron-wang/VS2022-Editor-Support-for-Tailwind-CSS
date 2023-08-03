@@ -31,6 +31,7 @@ namespace TailwindCSSIntellisense.Completions
         internal bool Initialized { get; private set; }
         internal List<TailwindClass> Classes { get; set; }
         internal List<string> Modifiers { get; set; }
+        internal List<string> Screen { get; set; } = new List<string>() { "sm", "md", "lg", "xl", "2xl" };
         internal List<string> Spacing { get; set; }
         internal List<int> Opacity { get; set; }
         internal Dictionary<string, string> ColorToRgbMapper { get; set; }

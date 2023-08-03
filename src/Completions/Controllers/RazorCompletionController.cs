@@ -115,10 +115,11 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     {
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             var character = GetTypeChar(pvaIn);
-                            if (CharsAfterSignificantPoint(classText) <= 1 || character == ' ' || character == ':' || character == '/')
+                            if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 1 || character == ' ' || character == ':' || character == '/')
                             {
                                 _currentSession?.Dismiss();
                                 StartSession();
+                                Filter();
                             }
                             else if (_currentSession != null)
                             {
@@ -132,10 +133,11 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
                             // backspace is applied after this function is called, so this is actually
                             // equivalent to <= 1 (like above)
-                            if (CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
+                            if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
                             {
                                 _currentSession?.Dismiss();
                                 StartSession();
+                                Filter();
                             }
                             else if (_currentSession != null)
                             {
@@ -188,6 +190,20 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         private bool RetriggerIntellisense(string classText)
         {
             return classText.EndsWith(":");
+        }
+
+        /// <summary>
+        /// Dismisses the other sessions so two completion windows do not show up at once
+        /// </summary>
+        private void DismissOtherSessions()
+        {
+            foreach (var session in Broker.GetSessions(TextView))
+            {
+                if (session != _currentSession)
+                {
+                    session.Dismiss();
+                }
+            }
         }
 
         /// <summary>
@@ -261,6 +277,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
             if (!completionActive || _currentSession is null)
             {
+                DismissOtherSessions();
                 _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
             }
             _currentSession.Dismissed += (sender, args) => _currentSession = null;

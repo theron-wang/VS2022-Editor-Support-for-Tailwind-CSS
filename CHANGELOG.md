@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.5 (August 2nd, 2023)
+
+### Enhancements
+
+- IntelliSense shows up if you backspace or type at the end of a class
+- Added colons to the end of each modifier for clarity
+- Removed modifiers showing up before each completion
+
+### Additions
+
+- Support for max-{breakpoint}:
+- Support for group and all group modifiers
+
 ## 1.1.4.2 (July 31st, 2023)
 
 ### Fixes

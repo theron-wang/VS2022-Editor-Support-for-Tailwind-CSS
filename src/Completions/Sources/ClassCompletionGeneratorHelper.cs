@@ -18,10 +18,9 @@ namespace TailwindCSSIntellisense.Completions.Sources
         /// <returns>A list of completions</returns>
         internal static List<Completion> GetCompletions(string classRaw, CompletionUtilities completionUtils)
         {
-            var currentClass = classRaw.Split(new string[] { "::" }, StringSplitOptions.None)[0];
-            var modifiers = currentClass.Split(':').ToList();
+            var modifiers = classRaw.Split(':').ToList();
 
-            currentClass = modifiers.Last();
+            var currentClass = modifiers.Last();
             modifiers.RemoveAt(modifiers.Count - 1);
 
             var completions = new List<Completion>();
@@ -32,12 +31,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 modifiersAsString += ":";
             }
             var segments = currentClass.Split('-');
-
-            // Prevent Intellisense from showing up for invalid statements like px-0:
-            if (modifiers.Count != 0 && modifiers.Any(m => ((m.StartsWith("[") && m.EndsWith("]")) || completionUtils.Modifiers.Contains(m)) == false))
-            {
-                return null;
-            }
 
             if (string.IsNullOrWhiteSpace(currentClass) == false)
             {
@@ -81,7 +74,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             if (useCustom)
                             {
                                 completions.Add(
-                                                new Completion(modifiersAsString + className,
+                                                new Completion(className,
                                                                     modifiersAsString + className,
                                                                     completionUtils.GetCustomColorDescription(twClass.Name, color) ?? className,
                                                                     completionUtils.GetCustomImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
@@ -90,7 +83,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             else
                             {
                                 completions.Add(
-                                                new Completion(modifiersAsString + className,
+                                                new Completion(className,
                                                                     modifiersAsString + className,
                                                                     completionUtils.GetColorDescription(color) ?? className,
                                                                     completionUtils.GetImageFromColor(color, color == "transparent" ? 0 : 100),
@@ -103,7 +96,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                     if (useCustom)
                                     {
                                         completions.Add(
-                                                new Completion(modifiersAsString + className + $"/{opacity}",
+                                                new Completion(className + $"/{opacity}",
                                                                     modifiersAsString + className + $"/{opacity}",
                                                                     completionUtils.GetCustomColorDescription(twClass.Name, color, opacity) ?? className,
                                                                     completionUtils.GetCustomImageFromColor(twClass.Name, color, opacity),
@@ -112,7 +105,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                     else
                                     {
                                         completions.Add(
-                                                new Completion(modifiersAsString + className + $"/{opacity}",
+                                                new Completion(className + $"/{opacity}",
                                                                     modifiersAsString + className + $"/{opacity}",
                                                                     completionUtils.GetColorDescription(color, opacity) ?? className,
                                                                     completionUtils.GetImageFromColor(color, opacity),
@@ -120,7 +113,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                     }
                                 }
                                 completions.Add(
-                                            new Completion(modifiersAsString + className + "/[...]",
+                                            new Completion(className + "/[...]",
                                                                 modifiersAsString + className + "/[]",
                                                                 className + "/[...]",
                                                                 completionUtils.TailwindLogo,
@@ -144,7 +137,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             var className = string.Format(twClass.Name, spacing);
 
                             completions.Add(
-                                new Completion(modifiersAsString + className,
+                                new Completion(className,
                                                     modifiersAsString + className,
                                                     className,
                                                     completionUtils.TailwindLogo,
@@ -154,7 +147,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     else if (twClass.SupportsBrackets)
                     {
                         completions.Add(
-                        new Completion(modifiersAsString + twClass.Name + "[...]",
+                        new Completion(twClass.Name + "[...]",
                                             modifiersAsString + twClass.Name + "[]",
                                             twClass.Name + "[...]",
                                             completionUtils.TailwindLogo,
@@ -163,7 +156,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     else
                     {
                         completions.Add(
-                        new Completion(modifiersAsString + twClass.Name,
+                        new Completion(twClass.Name,
                                             modifiersAsString + twClass.Name,
                                             twClass.Name,
                                             completionUtils.TailwindLogo,
@@ -172,19 +165,50 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 }
             }
 
+            var completionsToAddToEnd = new List<Completion>();
             foreach (var modifier in completionUtils.Modifiers)
             {
                 if (modifiers.Contains(modifier) == false)
                 {
                     completions.Add(
-                        new Completion(modifiersAsString + modifier,
+                        new Completion(modifier + ":",
                                             modifiersAsString + modifier + ":",
                                             modifier,
                                             completionUtils.TailwindLogo,
                                             null));
+
+                    completionsToAddToEnd.Add(
+                        new Completion("group-" + modifier + ":",
+                                            modifiersAsString + "group-" + modifier + ":",
+                                            modifier,
+                                            completionUtils.TailwindLogo,
+                                            null));
+
+                }
+            }
+            foreach (var screen in completionUtils.Screen)
+            {
+                if (modifiers.Contains(screen) == false)
+                {
+                    completions.Add(
+                        new Completion(screen + ":",
+                                            modifiersAsString + screen + ":",
+                                            screen,
+                                            completionUtils.TailwindLogo,
+                                            null));
+
+                    completionsToAddToEnd.Add(
+                        new Completion("max-" + screen + ":",
+                                            modifiersAsString + "max-" + screen + ":",
+                                            screen,
+                                            completionUtils.TailwindLogo,
+                                            null));
+
                 }
             }
 
+            // this is to keep a decent order within the completion list
+            completions.AddRange(completionsToAddToEnd);
             return completions;
         }
     }
