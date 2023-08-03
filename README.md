@@ -5,6 +5,8 @@
 
 Editor features such as IntelliSense, build integration, among others for Tailwind CSS to enhance the development experience in Visual Studio 2022.
 
+**NOTE**: this extension is designed to be used with Tailwind v3.0.0+; there may be unintended effects when using earlier versions.
+
 Download from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=TheronWang.TailwindCSSIntellisense).
 
 ## Changelog
