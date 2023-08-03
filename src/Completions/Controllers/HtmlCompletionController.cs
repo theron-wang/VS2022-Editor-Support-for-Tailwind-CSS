@@ -81,7 +81,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 {
                     case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
                     case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                        handled = StartSession(true);
+                        handled = StartSession();
                         Filter();
                         break;
                     case VSConstants.VSStd2KCmdID.RETURN:
@@ -104,7 +104,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
             if (retrigger)
             {
-                StartSession(true);
+                StartSession();
             }
 
             if (ErrorHandler.Succeeded(hresult))
@@ -118,7 +118,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 1 || character == ':' || character == '/')
                             {
                                 _currentSession?.Dismiss();
-                                StartSession(true);
+                                StartSession();
                                 Filter();
                             }
                             else if (_currentSession != null)
@@ -129,13 +129,13 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             break;
                         case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
                             _currentSession?.Dismiss();
-                            StartSession(true);
+                            StartSession();
                             break;
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
                             if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
                             {
                                 _currentSession?.Dismiss();
-                                StartSession(true);
+                                StartSession();
                                 Filter();
                             }
                             else if (_currentSession != null)
