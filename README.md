@@ -39,7 +39,7 @@ Customization support for most `theme` and `theme.extension` values:
 
 ![Intellisense Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-3.png)
 
-Code such as `({ theme }) => ({ ... })` and `...defaultTheme.fontFamily.sans` is not currently supported.
+Code such as `({ theme }) => ({ ... })` and `...defaultTheme.fontFamily.sans` are not currently supported.
 
 ### Build Integration
 
