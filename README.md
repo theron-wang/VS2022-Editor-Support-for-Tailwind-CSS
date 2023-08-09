@@ -33,7 +33,7 @@ Tailwind CSS classes show up in the IntelliSense completion menus in Razor, HTML
 
 ![Intellisense Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-1.gif)
 
-Customization support for most `theme` and `theme.extension` values:
+Customization support for `theme` and `theme.extension` values:
 
 ![Custom Configuration File](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-2-Configuration.png)
 
@@ -51,7 +51,7 @@ After the process has started, the process will continue to build and output dat
 
 ![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-2.png)
 
-Custom package.json scripts are supported on build:
+Custom `package.json` scripts are supported on build:
 
 ![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
 
@@ -77,7 +77,7 @@ Likewise, for the build file and the output file, you can also explicitly state 
 
 ![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-2.png)
 
-If you click on each file again, you will find a remove option to set it back to the default.
+If you right click on each file again, you will find a remove option to set it back to the default.
 
 Please note that the extension creates a `tailwind.extension.json` file in your project root.
 
