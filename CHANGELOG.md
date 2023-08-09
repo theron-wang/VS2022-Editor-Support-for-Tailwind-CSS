@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.7 (August 8th, 2023)
+
+### Additions
+
+- CSS descriptions for each class ([#7](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/7))
+- Added support for missing configuration values
+
+### Fixes
+
+- rgb() values now supported within `theme.colors` and `theme.extend.colors`
+- Spacing values (i.e. padding, margin) now ordered correctly
+
 ## 1.1.6 (August 3rd, 2023)
 
 ### Additions
@@ -40,7 +52,7 @@
 
 ### Additions
 
-- Support for most configuration specifications (see what is and is not supported in [here](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/ConfigSupported.md))
+- Support for most configuration specifications
 - Added ability to override the default build process or supplement it with a package.json script ([#5](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/5))
 
 ### Enhancements

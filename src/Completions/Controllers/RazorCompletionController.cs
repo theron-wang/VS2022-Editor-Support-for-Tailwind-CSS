@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Editor;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
+using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
@@ -248,12 +249,18 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
             else
             {
-                var moveOneBack = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText.EndsWith("]");
+                var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
+                var moveOneBack = completionText.EndsWith("]");
+                var moveTwoBack = completionText.EndsWith("]:");
                 _currentSession.Commit();
 
                 if (moveOneBack)
                 {
                     TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
+                }
+                else if (moveTwoBack)
+                {
+                    TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
                 }
 
                 return true;

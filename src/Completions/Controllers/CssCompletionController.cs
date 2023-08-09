@@ -227,11 +227,16 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
                 // ) is for theme()
                 var moveOneBack = completionText.EndsWith("]") || completionText.EndsWith(")");
+                var moveTwoBack = completionText.EndsWith("]:");
                 _currentSession.Commit();
 
                 if (moveOneBack)
                 {
                     TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
+                }
+                else if (moveTwoBack)
+                {
+                    TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
                 }
 
                 return true;

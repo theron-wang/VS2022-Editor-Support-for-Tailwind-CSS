@@ -149,7 +149,6 @@ namespace TailwindCSSIntellisense.Configuration
             var nearestColon = scope.IndexOf(':');
             var nearestArrow = scope.IndexOf("=>");
             var nearestTheme = scope.IndexOf("theme");
-            var nearestThemeCall = scope.IndexOf("theme(");
             var needToTrimEndingParenthesis = false;
             // If we are looking at the theme base block then this will be true and we don't want that
             if (nearestArrow != -1 && nearestTheme != -1 && nearestColon < nearestTheme && nearestTheme < nearestArrow)
@@ -160,23 +159,21 @@ namespace TailwindCSSIntellisense.Configuration
             }
 
             var index = scope.IndexOf('{') + 1;
-            var nearestComma = scope.IndexOf(',');
-            var nearestCloseBracket = scope.IndexOf('}');
-            int nearestTerminator;
 
-            if (nearestComma == -1 && nearestCloseBracket != -1)
+            int nearestTerminator = scope.IndexOfAny(new char[] { ',', '}' });
+
+            var nearestStartQuote = scope.IndexOfAny(new char[] { '\'', '"', '`' }, nearestColon);
+            if (nearestStartQuote < nearestTerminator && nearestStartQuote != -1)
             {
-                nearestTerminator = nearestCloseBracket;
+                var nearestEndQuote = scope.IndexOfAny(new char[] { '\'', '"', '`' }, nearestStartQuote + 1);
+
+                if (nearestEndQuote != -1)
+                {
+                    nearestTerminator = scope.IndexOfAny(new char[] { ',', '}' }, nearestEndQuote);
+                }
             }
-            else if (nearestComma != -1 && nearestCloseBracket == -1)
-            {
-                nearestTerminator = nearestComma;
-            }
-            else if (nearestComma != -1 && nearestCloseBracket != -1)
-            {
-                nearestTerminator = Math.Min(nearestComma, nearestCloseBracket);
-            }
-            else
+
+            if (nearestTerminator == -1)
             {
                 nearestTerminator = scope.Length - 1;
             }
@@ -231,29 +228,61 @@ namespace TailwindCSSIntellisense.Configuration
             var blocksIn = 1;
 
             var keys = new List<string>();
+            char? punct = null;
 
             while (blocksIn != 0 && index < scope.Length)
             {
                 if (scope[index] == ':' && blocksIn == 1)
                 {
-                    char c = scope[index - 1];
                     string key = "";
-                    for (int i = index - 1; IsCharAcceptedLetter(c); i--)
+                    for (int i = index - 1; IsCharAcceptedLetter(scope[i]); i--)
                     {
-                        c = scope[i];
-                        key = c + key;
+                        key = scope[i] + key;
                     }
 
                     keys.Add(key.Trim());
                 }
 
-                if (scope[index] == '{')
+                if (scope[index] == '{' && punct == null)
                 {
                     blocksIn++;
                 }
-                else if (scope[index] == '}')
+                else if (scope[index] == '}' && punct == null)
                 {
                     blocksIn--;
+                }
+                else if (scope[index] == '\'')
+                {
+                    if (punct == null)
+                    {
+                        punct = '\'';
+                    }
+                    else if (punct == '\'')
+                    {
+                        punct = null;
+                    }
+                }
+                else if (scope[index] == '"')
+                {
+                    if (punct == null)
+                    {
+                        punct = '"';
+                    }
+                    else if (punct == '"')
+                    {
+                        punct = null;
+                    }
+                }
+                else if (scope[index] == '`')
+                {
+                    if (punct == null)
+                    {
+                        punct = '`';
+                    }
+                    else if (punct == '`')
+                    {
+                        punct = null;
+                    }
                 }
                 index++;
             }

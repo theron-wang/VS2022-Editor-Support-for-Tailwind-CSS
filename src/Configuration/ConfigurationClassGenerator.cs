@@ -1,27 +1,19 @@
-﻿using EnvDTE;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Configuration
 {
     public sealed partial class CompletionConfiguration
     {
-        private TailwindConfiguration _lastConfig;
-        private bool _overrideLoaded;
-        private bool _shouldRegenerate;
-
         /// <summary>
         /// Reconfigures colors, spacing, and screen
         /// </summary>
         private void LoadGlobalConfiguration(TailwindConfiguration config)
         {
-            _completionBase.Modifiers = ModifiersOrig.ToList();
-            _completionBase.Spacing = SpacingOrig.ToList();
+            _completionBase.SpacingMapper = SpacingMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
             _completionBase.Screen = ScreenOrig.ToList();
             _completionBase.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
 
@@ -50,7 +42,7 @@ namespace TailwindCSSIntellisense.Configuration
                     {
                         if (IsHex(s, out string hex))
                         {
-                            var color = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
+                            var color = ColorTranslator.FromHtml($"#{hex}");
                             _completionBase.ColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
                         }
                         else if (s.StartsWith("colors"))
@@ -99,29 +91,19 @@ namespace TailwindCSSIntellisense.Configuration
             }
             if (config.ExtendedValues.ContainsKey("screens") && GetDictionary(config.ExtendedValues["screens"], out dict))
             {
-                // In case user changes / removes overriden or extended values
-                if (config.OverridenValues.ContainsKey("screens") == false)
-                {
-                    // Clear out any other values and put in the defaults
-                    _completionBase.Screen = ScreenOrig.ToList();
-                }
-
-                _completionBase.Modifiers.AddRange(dict.Keys.Where(k => _completionBase.Modifiers.Contains(k) == false));
+                _completionBase.Screen.AddRange(dict.Keys.Where(k => _completionBase.Screen.Contains(k) == false));
             }
 
             if (config.OverridenValues.ContainsKey("spacing") && GetDictionary(config.OverridenValues["spacing"], out dict))
             {
-                _completionBase.Spacing = dict.Keys.ToList();
+                _completionBase.SpacingMapper = dict.ToDictionary(p => p.Key, p => p.Value.ToString());
             }
             if (config.ExtendedValues.ContainsKey("spacing") && GetDictionary(config.ExtendedValues["spacing"], out dict))
             {
-                // In case user changes / removes overriden or extended values
-                if (config.OverridenValues.ContainsKey("spacing") == false)
+                foreach (var pair in dict)
                 {
-                    _completionBase.Spacing = SpacingOrig.ToList();
+                    _completionBase.SpacingMapper[pair.Key] = pair.Value.ToString();
                 }
-
-                _completionBase.Spacing.AddRange(dict.Keys.Where(k => _completionBase.Spacing.Contains(k) == false));
             }
 
             _areValuesDefault = false;
@@ -137,96 +119,153 @@ namespace TailwindCSSIntellisense.Configuration
             {
                 return;
             }
-            _overrideLoaded = false;
 
             var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
-            _shouldRegenerate = ShouldRegenerate(config);
+            _completionBase.Classes = ClassesOrig.ToList();
+            _completionBase.Modifiers = ModifiersOrig.ToList();
+            var classesToRemove = new List<TailwindClass>();
+            var classesToAdd = new List<TailwindClass>();
 
-            if (_shouldRegenerate)
+            _completionBase.CustomSpacingMappers = new Dictionary<string, Dictionary<string, string>>();
+            _completionBase.CustomColorMappers = new Dictionary<string, Dictionary<string, string>>();
+
+            foreach (var key in applicable)
             {
-                _completionBase.Classes = ClassesOrig.ToList();
-                var classesToRemove = new List<TailwindClass>();
-                var classesToAdd = new List<TailwindClass>();
+                var stems = _completionBase.ConfigurationValueToClassStems[key];
 
-                _completionBase.CustomSpacings = new Dictionary<string, List<string>>();
-                _completionBase.CustomColorMappers = new Dictionary<string, Dictionary<string, string>>();
-
-                foreach (var key in applicable)
+                foreach (var stem in stems)
                 {
-                    var stems = _completionBase.ConfigurationValueToClassStems[key];
-
-                    foreach (var stem in stems)
+                    if (stem.Contains(':'))
                     {
-                        if (stem.Contains("{s}"))
+                        var s = stem.Trim(':');
+                        _completionBase.Modifiers.RemoveAll(c => c.StartsWith(s) && c.Replace($"{s}-", "").Count(ch => ch == '-') == 0 && c.Contains("[]") == false);
+
+                        if (GetDictionary(config.OverridenValues[key], out var dict))
                         {
-                            if (GetDictionary(config.OverridenValues[key], out var dict))
-                            {
-                                _completionBase.CustomSpacings[stem.Replace("{s}", "{0}")] = dict.Keys.ToList();
-                            }
-                            else
-                            {
-                                _completionBase.CustomSpacings[stem.Replace("{s}", "{0}")] = new List<string>();
-                            }
+                            _completionBase.Modifiers.AddRange(dict.Keys.Select(k => k == "DEFAULT" ? s : $"{s}-{k}"));
                         }
-                        else if (stem.Contains("{c}"))
+                    }
+                    else if (stem.Contains("{s}"))
+                    {
+                        if (GetDictionary(config.OverridenValues[key], out var dict))
                         {
-                            if (GetDictionary(config.OverridenValues[key], out var dict))
-                            {
-                                _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = GetColorMapper(dict);
-                            }
-                            else
-                            {
-                                _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = new Dictionary<string, string>();
-                            }
+                            _completionBase.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = dict.ToDictionary(p => p.Key == "DEFAULT" ? "" : p.Key, p => p.Value.ToString());
                         }
                         else
                         {
-                            var s = stem;
-                            if (stem.Contains("{*}"))
-                            {
-                                s = stem.Replace("-{*}", "");
+                            _completionBase.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = new Dictionary<string, string>();
+                        }
+                    }
+                    else if (stem.Contains("{c}"))
+                    {
+                        if (GetDictionary(config.OverridenValues[key], out var dict))
+                        {
+                            _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = GetColorMapper(dict);
+                        }
+                        else
+                        {
+                            _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = new Dictionary<string, string>();
+                        }
+                    }
+                    else if (stem.Contains('{') && stem.Contains("{*}") == false)
+                    {
+                        var s = stem.Replace($"-{stem.Split('-').Last()}", "");
+                        var values = stem.Split('-').Last().Trim('{', '}').Split('|').Select(v => $"{s}-{v}");
 
-                                classesToRemove.AddRange(_completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false));
+                        classesToRemove.AddRange(_completionBase.Classes.Where(c => values.Contains(c.Name) && c.SupportsBrackets == false));
+                    }
+                    else
+                    {
+                        IEnumerable<TailwindClass> descClasses;
+                        var s = stem;
+
+                        if (stem.Contains("{*}"))
+                        {
+                            s = stem.Replace("-{*}", "");
+
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false);
+                            classesToRemove.AddRange(descClasses);
+                        }
+                        else
+                        {
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false);
+                            classesToRemove.AddRange(descClasses);
+                        }
+
+                        if (GetDictionary(config.OverridenValues[key], out var dict))
+                        {
+                            // row-span and col-span are actually row and col internally
+                            if (s.EndsWith("-span"))
+                            {
+                                s = s.Replace("-span", "");
+                            }
+
+                            classesToAdd.AddRange(dict.Keys.Select(k =>
+                            {
+                                if (k == "DEFAULT")
+                                {
+                                    return new TailwindClass()
+                                    {
+                                        Name = s
+                                    };
+                                }
+                                else
+                                {
+                                    return new TailwindClass()
+                                    {
+                                        Name = $"{s}-{k}"
+                                    };
+                                }
+                            }));
+
+                            var texts = descClasses.Select(c =>
+                                _completionBase.DescriptionMapper[c.Name]);
+
+                            string format;
+
+                            if (texts.Count() <= 1)
+                            {
+                                var text = texts.First();
+                                var colon = text.IndexOf(':');
+                                var length = text.IndexOf(';') - colon - 1;
+                                format = text.Replace(text.Substring(colon + 2, length), "{0}");
                             }
                             else
                             {
-                                classesToRemove.AddRange(_completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false));
+                                var text = texts.First();
+                                if (text.Count(c => c == ':') == 1)
+                                {
+                                    var colon = text.IndexOf(':');
+                                    var length = text.IndexOf(';') - colon - 1;
+                                    format = text.Replace(text.Substring(colon + 2, length), "{0}");
+                                }
+                                else
+                                {
+                                    var prefix = FindCommonPrefix(texts);
+                                    var suffix = FindCommonSuffix(texts);
+                                    var replace = text.Substring(prefix.Length, text.IndexOf(suffix) - prefix.Length);
+                                    format = text.Replace(replace, "{0}");
+                                }
                             }
 
-                            if (GetDictionary(config.OverridenValues[key], out var dict))
+                            foreach (var pair in dict)
                             {
-                                // row-span and col-span are actually row and col internally
-                                if (s.EndsWith("-span"))
+                                if (pair.Key == "DEFAULT")
                                 {
-                                    s = s.Replace("-span", "");
+                                    _completionBase.CustomDescriptionMapper[s] = string.Format(format, pair.Value.ToString());
                                 }
-
-                                classesToAdd.AddRange(dict.Keys.Select(k =>
+                                else
                                 {
-                                    if (k == "DEFAULT")
-                                    {
-                                        return new TailwindClass()
-                                        {
-                                            Name = s
-                                        };
-                                    }
-                                    else
-                                    {
-                                        return new TailwindClass()
-                                        {
-                                            Name = $"{s}-{k}"
-                                        };
-                                    }
-                                }));
+                                    _completionBase.CustomDescriptionMapper[$"{s}-{pair.Key}"] = string.Format(format, pair.Value.ToString());
+                                }
                             }
                         }
                     }
                 }
-
-                _completionBase.Classes.RemoveAll(c => classesToRemove.Contains(c));
-                _completionBase.Classes.AddRange(classesToAdd);
-                _overrideLoaded = true;
             }
+
+            _completionBase.Classes.RemoveAll(c => classesToRemove.Contains(c));
+            _completionBase.Classes.AddRange(classesToAdd);
         }
 
         /// <summary>
@@ -245,164 +284,139 @@ namespace TailwindCSSIntellisense.Configuration
 
             var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
 
-            if (_shouldRegenerate)
+            var classesToAdd = new List<TailwindClass>();
+
+            foreach (var key in applicable)
             {
-                if (_overrideLoaded == false)
+                var stems = _completionBase.ConfigurationValueToClassStems[key];
+
+                foreach (var stem in stems)
                 {
-                    _completionBase.Classes = ClassesOrig.ToList();
-                    _completionBase.CustomSpacings = new Dictionary<string, List<string>>();
-                    _completionBase.CustomColorMappers = new Dictionary<string, Dictionary<string, string>>();
-                }
-
-                var classesToAdd = new List<TailwindClass>();
-
-                foreach (var key in applicable)
-                {
-                    var stems = _completionBase.ConfigurationValueToClassStems[key];
-
-                    foreach (var stem in stems)
+                    if (stem.Contains(':'))
                     {
-                        if (stem.Contains("{s}"))
+                        var s = stem.Trim(':');
+
+                        if (GetDictionary(config.ExtendedValues[key], out var dict))
                         {
-                            var newSpacing = _completionBase.Spacing.ToList();
-                            if (GetDictionary(config.ExtendedValues[key], out var dict))
+                            foreach (var k in dict.Keys)
                             {
-                                newSpacing.AddRange(dict.Keys);
-                                _completionBase.CustomSpacings[stem.Replace("{s}", "{0}")] = newSpacing.Distinct().ToList();
-                            }
-                            // no else because that would just be using the default spacing scheme
-                        }
-                        else if (stem.Contains("{c}"))
-                        {
-                            if (GetDictionary(config.ExtendedValues[key], out var dict))
-                            {
-                                var newMapper = _completionBase.ColorToRgbMapper.ToDictionary(p => p.Key, p => p.Value);
-                                foreach (var pair in GetColorMapper(dict))
+                                var insert = k == "DEFAULT" ? s : $"{s}-{k}";
+
+                                if (_completionBase.Modifiers.Contains(insert) == false)
                                 {
-                                    newMapper[pair.Key] = pair.Value;
+                                    _completionBase.Modifiers.Add(insert);
                                 }
-
-                                _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = newMapper;
-                            }
-                            // no else because that would just be using the default color scheme
-                        }
-                        else
-                        {
-                            var s = stem;
-                            if (stem.Contains("{*}"))
-                            {
-                                s = stem.Replace("-{*}", "");
-                            }
-
-                            var insertStem = s;
-                            // row-span and col-span are actually row and col internally
-                            if (s.EndsWith("-span"))
-                            {
-                                insertStem = s.Replace("-span", "");
-                            }
-                            if (GetDictionary(config.ExtendedValues[key], out var dict))
-                            {
-                                classesToAdd.AddRange(dict.Keys
-                                    .Where(k => _completionBase.Classes.Any(c => c.Name == $"{s}-{k}") == false)
-                                    .Select(k =>
-                                    {
-                                        return new TailwindClass()
-                                        {
-                                            Name = $"{insertStem}-{k}"
-                                        };
-                                    }));
-                            }
+                            };
                         }
                     }
-                }
-
-                _completionBase.Classes.AddRange(classesToAdd);
-
-                // fix order
-                _completionBase.Classes.Sort((x, y) => x.Name.CompareTo(y.Name));
-            }
-
-            _lastConfig = config;
-        }
-
-        private bool ShouldRegenerate(TailwindConfiguration config)
-        {
-            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
-            var oldApplicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.OverridenValues?.ContainsKey(k) == true);
-
-            var applicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
-            var oldApplicableToExtend = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => _lastConfig.ExtendedValues?.ContainsKey(k) == true);
-
-            return ShouldRegenerate(applicable, oldApplicable, config, true) && ShouldRegenerate(applicableToExtend, oldApplicableToExtend, config, false);
-        }
-
-        private bool ShouldRegenerate(IEnumerable<string> applicable, IEnumerable<string> oldApplicable, TailwindConfiguration config, bool isOverride)
-        {
-            var regenerate = false;
-
-            if (_lastConfig == null)
-            {
-                return true;
-            }
-
-            if (applicable.Count() != oldApplicable.Count() || applicable.Any(a => oldApplicable.Contains(a) == false))
-            {
-                regenerate = true;
-            }
-            // Same count, same keys, maybe content keys changed
-            else
-            {
-                var newValues = isOverride ? config.OverridenValues : config.ExtendedValues;
-                var oldValues = isOverride ? _lastConfig.OverridenValues : _lastConfig.ExtendedValues;
-
-                foreach (var key in applicable)
-                {
-                    // both are null / empty string
-                    if (newValues[key] == oldValues[key])
+                    else if (stem.Contains("{s}"))
                     {
-                        continue;
-                    }
-                    if (GetDictionary(newValues[key], out var dict1) && GetDictionary(oldValues[key], out var dict2))
-                    {
-                        if (dict1.Keys.Count == dict2.Keys.Count && dict1.Keys.All(k => dict2.ContainsKey(k)))
+                        if (GetDictionary(config.ExtendedValues[key], out var dict))
                         {
-                            foreach (var k in dict1.Keys)
+                            var newSpacing = _completionBase.SpacingMapper.ToDictionary(p => p.Key, p => p.Value);
+                            foreach (var pair in dict)
                             {
-                                var firstIsDict = GetDictionary(dict1[k], out var d1);
-                                var secondIsDict = GetDictionary(dict2[k], out var d2);
-                                if (firstIsDict && secondIsDict)
-                                {
-                                    if (d1.Keys.Count != d2.Keys.Count || d1.Keys.Any(ke => d2.ContainsKey(ke) == false))
-                                    {
-                                        regenerate = true;
-                                        break;
-                                    }
-                                }
-                                else if (firstIsDict != secondIsDict)
-                                {
-                                    regenerate = true;
-                                    break;
-                                }
+                                newSpacing[pair.Key == "DEFAULT" ? "" : pair.Key] = pair.Value.ToString();
                             }
-                            if (regenerate)
-                            {
-                                break;
-                            }
+                            _completionBase.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = newSpacing;
                         }
-                        else
+                    }
+                    else if (stem.Contains("{c}"))
+                    {
+                        if (GetDictionary(config.ExtendedValues[key], out var dict))
                         {
-                            regenerate = true;
-                            break;
+                            var newMapper = _completionBase.ColorToRgbMapper.ToDictionary(p => p.Key, p => p.Value);
+                            foreach (var pair in GetColorMapper(dict))
+                            {
+                                newMapper[pair.Key] = pair.Value;
+                            }
+
+                            _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = newMapper;
                         }
                     }
                     else
                     {
-                        regenerate = true;
-                        break;
+                        var s = stem;
+                        IEnumerable<TailwindClass> descClasses;
+                        if (stem.Contains("{*}"))
+                        {
+                            s = stem.Replace("-{*}", "");
+
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false);
+                        }
+                        else
+                        {
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false);
+                        }
+
+                        var insertStem = s;
+                        // row-span and col-span are actually row and col internally
+                        if (s.EndsWith("-span"))
+                        {
+                            insertStem = s.Replace("-span", "");
+                        }
+                        if (GetDictionary(config.ExtendedValues[key], out var dict))
+                        {
+                            classesToAdd.AddRange(dict.Keys
+                                .Where(k => _completionBase.Classes.Any(c => c.Name == $"{s}-{k}") == false)
+                                .Select(k =>
+                                {
+                                    return new TailwindClass()
+                                    {
+                                        Name = $"{insertStem}-{k}"
+                                    };
+                                }));
+
+                            var texts = descClasses.Select(c =>
+                                _completionBase.DescriptionMapper[c.Name]);
+
+                            string format;
+
+                            if (texts.Count() <= 1)
+                            {
+                                var text = texts.First();
+                                var colon = text.IndexOf(':');
+                                var length = text.IndexOf(';') - colon - 1;
+                                format = text.Replace(text.Substring(colon + 2, length), "{0}");
+                            }
+                            else
+                            {
+                                var text = texts.First();
+                                var colon = text.IndexOf(':');
+                                var length = text.IndexOf(';') - colon - 2;
+                                var replace = text.Substring(colon + 2, length);
+                                if (text.Count(c => c == ':') == CountSubstring(text, replace))
+                                {
+                                    format = text.Replace(replace, "{0}");
+                                }
+                                else
+                                {
+                                    var prefix = FindCommonPrefix(texts);
+                                    var suffix = FindCommonSuffix(texts);
+                                    replace = text.Substring(prefix.Length, text.IndexOf(suffix) - prefix.Length);
+                                    format = text.Replace(replace, "{0}");
+                                }
+                            }
+
+                            foreach (var pair in dict)
+                            {
+                                if (pair.Key == "DEFAULT")
+                                {
+                                    _completionBase.CustomDescriptionMapper[insertStem] = string.Format(format, pair.Value.ToString());
+                                }
+                                else
+                                {
+                                    _completionBase.CustomDescriptionMapper[$"{insertStem}-{pair.Key}"] = string.Format(format, pair.Value.ToString());
+                                }
+                            }
+                        }
                     }
                 }
             }
-            return regenerate;
+            _completionBase.Classes.AddRange(classesToAdd);
+
+            // fix order
+            _completionBase.Classes.Sort((x, y) => x.Name.CompareTo(y.Name));
         }
 
         private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors)
@@ -417,7 +431,7 @@ namespace TailwindCSSIntellisense.Configuration
                 {
                     if (IsHex(s, out string hex))
                     {
-                        var color = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
+                        var color = ColorTranslator.FromHtml($"#{hex}");
                         newColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
                     }
                     else if (s.StartsWith("colors"))
@@ -433,6 +447,21 @@ namespace TailwindCSSIntellisense.Configuration
                             }
                         }
                     }
+                    else if (s.StartsWith("rgb"))
+                    {
+                        var openParen = s.IndexOf('(');
+                        var closeParen = s.IndexOf(')', openParen);
+                        if (openParen != -1 && closeParen != -1 && closeParen - openParen > 1)
+                        {
+                            var text = s.Substring(openParen + 1, closeParen - openParen - 1);
+                            var values = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                            if (values.Length >= 3 && values.Take(3).All(v => float.TryParse(v, out _)))
+                            {
+                                newColorToRgbMapper[key] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
+                            }
+                        }
+                    }
                 }
                 else if (value is Dictionary<string, object> colorVariants)
                 {
@@ -442,16 +471,46 @@ namespace TailwindCSSIntellisense.Configuration
                         {
                             if (IsHex(colorVariants[colorVariant], out string hex))
                             {
-                                var color = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
+                                var color = ColorTranslator.FromHtml($"#{hex}");
                                 newColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
+                            }
+                            else if (colorVariants[colorVariant].ToString().StartsWith("rgb"))
+                            {
+                                var openParen = colorVariants[colorVariant].ToString().IndexOf('(');
+                                var closeParen = colorVariants[colorVariant].ToString().IndexOf(')', openParen);
+                                if (openParen != -1 && closeParen != -1 && closeParen - openParen > 1)
+                                {
+                                    var text = colorVariants[colorVariant].ToString().Substring(openParen + 1, closeParen - openParen - 1);
+                                    var values = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                    if (values.Length >= 3 && values.Take(3).All(v => float.TryParse(v, out _)))
+                                    {
+                                        newColorToRgbMapper[key] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
+                                    }
+                                }
                             }
                         }
                         else
                         {
                             if (IsHex(colorVariants[colorVariant], out string hex))
                             {
-                                var color = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
+                                var color = ColorTranslator.FromHtml($"#{hex}");
                                 newColorToRgbMapper[key + "-" + colorVariant] = $"{color.R},{color.G},{color.B}";
+                            }
+                            else if (colorVariants[colorVariant].ToString().StartsWith("rgb"))
+                            {
+                                var openParen = colorVariants[colorVariant].ToString().IndexOf('(');
+                                var closeParen = colorVariants[colorVariant].ToString().IndexOf(')', openParen);
+                                if (openParen != -1 && closeParen != -1 && closeParen - openParen > 1)
+                                {
+                                    var text = colorVariants[colorVariant].ToString().Substring(openParen + 1, closeParen - openParen - 1);
+                                    var values = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+                                    if (values.Length >= 3 && values.Take(3).All(v => float.TryParse(v, out _)))
+                                    {
+                                        newColorToRgbMapper[key + "-" + colorVariant] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
+                                    }
+                                }
                             }
                         }
 
@@ -460,6 +519,50 @@ namespace TailwindCSSIntellisense.Configuration
             }
 
             return newColorToRgbMapper;
+        }
+
+        private string FindCommonPrefix(IEnumerable<string> texts)
+        {
+            if (texts.Any() == false)
+            {
+                return "";
+            }
+
+            var prefix = texts.First();
+            foreach (var text in texts)
+            {
+                var i = 0;
+                while (i < prefix.Length && i < text.Length && prefix[i] == text[i])
+                {
+                    i++;
+                }
+                prefix = prefix.Substring(0, i);
+            }
+
+            return prefix;
+        }
+
+        private string FindCommonSuffix(IEnumerable<string> texts)
+        {
+            var suffix = new string(FindCommonPrefix(texts.Select(t => new string(t.Reverse().ToArray()))).Reverse().ToArray());
+
+            // Prevents duplicate endings
+            if (suffix.Count(char.IsPunctuation) == 1)
+            {
+                return ";";
+            }
+            return suffix;
+        }
+
+        public int CountSubstring(string text, string value)
+        {
+            int count = 0, minIndex = text.IndexOf(value, 0);
+            while (minIndex != -1)
+            {
+                minIndex = text.IndexOf(value, minIndex + value.Length);
+                count++;
+            }
+            return count;
         }
     }
 }

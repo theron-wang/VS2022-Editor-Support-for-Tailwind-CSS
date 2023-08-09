@@ -28,10 +28,10 @@ namespace TailwindCSSIntellisense.Configuration
         private CompletionUtilities _completionBase;
 
         private List<string> ModifiersOrig { get; set; }
-        private List<string> SpacingOrig { get; set; }
         private List<string> ScreenOrig { get; set; }
         private List<TailwindClass> ClassesOrig { get; set; }
         private Dictionary<string, string> ColorToRgbMapperOrig { get; set; }
+        private Dictionary<string, string> SpacingMapperOrig { get; set; }
 
         /// <summary>
         /// Initializes the configuration file (tailwind.config.js) for completion
@@ -41,7 +41,7 @@ namespace TailwindCSSIntellisense.Configuration
         {
             _completionBase = completionBase;
             ModifiersOrig = _completionBase.Modifiers.ToList();
-            SpacingOrig = _completionBase.Spacing.ToList();
+            SpacingMapperOrig = _completionBase.SpacingMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
             ClassesOrig = _completionBase.Classes.ToList();
             ScreenOrig = _completionBase.Screen.ToList();
             ColorToRgbMapperOrig = _completionBase.ColorToRgbMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -66,7 +66,6 @@ namespace TailwindCSSIntellisense.Configuration
 
                 var config = await Parser.GetConfigurationAsync();
                 LoadGlobalConfiguration(config);
-                _completionBase.Spacing = _completionBase.Spacing.Distinct().ToList();
                 _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
 
                 LoadIndividualConfigurationOverride(config);

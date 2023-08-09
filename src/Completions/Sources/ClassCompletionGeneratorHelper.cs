@@ -49,12 +49,10 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     if (twClass.UseColors)
                     {
                         IEnumerable<string> colors;
-                        var useCustom = false;
 
                         if (completionUtils.CustomColorMappers != null && completionUtils.CustomColorMappers.ContainsKey(twClass.Name))
                         {
                             colors = completionUtils.CustomColorMappers[twClass.Name].Keys;
-                            useCustom = true;
                         }
                         else
                         {
@@ -71,46 +69,22 @@ namespace TailwindCSSIntellisense.Completions.Sources
                         foreach (var color in colors)
                         {
                             var className = string.Format(twClass.Name, color);
-                            if (useCustom)
-                            {
-                                completions.Add(
-                                                new Completion(className,
-                                                                    modifiersAsString + className,
-                                                                    completionUtils.GetCustomColorDescription(twClass.Name, color) ?? className,
-                                                                    completionUtils.GetCustomImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
-                                                                    null));
-                            }
-                            else
-                            {
-                                completions.Add(
-                                                new Completion(className,
-                                                                    modifiersAsString + className,
-                                                                    completionUtils.GetColorDescription(color) ?? className,
-                                                                    completionUtils.GetImageFromColor(color, color == "transparent" ? 0 : 100),
-                                                                    null));
-                            }
+                            completions.Add(
+                                        new Completion(className,
+                                                            modifiersAsString + className,
+                                                            completionUtils.GetDescription(twClass.Name, color, null),
+                                                            completionUtils.GetImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
+                                                            null));
                             if (twClass.UseOpacity && currentClass.Contains('/'))
                             {
                                 foreach (var opacity in completionUtils.Opacity)
                                 {
-                                    if (useCustom)
-                                    {
-                                        completions.Add(
-                                                new Completion(className + $"/{opacity}",
-                                                                    modifiersAsString + className + $"/{opacity}",
-                                                                    completionUtils.GetCustomColorDescription(twClass.Name, color, opacity) ?? className,
-                                                                    completionUtils.GetCustomImageFromColor(twClass.Name, color, opacity),
-                                                                    null));
-                                    }
-                                    else
-                                    {
-                                        completions.Add(
-                                                new Completion(className + $"/{opacity}",
-                                                                    modifiersAsString + className + $"/{opacity}",
-                                                                    completionUtils.GetColorDescription(color, opacity) ?? className,
-                                                                    completionUtils.GetImageFromColor(color, opacity),
-                                                                    null));
-                                    }
+                                    completions.Add(
+                                            new Completion(className + $"/{opacity}",
+                                                                modifiersAsString + className + $"/{opacity}",
+                                                                completionUtils.GetDescription(twClass.Name, color, opacity),
+                                                                completionUtils.GetImageFromColor(twClass.Name, color, opacity),
+                                                                null));
                                 }
                                 completions.Add(
                                             new Completion(className + "/[...]",
@@ -125,21 +99,25 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     }
                     else if (twClass.UseSpacing)
                     {
-                        var spacings = completionUtils.Spacing;
+                        IEnumerable<string> spacings;
 
-                        if (completionUtils.CustomSpacings != null && completionUtils.CustomSpacings.TryGetValue(twClass.Name, out var value))
+                        if (completionUtils.CustomSpacingMappers != null && completionUtils.CustomSpacingMappers.TryGetValue(twClass.Name, out var value))
                         {
-                            spacings = value;
+                            spacings = value.Keys;
+                        }
+                        else
+                        {
+                            spacings = completionUtils.SpacingMapper.Keys;
                         }
 
                         foreach (var spacing in spacings)
                         {
-                            var className = string.Format(twClass.Name, spacing);
+                            var className = string.IsNullOrWhiteSpace(spacing) ? twClass.Name.Replace("-{0}", "") : string.Format(twClass.Name, spacing);
 
                             completions.Add(
                                 new Completion(className,
                                                     modifiersAsString + className,
-                                                    className,
+                                                    completionUtils.GetDescription(twClass.Name, spacing),
                                                     completionUtils.TailwindLogo,
                                                     null));
                         }
@@ -158,7 +136,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                         completions.Add(
                         new Completion(twClass.Name,
                                             modifiersAsString + twClass.Name,
-                                            twClass.Name,
+                                            completionUtils.GetDescription(twClass.Name),
                                             completionUtils.TailwindLogo,
                                             null));
                     }
@@ -170,20 +148,38 @@ namespace TailwindCSSIntellisense.Completions.Sources
             {
                 if (modifiers.Contains(modifier) == false)
                 {
-                    completions.Add(
-                        new Completion(modifier + ":",
-                                            modifiersAsString + modifier + ":",
-                                            modifier,
-                                            completionUtils.TailwindLogo,
-                                            null));
+                    if (modifier.EndsWith("[]"))
+                    {
+                        completions.Add(
+                            new Completion(modifier.Replace("[]", "") + "[...]:",
+                                                modifiersAsString + modifier + ":",
+                                                modifier.Replace("[]", "") + "[...]:",
+                                                completionUtils.TailwindLogo,
+                                                null));
 
-                    completionsToAddToEnd.Add(
-                        new Completion("group-" + modifier + ":",
-                                            modifiersAsString + "group-" + modifier + ":",
-                                            modifier,
-                                            completionUtils.TailwindLogo,
-                                            null));
+                        completionsToAddToEnd.Add(
+                            new Completion("group-" + modifier.Replace("[]", "") + "[...]:",
+                                                modifiersAsString + "group-" + modifier + ":",
+                                                "group-" + modifier.Replace("[]", "") + "[...]:",
+                                                completionUtils.TailwindLogo,
+                                                null));
+                    }
+                    else
+                    {
+                        completions.Add(
+                            new Completion(modifier + ":",
+                                                modifiersAsString + modifier + ":",
+                                                modifier,
+                                                completionUtils.TailwindLogo,
+                                                null));
 
+                        completionsToAddToEnd.Add(
+                            new Completion("group-" + modifier + ":",
+                                                modifiersAsString + "group-" + modifier + ":",
+                                                "group-" + modifier,
+                                                completionUtils.TailwindLogo,
+                                                null));
+                    }
                 }
             }
             foreach (var screen in completionUtils.Screen)

@@ -6,6 +6,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows;
@@ -32,14 +33,17 @@ namespace TailwindCSSIntellisense.Completions
         internal List<TailwindClass> Classes { get; set; }
         internal List<string> Modifiers { get; set; }
         internal List<string> Screen { get; set; } = new List<string>() { "sm", "md", "lg", "xl", "2xl" };
-        internal List<string> Spacing { get; set; }
         internal List<int> Opacity { get; set; }
         internal Dictionary<string, string> ColorToRgbMapper { get; set; }
+        internal Dictionary<string, string> SpacingMapper { get; set; }
         internal Dictionary<string, ImageSource> ColorToRgbMapperCache { get; private set; } = new Dictionary<string, ImageSource>();
         internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; }
 
         internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; }
-        internal Dictionary<string, List<string>> CustomSpacings { get; set; }
+        internal Dictionary<string, Dictionary<string, string>> CustomSpacingMappers { get; set; }
+
+        internal Dictionary<string, string> DescriptionMapper { get; set; }
+        internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Initializes the necessary utilities to provide completion
@@ -113,7 +117,19 @@ namespace TailwindCSSIntellisense.Completions
             }
             using (var fs = File.Open(Path.Combine(baseFolder, "tailwindspacing.json"), FileMode.Open, FileAccess.Read))
             {
-                Spacing = await JsonSerializer.DeserializeAsync<List<string>>(fs);
+                var spacing = await JsonSerializer.DeserializeAsync<List<string>>(fs);
+                SpacingMapper = new Dictionary<string, string>();
+                foreach (var s in spacing)
+                {
+                    if (s == "px")
+                    {
+                        SpacingMapper[s] = "1px";
+                    }
+                    else
+                    {
+                        SpacingMapper[s] = $"{float.Parse(s) / 4}rem";
+                    }
+                }
             }
             using (var fs = File.Open(Path.Combine(baseFolder, "tailwindopacity.json"), FileMode.Open, FileAccess.Read))
             {
@@ -122,6 +138,10 @@ namespace TailwindCSSIntellisense.Completions
             using (var fs = File.Open(Path.Combine(baseFolder, "tailwindconfig.json"), FileMode.Open, FileAccess.Read))
             {
                 ConfigurationValueToClassStems = await JsonSerializer.DeserializeAsync<Dictionary<string, List<string>>>(fs);
+            }
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwinddesc.json"), FileMode.Open, FileAccess.Read))
+            {
+                DescriptionMapper = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(fs);
             }
 
             Classes = new List<TailwindClass>();
@@ -261,129 +281,113 @@ namespace TailwindCSSIntellisense.Completions
             {
                 foreach (var stem in stems)
                 {
-                    Classes.Add(new TailwindClass()
+                    string name;
+                    if (stem.Contains('{'))
                     {
-                        Name = stem.Replace("-{*}", "").Replace("-{c}", "").Replace("-{s}", "") + "-",
-                        SupportsBrackets = true
-                    });
+                        var replace = stem.Substring(stem.IndexOf('{'), stem.IndexOf('}') - stem.IndexOf('{') + 1);
+                        name = stem.Replace(replace, "");
+                    }
+                    else
+                    {
+                        name = stem.EndsWith("-") ? stem : stem + "-";
+                    }
+
+                    if (stem.Contains(":"))
+                    {
+                        Modifiers.Add($"{name.Replace(":-", "")}-[]");
+                    }
+                    else
+                    {
+                        if (Classes.All(c => (c.Name == name && c.SupportsBrackets == false) || c.Name != name))
+                        {
+                            Classes.Add(new TailwindClass()
+                            {
+                                Name = name,
+                                SupportsBrackets = true
+                            });
+                        }
+                    }
                 }
             }
         }
 
-        /// <summary>
-        /// Gets the corresponding icon for a certain color class
-        /// </summary>
-        /// <param name="color">The color to generate an icon for (i.e. amber-100, blue-500)</param>
-        /// <param name="opacity">The opacity of the color (0-100)</param>
-        /// <returns>An <see cref="ImageSource"/> which contains a square displaying the requested color</returns>
-        internal ImageSource GetImageFromColor(string color, int opacity = 100)
+        private string FormatDescription(string text)
         {
-            if (ColorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out var result))
+            var lines = text.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var output = new StringBuilder();
+            foreach (var line in lines)
             {
-                return result;
+                output.AppendLine($"{line.Trim()};");
             }
 
-            if (ColorToRgbMapper.TryGetValue(color, out string value) == false || string.IsNullOrWhiteSpace(value))
-            {
-                return TailwindLogo;
-            }
-
-            var rgb = value.Split(',');
-
-            if (rgb.Length == 0)
-            {
-                // Something wrong happened: fall back to default tailwind icon
-                return TailwindLogo;
-            }
-            var r = byte.Parse(rgb[0]);
-            var g = byte.Parse(rgb[1]);
-            var b = byte.Parse(rgb[2]);
-            var a = (byte)Math.Round(opacity / 100d * 255);
-
-            var pen = new Pen() { Thickness = 7, Brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)) };
-            var mainImage = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(11, 2, 5, 8)), Pen = pen };
-
-            // https://stackoverflow.com/questions/37663993/preventing-icon-color-and-size-distortions-when-bundling-a-visual-studio-project
-            var pen2 = new Pen() { Thickness = 1, Brush = new SolidColorBrush(Color.FromArgb(1, 0, 255, 255)) };
-            var vsPrevent = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(18, -2, 1, 1)), Pen = pen2 };
-
-            var geometry = new DrawingGroup();
-            geometry.Children.Add(mainImage);
-            geometry.Children.Add(vsPrevent);
-
-            result = new DrawingImage
-            {
-                Drawing = geometry
-            };
-
-            ColorToRgbMapperCache.Add($"{color}/{opacity}", result);
-
-            return result;
+            return output.ToString().Trim();
         }
 
-        /// <summary>
-        /// Gets the hex code for a certain color
-        /// </summary>
-        /// <param name="color">The color to generate an description for (i.e. amber-100, blue-500)</param>
-        /// <param name="opacity">The opacity of the color (0-100)</param>
-        /// <returns>A 6-digit hex code representing the color</returns>
-        internal string GetColorDescription(string color, int opacity = 100)
+        internal string GetDescription(string tailwindClass)
         {
-            // Invalid color or value is empty when color is current, inherit, or transparent
-            if (ColorToRgbMapper.TryGetValue(color, out string value) == false || string.IsNullOrWhiteSpace(value))
+            if (CustomDescriptionMapper.ContainsKey(tailwindClass))
+            {
+                return FormatDescription(CustomDescriptionMapper[tailwindClass]);
+            }
+            if (DescriptionMapper.ContainsKey(tailwindClass))
+            {
+                return FormatDescription(DescriptionMapper[tailwindClass]);
+            }
+            return null;
+        }
+
+        internal string GetDescription(string tailwindClass, string spacing)
+        {
+            string spacingValue;
+
+            if (CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
+            {
+                spacingValue = dict[spacing];
+            }
+            else if (SpacingMapper.TryGetValue(spacing, out spacingValue) == false)
             {
                 return null;
             }
 
-            var rgb = value.Split(',');
-
-            if (rgb.Length == 0)
-            {
-                // Something wrong happened: return null which the caller can interpret
-                return null;
-            }
-            var r = byte.Parse(rgb[0]);
-            var g = byte.Parse(rgb[1]);
-            var b = byte.Parse(rgb[2]);
-            var a = (byte)Math.Round(opacity / 100d * 255);
-
-            return $"#{r:X2}{g:X2}{b:X2}{a:X2}";
+            return FormatDescription(string.Format(DescriptionMapper[tailwindClass.Replace("{0}", "{s}")], spacingValue));
         }
 
-        /// <summary>
-        /// Gets the corresponding icon for a certain color class
-        /// </summary>
-        /// <param name="stem">The extended stem</param>
-        /// <param name="color">The color to generate an icon for (i.e. amber-100, blue-500)</param>
-        /// <param name="opacity">The opacity of the color (0-100)</param>
-        /// <returns>An <see cref="ImageSource"/> which contains a square displaying the requested color</returns>
-        internal ImageSource GetCustomImageFromColor(string stem, string color, int opacity = 100)
+        internal string GetDescription(string tailwindClass, string color, int? opacity)
         {
-            if (ColorToRgbMapperCache.TryGetValue($"{stem}/{color}/{opacity}", out var result))
+            var value = GetColorDescription(color, opacity, tailwindClass);
+
+            var format = DescriptionMapper[tailwindClass.Replace("{0}", "{c}")];
+
+            if (format.Contains("{0};"))
+            {
+                return FormatDescription(string.Format(format, value + ")"));
+            }
+
+            return FormatDescription(string.Format(format, value + " "));
+        }
+
+        internal ImageSource GetImageFromColor(string stem, string color, int opacity = 100)
+        {
+            if (ColorToRgbMapperCache.TryGetValue($"{stem}/{color}/{opacity}", out var result) || ColorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out result))
             {
                 return result;
             }
-            else
+
+            if (CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out string value) && ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2))
             {
                 if (ColorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out result))
                 {
                     return result;
                 }
-            }
 
-            string value;
-            if (CustomColorMappers.TryGetValue(stem, out var dict) == false)
-            {
-                return GetImageFromColor(color, opacity);
-            }
-            else if (dict.TryGetValue(color, out value))
-            {
-                if (ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
+                if (ColorToRgbMapper.TryGetValue(color, out value) == false)
                 {
-                    return GetImageFromColor(color, opacity);
+                    return TailwindLogo;
                 }
             }
-            else if (string.IsNullOrWhiteSpace(value))
+
+            if (string.IsNullOrWhiteSpace(value))
             {
                 return TailwindLogo;
             }
@@ -421,45 +425,57 @@ namespace TailwindCSSIntellisense.Completions
             return result;
         }
 
-        /// <summary>
-        /// Gets the hex code for a certain color
-        /// </summary>
-        /// <param name="color">The color to generate an description for (i.e. amber-100, blue-500)</param>
-        /// <param name="opacity">The opacity of the color (0-100)</param>
-        /// <returns>A 6-digit hex code representing the color</returns>
-        internal string GetCustomColorDescription(string stem, string color, int opacity = 100)
+        private string GetColorDescription(string color, int? opacity = null, string stem = null)
         {
             string value;
-            if (CustomColorMappers.TryGetValue(stem, out var dict) == false)
+            if (stem != null)
             {
-                return GetColorDescription(color, opacity);
-            }
-            else if (dict.TryGetValue(color, out value))
-            {
-                if (ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
+                if (CustomColorMappers.TryGetValue(stem, out var dict) == false)
                 {
-                    return GetColorDescription(color, opacity);
+                    if (ColorToRgbMapper.TryGetValue(color, out value) == false)
+                    {
+                        return null;
+                    }
+                }
+                else if (dict.TryGetValue(color, out value))
+                {
+                    if (ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
+                    {
+                        if (ColorToRgbMapper.TryGetValue(color, out value) == false)
+                        {
+                            return null;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (ColorToRgbMapper.TryGetValue(color, out value) == false)
+                {
+                    return null;
                 }
             }
             // Invalid color or value is empty when color is current, inherit, or transparent
-            else if (string.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(value))
             {
-                return null;
+                return color;
             }
 
             var rgb = value.Split(',');
 
             if (rgb.Length == 0)
             {
-                // Something wrong happened: return null which the caller can interpret
                 return null;
             }
-            var r = byte.Parse(rgb[0]);
-            var g = byte.Parse(rgb[1]);
-            var b = byte.Parse(rgb[2]);
-            var a = (byte)Math.Round(opacity / 100d * 255);
 
-            return $"#{r:X2}{g:X2}{b:X2}{a:X2}";
+            if (opacity != null)
+            {
+                return $"rgb({rgb[0]} {rgb[1]} {rgb[2]} / {opacity})";
+            }
+            else
+            {
+                return $"rgb({rgb[0]} {rgb[1]} {rgb[2]}";
+            }
         }
     }
 }

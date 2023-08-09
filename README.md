@@ -39,11 +39,11 @@ Customization support for most `theme` and `theme.extension` values:
 
 ![Intellisense Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-3.png)
 
-See [this list](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/ConfigSupported.md) to see what is and is not currently supported.
+Code such as `({ theme }) => ({ ... })` and `...defaultTheme.fontFamily.sans` is not currently supported.
 
 ### Build Integration
 
-In a project, simply run the project to build Tailwind CSS or access it via the Build menu:
+When in a project, you can run the project to build Tailwind CSS or access it via the Build menu:
 
 ![Build Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-1.png)
 
@@ -51,17 +51,17 @@ After the process has started, the process will continue to build and output dat
 
 ![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-2.png)
 
+Custom package.json scripts are supported on build:
+
+![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
+
+You can customize the behavior in Tools > Options > TailwindCSS IntelliSense > Custom Build.
+
 ### NPM Integration
 
 When getting started in a new project, you can import the necessary modules by right-clicking on the project node:
 
 ![NPM Shortcut 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-Shortcuts-1.png)
-
-Custom package.json scripts are also supported on build:
-
-![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
-
-You can customize the behavior in Tools > Options > TailwindCSS IntelliSense > Custom Build.
 
 ### Customizability
 
@@ -73,13 +73,13 @@ If you want to explicitly state the configuration file, you can right click any 
 
 ![Customizability Build 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-1.png)
 
-Likewise, for the build file and the output file, you can also explicitly state what CSS files you want:
+Likewise, for the build file and the output file, you can also explicitly state which CSS files you want:
 
 ![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-2.png)
 
 If you click on each file again, you will find a remove option to set it back to the default.
 
-Please note that if you click any of these buttons, a tailwind.extension.json file will be created in your project root.
+Please note that the extension creates a `tailwind.extension.json` file in your project root.
 
 #### Extension Options
 
@@ -102,7 +102,7 @@ Please report any errors that you encounter!
 
 ## Limitations
 
-As of right now, Visual Studio does not provide an API to override error tagging, so you will see the CSS directives (`@apply`, `@tailwind`, etc.) marked as errors.
+Visual Studio does not provide an API to override error tagging, so you will see the CSS directives (`@apply`, `@tailwind`, etc.) marked as errors.
 
 ## Bugs / Suggestions
 

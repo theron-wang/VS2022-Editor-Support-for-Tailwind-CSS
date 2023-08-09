@@ -60,7 +60,7 @@ namespace TailwindCSSIntellisense.Configuration
         {
             if (settings.TailwindConfigurationFile != await Scanner.FindConfigurationFilePathAsync())
             {
-                await Scanner.FindConfigurationFilePathAsync(true);
+                _fileName = await Scanner.FindConfigurationFilePathAsync(true);
                 await _config.ReloadCustomAttributesAsync();
             }
         }

@@ -3,14 +3,6 @@
 - aria
 - supports
 - data
-- fontFamily
-- fontWeight
-- fontSize
-- textDecorationThickness
-- backgroundPosition
-- backgroundSize
-- backgroundImage
-- strokeWidth
 
 # Supported theme attributes
 
@@ -108,3 +100,11 @@
 - willChange
 - fill
 - stroke
+- fontFamily
+- fontWeight
+- fontSize
+- textDecorationThickness
+- backgroundPosition
+- backgroundSize
+- backgroundImage
+- strokeWidth
