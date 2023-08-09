@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.7.1 (August 9th, 2023)
+
+## Fixes
+
+- Fixed an exception which would occur with specific configuration files
+- Fixed a bug where custom colors would not show up in IntelliSense
+
 ## 1.1.7 (August 8th, 2023)
 
 ### Additions

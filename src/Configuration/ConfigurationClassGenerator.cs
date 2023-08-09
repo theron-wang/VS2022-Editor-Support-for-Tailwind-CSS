@@ -34,54 +34,9 @@ namespace TailwindCSSIntellisense.Configuration
             }
             if (config.ExtendedValues.ContainsKey("colors") && GetDictionary(config.ExtendedValues["colors"], out dict))
             {
-                foreach (var key in dict.Keys)
+                foreach (var pair in GetColorMapper(dict))
                 {
-                    var value = dict[key];
-
-                    if (value is string s)
-                    {
-                        if (IsHex(s, out string hex))
-                        {
-                            var color = ColorTranslator.FromHtml($"#{hex}");
-                            _completionBase.ColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
-                        }
-                        else if (s.StartsWith("colors"))
-                        {
-                            var color = s.Split('.').Last();
-
-                            if (ColorToRgbMapperOrig.ContainsKey(color) && ColorToRgbMapperOrig.ContainsKey(key) == false)
-                            {
-                                foreach (var pairing in ColorToRgbMapperOrig.Where(
-                                    p => p.Key.StartsWith(color)))
-                                {
-                                    _completionBase.ColorToRgbMapper[pairing.Key.Replace(color, key)] = pairing.Value;
-                                }
-                            }
-                        }
-                    }
-                    else if (value is Dictionary<string, object> colorVariants)
-                    {
-                        foreach (var colorVariant in colorVariants.Keys)
-                        {
-                            if (colorVariant == "DEFAULT")
-                            {
-                                if (IsHex(colorVariants[colorVariant], out string hex))
-                                {
-                                    var color = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
-                                    _completionBase.ColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
-                                }
-                            }
-                            else
-                            {
-                                if (IsHex(colorVariants[colorVariant], out string hex))
-                                {
-                                    var color = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
-                                    _completionBase.ColorToRgbMapper[key + "-" + colorVariant] = $"{color.R},{color.G},{color.B}";
-                                }
-                            }
-
-                        }
-                    }
+                    _completionBase.ColorToRgbMapper[pair.Key] = pair.Value;
                 }
             }
 
@@ -460,7 +415,15 @@ namespace TailwindCSSIntellisense.Configuration
                             {
                                 newColorToRgbMapper[key] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
                             }
+                            else
+                            {
+                                newColorToRgbMapper[key] = "{noparse}" + s;
+                            }
                         }
+                    }
+                    else
+                    {
+                        newColorToRgbMapper[key] = "{noparse}" + s;
                     }
                 }
                 else if (value is Dictionary<string, object> colorVariants)

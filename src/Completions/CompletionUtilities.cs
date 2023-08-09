@@ -313,6 +313,11 @@ namespace TailwindCSSIntellisense.Completions
 
         private string FormatDescription(string text)
         {
+            if (text is null)
+            {
+                return null;
+            }
+
             var lines = text.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
             var output = new StringBuilder();
@@ -361,10 +366,27 @@ namespace TailwindCSSIntellisense.Completions
 
             if (format.Contains("{0};"))
             {
-                return FormatDescription(string.Format(format, value + ")"));
+                if (value.StartsWith("{noparse}"))
+                {
+                    return FormatDescription(string.Format(format, value.Replace("{noparse}", "")));
+                }
+                else
+                {
+                    return FormatDescription(string.Format(format, value + ")"));
+                }
             }
 
-            return FormatDescription(string.Format(format, value + " "));
+            if (value.StartsWith("{noparse}"))
+            {
+                var startIndex = format.IndexOf("{0}") + 3;
+                var replace = format.Substring(startIndex, format.IndexOf(';', startIndex) - startIndex);
+
+                return FormatDescription(string.Format(format.Replace(replace, ""), value.Replace("{noparse}", "")));
+            }
+            else
+            {
+                return FormatDescription(string.Format(format, value + " "));
+            }
         }
 
         internal ImageSource GetImageFromColor(string stem, string color, int opacity = 100)
@@ -387,7 +409,7 @@ namespace TailwindCSSIntellisense.Completions
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(value))
+            if (string.IsNullOrWhiteSpace(value) || value.StartsWith("{noparse}"))
             {
                 return TailwindLogo;
             }
@@ -428,16 +450,17 @@ namespace TailwindCSSIntellisense.Completions
         private string GetColorDescription(string color, int? opacity = null, string stem = null)
         {
             string value;
+            Dictionary<string, string> dict = null;
             if (stem != null)
             {
-                if (CustomColorMappers.TryGetValue(stem, out var dict) == false)
+                if (CustomColorMappers != null && CustomColorMappers.TryGetValue(stem, out dict) == false)
                 {
                     if (ColorToRgbMapper.TryGetValue(color, out value) == false)
                     {
                         return null;
                     }
                 }
-                else if (dict.TryGetValue(color, out value))
+                else if (dict != null && dict.TryGetValue(color, out value))
                 {
                     if (ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
                     {
@@ -446,6 +469,10 @@ namespace TailwindCSSIntellisense.Completions
                             return null;
                         }
                     }
+                }
+                else if (ColorToRgbMapper.TryGetValue(color, out value) == false)
+                {
+                    return null;
                 }
             }
             else
@@ -459,6 +486,10 @@ namespace TailwindCSSIntellisense.Completions
             if (string.IsNullOrWhiteSpace(value))
             {
                 return color;
+            }
+            else if (value.StartsWith("{noparse}"))
+            {
+                return value;
             }
 
             var rgb = value.Split(',');
