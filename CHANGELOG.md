@@ -4,7 +4,7 @@
 
 ## Enhancements
 
-- Added `px` values for spacing in completion descriptions ([#8](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/8))
+- Added `px` values for spacing in completion descriptions ([#9](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/))
 
 ## 1.1.7.1 (August 9th, 2023)
 
