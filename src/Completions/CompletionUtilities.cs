@@ -1,5 +1,4 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio.Utilities;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -348,11 +347,16 @@ namespace TailwindCSSIntellisense.Completions
 
             if (CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
             {
-                spacingValue = dict[spacing];
+                spacingValue = dict[spacing].Trim();
             }
             else if (SpacingMapper.TryGetValue(spacing, out spacingValue) == false)
             {
                 return null;
+            }
+
+            if (spacingValue.EndsWith("rem") && double.TryParse(spacingValue.Replace("rem", ""), out var result))
+            {
+                spacingValue += $" /*{result * 16}px*/";
             }
 
             return FormatDescription(string.Format(DescriptionMapper[tailwindClass.Replace("{0}", "{s}")], spacingValue));
