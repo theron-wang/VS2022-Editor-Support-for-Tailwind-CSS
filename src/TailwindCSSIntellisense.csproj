@@ -56,6 +56,8 @@
     <Compile Include="Commands\RemoveAsConfigFile.cs" />
     <Compile Include="Commands\SetUpTailwindWs.cs" />
     <Compile Include="Commands\SetUpTailwind.cs" />
+    <Compile Include="Commands\StartBuildProcessWs.cs" />
+    <Compile Include="Commands\StopBuildProcessWs.cs" />
     <Compile Include="Commands\StopBuildProcess.cs" />
     <Compile Include="Commands\StartBuildProcess.cs" />
     <Compile Include="Commands\SetAsOutputFile.cs" />

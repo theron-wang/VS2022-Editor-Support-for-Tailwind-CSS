@@ -83,8 +83,8 @@ namespace TailwindCSSIntellisense
                 await _buildProcess.InitializeAsync();
 
                 // Resets tailwind.config.js configuration styles
-                await _completionUtils.Configuration.ReloadCustomAttributesAsync();
                 await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
+                await _completionUtils.Configuration.ReloadCustomAttributesAsync();
 
                 // Check for updates again
                 foreach (var project in await VS.Solutions.GetAllProjectsAsync())

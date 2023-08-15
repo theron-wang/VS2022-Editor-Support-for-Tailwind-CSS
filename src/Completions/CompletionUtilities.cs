@@ -343,6 +343,7 @@ namespace TailwindCSSIntellisense.Completions
 
         internal string GetDescription(string tailwindClass, string spacing)
         {
+            var negative = tailwindClass.StartsWith("-");
             string spacingValue;
 
             if (CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
@@ -356,10 +357,10 @@ namespace TailwindCSSIntellisense.Completions
 
             if (spacingValue.EndsWith("rem") && double.TryParse(spacingValue.Replace("rem", ""), out var result))
             {
-                spacingValue += $" /*{result * 16}px*/";
+                spacingValue += $" /*{(negative ? -1 : 1) * result * 16}px*/";
             }
 
-            return FormatDescription(string.Format(DescriptionMapper[tailwindClass.Replace("{0}", "{s}")], spacingValue));
+            return FormatDescription(string.Format(DescriptionMapper[tailwindClass.Replace("{0}", "{s}")], (negative ? "-" : "") + spacingValue));
         }
 
         internal string GetDescription(string tailwindClass, string color, int? opacity)

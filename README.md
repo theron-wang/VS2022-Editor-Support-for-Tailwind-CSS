@@ -47,6 +47,8 @@ When in a project, you can run the project to build Tailwind CSS or access it vi
 
 ![Build Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-1.png)
 
+In an open folder context, however, you must right click the folder instead to toggle the build process.
+
 After the process has started, the process will continue to build and output data to the Build window pane:
 
 ![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-2.png)

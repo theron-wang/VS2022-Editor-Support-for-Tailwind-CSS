@@ -127,11 +127,6 @@ namespace TailwindCSSIntellisense.Settings
                 returnSettings.TailwindCssFile = null;
                 changed = true;
             }
-            if (returnSettings.TailwindOutputCssFile != null && File.Exists(returnSettings.TailwindOutputCssFile) == false)
-            {
-                returnSettings.TailwindOutputCssFile = null;
-                changed = true;
-            }
 
             if (changed)
             {

@@ -36,7 +36,7 @@ namespace TailwindCSSIntellisense
             {
                 var path = ThreadHelper.JoinableTaskFactory.Run(FileFinder.GetCurrentMiscellaneousProjectPathAsync);
 
-                Command.Visible = settings.EnableTailwindCss &&
+                Command.Visible = settings.EnableTailwindCss && string.IsNullOrEmpty(path) == false &&
                     path.TrimEnd(Path.DirectorySeparatorChar).Equals(selected.TrimEnd(Path.DirectorySeparatorChar), StringComparison.InvariantCultureIgnoreCase) &&
                     (string.IsNullOrEmpty(settings.TailwindConfigurationFile) || File.Exists(settings.TailwindConfigurationFile) == false);
             }

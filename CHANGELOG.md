@@ -1,16 +1,24 @@
 # Changelog
 
+## 1.1.7.3 (August 14th, 2023)
+
+### Fixes
+
+- Fixed incorrect descriptions for negative spacing values
+- CSS output file becomes null when file does not exist ([#11](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/11))
+- Build menu in an open folder context would not show up (moved toggle to solution explorer folder node)
+
 ## 1.1.7.2 (August 10th, 2023)
 
-## Enhancements
+### Enhancements
 
-- Added `px` values for spacing in completion descriptions ([#9](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/))
+- Added `px` values for spacing in completion descriptions ([#9](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/9))
 
 ## 1.1.7.1 (August 9th, 2023)
 
-## Fixes
+### Fixes
 
-- Fixed an exception which would occur with specific configuration files
+- Fixed an exception which would occur with specific configuration files ([#8](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/8))
 - Fixed a bug where custom colors would not show up in IntelliSense
 
 ## 1.1.7 (August 8th, 2023)
@@ -45,7 +53,7 @@
 
 ### Additions
 
-- Support for max-{breakpoint}:
+- Support for `max-{breakpoint}:`
 - Support for group and all group modifiers
 
 ## 1.1.4.2 (July 31st, 2023)

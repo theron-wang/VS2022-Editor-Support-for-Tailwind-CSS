@@ -288,10 +288,10 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             {
                 DismissOtherSessions();
                 _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
+                _currentSession.Start();
             }
             _currentSession.Dismissed += (sender, args) => _currentSession = null;
 
-            _currentSession.Start();
             return true;
         }
 
