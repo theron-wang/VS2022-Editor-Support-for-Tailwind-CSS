@@ -22,6 +22,7 @@ namespace TailwindCSSIntellisense.Settings
             General.Saved += GeneralSettingsChanged;
             VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCacheAndSettingsChanged;
             VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
+            VS.Events.DocumentEvents.Saved += OnFileSaved;
         }
 
         [Import]
@@ -182,6 +183,7 @@ namespace TailwindCSSIntellisense.Settings
             General.Saved -= GeneralSettingsChanged;
             VS.Events.SolutionEvents.OnAfterOpenFolder -= InvalidateCacheAndSettingsChanged;
             VS.Events.SolutionEvents.OnAfterOpenProject -= InvalidateCacheAndSettingsChanged;
+            VS.Events.DocumentEvents.Saved -= OnFileSaved;
         }
 
         private async Task<string> GetActiveProjectDirectoryAsync()
@@ -287,6 +289,14 @@ namespace TailwindCSSIntellisense.Settings
                     var settings = await GetSettingsAsync();
                     await OnSettingsChanged(settings);
                 });
+            }
+        }
+
+        private void OnFileSaved(string file)
+        {
+            if (Path.GetFileName(file) == ExtensionConfigFileName)
+            {
+                InvalidateCacheAndSettingsChanged(file);
             }
         }
     }

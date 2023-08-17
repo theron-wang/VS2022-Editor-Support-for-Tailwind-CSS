@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7.4 (August 16th, 2023)
+
+## Enhancements
+
+- Build settings are now updated when `tailwind.extension.json` is directly modified ([#11](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/11))
+
 ## 1.1.7.3 (August 14th, 2023)
 
 ### Fixes
