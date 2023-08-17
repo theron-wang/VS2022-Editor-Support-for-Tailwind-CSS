@@ -1,4 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -38,8 +39,8 @@ namespace TailwindCSSIntellisense.Completions
         internal Dictionary<string, ImageSource> ColorToRgbMapperCache { get; private set; } = new Dictionary<string, ImageSource>();
         internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; }
 
-        internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; }
-        internal Dictionary<string, Dictionary<string, string>> CustomSpacingMappers { get; set; }
+        internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
+        internal Dictionary<string, Dictionary<string, string>> CustomSpacingMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
 
         internal Dictionary<string, string> DescriptionMapper { get; set; }
         internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = new Dictionary<string, string>();
@@ -401,17 +402,25 @@ namespace TailwindCSSIntellisense.Completions
                 return result;
             }
 
-            if (CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out string value) && ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2))
+            string value;
+            if (CustomColorMappers != null)
             {
-                if (ColorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out result))
+                if (CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out value) && ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2))
                 {
-                    return result;
-                }
+                    if (ColorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out result))
+                    {
+                        return result;
+                    }
 
-                if (ColorToRgbMapper.TryGetValue(color, out value) == false)
-                {
-                    return TailwindLogo;
+                    if (ColorToRgbMapper.TryGetValue(color, out value) == false)
+                    {
+                        return TailwindLogo;
+                    }
                 }
+            }
+            else if (ColorToRgbMapper.TryGetValue(color, out value) == false)
+            {
+                return TailwindLogo;
             }
 
             if (string.IsNullOrWhiteSpace(value) || value.StartsWith("{noparse}"))

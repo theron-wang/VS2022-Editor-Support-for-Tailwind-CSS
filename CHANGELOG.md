@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7.5 (August 17th, 2023)
+
+## Fixes
+
+- Null reference exception would occur when IntelliSense triggered ([#8](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/8))
+
 ## 1.1.7.4 (August 16th, 2023)
 
 ## Enhancements
