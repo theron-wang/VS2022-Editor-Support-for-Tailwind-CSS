@@ -79,7 +79,11 @@ namespace TailwindCSSIntellisense.Completions
                 return;
             }
 
-            _filteredCompletions.Filter(c => c.DisplayText.Contains(FilterBufferText.Split(':').Last()));
+            _filteredCompletions.Filter(c => 
+            {
+                var segments = c.DisplayText.Split(':').Last().Split('-');
+                return FilterBufferText.Split('-').All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
+            });
         }
 
         /// <inheritdoc />

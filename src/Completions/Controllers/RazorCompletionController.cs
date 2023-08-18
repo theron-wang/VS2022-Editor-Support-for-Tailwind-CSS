@@ -214,7 +214,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         /// </summary>
         private void Filter()
         {
-            if (_currentSession == null)
+            if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
                 return;
 
             _currentSession.SelectedCompletionSet.Filter();
@@ -272,7 +272,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         /// </summary>
         bool StartSession()
         {
-            if (_currentSession != null)
+            if (_currentSession != null && _currentSession.IsDismissed == false)
                 return false;
 
             SnapshotPoint caret = TextView.Caret.Position.BufferPosition;

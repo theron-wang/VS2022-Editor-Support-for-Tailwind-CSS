@@ -197,7 +197,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         /// </summary>
         private void Filter()
         {
-            if (_currentSession == null)
+            if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
                 return;
 
             _currentSession.SelectedCompletionSet.Filter();

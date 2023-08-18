@@ -45,7 +45,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 _showAutocomplete = ThreadHelper.JoinableTaskFactory.Run(_settingsProvider.GetSettingsAsync).EnableTailwindCss;
             }
 
-            if (_showAutocomplete == false)
+            if (_showAutocomplete == false || _completionUtils.Scanner.HasConfigurationFile == false)
             {
                 return;
             }

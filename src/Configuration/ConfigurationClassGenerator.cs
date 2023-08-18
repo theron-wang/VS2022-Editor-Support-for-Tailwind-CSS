@@ -16,6 +16,7 @@ namespace TailwindCSSIntellisense.Configuration
             _completionBase.SpacingMapper = SpacingMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
             _completionBase.Screen = ScreenOrig.ToList();
             _completionBase.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
+            _completionBase.ColorToRgbMapperCache.Clear();
 
             if (config is null && _areValuesDefault == false)
             {
@@ -138,12 +139,12 @@ namespace TailwindCSSIntellisense.Configuration
                         {
                             s = stem.Replace("-{*}", "");
 
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false);
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                             classesToRemove.AddRange(descClasses);
                         }
                         else
                         {
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false);
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                             classesToRemove.AddRange(descClasses);
                         }
 
@@ -173,7 +174,7 @@ namespace TailwindCSSIntellisense.Configuration
                                 }
                             }));
 
-                            var texts = descClasses.Select(c =>
+                            var texts = descClasses.Where(c => _completionBase.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
                                 _completionBase.DescriptionMapper[c.Name]);
 
                             string format;
@@ -297,11 +298,11 @@ namespace TailwindCSSIntellisense.Configuration
                         {
                             s = stem.Replace("-{*}", "");
 
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false);
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                         }
                         else
                         {
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false);
+                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                         }
 
                         var insertStem = s;
@@ -322,7 +323,7 @@ namespace TailwindCSSIntellisense.Configuration
                                     };
                                 }));
 
-                            var texts = descClasses.Select(c =>
+                            var texts = descClasses.Where(c => _completionBase.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
                                 _completionBase.DescriptionMapper[c.Name]);
 
                             string format;

@@ -1,14 +1,26 @@
 # Changelog
 
+## 1.1.7.6 (August 18th, 2023)
+
+### Fixes
+
+- Exceptions fixed when IntelliSense triggered with certain configuration files ([#8](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/8))
+- Completions no longer show up in a non-Tailwind project
+
+### Enhancements
+
+- IntelliSense now shows up with Blazor components using a `Class=""` parameter instead of `class=""` ([#12](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/12))
+- Improved IntelliSense filtering: for example, typing `hue-60` will now display `backdrop-hue-rotate-60`
+
 ## 1.1.7.5 (August 17th, 2023)
 
-## Fixes
+### Fixes
 
 - Null reference exception would occur when IntelliSense triggered ([#8](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/8))
 
 ## 1.1.7.4 (August 16th, 2023)
 
-## Enhancements
+### Enhancements
 
 - Build settings are now updated when `tailwind.extension.json` is directly modified ([#11](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/11))
 
