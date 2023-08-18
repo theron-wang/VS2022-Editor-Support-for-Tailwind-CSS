@@ -26,6 +26,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "art", "art", "{691DF4C7-034
 		art\Troubleshooting-Build.png = art\Troubleshooting-Build.png
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "getting-started", "getting-started", "{7975A598-01E3-4CA0-9E2C-EA6BFA25C6C4}"
+	ProjectSection(SolutionItems) = preProject
+		art\getting-started\ide-install.png = art\getting-started\ide-install.png
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +59,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{691DF4C7-034E-465B-9414-4FAB187267A9} = {708CEB7C-9C71-49E9-A629-A6AB8D96A24D}
+		{7975A598-01E3-4CA0-9E2C-EA6BFA25C6C4} = {691DF4C7-034E-465B-9414-4FAB187267A9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8256AA93-DA1C-4F88-A4A4-94D338DE264A}

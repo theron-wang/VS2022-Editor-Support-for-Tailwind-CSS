@@ -5,6 +5,7 @@
         <DisplayName>Tailwind CSS VS2022 Editor Support</DisplayName>
         <Description xml:space="preserve">Unofficial VS2022 extension for Tailwind CSS, offering editor features such as IntelliSense, build integration, and more.</Description>
         <MoreInfo>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS</MoreInfo>
+        <GettingStartedGuide>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md</GettingStartedGuide>
         <ReleaseNotes>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/CHANGELOG.md</ReleaseNotes>
         <Icon>Resources\icon.png</Icon>
         <PreviewImage>Resources\icon.png</PreviewImage>
