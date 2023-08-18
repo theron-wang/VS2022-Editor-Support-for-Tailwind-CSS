@@ -8,7 +8,7 @@
 
 ![IDE Menu](art/getting-started/ide-install.png)
 
-**IMPORTANT**: This extension uses `npm` for building and setting up, so follow the [official npm documentation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) guide.
+**IMPORTANT**: This extension uses `npm` for building and setting up, so follow the [official npm documentation](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) guide if you do not already have it installed.
 
 ## Opening a New Project
 
