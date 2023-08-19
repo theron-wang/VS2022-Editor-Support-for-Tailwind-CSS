@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.7.7 (August 19th, 2023)
+
+### Fixes
+
+- Added null checks where errors could occur ([#14](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/14))
+
 ## 1.1.7.6 (August 18th, 2023)
 
 ### Fixes

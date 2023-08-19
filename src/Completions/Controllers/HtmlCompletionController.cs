@@ -189,7 +189,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
         private bool RetriggerIntellisense(string classText)
         {
-            return classText.EndsWith(":");
+            return classText != null && classText.EndsWith(":");
         }
 
         /// <summary>
@@ -223,7 +223,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         /// </summary>
         bool Cancel()
         {
-            if (_currentSession == null)
+            if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
                 return false;
 
             _currentSession.Dismiss();
@@ -236,7 +236,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         /// </summary>
         bool Complete(bool force)
         {
-            if (_currentSession == null)
+            if (_currentSession == null || _currentSession.SelectedCompletionSet == null || _currentSession.SelectedCompletionSet.SelectionStatus == null)
             {
                 return false;
             }

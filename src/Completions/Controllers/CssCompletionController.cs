@@ -167,7 +167,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
         private bool RetriggerIntellisense(string classText)
         {
-            return classText.EndsWith(":");
+            return classText != null && classText.EndsWith(":");
         }
 
         /// <summary>
@@ -214,7 +214,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         /// </summary>
         bool Complete(bool force)
         {
-            if (_currentSession == null)
+            if (_currentSession == null || _currentSession.SelectedCompletionSet == null || _currentSession.SelectedCompletionSet.SelectionStatus == null)
                 return false;
 
             if (!_currentSession.SelectedCompletionSet.SelectionStatus.IsSelected && !force)

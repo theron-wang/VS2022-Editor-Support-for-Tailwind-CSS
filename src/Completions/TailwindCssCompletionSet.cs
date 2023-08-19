@@ -81,8 +81,8 @@ namespace TailwindCSSIntellisense.Completions
 
             _filteredCompletions.Filter(c => 
             {
-                var segments = c.DisplayText.Split(':').Last().Split('-');
-                return FilterBufferText.Split('-').All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
+                var segments = c.DisplayText.Split(':').Last().Split(new char[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
+                return segments.Length == 0 || (FilterBufferText.Split('-').All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s))));
             });
         }
 
