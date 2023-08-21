@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.7.8 (August 21st, 2023)
+
+### Fixes
+
+- Classes would not show up consistently with IntelliSense ([#14](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/14))
+- Spacing mapper now works when local culture uses commas instead of dots ([#15](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/15))
+- Fixed an issue where `tailwind.extension.json` could not be found when multiple projects are loaded
+
 ## 1.1.7.7 (August 19th, 2023)
 
 ### Fixes

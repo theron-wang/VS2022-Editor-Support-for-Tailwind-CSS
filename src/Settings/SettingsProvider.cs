@@ -198,7 +198,7 @@ namespace TailwindCSSIntellisense.Settings
             {
                 foreach (var p in await VS.Solutions.GetAllProjectsAsync())
                 {
-                    if (File.Exists(Path.Combine(Path.GetDirectoryName(project.FullPath), "tailwind.extension.json")))
+                    if (File.Exists(Path.Combine(Path.GetDirectoryName(p.FullPath), ExtensionConfigFileName)))
                     {
                         return Path.GetDirectoryName(p.FullPath);
                     }
