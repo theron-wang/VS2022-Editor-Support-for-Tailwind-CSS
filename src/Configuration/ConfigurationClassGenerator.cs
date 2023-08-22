@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -123,13 +124,6 @@ namespace TailwindCSSIntellisense.Configuration
                             _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = new Dictionary<string, string>();
                         }
                     }
-                    else if (stem.Contains('{') && stem.Contains("{*}") == false)
-                    {
-                        var s = stem.Replace($"-{stem.Split('-').Last()}", "");
-                        var values = stem.Split('-').Last().Trim('{', '}').Split('|').Select(v => $"{s}-{v}");
-
-                        classesToRemove.AddRange(_completionBase.Classes.Where(c => values.Contains(c.Name) && c.SupportsBrackets == false));
-                    }
                     else
                     {
                         IEnumerable<TailwindClass> descClasses;
@@ -140,6 +134,14 @@ namespace TailwindCSSIntellisense.Configuration
                             s = stem.Replace("-{*}", "");
 
                             descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            classesToRemove.AddRange(descClasses);
+                        }
+                        else if (stem.Contains('{'))
+                        {
+                            s = stem.Replace($"-{stem.Split('-').Last()}", "");
+                            var values = stem.Split('-').Last().Trim('{', '}').Split('|').Select(v => $"{s}-{v}");
+
+                            descClasses = _completionBase.Classes.Where(c => values.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                             classesToRemove.AddRange(descClasses);
                         }
                         else
@@ -179,7 +181,11 @@ namespace TailwindCSSIntellisense.Configuration
 
                             string format;
 
-                            if (texts.Count() <= 1)
+                            if (texts.Count() == 0)
+                            {
+                                continue;
+                            }
+                            else if (texts.Count() == 1)
                             {
                                 var text = texts.First();
                                 var colon = text.IndexOf(':');
@@ -300,6 +306,13 @@ namespace TailwindCSSIntellisense.Configuration
 
                             descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                         }
+                        else if (stem.Contains('{'))
+                        {
+                            s = stem.Replace($"-{stem.Split('-').Last()}", "");
+                            var values = stem.Split('-').Last().Trim('{', '}').Split('|').Select(v => $"{s}-{v}");
+
+                            descClasses = _completionBase.Classes.Where(c => values.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                        }
                         else
                         {
                             descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
@@ -311,6 +324,7 @@ namespace TailwindCSSIntellisense.Configuration
                         {
                             insertStem = s.Replace("-span", "");
                         }
+
                         if (GetDictionary(config.ExtendedValues[key], out var dict))
                         {
                             classesToAdd.AddRange(dict.Keys
@@ -328,7 +342,11 @@ namespace TailwindCSSIntellisense.Configuration
 
                             string format;
 
-                            if (texts.Count() <= 1)
+                            if (texts.Count() == 0)
+                            {
+                                continue;
+                            }
+                            else if (texts.Count() == 1)
                             {
                                 var text = texts.First();
                                 var colon = text.IndexOf(':');

@@ -1,6 +1,7 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -89,7 +90,7 @@ namespace TailwindCSSIntellisense
                 // Check for updates again
                 foreach (var project in await VS.Solutions.GetAllProjectsAsync())
                 {
-                    await _checkForUpdates.UpdateIfNeededAsync(Path.GetDirectoryName(project.FullPath));
+                    JoinableTaskFactory.RunAsync(() => _checkForUpdates.UpdateIfNeededAsync(Path.GetDirectoryName(project.FullPath))).FireAndForget();
                 }
             }
         }
@@ -116,7 +117,7 @@ namespace TailwindCSSIntellisense
                 await _completionUtils.Configuration.ReloadCustomAttributesAsync();
 
                 // Check for updates again
-                await _checkForUpdates.UpdateIfNeededAsync(folderName);
+                JoinableTaskFactory.RunAsync(() => _checkForUpdates.UpdateIfNeededAsync(folderName)).FireAndForget();
             }
             catch (Exception ex)
             {

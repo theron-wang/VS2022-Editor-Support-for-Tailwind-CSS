@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.8 (Unreleased)
+
+### Fixes
+
+- Error loading `tailwind.config.js` when certain properties are used ([#16](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/16))
+
+### Enhancements
+
+- Changed Tailwind update check to be asynchronous and forgotten to prevent UI locking
+
 ## 1.1.7.8 (August 21st, 2023)
 
 ### Fixes
