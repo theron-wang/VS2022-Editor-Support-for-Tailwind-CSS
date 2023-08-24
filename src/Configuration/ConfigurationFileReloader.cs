@@ -52,7 +52,7 @@ namespace TailwindCSSIntellisense.Configuration
         {
             if (file.Equals(_fileName, StringComparison.InvariantCultureIgnoreCase))
             {
-                ThreadHelper.JoinableTaskFactory.Run(_config.ReloadCustomAttributesAsync);
+                ThreadHelper.JoinableTaskFactory.RunAsync(_config.ReloadCustomAttributesAsync).FireAndForget();
             }
         }
 

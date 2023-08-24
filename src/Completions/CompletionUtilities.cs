@@ -362,12 +362,26 @@ namespace TailwindCSSIntellisense.Completions
                 spacingValue += $" /*{(negative ? -1 : 1) * result * 16}px*/";
             }
 
-            return FormatDescription(string.Format(DescriptionMapper[tailwindClass.Replace("{0}", "{s}")], (negative ? "-" : "") + spacingValue));
+            var key = tailwindClass.Replace("{0}", "{s}");
+
+            if (DescriptionMapper.ContainsKey(key))
+            {
+                return FormatDescription(string.Format(DescriptionMapper[key], (negative ? "-" : "") + spacingValue));
+            }
+            else
+            {
+                return null;
+            }
         }
 
         internal string GetDescription(string tailwindClass, string color, int? opacity)
         {
             var value = GetColorDescription(color, opacity, tailwindClass);
+
+            if (string.IsNullOrEmpty(value) || DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
+            {
+                return null;
+            }
 
             var format = DescriptionMapper[tailwindClass.Replace("{0}", "{c}")];
 
@@ -379,6 +393,10 @@ namespace TailwindCSSIntellisense.Completions
                 }
                 else
                 {
+                    if (opacity != null)
+                    {
+                        format = format.Replace(": 1;", $": {opacity.Value / 100};");
+                    }
                     return FormatDescription(string.Format(format, value + ")"));
                 }
             }
@@ -392,6 +410,10 @@ namespace TailwindCSSIntellisense.Completions
             }
             else
             {
+                if (opacity != null)
+                {
+                    format = format.Replace(": 1;", $": {opacity.Value / 100f};");
+                }
                 return FormatDescription(string.Format(format, value + " "));
             }
         }

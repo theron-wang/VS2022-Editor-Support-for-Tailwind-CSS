@@ -78,6 +78,11 @@
     <Compile Include="Node\PackageJsonReader.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
+    <Compile Include="QuickInfo\CssQuickInfoSource.cs" />
+    <Compile Include="QuickInfo\HtmlQuickInfoSource.cs" />
+    <Compile Include="QuickInfo\CssQuickInfoSourceProvider.cs" />
+    <Compile Include="QuickInfo\HtmlQuickInfoSourceProvider.cs" />
+    <Compile Include="QuickInfo\QuickInfoSource.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

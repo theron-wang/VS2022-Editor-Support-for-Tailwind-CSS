@@ -408,19 +408,6 @@ namespace TailwindCSSIntellisense.Configuration
                         var color = ColorTranslator.FromHtml($"#{hex}");
                         newColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
                     }
-                    else if (s.StartsWith("colors"))
-                    {
-                        var color = s.Split('.').Last();
-
-                        if (ColorToRgbMapperOrig.Any(c => c.Key.StartsWith(color)))
-                        {
-                            foreach (var pairing in ColorToRgbMapperOrig.Where(
-                                p => p.Key.StartsWith(color)))
-                            {
-                                newColorToRgbMapper[pairing.Key.Replace(color, key)] = pairing.Value;
-                            }
-                        }
-                    }
                     else if (s.StartsWith("rgb"))
                     {
                         var openParen = s.IndexOf('(');

@@ -1,9 +1,13 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Threading;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Configuration
@@ -17,12 +21,7 @@ namespace TailwindCSSIntellisense.Configuration
         [Import]
         internal ConfigFileScanner Scanner { get; set; }
 
-        /// <summary>
-        /// Gets the configuration settings from the TailwindCSS configuration file.
-        /// </summary>
-        /// <remarks>Returns null if the configuration file cannot be found, or if the configuration file does not have a 'theme' section.</remarks>
-        /// <returns>Returns a <see cref="Task{TailwindConfiguration}" /> of type <see cref="TailwindConfiguration"/> which contains the parsed configuration information</returns>
-        internal async Task<TailwindConfiguration> GetConfigurationAsync()
+        internal async Task<JsonObject> GetConfigJsonNodeAsync()
         {
             var path = await Scanner.FindConfigurationFilePathAsync();
 
@@ -31,289 +30,141 @@ namespace TailwindCSSIntellisense.Configuration
                 return null;
             }
 
-            string fileText;
-
-            using (var fileStream = File.OpenRead(path))
+            var processInfo = new ProcessStartInfo()
             {
-                using (var reader = new StreamReader(fileStream))
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardInput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                FileName = "cmd",
+                Arguments = "/c node",
+                WorkingDirectory = Path.GetDirectoryName(Path.GetDirectoryName(path))
+            };
+
+            var process = Process.Start(processInfo);
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+
+            // syntax like ({ theme }) => theme('colors') not supported yet; replace null
+            var command = $"console.log(JSON.stringify(require('{path.Replace('\\', '/')}'), (key, value) => {{ return typeof value === 'function' ? null : value }}));";
+
+            var file = new StringBuilder();
+
+            process.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
+            {
+                if (string.IsNullOrEmpty(e.Data) == false)
                 {
-                    fileText = await reader.ReadToEndAsync();
+                    file.AppendLine(e.Data);
                 }
+            };
+            var hasError = false;
+            var error = new StringBuilder();
+            process.ErrorDataReceived += (object sender, DataReceivedEventArgs e) =>
+            {
+                if (string.IsNullOrEmpty(e.Data) == false && e.Data.Contains("warn") == false)
+                {
+                    hasError = true;
+                    error.AppendLine(e.Data);
+                }
+            };
+            await process.StandardInput.WriteLineAsync(command);
+            process.StandardInput.Close();
+            await process.WaitForExitAsync();
+
+            if (hasError)
+            {
+                throw new InvalidOperationException("Error occurred while parsing configuration file: " + error.ToString().Trim());
             }
 
-            var stringBuilder = new StringBuilder();
-            var isInComment = false;
+            var fileText = file.ToString().Trim();
 
-            foreach (var l in fileText.Split('\n'))
-            {
-                var line = l.Trim();
-                var alreadyProcessed = false;
-                if (l.Contains("/*") && isInComment == false)
-                {
-                    line = line.Split(new string[] { "/*" }, StringSplitOptions.None)[0];
+            return JsonSerializer.Deserialize<JsonObject>(fileText);
+        }
 
-                    if (string.IsNullOrWhiteSpace(line) == false)
-                    {
-                        stringBuilder.AppendLine(line);
-                    }
+        /// <summary>
+        /// Gets the configuration settings from the TailwindCSS configuration file.
+        /// </summary>
+        /// <remarks>Returns null if the configuration file cannot be found, or if the configuration file does not have a 'theme' section.</remarks>
+        /// <returns>Returns a <see cref="Task{TailwindConfiguration}" /> of type <see cref="TailwindConfiguration"/> which contains the parsed configuration information</returns>
+        internal async Task<TailwindConfiguration> GetConfigurationAsync()
+        {
+            var obj = await GetConfigJsonNodeAsync();
 
-                    alreadyProcessed = true;
-                    isInComment = true;
-                }
-                if (l.Contains("//") && isInComment == false)
-                {
-                    line = line.Split(new string[] { "//" }, StringSplitOptions.None)[0];
+            var theme = obj["theme"];
 
-                    if (string.IsNullOrWhiteSpace(line) == false)
-                    {
-                        stringBuilder.AppendLine(line);
-                    }
-                    alreadyProcessed = true;
-                }
-                if (l.Contains("*/") && isInComment) 
-                {
-                    line = l.Split(new string[] { "*/" }, StringSplitOptions.None).Last();
-
-                    if (string.IsNullOrWhiteSpace(line) == false)
-                    {
-                        stringBuilder.AppendLine(line);
-                    }
-
-                    alreadyProcessed = true;
-                    isInComment = false;
-                }
-                if (alreadyProcessed == false && isInComment == false)
-                {
-
-                    stringBuilder.AppendLine(line);
-                }
-            }
-
-            fileText = stringBuilder.ToString();
-
-            var mainBlock = GetBlockOrValue(fileText, "theme", out _);
-
-            if (mainBlock is null)
+            if (theme == null)
             {
                 return null;
             }
 
-            var extend = GetBlockOrValue(mainBlock, "extend", out _);
-
             var config = new TailwindConfiguration();
 
-            if (extend != null)
-            {
-                mainBlock = mainBlock.Replace(extend, "");
-
-                config.ExtendedValues = GetTotalValue(extend);
-            }
-
-            config.OverridenValues = GetTotalValue(mainBlock);
+            config.OverridenValues = GetTotalValue(theme, "extend") ?? new Dictionary<string, object>();
+            config.ExtendedValues = GetTotalValue(theme["extend"]) ?? new Dictionary<string, object>();
 
             return config;
         }
 
-        private string GetBlockOrValue(string scope, string key, out bool isBlock)
+        private Dictionary<string, object> GetTotalValue(JsonNode node, string ignoreKey = null)
         {
-            var cutoff = scope.IndexOf($"{key}:");
-
-            if (cutoff == -1)
+            if (node == null)
             {
-                isBlock = false;
                 return null;
             }
 
-
-            /*
-             * backgroundSize: ({ theme }) => ({
-                auto: 'auto',
-                cover: 'cover',
-                contain: 'contain',
-                ...theme('spacing')
-            })
-             */
-
-            scope = scope.Substring(cutoff);
-
-            /*({ theme }) => ({
-                auto: 'auto',
-                cover: 'cover',
-                contain: 'contain',
-                ...theme('spacing')
-            }),
-            borderRadius: {
-            }
-             */
-
-            var nearestColon = scope.IndexOf(':');
-            var nearestArrow = scope.IndexOf("=>");
-            var nearestTheme = scope.IndexOf("theme");
-            var needToTrimEndingParenthesis = false;
-            // If we are looking at the theme base block then this will be true and we don't want that
-            if (nearestArrow != -1 && nearestTheme != -1 && nearestColon < nearestTheme && nearestTheme < nearestArrow)
-            {
-                var nextOpenBracket = scope.IndexOf('{', nearestTheme);
-                scope = scope.Substring(nextOpenBracket);
-                needToTrimEndingParenthesis = true;
-            }
-
-            var index = scope.IndexOf('{') + 1;
-
-            int nearestTerminator = scope.IndexOfAny(new char[] { ',', '}' });
-
-            var nearestStartQuote = scope.IndexOfAny(new char[] { '\'', '"', '`' }, nearestColon);
-            if (nearestStartQuote < nearestTerminator && nearestStartQuote != -1)
-            {
-                var nearestEndQuote = scope.IndexOfAny(new char[] { '\'', '"', '`' }, nearestStartQuote + 1);
-
-                if (nearestEndQuote != -1)
-                {
-                    nearestTerminator = scope.IndexOfAny(new char[] { ',', '}' }, nearestEndQuote);
-                }
-            }
-
-            if (nearestTerminator == -1)
-            {
-                nearestTerminator = scope.Length - 1;
-            }
-
-            // Item is innermost element, return value instead of block
-            if (index == 0 || nearestTerminator < index)
-            {
-                isBlock = false;
-                var colon = scope.IndexOf(':') + 1;
-                return scope.Substring(colon, nearestTerminator - colon).TrimEnd('}').Trim();
-            }
-
-            /*{
-                auto: 'auto',
-                cover: 'cover',
-                contain: 'contain',
-                ...theme('spacing')
-            })
-             */
-            if (needToTrimEndingParenthesis)
-            {
-                scope = scope.Trim().TrimEnd(')');
-            }
-
-            var blocksIn = 1;
-
-            while (blocksIn != 0 && index < scope.Length)
-            {
-                if (scope[index] == '{')
-                {
-                    blocksIn++;
-                }
-                else if (scope[index] == '}')
-                {
-                    blocksIn--;
-                }
-                index++;
-            }
-
-            if (index < scope.Length)
-            {
-                index++;
-            }
-            var start = scope.IndexOf('{');
-            isBlock = true;
-            return scope.Substring(start == -1 ? 0 : start, index - scope.IndexOf('{') - 1);
-        }
-
-        private List<string> GetKeys(string scope)
-        {
-            var index = scope.IndexOf('{') + 1;
-            var blocksIn = 1;
-
-            var keys = new List<string>();
-            char? punct = null;
-
-            while (blocksIn != 0 && index < scope.Length)
-            {
-                if (scope[index] == ':' && blocksIn == 1)
-                {
-                    string key = "";
-                    for (int i = index - 1; IsCharAcceptedLetter(scope[i]); i--)
-                    {
-                        key = scope[i] + key;
-                    }
-
-                    keys.Add(key.Trim());
-                }
-
-                if (scope[index] == '{' && punct == null)
-                {
-                    blocksIn++;
-                }
-                else if (scope[index] == '}' && punct == null)
-                {
-                    blocksIn--;
-                }
-                else if (scope[index] == '\'')
-                {
-                    if (punct == null)
-                    {
-                        punct = '\'';
-                    }
-                    else if (punct == '\'')
-                    {
-                        punct = null;
-                    }
-                }
-                else if (scope[index] == '"')
-                {
-                    if (punct == null)
-                    {
-                        punct = '"';
-                    }
-                    else if (punct == '"')
-                    {
-                        punct = null;
-                    }
-                }
-                else if (scope[index] == '`')
-                {
-                    if (punct == null)
-                    {
-                        punct = '`';
-                    }
-                    else if (punct == '`')
-                    {
-                        punct = null;
-                    }
-                }
-                index++;
-            }
-
-            return keys;
-        }
-
-        private bool IsCharAcceptedLetter(char character)
-        {
-            return char.IsLetterOrDigit(character) || character == '\'' || character == '"' || character == '-' || character == '_' || character == '/';
-        }
-
-        private Dictionary<string, object> GetTotalValue(string scope)
-        {
             var result = new Dictionary<string, object>();
 
-            foreach (var key in GetKeys(scope))
+            if (GetValueKind(node) == JsonValueKind.Object)
             {
-                var value = GetBlockOrValue(scope, key, out bool isBlock);
-
-                if (isBlock)
+                foreach (var key in GetKeys(node))
                 {
-                    result[key.Trim('\'', '"')] = GetTotalValue(value);
-                }
-                else if (string.IsNullOrWhiteSpace(value) == false)
-                {
-                    result[key.Trim('\'', '"')] = value.Trim('\'', '"');
+                    if (key == ignoreKey)
+                    {
+                        continue;
+                    }
+                    var valueKind = GetValueKind(node[key]);
+                    if (valueKind == JsonValueKind.Object)
+                    {
+                        result[key] = GetTotalValue(node[key]);
+                    }
+                    else if (valueKind == JsonValueKind.Array)
+                    {
+                        result[key] = node[key].AsArray().Select(n => n.ToString()).ToList();
+                    }
+                    else if (valueKind != JsonValueKind.Null)
+                    {
+                        result[key] = node[key].ToString().Trim();
+                    }
                 }
             }
 
             return result;
+        }
+
+        private ICollection<string> GetKeys(JsonNode obj)
+        {
+            return ((IDictionary<string, JsonNode>)obj).Keys;
+        }
+
+        private JsonValueKind GetValueKind(JsonNode node)
+        {
+            if (node is JsonObject)
+            {
+                return JsonValueKind.Object;
+            }
+            else if (node is JsonArray)
+            {
+                return JsonValueKind.Array;
+            }
+            else if (node is null)
+            {
+                return JsonValueKind.Null;
+            }
+
+            var value = node.GetValue<JsonElement>();
+
+            return value.ValueKind;
         }
     }
 }

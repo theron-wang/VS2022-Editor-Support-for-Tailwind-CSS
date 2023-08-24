@@ -46,10 +46,18 @@ namespace TailwindCSSIntellisense.Configuration
             ScreenOrig = _completionBase.Screen.ToList();
             ColorToRgbMapperOrig = _completionBase.ColorToRgbMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
 
-            var config = await Parser.GetConfigurationAsync();
-            LoadGlobalConfiguration(config);
-            LoadIndividualConfigurationOverride(config);
-            LoadIndividualConfigurationExtend(config);
+            try
+            {
+                var config = await Parser.GetConfigurationAsync();
+                LoadGlobalConfiguration(config);
+                LoadIndividualConfigurationOverride(config);
+                LoadIndividualConfigurationExtend(config);
+            }
+            catch (Exception ex)
+            {
+                await VS.StatusBar.ShowMessageAsync("Tailwind CSS: Failed to load configuration file; check the 'Extensions' output window for more details");
+                await ex.LogAsync();
+            }
 
             await Reloader.InitializeAsync(this);
         }
@@ -64,16 +72,26 @@ namespace TailwindCSSIntellisense.Configuration
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
                 await VS.StatusBar.ShowProgressAsync("Reloading TailwindCSS configuration", 1, 2);
 
-                var config = await Parser.GetConfigurationAsync();
-                LoadGlobalConfiguration(config);
-                _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
+                try
+                {
+                    var config = await Parser.GetConfigurationAsync();
+                    LoadGlobalConfiguration(config);
+                    _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
 
-                LoadIndividualConfigurationOverride(config);
-                LoadIndividualConfigurationExtend(config);
+                    LoadIndividualConfigurationOverride(config);
+                    LoadIndividualConfigurationExtend(config);
 
-                await VS.StatusBar.ShowProgressAsync("", 2, 2);
-                await VS.StatusBar.ShowMessageAsync("Finished reloading TailwindCSS configuration");
-                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+                    await VS.StatusBar.ShowProgressAsync("", 2, 2);
+                    await VS.StatusBar.ShowMessageAsync("Finished reloading TailwindCSS configuration");
+                    await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+                }
+                catch (Exception ex)
+                {
+                    await VS.StatusBar.ShowProgressAsync("", 2, 2);
+                    await VS.StatusBar.ShowMessageAsync("Tailwind CSS: Failed to load configuration file; check the 'Extensions' output window for more details");
+                    await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
+                    await ex.LogAsync();
+                }
             }
         }
 

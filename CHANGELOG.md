@@ -1,6 +1,11 @@
 # Changelog
 
-## 1.1.8 (Unreleased)
+## 1.1.8 (August 23rd, 2023)
+
+### Additions
+
+- Re-written configuration file parser to support referencing other files (i.e. using `require('tailwindcss/defaultTheme')` to reference the default theme)
+- Added hover tooltips for Tailwind classes
 
 ### Fixes
 
@@ -8,7 +13,7 @@
 
 ### Enhancements
 
-- Changed Tailwind update check to be asynchronous and forgotten to prevent UI locking
+- Changed Tailwind update check to be asynchronous to prevent UI locking
 
 ## 1.1.7.8 (August 21st, 2023)
 
