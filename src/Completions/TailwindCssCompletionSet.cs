@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using TailwindCSSIntellisense.Options;
@@ -79,9 +80,9 @@ namespace TailwindCSSIntellisense.Completions
                 return;
             }
 
-            _filteredCompletions.Filter(c => 
+            _filteredCompletions.Filter(c =>
             {
-                var segments = c.DisplayText.Split(':').Last().Split('-');
+                var segments = c.DisplayText.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries).Last().Split('-');
                 var filterSegments = FilterBufferText.Split(':').Last().Split(new char[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
                 return filterSegments.Length == 0 || filterSegments.All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
             });
@@ -90,7 +91,35 @@ namespace TailwindCSSIntellisense.Completions
         /// <inheritdoc />
         public override void SelectBestMatch()
         {
-            SelectBestMatch(CompletionMatchType.MatchInsertionText, false);
+            Completion completionSelection = null;
+
+            if (string.IsNullOrWhiteSpace(FilterBufferText) == false && string.IsNullOrWhiteSpace(FilterBufferText.Split(':').Last()) == false)
+            {
+                foreach (var completion in Completions)
+                {
+                    if (completion.InsertionText == FilterBufferText)
+                    {
+                        SelectionStatus = new CompletionSelectionStatus(completion, true, true);
+                        return;
+                    }
+                    else if (completion.InsertionText.StartsWith(FilterBufferText))
+                    {
+                        if (completionSelection == null || completion.InsertionText.Length < completionSelection.InsertionText.Length)
+                        {
+                            completionSelection = completion;
+                        }
+                    }
+                }
+            }
+
+            if (completionSelection != null)
+            {
+                SelectionStatus = new CompletionSelectionStatus(completionSelection, false, true);
+            }
+            else
+            {
+                SelectBestMatch(CompletionMatchType.MatchInsertionText, false);
+            }
         }
     }
 }

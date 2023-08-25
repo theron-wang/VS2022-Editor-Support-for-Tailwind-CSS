@@ -43,7 +43,7 @@ namespace TailwindCSSIntellisense.Completions
         internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
         internal Dictionary<string, Dictionary<string, string>> CustomSpacingMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
 
-        internal Dictionary<string, string> DescriptionMapper { get; set; }
+        internal Dictionary<string, string> DescriptionMapper { get; set; } = new Dictionary<string, string>();
         internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = new Dictionary<string, string>();
 
         /// <summary>

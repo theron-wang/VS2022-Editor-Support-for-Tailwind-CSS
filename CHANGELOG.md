@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.8.1 (August 25th, 2023)
+
+### Enhancements
+
+- IntelliSense now scrolls correctly when filtering (i.e. typing `border-b` will now prioritize `border-b` instead of `border-blue-*`)
+
+### Fixes
+
+- IntelliSense did not show any modifiers (i.e. `active:`, `focus:`) in certain cases
+- Fixed an exception which would occur when hovering over Tailwind classes before the project was loaded
+- Build process would build to default file when adding a new project (related to [#14](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/14))
+
 ## 1.1.8 (August 23rd, 2023)
 
 ### Additions

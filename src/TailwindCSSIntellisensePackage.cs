@@ -133,6 +133,7 @@ namespace TailwindCSSIntellisense
             if (_checkForUpdates != null)
             {
                 VS.Events.SolutionEvents.OnAfterOpenProject -= ProjectLoaded;
+                VS.Events.SolutionEvents.OnAfterOpenFolder -= FolderOpened;
             }
         }
 

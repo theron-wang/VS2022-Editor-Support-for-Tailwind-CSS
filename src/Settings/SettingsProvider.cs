@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Configuration;
@@ -188,15 +189,15 @@ namespace TailwindCSSIntellisense.Settings
 
         private async Task<string> GetActiveProjectDirectoryAsync()
         {
-            var project = await VS.Solutions.GetActiveProjectAsync();
+            var projects = await VS.Solutions.GetAllProjectsAsync();
 
-            if (project == null)
+            if (projects == null || projects.Any() == false)
             {
                 return await FileFinder.GetCurrentMiscellaneousProjectPathAsync();
             }
             else
             {
-                foreach (var p in await VS.Solutions.GetAllProjectsAsync())
+                foreach (var p in projects)
                 {
                     if (File.Exists(Path.Combine(Path.GetDirectoryName(p.FullPath), ExtensionConfigFileName)))
                     {
@@ -204,7 +205,7 @@ namespace TailwindCSSIntellisense.Settings
                     }
                 }
 
-                return Path.GetDirectoryName(project.FullPath);
+                return Path.GetDirectoryName(projects.First().FullPath);
             }
         }
 
