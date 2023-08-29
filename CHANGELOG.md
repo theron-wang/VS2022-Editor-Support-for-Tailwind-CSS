@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.1.8.2 (August 29th, 2023)
+
+### Fixes
+
+- Fixed QuickInfo tooltips showing more than 1 description ([#17](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/17))
+- QuickInfo tooltips would not show up with `whitespace-...` variants
+- Fixed an issue where backspacing from the end of a class would not show other completions
+
+### Enhancements
+
+- Added `px` values for non-spacing `rem` values
+
 ## 1.1.8.1 (August 25th, 2023)
 
 ### Enhancements

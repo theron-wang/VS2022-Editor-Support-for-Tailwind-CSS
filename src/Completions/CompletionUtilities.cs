@@ -35,10 +35,10 @@ namespace TailwindCSSIntellisense.Completions
         internal List<string> Modifiers { get; set; }
         internal List<string> Screen { get; set; } = new List<string>() { "sm", "md", "lg", "xl", "2xl" };
         internal List<int> Opacity { get; set; }
-        internal Dictionary<string, string> ColorToRgbMapper { get; set; }
-        internal Dictionary<string, string> SpacingMapper { get; set; }
+        internal Dictionary<string, string> ColorToRgbMapper { get; set; } = new Dictionary<string, string>();
+        internal Dictionary<string, string> SpacingMapper { get; set; } = new Dictionary<string, string>();
         internal Dictionary<string, ImageSource> ColorToRgbMapperCache { get; private set; } = new Dictionary<string, ImageSource>();
-        internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; }
+        internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; } = new Dictionary<string, List<string>>();
 
         internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
         internal Dictionary<string, Dictionary<string, string>> CustomSpacingMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
@@ -332,15 +332,46 @@ namespace TailwindCSSIntellisense.Completions
 
         internal string GetDescription(string tailwindClass)
         {
+            string description = null;
             if (CustomDescriptionMapper.ContainsKey(tailwindClass))
             {
-                return FormatDescription(CustomDescriptionMapper[tailwindClass]);
+                description = CustomDescriptionMapper[tailwindClass];
             }
             if (DescriptionMapper.ContainsKey(tailwindClass))
             {
-                return FormatDescription(DescriptionMapper[tailwindClass]);
+                description = DescriptionMapper[tailwindClass];
             }
-            return null;
+
+            if (description == null)
+            {
+                return null;
+            }
+
+            var oldDescription = description;
+            try
+            {
+                var index = description.IndexOf("rem;");
+
+                while (index != -1)
+                {
+                    var replace = description.Substring(index, 4);
+
+                    var start = description.LastIndexOf(' ', index) + 1;
+                    var number = float.Parse(description.Substring(start, index - start));
+
+                    replace = $"{number}{replace}";
+
+                    description = description.Replace(replace, $"{number}rem /*{(tailwindClass.StartsWith("-") ? -1 : 1) * number * 16}px*/;");
+
+                    index = description.IndexOf("rem;");
+                }
+            }
+            catch
+            {
+                description = oldDescription;
+            }
+
+            return FormatDescription(description);
         }
 
         internal string GetDescription(string tailwindClass, string spacing)

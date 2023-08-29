@@ -93,7 +93,11 @@ namespace TailwindCSSIntellisense.Completions
         {
             Completion completionSelection = null;
 
-            if (string.IsNullOrWhiteSpace(FilterBufferText) == false && string.IsNullOrWhiteSpace(FilterBufferText.Split(':').Last()) == false)
+            if (_filteredCompletions.Count == 1)
+            {
+                SelectionStatus = new CompletionSelectionStatus(_filteredCompletions[0], true, true);
+            }
+            else if (string.IsNullOrWhiteSpace(FilterBufferText) == false && string.IsNullOrWhiteSpace(FilterBufferText.Split(':').Last()) == false)
             {
                 foreach (var completion in Completions)
                 {

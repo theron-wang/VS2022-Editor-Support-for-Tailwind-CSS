@@ -29,6 +29,11 @@ namespace TailwindCSSIntellisense.QuickInfo
 
         public Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
         {
+            if (session.Content is null || session.Content.Any())
+            {
+                return Task.FromResult<QuickInfoItem>(null);
+            }
+
             var triggerPoint = session.GetTriggerPoint(_textBuffer.CurrentSnapshot);
 
             if (triggerPoint != null && IsInClassScope(session, out var classSpan) && classSpan != null)
@@ -36,7 +41,7 @@ namespace TailwindCSSIntellisense.QuickInfo
                 var classText = classSpan.Value.GetText().Split(':').Last();
                 var desc = GetDescription(classText);
                 var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
-
+                
                 if (string.IsNullOrEmpty(desc) == false)
                 {
                     var classElement = new ContainerElement(

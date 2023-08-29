@@ -36,8 +36,13 @@ namespace TailwindCSSIntellisense.Completions.Sources
             {
                 var currentClassStem = currentClass.Split('-')[0];
                 var searchClass = $"-{currentClass.TrimStart('-')}";
+                var startsWith = currentClass[0].ToString();
+                if (currentClass.Length > 1)
+                {
+                    startsWith += currentClass[1];
+                }
                 var scope = completionUtils.Classes.Where(
-                    c => c.Name.Contains(searchClass) || c.Name.StartsWith(currentClass) || c.UseColors);
+                    c => c.Name.Contains(searchClass) || c.Name.StartsWith(startsWith) || c.UseColors);
 
                 if (currentClass.StartsWith("-") == false)
                 {

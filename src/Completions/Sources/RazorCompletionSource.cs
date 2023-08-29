@@ -128,7 +128,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 var newCompletions = e.CompletionSession.GetComputedItems(default)
                     .Items
                     .Where(c => c.DisplayText.StartsWith(classText.Split(' ').Last(), StringComparison.InvariantCultureIgnoreCase))
-                    .Select(c => new Completion3(c.DisplayText, c.InsertText, c.DisplayText, c.Icon == null ? KnownMonikers.LocalVariable : new ImageMoniker() { Guid = c.Icon.ImageId.Guid, Id = c.Icon.ImageId.Id }, null));
+                    .Select(c => new Completion3(c.DisplayText, c.InsertText, null, c.Icon == null ? KnownMonikers.LocalVariable : new ImageMoniker() { Guid = c.Icon.ImageId.Guid, Id = c.Icon.ImageId.Id }, null));
 
                 tailwindCompletionSet.AddCompletions(newCompletions);
                 e.CompletionSession?.Dismiss();
