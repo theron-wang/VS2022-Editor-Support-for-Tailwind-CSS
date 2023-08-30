@@ -350,20 +350,20 @@ namespace TailwindCSSIntellisense.Completions
             var oldDescription = description;
             try
             {
-                var index = description.IndexOf("rem;");
-
-                while (index != -1)
+                var index = 0;
+                while (description.IndexOf("rem;", index) != -1)
                 {
-                    var replace = description.Substring(index, 4);
+                    var remIndex = description.IndexOf("rem;", index);
 
-                    var start = description.LastIndexOf(' ', index) + 1;
-                    var number = float.Parse(description.Substring(start, index - start));
+                    var replace = description.Substring(remIndex, 4);
+
+                    var start = description.LastIndexOf(' ', remIndex) + 1;
+                    var number = float.Parse(description.Substring(start, remIndex - start));
 
                     replace = $"{number}{replace}";
 
                     description = description.Replace(replace, $"{number}rem /*{(tailwindClass.StartsWith("-") ? -1 : 1) * number * 16}px*/;");
-
-                    index = description.IndexOf("rem;");
+                    index = description.IndexOf("*/", remIndex);
                 }
             }
             catch

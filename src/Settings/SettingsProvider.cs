@@ -165,10 +165,24 @@ namespace TailwindCSSIntellisense.Settings
                 OutputCssFile = GetRelativePath(settings.TailwindOutputCssFile, projectRoot)
             };
 
-            using (var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
+            if (projectSettings.ConfigurationFile == null && projectSettings.InputCssFile == null && projectSettings.OutputCssFile == null && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
             {
-                _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings);
-                await _fileWritingTask;
+                try
+                {
+                    File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
+                }
+                catch
+                {
+
+                }
+            }
+            else
+            {
+                using (var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
+                {
+                    _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings);
+                    await _fileWritingTask;
+                }
             }
 
             _cachedSettings = settings;

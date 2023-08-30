@@ -79,15 +79,13 @@ namespace TailwindCSSIntellisense
 
             if (await VS.Solutions.IsOpenAsync())
             {
-                await _completionUtils.InitializeAsync();
+                JoinableTaskFactory.RunAsync(async () =>
+                {
+                    await _buildProcess.InitializeAsync(true);
+                    await _completionUtils.InitializeAsync();
+                    await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
+                }).FireAndForget();
 
-                await _buildProcess.InitializeAsync();
-
-                // Resets tailwind.config.js configuration styles
-                await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
-                await _completionUtils.Configuration.ReloadCustomAttributesAsync();
-
-                // Check for updates again
                 foreach (var project in await VS.Solutions.GetAllProjectsAsync())
                 {
                     JoinableTaskFactory.RunAsync(() => _checkForUpdates.UpdateIfNeededAsync(Path.GetDirectoryName(project.FullPath))).FireAndForget();
@@ -100,33 +98,24 @@ namespace TailwindCSSIntellisense
             FolderOpened(Path.GetDirectoryName(project.FullPath));
         }
 
-#pragma warning disable VSTHRD100 // Avoid async void methods
-        private async void FolderOpened(string folderName)
+        private void FolderOpened(string folderName)
         {
             try
             {
-                // Reinitialize build process
-                await _buildProcess.InitializeAsync(true);
-
-                // Initialize completion - caches classes
-                // Only fires once; after that, the method does not fire
-                await _completionUtils.InitializeAsync();
-
-                // Resets tailwind.config.js configuration styles
-                await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
-                await _completionUtils.Configuration.ReloadCustomAttributesAsync();
-
-                // Check for updates again
-                JoinableTaskFactory.RunAsync(() => _checkForUpdates.UpdateIfNeededAsync(folderName)).FireAndForget();
+                JoinableTaskFactory.RunAsync(async () =>
+                {
+                    await _buildProcess.InitializeAsync(true);
+                    await _completionUtils.InitializeAsync();
+                    await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
+                    await _checkForUpdates.UpdateIfNeededAsync(folderName);
+                }).FireAndForget();
             }
             catch (Exception ex)
             {
-                // Catch so process does not crash (as per VSTHRD100)
-                await VS.StatusBar.ShowMessageAsync("Tailwind CSS: An error occurred while loading in this project");
-                await ex.LogAsync();
+                JoinableTaskFactory.Run(() => VS.StatusBar.ShowMessageAsync("Tailwind CSS: An error occurred while loading in this project"));
+                ex.Log();
             }
         }
-#pragma warning restore VSTHRD100 // Avoid async void methods
 
         public void Dispose()
         {

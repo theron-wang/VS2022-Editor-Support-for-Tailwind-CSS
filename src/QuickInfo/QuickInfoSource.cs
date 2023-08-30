@@ -1,11 +1,10 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.StandardClassification;
-using Microsoft.VisualStudio.Text.Adornments;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Adornments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
@@ -16,6 +15,8 @@ namespace TailwindCSSIntellisense.QuickInfo
     {
         protected ITextBuffer _textBuffer;
         protected CompletionUtilities _completionUtilities;
+
+        private const string PropertyKey = "tailwindintellisensequickinfoadded";
 
         public QuickInfoSource(ITextBuffer textBuffer, CompletionUtilities completionUtilities)
         {
@@ -29,7 +30,8 @@ namespace TailwindCSSIntellisense.QuickInfo
 
         public Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
         {
-            if (session.Content is null || session.Content.Any())
+            // session.Properties is to ensure that quick info is only added once (measure for #17)
+            if (session.Content is null || session.Content.Any() || session.State == QuickInfoSessionState.Visible || session.State == QuickInfoSessionState.Dismissed || session.Properties.ContainsProperty(PropertyKey))
             {
                 return Task.FromResult<QuickInfoItem>(null);
             }
@@ -41,7 +43,7 @@ namespace TailwindCSSIntellisense.QuickInfo
                 var classText = classSpan.Value.GetText().Split(':').Last();
                 var desc = GetDescription(classText);
                 var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
-                
+
                 if (string.IsNullOrEmpty(desc) == false)
                 {
                     var classElement = new ContainerElement(
@@ -80,6 +82,8 @@ namespace TailwindCSSIntellisense.QuickInfo
                             new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, "}")
                         )
                     );
+
+                    session.Properties.AddProperty(PropertyKey, true);
 
                     return Task.FromResult(
                         new QuickInfoItem(span, new ContainerElement(
