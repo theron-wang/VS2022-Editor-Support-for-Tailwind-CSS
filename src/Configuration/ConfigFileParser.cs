@@ -98,10 +98,12 @@ namespace TailwindCSSIntellisense.Configuration
                 return null;
             }
 
-            var config = new TailwindConfiguration();
-
-            config.OverridenValues = GetTotalValue(theme, "extend") ?? new Dictionary<string, object>();
-            config.ExtendedValues = GetTotalValue(theme["extend"]) ?? new Dictionary<string, object>();
+            var config = new TailwindConfiguration
+            {
+                OverridenValues = GetTotalValue(theme, "extend") ?? new Dictionary<string, object>(),
+                ExtendedValues = GetTotalValue(theme["extend"]) ?? new Dictionary<string, object>(),
+                Prefix = obj["prefix"]?.ToString()
+            };
 
             return config;
         }

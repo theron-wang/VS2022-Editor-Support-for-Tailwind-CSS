@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.8.4 (September 8th, 2023)
+
+### Additions
+
+- Support for `prefix` values ([#19](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/19))
+- Added description support for `fontFamily` and `dropShadow` (`fontSize` not supported)
+
 ## 1.1.8.3 (August 30th, 2023)
 
 ### Fixes

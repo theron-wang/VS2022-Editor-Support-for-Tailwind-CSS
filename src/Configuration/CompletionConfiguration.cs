@@ -9,9 +9,13 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Configuration.Descriptions;
 
 namespace TailwindCSSIntellisense.Configuration
 {
+    /// <summary>
+    /// Check ConfigurationClassGenerator.cs for the other half
+    /// </summary>
     [Export]
     public sealed partial class CompletionConfiguration
     {
@@ -23,6 +27,9 @@ namespace TailwindCSSIntellisense.Configuration
 
         [Import]
         internal ConfigFileScanner Scanner { get; set; }
+
+        [Import(typeof(GeneratorAggregator))]
+        internal GeneratorAggregator DescriptionGenerator { get; set; }
 
         private bool _areValuesDefault;
         private CompletionUtilities _completionBase;
@@ -49,6 +56,7 @@ namespace TailwindCSSIntellisense.Configuration
             try
             {
                 var config = await Parser.GetConfigurationAsync();
+                _completionBase.Prefix = config.Prefix;
                 LoadGlobalConfiguration(config);
                 LoadIndividualConfigurationOverride(config);
                 LoadIndividualConfigurationExtend(config);
@@ -75,6 +83,7 @@ namespace TailwindCSSIntellisense.Configuration
                 try
                 {
                     var config = await Parser.GetConfigurationAsync();
+                    _completionBase.Prefix = config.Prefix;
                     LoadGlobalConfiguration(config);
                     _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
 

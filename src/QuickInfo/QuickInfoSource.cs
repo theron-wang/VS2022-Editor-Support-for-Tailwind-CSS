@@ -41,7 +41,17 @@ namespace TailwindCSSIntellisense.QuickInfo
             if (triggerPoint != null && IsInClassScope(session, out var classSpan) && classSpan != null)
             {
                 var classText = classSpan.Value.GetText().Split(':').Last();
-                var desc = GetDescription(classText);
+
+                string desc;
+                if (classText.StartsWith(_completionUtilities.Prefix))
+                {
+                    desc = GetDescription(classText.Substring(_completionUtilities.Prefix.Length));
+                }
+                else
+                {
+                    desc = GetDescription(classText);
+                }
+
                 var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
 
                 if (string.IsNullOrEmpty(desc) == false)

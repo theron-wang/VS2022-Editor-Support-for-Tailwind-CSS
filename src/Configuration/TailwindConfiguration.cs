@@ -22,5 +22,7 @@ namespace TailwindCSSIntellisense.Configuration
         /// The value is a <see cref="Dictionary{TKey, TValue}"/>, which holds the specific key/value pairs of the extended values.
         /// </remarks>
         public Dictionary<string, object> ExtendedValues { get; set; } = new Dictionary<string, object>();
+
+        public string Prefix { get; set; }
     }
 }

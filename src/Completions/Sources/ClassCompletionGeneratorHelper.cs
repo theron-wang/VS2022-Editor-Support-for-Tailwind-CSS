@@ -21,6 +21,13 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var modifiers = classRaw.Split(':').ToList();
 
             var currentClass = modifiers.Last();
+            var prefix = completionUtils.Prefix;
+
+            if (string.IsNullOrWhiteSpace(prefix))
+            {
+                prefix = null;
+            }
+
             modifiers.RemoveAt(modifiers.Count - 1);
 
             var completions = new List<Completion>();
@@ -42,7 +49,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     startsWith += currentClass[1];
                 }
                 var scope = completionUtils.Classes.Where(
-                    c => c.Name.Contains(searchClass) || c.Name.StartsWith(startsWith) || c.UseColors);
+                    c => c.Name.Contains(searchClass) || (prefix + c.Name).StartsWith(startsWith) || c.UseColors);
 
                 if (currentClass.StartsWith("-") == false)
                 {
@@ -74,6 +81,16 @@ namespace TailwindCSSIntellisense.Completions.Sources
                         foreach (var color in colors)
                         {
                             var className = string.Format(twClass.Name, color);
+
+                            if (className.StartsWith("-"))
+                            {
+                                className = $"-{prefix}{className.TrimStart('-')}";
+                            }
+                            else
+                            {
+                                className = $"{prefix}{className}";
+                            }
+
                             completions.Add(
                                         new Completion(className,
                                                             modifiersAsString + className,
@@ -119,6 +136,15 @@ namespace TailwindCSSIntellisense.Completions.Sources
                         {
                             var className = string.IsNullOrWhiteSpace(spacing) ? twClass.Name.Replace("-{0}", "") : string.Format(twClass.Name, spacing);
 
+                            if (className.StartsWith("-"))
+                            {
+                                className = $"-{prefix}{className.TrimStart('-')}";
+                            }
+                            else
+                            {
+                                className = $"{prefix}{className}";
+                            }
+
                             completions.Add(
                                 new Completion(className,
                                                     modifiersAsString + className,
@@ -129,18 +155,40 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     }
                     else if (twClass.SupportsBrackets)
                     {
+                        var className = twClass.Name;
+
+                        if (className.StartsWith("-"))
+                        {
+                            className = $"-{prefix}{className.TrimStart('-')}";
+                        }
+                        else
+                        {
+                            className = $"{prefix}{className}";
+                        }
+
                         completions.Add(
-                        new Completion(twClass.Name + "[...]",
-                                            modifiersAsString + twClass.Name + "[]",
+                        new Completion(className + "[...]",
+                                            modifiersAsString + prefix + twClass.Name + "[]",
                                             twClass.Name + "[...]",
                                             completionUtils.TailwindLogo,
                                             null));
                     }
                     else
                     {
+                        var className = twClass.Name;
+
+                        if (className.StartsWith("-"))
+                        {
+                            className = $"-{prefix}{className.TrimStart('-')}";
+                        }
+                        else
+                        {
+                            className = $"{prefix}{className}";
+                        }
+
                         completions.Add(
-                        new Completion(twClass.Name,
-                                            modifiersAsString + twClass.Name,
+                        new Completion(className,
+                                            modifiersAsString + prefix + twClass.Name,
                                             completionUtils.GetDescription(twClass.Name),
                                             completionUtils.TailwindLogo,
                                             null));

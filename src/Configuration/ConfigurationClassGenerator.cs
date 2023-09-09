@@ -181,7 +181,11 @@ namespace TailwindCSSIntellisense.Configuration
 
                             string format;
 
-                            if (texts.Count() == 0)
+                            if (DescriptionGenerator.Handled(key))
+                            {
+                                format = null;
+                            }
+                            else if (texts.Count() == 0)
                             {
                                 continue;
                             }
@@ -212,7 +216,11 @@ namespace TailwindCSSIntellisense.Configuration
 
                             foreach (var pair in dict)
                             {
-                                if (pair.Key == "DEFAULT")
+                                if (DescriptionGenerator.Handled(key))
+                                {
+                                    _completionBase.CustomDescriptionMapper[s] = DescriptionGenerator.GenerateDescription(key, pair.Value);
+                                }
+                                else if (pair.Key == "DEFAULT")
                                 {
                                     _completionBase.CustomDescriptionMapper[s] = string.Format(format, pair.Value.ToString());
                                 }
@@ -342,7 +350,11 @@ namespace TailwindCSSIntellisense.Configuration
 
                             string format;
 
-                            if (texts.Count() == 0)
+                            if (DescriptionGenerator.Handled(key))
+                            {
+                                format = null;
+                            }
+                            else if (texts.Count() == 0)
                             {
                                 continue;
                             }
@@ -374,13 +386,24 @@ namespace TailwindCSSIntellisense.Configuration
 
                             foreach (var pair in dict)
                             {
-                                if (pair.Key == "DEFAULT")
+                                string description;
+
+                                if (DescriptionGenerator.Handled(key))
                                 {
-                                    _completionBase.CustomDescriptionMapper[insertStem] = string.Format(format, pair.Value.ToString());
+                                    description = DescriptionGenerator.GenerateDescription(key, pair.Value);
                                 }
                                 else
                                 {
-                                    _completionBase.CustomDescriptionMapper[$"{insertStem}-{pair.Key}"] = string.Format(format, pair.Value.ToString());
+                                    description = string.Format(format, pair.Value.ToString());
+                                }
+                                
+                                if (pair.Key == "DEFAULT")
+                                {
+                                    _completionBase.CustomDescriptionMapper[insertStem] = description;
+                                }
+                                else
+                                {
+                                    _completionBase.CustomDescriptionMapper[$"{insertStem}-{pair.Key}"] = description;
                                 }
                             }
                         }
