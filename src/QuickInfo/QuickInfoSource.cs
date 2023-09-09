@@ -43,7 +43,7 @@ namespace TailwindCSSIntellisense.QuickInfo
                 var classText = classSpan.Value.GetText().Split(':').Last();
 
                 string desc;
-                if (classText.StartsWith(_completionUtilities.Prefix))
+                if (string.IsNullOrWhiteSpace(_completionUtilities.Prefix) == false && classText.StartsWith(_completionUtilities.Prefix))
                 {
                     desc = GetDescription(classText.Substring(_completionUtilities.Prefix.Length));
                 }
