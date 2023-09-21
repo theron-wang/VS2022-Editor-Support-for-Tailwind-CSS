@@ -78,6 +78,7 @@
     <Compile Include="Configuration\Descriptions\DescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\DropShadowDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\FontFamilyDescriptionGenerator.cs" />
+    <Compile Include="Configuration\Descriptions\FontSizeDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\GeneratorAggregator.cs" />
     <Compile Include="Node\PackageJsonReader.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />

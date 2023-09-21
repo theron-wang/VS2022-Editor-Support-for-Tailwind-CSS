@@ -340,7 +340,7 @@ namespace TailwindCSSIntellisense.Completions
             {
                 description = CustomDescriptionMapper[tailwindClass];
             }
-            if (DescriptionMapper.ContainsKey(tailwindClass))
+            else if (DescriptionMapper.ContainsKey(tailwindClass))
             {
                 description = DescriptionMapper[tailwindClass];
             }

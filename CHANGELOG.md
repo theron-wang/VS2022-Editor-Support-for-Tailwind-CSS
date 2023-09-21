@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.1.8.5 (September 20th, 2023)
+
+### Additions
+
+- Support for `CssClass` in ASP.NET Web Forms controls ([#20](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/20))
+- Full description support for `fontSize`
+
+### Fixes
+
+- Fixed a bug where custom descriptions would sometimes fail to appear
+
 ## 1.1.8.4 (September 8th, 2023)
 
 ### Additions
