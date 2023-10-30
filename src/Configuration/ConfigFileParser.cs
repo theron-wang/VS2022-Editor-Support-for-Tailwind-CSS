@@ -39,7 +39,7 @@ namespace TailwindCSSIntellisense.Configuration
                 CreateNoWindow = true,
                 FileName = "cmd",
                 Arguments = "/c node",
-                WorkingDirectory = Path.GetDirectoryName(Path.GetDirectoryName(path))
+                WorkingDirectory = Path.GetDirectoryName(path)
             };
 
             var process = Process.Start(processInfo);
@@ -47,7 +47,7 @@ namespace TailwindCSSIntellisense.Configuration
             process.BeginErrorReadLine();
 
             // syntax like ({ theme }) => theme('colors') not supported yet; replace null
-            var command = $"console.log(JSON.stringify(require('{path.Replace('\\', '/')}'), (key, value) => {{ return typeof value === 'function' ? null : value }}));";
+            var command = $"console.log(JSON.stringify(require('{path.Replace('\\', '/')}'),(key, value) => {{ return typeof value === 'function' ? value({{ theme: (key) => {{ var defaultTheme = require('tailwindcss/defaultTheme'); var custom = require('{path.Replace('\\', '/')}'); return custom.theme[key] || custom.theme.extend[key] || defaultTheme[key]; }} }}) : value }}));";
 
             var file = new StringBuilder();
 

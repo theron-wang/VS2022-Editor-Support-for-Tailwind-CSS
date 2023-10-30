@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.8.6 (October 29th, 2023)
+
+### Additions
+
+- Support for `({ theme })` in configuration files
+
+### Fixes
+
+- Minor performance fixes for transparency IntelliSense
+
 ## 1.1.8.5 (September 20th, 2023)
 
 ### Additions

@@ -5,7 +5,7 @@
 
 Editor features such as IntelliSense, build integration, among others for Tailwind CSS to enhance the development experience in Visual Studio 2022.
 
-**NOTE**: this extension is designed to be used with Tailwind v3.0.0+; there may be unintended effects when using earlier versions.
+**NOTE**: this extension is designed to be used with the latest version of Tailwind; there may be unintended effects when using earlier versions.
 
 Download from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=TheronWang.TailwindCSSIntellisense).
 
@@ -17,15 +17,15 @@ For information on recent updates, see [the changelog](https://github.com/theron
 
 ## Disclaimer
 
-This is NOT an official Tailwind CSS extension and is NOT affiliated with Tailwind Labs Inc. 
+This is **not** an official Tailwind CSS extension and is **not** affiliated with Tailwind Labs Inc. 
 
 ## Prerequisites
 
-This extension uses npm for multiple features, so you should have npm installed to avoid errors.
+This extension uses `npm` and `node` under the hood, so you should have them installed to avoid errors.
 
-To check if you have npm installed, run `npm -v` in the terminal.
+To check if you have `npm` installed, run `npm -v` in the terminal.
 
-If you do not have npm installed, follow [this tutorial](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) from the official npm docs.
+If you do not have `npm` installed, follow [this tutorial](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) from the official npm docs.
 
 ## Usage
 
@@ -40,8 +40,6 @@ Customization support for `theme` and `theme.extension` values:
 ![Custom Configuration File](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-2-Configuration.png)
 
 ![Intellisense Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-3.png)
-
-Please note that referencing theme values using functions (`({ theme }) => ({ ... })`) is not yet supported.
 
 ### Build Integration
 
@@ -59,7 +57,7 @@ Custom `package.json` scripts are supported on build:
 
 ![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
 
-You can customize the behavior in Tools > Options > TailwindCSS IntelliSense > Custom Build.
+You can customize the behavior in Tools > Options > Tailwind CSS Intellisense > Custom Build.
 
 ### NPM Integration
 
@@ -87,7 +85,7 @@ Please note that the extension creates a `tailwind.extension.json` file in your 
 
 #### Extension Options
 
-Extension settings are located in Tools > Options > TailwindCSS Intellisense.
+Extension settings are located in Tools > Options > Tailwind CSS Intellisense.
 
 ## Troubleshooting
 
@@ -110,4 +108,4 @@ Visual Studio does not provide an API to override error tagging, so you will see
 
 ## Bugs / Suggestions
 
-If you run into any issues or come up with any feature suggestions while using this extension, please create an issue [on GitHub](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/new).
+If you run into any issues or come up with any feature suggestions while using this extension, please create an issue [on the GitHub repo](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/new).

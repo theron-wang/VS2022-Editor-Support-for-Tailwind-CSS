@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 
 namespace TailwindCSSIntellisense.Configuration.Descriptions
 {
@@ -13,11 +14,11 @@ namespace TailwindCSSIntellisense.Configuration.Descriptions
         {
             if (value is string)
             {
-                return $"font-family: {value}";
+                return $"font-family: '{value}'";
             }
             else if (value is IEnumerable<string> array)
             {
-                return $"font-family: {string.Join(", ", array)}";
+                return $"font-family: {string.Join(", ", array.Select(v => $"'{v}'"))}";
             }
             return null;
         }

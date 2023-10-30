@@ -1,8 +1,10 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.Shell;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -48,6 +50,8 @@ namespace TailwindCSSIntellisense.Completions
 
         internal Dictionary<string, string> DescriptionMapper { get; set; } = new Dictionary<string, string>();
         internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = new Dictionary<string, string>();
+
+        internal Dictionary<string, string> ColorDescriptionMapper { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
         /// Initializes the necessary utilities to provide completion
@@ -107,19 +111,19 @@ namespace TailwindCSSIntellisense.Completions
             var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
             List<Variant> variants;
 
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindclasses.json"), FileMode.Open, FileAccess.Read))
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindclasses.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 variants = await JsonSerializer.DeserializeAsync<List<Variant>>(fs);
             }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindmodifiers.json"), FileMode.Open, FileAccess.Read))
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindmodifiers.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 Modifiers = await JsonSerializer.DeserializeAsync<List<string>>(fs);
             }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindrgbmapper.json"), FileMode.Open, FileAccess.Read))
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindrgbmapper.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 ColorToRgbMapper = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(fs);
             }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindspacing.json"), FileMode.Open, FileAccess.Read))
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindspacing.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 var spacing = await JsonSerializer.DeserializeAsync<List<string>>(fs);
                 SpacingMapper = new Dictionary<string, string>();
@@ -135,15 +139,15 @@ namespace TailwindCSSIntellisense.Completions
                     }
                 }
             }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindopacity.json"), FileMode.Open, FileAccess.Read))
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindopacity.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 Opacity = await JsonSerializer.DeserializeAsync<List<int>>(fs);
             }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindconfig.json"), FileMode.Open, FileAccess.Read))
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindconfig.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 ConfigurationValueToClassStems = await JsonSerializer.DeserializeAsync<Dictionary<string, List<string>>>(fs);
             }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwinddesc.json"), FileMode.Open, FileAccess.Read))
+            using (var fs = File.Open(Path.Combine(baseFolder, "tailwinddesc.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 DescriptionMapper = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(fs);
             }
@@ -329,7 +333,6 @@ namespace TailwindCSSIntellisense.Completions
             {
                 output.AppendLine($"{line.Trim()};");
             }
-
             return output.ToString().Trim();
         }
 
@@ -410,45 +413,49 @@ namespace TailwindCSSIntellisense.Completions
 
         internal string GetDescription(string tailwindClass, string color, int? opacity)
         {
-            var value = GetColorDescription(color, opacity, tailwindClass);
-
-            if (string.IsNullOrEmpty(value) || DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
+            var value = new StringBuilder(GetColorDescription(color, opacity, tailwindClass));
+            
+            if (string.IsNullOrEmpty(value.ToString()) || DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
             {
                 return null;
             }
 
-            var format = DescriptionMapper[tailwindClass.Replace("{0}", "{c}")];
+            var format = new StringBuilder(DescriptionMapper[tailwindClass.Replace("{0}", "{c}")]);
+            var formatAsString = format.ToString();
 
-            if (format.Contains("{0};"))
+            if (formatAsString.Contains("{0};"))
             {
-                if (value.StartsWith("{noparse}"))
+                if (value.ToString().StartsWith("{noparse}"))
                 {
-                    return FormatDescription(string.Format(format, value.Replace("{noparse}", "")));
+                    return FormatDescription(string.Format(format.ToString(), value.Replace("{noparse}", "")));
                 }
                 else
                 {
                     if (opacity != null)
                     {
-                        format = format.Replace(": 1;", $": {opacity.Value / 100};");
+                        format.Replace(": 1;", $": {opacity.Value / 100};");
                     }
-                    return FormatDescription(string.Format(format, value + ")"));
+                    return FormatDescription(string.Format(format.ToString(), value + ")"));
                 }
             }
 
-            if (value.StartsWith("{noparse}"))
+            if (value.ToString().StartsWith("{noparse}"))
             {
-                var startIndex = format.IndexOf("{0}") + 3;
-                var replace = format.Substring(startIndex, format.IndexOf(';', startIndex) - startIndex);
+                var startIndex = formatAsString.IndexOf("{0}") + 3;
+                var replace = formatAsString.Substring(startIndex, formatAsString.IndexOf(';', startIndex) - startIndex);
 
-                return FormatDescription(string.Format(format.Replace(replace, ""), value.Replace("{noparse}", "")));
+                format.Replace(replace, "");
+                value.Replace("{noparse}", "");
+
+                return FormatDescription(string.Format(format.ToString(), value.ToString()));
             }
             else
             {
                 if (opacity != null)
                 {
-                    format = format.Replace(": 1;", $": {opacity.Value / 100f};");
+                    format.Replace(": 1;", $": {opacity.Value / 100f};");
                 }
-                return FormatDescription(string.Format(format, value + " "));
+                return FormatDescription(string.Format(format.ToString(), value.ToString() + " "));
             }
         }
 
@@ -513,7 +520,13 @@ namespace TailwindCSSIntellisense.Completions
                 Drawing = geometry
             };
 
-            ColorToRgbMapperCache.Add($"{stem}/{color}/{opacity}", result);
+            var key = $"{color}/{opacity}";
+            if (string.IsNullOrEmpty(stem) == false)
+            {
+                key = $"{stem}/{key}";
+            }
+
+            ColorToRgbMapperCache[key] = result;
 
             return result;
         }
@@ -522,8 +535,13 @@ namespace TailwindCSSIntellisense.Completions
         {
             string value;
             Dictionary<string, string> dict = null;
+
             if (stem != null)
             {
+                if (ColorDescriptionMapper.TryGetValue($"{stem}/{color}/{opacity}", out value))
+                {
+                    return value;
+                }
                 if (CustomColorMappers != null && CustomColorMappers.TryGetValue(stem, out dict) == false)
                 {
                     if (ColorToRgbMapper.TryGetValue(color, out value) == false)
@@ -548,6 +566,10 @@ namespace TailwindCSSIntellisense.Completions
             }
             else
             {
+                if (ColorDescriptionMapper.TryGetValue($"{stem}/{color}/{opacity}", out value))
+                {
+                    return value;
+                }
                 if (ColorToRgbMapper.TryGetValue(color, out value) == false)
                 {
                     return null;
@@ -570,14 +592,26 @@ namespace TailwindCSSIntellisense.Completions
                 return null;
             }
 
+            string result;
+
             if (opacity != null)
             {
-                return $"rgb({rgb[0]} {rgb[1]} {rgb[2]} / {opacity})";
+                result = $"rgb({rgb[0]} {rgb[1]} {rgb[2]} / {opacity})";
             }
             else
             {
-                return $"rgb({rgb[0]} {rgb[1]} {rgb[2]}";
+                result = $"rgb({rgb[0]} {rgb[1]} {rgb[2]}";
             }
+
+            var key = $"{color}/{opacity}";
+            if (string.IsNullOrEmpty(stem) == false)
+            {
+                key = $"{stem}/{key}";
+            }
+
+            ColorDescriptionMapper[key] = result;
+
+            return result;
         }
     }
 }

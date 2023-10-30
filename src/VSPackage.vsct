@@ -30,7 +30,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as TailwindCSS configuration file</ButtonText>
+					<ButtonText>Set as Tailwind CSS configuration file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -41,7 +41,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as TailwindCSS build file</ButtonText>
+					<ButtonText>Set as Tailwind CSS build file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -52,7 +52,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as TailwindCSS output file</ButtonText>
+					<ButtonText>Set as Tailwind CSS output file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -63,7 +63,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Remove as TailwindCSS configuration file</ButtonText>
+					<ButtonText>Remove as Tailwind CSS configuration file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -74,7 +74,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Remove as TailwindCSS build file</ButtonText>
+					<ButtonText>Remove as Tailwind CSS build file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -85,7 +85,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Remove as TailwindCSS output file</ButtonText>
+					<ButtonText>Remove as Tailwind CSS output file</ButtonText>
 				</Strings>
 			</Button>
 		
@@ -95,7 +95,7 @@
 				<CommandFlag>IconIsMoniker</CommandFlag>
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<Strings>
-					<ButtonText>Start TailwindCSS build process</ButtonText>
+					<ButtonText>Start Tailwind CSS build process</ButtonText>
 				</Strings>
 			</Button>
 
@@ -106,7 +106,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Stop TailwindCSS build process</ButtonText>
+					<ButtonText>Stop Tailwind CSS build process</ButtonText>
 				</Strings>
 			</Button>
 
@@ -116,7 +116,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set up TailwindCSS</ButtonText>
+					<ButtonText>Set up Tailwind CSS</ButtonText>
 				</Strings>
 			</Button>
 
@@ -129,7 +129,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as TailwindCSS configuration file</ButtonText>
+					<ButtonText>Set as Tailwind CSS configuration file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -140,7 +140,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as TailwindCSS build file</ButtonText>
+					<ButtonText>Set as Tailwind CSS build file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -151,7 +151,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as TailwindCSS output file</ButtonText>
+					<ButtonText>Set as Tailwind CSS output file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -162,7 +162,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Remove as TailwindCSS configuration file</ButtonText>
+					<ButtonText>Remove as Tailwind CSS configuration file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -173,7 +173,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Remove as TailwindCSS build file</ButtonText>
+					<ButtonText>Remove as Tailwind CSS build file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -184,7 +184,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Remove as TailwindCSS output file</ButtonText>
+					<ButtonText>Remove as Tailwind CSS output file</ButtonText>
 				</Strings>
 			</Button>
 			
@@ -194,7 +194,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set up TailwindCSS</ButtonText>
+					<ButtonText>Set up Tailwind CSS</ButtonText>
 				</Strings>
 			</Button>
 
@@ -204,7 +204,7 @@
 				<CommandFlag>IconIsMoniker</CommandFlag>
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<Strings>
-					<ButtonText>Start TailwindCSS build process</ButtonText>
+					<ButtonText>Start Tailwind CSS build process</ButtonText>
 				</Strings>
 			</Button>
 
@@ -215,7 +215,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Stop TailwindCSS build process</ButtonText>
+					<ButtonText>Stop Tailwind CSS build process</ButtonText>
 				</Strings>
 			</Button>
 		</Buttons>
