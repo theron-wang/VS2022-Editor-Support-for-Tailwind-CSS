@@ -56,6 +56,7 @@
     <Compile Include="Commands\RemoveAsConfigFile.cs" />
     <Compile Include="Commands\SetUpTailwindWs.cs" />
     <Compile Include="Commands\SetUpTailwind.cs" />
+    <Compile Include="Commands\StartMinifyBuildProcess.cs" />
     <Compile Include="Commands\StartBuildProcessWs.cs" />
     <Compile Include="Commands\StopBuildProcessWs.cs" />
     <Compile Include="Commands\StopBuildProcess.cs" />
@@ -146,6 +147,7 @@
     <Content Include="Resources\tailwinddesc.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <None Include="README.md" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>

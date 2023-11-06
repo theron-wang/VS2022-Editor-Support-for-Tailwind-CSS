@@ -1,6 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text.Editor.Commanding.Commands;
 using System;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Build;
@@ -10,8 +9,8 @@ using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
 {
-    [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.StopBuildProcessCmdId)]
-    internal sealed class StopBuildProcess : BaseCommand<StopBuildProcess>
+    [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.StartMinifyBuildProcessCmdId)]
+    internal sealed class StartMinifyBuildProcess : BaseCommand<StartMinifyBuildProcess>
     {
         protected override async Task InitializeCompletedAsync()
         {
@@ -26,27 +25,15 @@ namespace TailwindCSSIntellisense
 
         protected override void BeforeQueryStatus(EventArgs e)
         {
-            var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
-            Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() && ConfigFileScanner.HasConfigurationFile && settings.BuildType != BuildProcessOptions.None;
-            switch (settings.BuildType)
-            {
-                case BuildProcessOptions.Default:
-                    Command.Text = "Stop Tailwind CSS JIT build process";
-                    break;
-                case BuildProcessOptions.OnBuild:
-                    Command.Text = "Cancel Tailwind CSS build";
-                    break;
-                default:
-                    Command.Text = "Stop Tailwind CSS build process";
-                    break;
-            }
+            var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync); 
+            Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() == false && ConfigFileScanner.HasConfigurationFile && settings.BuildType != BuildProcessOptions.None;
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
         {
             await BuildProcess.InitializeAsync();
 
-            BuildProcess.EndProcess();
+            BuildProcess.StartProcess(true);
         }
     }
 }

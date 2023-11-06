@@ -69,7 +69,7 @@ namespace TailwindCSSIntellisense.Build
             // Prevent more than one subscription when projects are changed
             if (_subscribed == false)
             {
-                VS.Events.BuildEvents.ProjectBuildStarted += StartProcess;
+                VS.Events.BuildEvents.ProjectBuildStarted += OnBuild;
                 VS.Events.DocumentEvents.Saved += OnFileSave;
                 SettingsProvider.OnSettingsChanged += SettingsChangedAsync;
                 _subscribed = true;
@@ -79,7 +79,7 @@ namespace TailwindCSSIntellisense.Build
 
         public void Dispose()
         {
-            VS.Events.BuildEvents.ProjectBuildStarted -= StartProcess;
+            VS.Events.BuildEvents.ProjectBuildStarted -= OnBuild;
             VS.Events.DocumentEvents.Saved -= OnFileSave;
             SettingsProvider.OnSettingsChanged -= SettingsChangedAsync;
         }
@@ -148,10 +148,15 @@ namespace TailwindCSSIntellisense.Build
             }
         }
 
+        internal void OnBuild(Project project = null)
+        {
+            StartProcess();
+        }
+
         /// <summary>
         /// Starts the build process
         /// </summary>
-        internal void StartProcess(Project project = null)
+        internal void StartProcess(bool minify = false)
         {
             if (Scanner.HasConfigurationFile == false || _cssFilePath == null || _settings.BuildType == BuildProcessOptions.None)
             {
@@ -191,7 +196,7 @@ namespace TailwindCSSIntellisense.Build
                 {
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
+                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
                     }
                     else if (_settings.OverrideBuild)
                     {
@@ -206,7 +211,7 @@ namespace TailwindCSSIntellisense.Build
 
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\"");
+                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
                     }
                     else if (_settings.OverrideBuild)
                     {
@@ -242,7 +247,7 @@ namespace TailwindCSSIntellisense.Build
                 }
                 #endregion
             }
-            else if (_settings.BuildType == BuildProcessOptions.Default)
+            else if (_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.OnBuild)
             {
                 var dir = Path.GetDirectoryName(_configPath);
                 var cssFile = GetRelativePath(_cssFilePath, dir);
@@ -268,7 +273,7 @@ namespace TailwindCSSIntellisense.Build
 
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" --watch & exit");
+                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
                     }
                     else if (_settings.OverrideBuild)
                     {

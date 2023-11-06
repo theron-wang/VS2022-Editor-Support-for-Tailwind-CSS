@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.8.7 (November 5th, 2023)
+
+### Additions
+
+- Ability to create minified output css files
+- New build option: build once when entire project is built
+- `tailwind.config.js` files will automatically be found when opening an existing project ([#22](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/22))
+
+### Enhancements
+
+- Renamed certain menu items to better reflect their purpose ([#23](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/23))
+- Performance improvements when typing `/` for transparency variants
+
 ## 1.1.8.6 (October 29th, 2023)
 
 ### Additions

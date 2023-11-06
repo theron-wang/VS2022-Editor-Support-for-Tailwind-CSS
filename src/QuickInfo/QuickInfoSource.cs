@@ -146,7 +146,13 @@ namespace TailwindCSSIntellisense.QuickInfo
                     }
                 }
 
-                description = _completionUtilities.GetDescription(stem, color, opacity);
+                description = _completionUtilities.GetDescription(stem, color);
+
+                if (opacity != null)
+                {
+                    description = string.Format(description, opacity.Value / 100f);
+                }
+
                 if (string.IsNullOrEmpty(description) == false)
                 {
                     return description;

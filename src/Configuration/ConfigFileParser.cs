@@ -46,8 +46,19 @@ namespace TailwindCSSIntellisense.Configuration
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
-            // syntax like ({ theme }) => theme('colors') not supported yet; replace null
-            var command = $"console.log(JSON.stringify(require('{path.Replace('\\', '/')}'),(key, value) => {{ return typeof value === 'function' ? value({{ theme: (key) => {{ var defaultTheme = require('tailwindcss/defaultTheme'); var custom = require('{path.Replace('\\', '/')}'); return custom.theme[key] || custom.theme.extend[key] || defaultTheme[key]; }} }}) : value }}));";
+            var command = $@"console.log(
+    JSON.stringify(require('{path.Replace('\\', '/')}'),
+        (key, value) => {{
+            return typeof value === 'function' ? value({{
+                theme: (key) => {{
+                    var defaultTheme = require('tailwindcss/defaultTheme');
+                    var custom = require('{path.Replace('\\', '/')}');
+
+                    return {{ ...defaultTheme[key], ...custom.theme[key], ...custom.theme.extend[key] }};
+                }}
+            }}) : value
+        }})
+);";
 
             var file = new StringBuilder();
 

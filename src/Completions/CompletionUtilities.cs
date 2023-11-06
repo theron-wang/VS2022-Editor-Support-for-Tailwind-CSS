@@ -411,9 +411,9 @@ namespace TailwindCSSIntellisense.Completions
             }
         }
 
-        internal string GetDescription(string tailwindClass, string color, int? opacity)
+        internal string GetDescription(string tailwindClass, string color, bool opacity)
         {
-            var value = new StringBuilder(GetColorDescription(color, opacity, tailwindClass));
+            var value = new StringBuilder(GetColorDescription(color, tailwindClass));
             
             if (string.IsNullOrEmpty(value.ToString()) || DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
             {
@@ -431,11 +431,11 @@ namespace TailwindCSSIntellisense.Completions
                 }
                 else
                 {
-                    if (opacity != null)
+                    if (opacity)
                     {
-                        format.Replace(": 1;", $": {opacity.Value / 100};");
+                        format.Replace(": 1;", ": {1};");
                     }
-                    return FormatDescription(string.Format(format.ToString(), value + ")"));
+                    return FormatDescription(string.Format(format.ToString(), value + ")", "{0}"));
                 }
             }
 
@@ -451,11 +451,11 @@ namespace TailwindCSSIntellisense.Completions
             }
             else
             {
-                if (opacity != null)
+                if (opacity)
                 {
-                    format.Replace(": 1;", $": {opacity.Value / 100f};");
+                    format.Replace(": 1;", ": {1};");
                 }
-                return FormatDescription(string.Format(format.ToString(), value.ToString() + " "));
+                return FormatDescription(string.Format(format.ToString(), value.ToString() + " ", "{0}"));
             }
         }
 
@@ -531,14 +531,14 @@ namespace TailwindCSSIntellisense.Completions
             return result;
         }
 
-        private string GetColorDescription(string color, int? opacity = null, string stem = null)
+        private string GetColorDescription(string color, string stem)
         {
             string value;
             Dictionary<string, string> dict = null;
 
             if (stem != null)
             {
-                if (ColorDescriptionMapper.TryGetValue($"{stem}/{color}/{opacity}", out value))
+                if (ColorDescriptionMapper.TryGetValue($"{stem}/{color}", out value))
                 {
                     return value;
                 }
@@ -547,6 +547,11 @@ namespace TailwindCSSIntellisense.Completions
                     if (ColorToRgbMapper.TryGetValue(color, out value) == false)
                     {
                         return null;
+                    }
+
+                    if (ColorDescriptionMapper.TryGetValue(color, out var desc))
+                    {
+                        return desc;
                     }
                 }
                 else if (dict != null && dict.TryGetValue(color, out value))
@@ -566,7 +571,7 @@ namespace TailwindCSSIntellisense.Completions
             }
             else
             {
-                if (ColorDescriptionMapper.TryGetValue($"{stem}/{color}/{opacity}", out value))
+                if (ColorDescriptionMapper.TryGetValue(color, out value))
                 {
                     return value;
                 }
@@ -592,19 +597,10 @@ namespace TailwindCSSIntellisense.Completions
                 return null;
             }
 
-            string result;
+            var result = $"rgb({rgb[0]} {rgb[1]} {rgb[2]}";
 
-            if (opacity != null)
-            {
-                result = $"rgb({rgb[0]} {rgb[1]} {rgb[2]} / {opacity})";
-            }
-            else
-            {
-                result = $"rgb({rgb[0]} {rgb[1]} {rgb[2]}";
-            }
-
-            var key = $"{color}/{opacity}";
-            if (string.IsNullOrEmpty(stem) == false)
+            var key = color;
+            if (CustomColorMappers.ContainsKey(stem))
             {
                 key = $"{stem}/{key}";
             }

@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Package;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -94,17 +95,20 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             completions.Add(
                                         new Completion(className,
                                                             modifiersAsString + className,
-                                                            completionUtils.GetDescription(twClass.Name, color, null),
+                                                            completionUtils.GetDescription(twClass.Name, color, false),
                                                             completionUtils.GetImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
                                                             null));
-                            if (twClass.UseOpacity && currentClass.Contains('/'))
+
+                            if (twClass.UseOpacity && currentClass.Contains(color) && currentClass.Contains('/'))
                             {
+                                var description = completionUtils.GetDescription(twClass.Name, color, true);
+
                                 foreach (var opacity in completionUtils.Opacity)
                                 {
                                     completions.Add(
-                                            new Completion(className + $"/{opacity}",
-                                                                modifiersAsString + className + $"/{opacity}",
-                                                                completionUtils.GetDescription(twClass.Name, color, opacity),
+                                            new Completion($"{className}/{opacity}",
+                                                                $"{modifiersAsString}{className}/{opacity}",
+                                                                string.Format(description, opacity / 100f),
                                                                 completionUtils.GetImageFromColor(twClass.Name, color, opacity),
                                                                 null));
                                 }

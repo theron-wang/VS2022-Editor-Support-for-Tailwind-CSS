@@ -130,7 +130,7 @@ namespace TailwindCSSIntellisense.Node
                 await process.WaitForExitAsync();
 
                 await VS.StatusBar.ShowProgressAsync("", 3, 3);
-                await VS.StatusBar.ShowMessageAsync($"TailwindCSS update successful (updated to version {newVersion}");
+                await VS.StatusBar.ShowMessageAsync($"TailwindCSS update successful (updated to version {newVersion})");
 
                 _configFilesChecked.Add(settings.TailwindConfigurationFile);
             }

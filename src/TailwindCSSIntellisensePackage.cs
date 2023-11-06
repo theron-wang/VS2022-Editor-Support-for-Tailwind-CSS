@@ -38,6 +38,7 @@ namespace TailwindCSSIntellisense
     [InstalledProductRegistration(Vsix.Name, Vsix.Description, Vsix.Version)]
     // Makes sure that the package is initialized early so the solution explorer commands are showing up
     [ProvideAutoLoad(VSConstants.UICONTEXT.NoSolution_string, PackageAutoLoadFlags.BackgroundLoad)]
+    [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string, PackageAutoLoadFlags.BackgroundLoad)]
     [ProvideAutoLoad(VSConstants.UICONTEXT.DesignMode_string, PackageAutoLoadFlags.BackgroundLoad)]
     public sealed class TailwindCSSIntellisensePackage : AsyncPackage, IDisposable
     {

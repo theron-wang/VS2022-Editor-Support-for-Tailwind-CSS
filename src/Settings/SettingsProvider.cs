@@ -47,6 +47,7 @@ namespace TailwindCSSIntellisense.Settings
         public async Task<TailwindSettings> GetSettingsAsync()
         {
             TailwindSettings returnSettings;
+            var changed = false;
             if (_cacheValid)
             {
                 returnSettings = _cachedSettings;
@@ -101,6 +102,18 @@ namespace TailwindCSSIntellisense.Settings
                         await ex.LogAsync();
                     }
                 }
+                else
+                {
+                    projectSettings = new TailwindSettingsProjectOnly()
+                    {
+                        ConfigurationFile = await FindExistingConfigurationFileAsync()
+                    };
+
+                    if (projectSettings.ConfigurationFile != null)
+                    {
+                        changed = true;
+                    }
+                }
 
                 returnSettings = new TailwindSettings()
                 {
@@ -118,7 +131,6 @@ namespace TailwindCSSIntellisense.Settings
                 _cacheValid = true;
             }
 
-            var changed = false;
             if (returnSettings.TailwindConfigurationFile != null && File.Exists(returnSettings.TailwindConfigurationFile) == false)
             {
                 returnSettings.TailwindConfigurationFile = null;
@@ -221,6 +233,13 @@ namespace TailwindCSSIntellisense.Settings
 
                 return Path.GetDirectoryName(projects.First().FullPath);
             }
+        }
+
+        private async Task<string> FindExistingConfigurationFileAsync()
+        {
+            var paths = await FileFinder.GetJavascriptFilesAsync();
+
+            return paths.FirstOrDefault(p => Path.GetFileName(p).Equals("tailwind.config.js", StringComparison.InvariantCultureIgnoreCase));
         }
 
         private void GeneralSettingsChanged(General settings)
