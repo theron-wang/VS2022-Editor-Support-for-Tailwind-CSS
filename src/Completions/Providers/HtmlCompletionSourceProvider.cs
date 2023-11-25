@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions.Sources;
@@ -14,6 +15,7 @@ namespace TailwindCSSIntellisense.Completions.Providers
     [ContentType("html")]
     [ContentType("WebForms")]
     [Name("TailwindCSS HTML Token Completion")]
+    [Order(After = Priority.Default, Before = Priority.High)]
     internal class HtmlCompletionSourceProvider : ICompletionSourceProvider
     {
         [Import]

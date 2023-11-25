@@ -14,7 +14,7 @@ namespace TailwindCSSIntellisense.Options
     {
         [Category("General")]
         [DisplayName("Enable extension")]
-        [Description("Enables or disables Tailwind CSS extension features (Intellisense, build)")]
+        [Description("Enables or disables the extension features")]
         [DefaultValue(true)]
         public bool UseTailwindCss { get; set; } = true;
         [Category("General")]
@@ -24,7 +24,7 @@ namespace TailwindCSSIntellisense.Options
         public bool TailwindCompletionsComeFirst { get; set; } = true;
         [Category("General")]
         [DisplayName("Automatically apply library updates")]
-        [Description("Set to true if the Tailwind CSS module should update on project load; false if not")]
+        [Description("True if the Tailwind CSS should update on project load; false if not")]
         [DefaultValue(true)]
         public bool AutomaticallyUpdateLibrary { get; set; } = true;
         [Category("Build")]

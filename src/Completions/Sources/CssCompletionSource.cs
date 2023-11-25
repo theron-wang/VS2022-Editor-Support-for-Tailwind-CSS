@@ -63,6 +63,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var position = session.TextView.Caret.Position.BufferPosition.Position;
             var snapshot = _textBuffer.CurrentSnapshot;
             var triggerPoint = session.GetTriggerPoint(snapshot);
+            var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
 
             if (triggerPoint == null)
             {
@@ -116,10 +117,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             {
                 if (IsUsingApplyDirective(session))
                 {
-                    var caretPos = session.TextView.Caret.Position.BufferPosition.Position - line.Start;
-                    var lineText = line.GetText().Substring(0, caretPos).TrimStart();
-
-                    var classRaw = lineText.Split(new[] { "@apply" }, StringSplitOptions.None).Last().TrimStart().Split(' ').Last() ?? "";
+                    var classRaw = applicableTo.GetText(snapshot).Split(new[] { "@apply" }, StringSplitOptions.None).Last().TrimStart().Split(' ').Last() ?? "";
 
                     completions = ClassCompletionGeneratorHelper.GetCompletions(classRaw, _completionUtils);
                 }
@@ -138,8 +136,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     };
                 }
             }
-
-            var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
 
             if (completionSets.Count == 1)
             {
@@ -205,12 +201,17 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 start -= 1;
             }
 
+            while (end.Position < snapshot.Length && end.GetChar() != '"' && end.GetChar() != '\'' && !char.IsWhiteSpace(end.GetChar()))
+            {
+                end += 1;
+            }
+
             if (start.Position != 0)
             {
                 start += 1;
             }
 
-            return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end), SpanTrackingMode.EdgeInclusive);
+            return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end - 1), SpanTrackingMode.EdgeInclusive);
         }
 
         public void Dispose()

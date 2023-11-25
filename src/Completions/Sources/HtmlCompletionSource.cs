@@ -74,11 +74,10 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 return;
             }
 
+            var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
             var currentClassTotal = classAttributeValueUpToPosition.Split(' ').Last();
 
-            var completions = ClassCompletionGeneratorHelper.GetCompletions(currentClassTotal, _completionUtils);
-
-            var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
+            var completions = ClassCompletionGeneratorHelper.GetCompletions(applicableTo.GetText(snapshot), _completionUtils);
 
             if (completionSets.Count == 1)
             {
@@ -164,6 +163,11 @@ namespace TailwindCSSIntellisense.Completions.Sources
             while (start.GetChar() != '"' && start.GetChar() != ' ')
             {
                 start -= 1;
+            }
+
+            while (end.Position < snapshot.Length && end.GetChar() != '"' && end.GetChar() != '\'' && !char.IsWhiteSpace(end.GetChar()))
+            {
+                end += 1;
             }
 
             start += 1;

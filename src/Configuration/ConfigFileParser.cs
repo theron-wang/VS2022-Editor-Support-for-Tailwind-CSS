@@ -49,6 +49,9 @@ namespace TailwindCSSIntellisense.Configuration
             var command = $@"console.log(
     JSON.stringify(require('{path.Replace('\\', '/')}'),
         (key, value) => {{
+            if (key.toLowerCase() === 'plugins') {{
+                return undefined;
+            }}
             return typeof value === 'function' ? value({{
                 theme: (key) => {{
                     var defaultTheme = require('tailwindcss/defaultTheme');

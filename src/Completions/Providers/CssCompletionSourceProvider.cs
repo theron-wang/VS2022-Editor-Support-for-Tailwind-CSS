@@ -13,6 +13,7 @@ namespace TailwindCSSIntellisense.Completions.Providers
     /// </summary>
     [Export(typeof(ICompletionSourceProvider))]
     [ContentType("css")]
+    [ContentType("tcss")]
     [Name("TailwindCSS CSS Token Completion")]
     [Order(After = Priority.Default, Before = Priority.High)]
     internal class CssCompletionSourceProvider : ICompletionSourceProvider

@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions.Sources;
@@ -17,6 +18,7 @@ namespace TailwindCSSIntellisense.Completions.Providers
     [ContentType("LegacyRazor")]
     [ContentType("LegacyRazorCoreCSharp")]
     [Name("TailwindCSS Razor Token Completion")]
+    [Order(After = Priority.Default, Before = Priority.High)]
     internal class RazorCompletionSourceProvider : ICompletionSourceProvider
     {
         [Import]

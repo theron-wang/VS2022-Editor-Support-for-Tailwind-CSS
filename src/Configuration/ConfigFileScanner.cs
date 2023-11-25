@@ -26,7 +26,7 @@ namespace TailwindCSSIntellisense.Configuration
         /// <summary>
         /// Searches through the solution to find a TailwindCSS configuration file.
         /// </summary>
-        /// <returns>A <see cref="Task"/> of type <see cref="string" />, which represents the path to an existing configuration file, or null if one cannot be found</returns>
+        /// <returns>A <see cref="Task"/> of type <see cref="string" />, which represents the absolute path to an existing configuration file, or null if one cannot be found</returns>
         internal async Task<string> FindConfigurationFilePathAsync(bool overrideCurrent = false)
         {
             if (_configFilePath != null && !overrideCurrent)

@@ -82,11 +82,10 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var line = triggerPoint.GetContainingLine();
             SnapshotPoint start = triggerPoint;
 
+            var applicableTo = GetApplicableTo(triggerPoint, snapshot);
             var currentClassTotal = classAttributeValueUpToPosition.Split(' ').Last();
 
-            var completions = ClassCompletionGeneratorHelper.GetCompletions(currentClassTotal, _completionUtils);
-
-            var applicableTo = GetApplicableTo(triggerPoint, snapshot);
+            var completions = ClassCompletionGeneratorHelper.GetCompletions(applicableTo.GetText(snapshot), _completionUtils);
 
             if (completionSets.Count == 1)
             {
@@ -174,6 +173,11 @@ namespace TailwindCSSIntellisense.Completions.Sources
             while (start.GetChar() != '"' && start.GetChar() != ' ')
             {
                 start -= 1;
+            }
+
+            while (end.Position < snapshot.Length && end.GetChar() != '"' && end.GetChar() != '\'' && !char.IsWhiteSpace(end.GetChar()))
+            {
+                end += 1;
             }
 
             start += 1;

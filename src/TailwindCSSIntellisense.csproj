@@ -65,6 +65,7 @@
     <Compile Include="Commands\SetAsInputFile.cs" />
     <Compile Include="Commands\SetAsConfigFile.cs" />
     <Compile Include="Completions\BulkInsertObservableCollection.cs" />
+    <Compile Include="Completions\TCss\TCssFileAndContentTypeDeclaration.cs" />
     <Compile Include="Configuration\CompletionConfiguration.cs" />
     <Compile Include="Completions\Controllers\CssCompletionController.cs" />
     <Compile Include="Completions\Controllers\HtmlCompletionController.cs" />

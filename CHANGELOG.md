@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.8.8 (November 24th, 2023)
+
+### Additions
+
+- Added IntelliSense support for `.tcss` files ([#27](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/27))
+
+### Enhancements
+
+- Using ctrl + space in the middle of a class will now display relevant completions for the entire class
+
+### Fixes
+
+- Fixed an exception which would occur when using `plugins` ([#26](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/26))
+
 ## 1.1.8.7 (November 5th, 2023)
 
 ### Additions
