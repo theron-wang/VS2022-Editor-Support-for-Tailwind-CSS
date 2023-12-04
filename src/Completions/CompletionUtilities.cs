@@ -53,6 +53,9 @@ namespace TailwindCSSIntellisense.Completions
 
         internal Dictionary<string, string> ColorDescriptionMapper { get; set; } = new Dictionary<string, string>();
 
+        internal List<string> PluginClasses { get; set; }
+        internal List<string> PluginModifiers { get; set; }
+
         /// <summary>
         /// Initializes the necessary utilities to provide completion
         /// </summary>
@@ -79,7 +82,7 @@ namespace TailwindCSSIntellisense.Completions
                 await VS.StatusBar.ShowProgressAsync("Loading TailwindCSS configuration", 2, 3);
 
                 await Configuration.InitializeAsync(this);
-                await VS.StatusBar.ShowProgressAsync("TailwindCSS Intellisense initialized", 3, 3);
+                await VS.StatusBar.ShowProgressAsync("TailwindCSS IntelliSense initialized", 3, 3);
 
                 Initialized = true;
                 return true;

@@ -50,7 +50,9 @@ namespace TailwindCSSIntellisense.Completions
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
+#pragma warning disable VSTHRD001 // Avoid legacy thread switching APIs
                     await _dispatcher.BeginInvoke(DispatcherPriority.Send, new AddRangeToBeginningCallback(AddRangeToBeginning), items);
+#pragma warning restore VSTHRD001 // Avoid legacy thread switching APIs
                 });
             }
         }

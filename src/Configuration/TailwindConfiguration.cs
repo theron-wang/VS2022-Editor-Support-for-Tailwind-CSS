@@ -24,5 +24,9 @@ namespace TailwindCSSIntellisense.Configuration
         public Dictionary<string, object> ExtendedValues { get; set; } = new Dictionary<string, object>();
 
         public string Prefix { get; set; }
+
+        public List<string> PluginClasses { get; set; }
+
+        public List<string> PluginModifiers { get; set; }
     }
 }

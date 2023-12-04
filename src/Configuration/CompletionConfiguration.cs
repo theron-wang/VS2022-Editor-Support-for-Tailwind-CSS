@@ -60,6 +60,7 @@ namespace TailwindCSSIntellisense.Configuration
                 LoadGlobalConfiguration(config);
                 LoadIndividualConfigurationOverride(config);
                 LoadIndividualConfigurationExtend(config);
+                LoadPlugins(config);
             }
             catch (Exception ex)
             {
@@ -89,6 +90,8 @@ namespace TailwindCSSIntellisense.Configuration
 
                     LoadIndividualConfigurationOverride(config);
                     LoadIndividualConfigurationExtend(config);
+
+                    LoadPlugins(config);
 
                     await VS.StatusBar.ShowProgressAsync("", 2, 2);
                     await VS.StatusBar.ShowMessageAsync("Finished reloading TailwindCSS configuration");

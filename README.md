@@ -35,7 +35,7 @@ Tailwind CSS classes show up in the IntelliSense completion menus in Razor, HTML
 
 ![Intellisense Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-1.gif)
 
-Customization support for `theme` and `theme.extension` values:
+Customization support for `theme` values and plugins (experimental):
 
 ![Custom Configuration File](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-2-Configuration.png)
 

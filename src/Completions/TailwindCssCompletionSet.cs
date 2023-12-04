@@ -82,9 +82,16 @@ namespace TailwindCSSIntellisense.Completions
 
             _filteredCompletions.Filter(c =>
             {
-                var segments = c.DisplayText.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries).Last().Split('-');
-                var filterSegments = FilterBufferText.Split(':').Last().Split(new char[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
-                return filterSegments.Length == 0 || filterSegments.All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
+                if (string.IsNullOrWhiteSpace(c.DisplayText))
+                {
+                    return c.DisplayText.EndsWith(":");
+                }
+                else
+                {
+                    var segments = c.DisplayText.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries).Last().Split('-');
+                    var filterSegments = FilterBufferText.Split(':').Last().Split(new char[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
+                    return filterSegments.Length == 0 || filterSegments.All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
+                }
             });
         }
 

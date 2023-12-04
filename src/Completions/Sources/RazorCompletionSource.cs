@@ -124,13 +124,19 @@ namespace TailwindCSSIntellisense.Completions.Sources
 
             if (tailwindSession != null && IsInClassScope(tailwindSession, out string classText) && tailwindSession.SelectedCompletionSet is TailwindCssCompletionSet tailwindCompletionSet)
             {
-                var newCompletions = e.CompletionSession.GetComputedItems(default)
+                var otherSessions = sessions.Where(s => s != tailwindSession);
+                tailwindCompletionSet.AddCompletions(e.CompletionSession.GetComputedItems(default)
                     .Items
                     .Where(c => c.DisplayText.StartsWith(classText.Split(' ').Last(), StringComparison.InvariantCultureIgnoreCase))
-                    .Select(c => new Completion3(c.DisplayText, c.InsertText, null, c.Icon == null ? KnownMonikers.LocalVariable : new ImageMoniker() { Guid = c.Icon.ImageId.Guid, Id = c.Icon.ImageId.Id }, null));
+                    .Select(c => new Completion3(c.DisplayText, c.InsertText, null, c.Icon == null ? KnownMonikers.LocalVariable : new ImageMoniker() { Guid = c.Icon.ImageId.Guid, Id = c.Icon.ImageId.Id }, null)));
 
-                tailwindCompletionSet.AddCompletions(newCompletions);
-                e.CompletionSession?.Dismiss();
+                e.CompletionSession.Dismiss();
+                foreach (var session in otherSessions)
+                {
+                    tailwindCompletionSet.AddCompletions(session.SelectedCompletionSet.Completions);
+                    session.Dismiss();
+                }
+
                 // Prevent word cutoff by re-rendering completion GUI
                 tailwindSession.Filter();
             }

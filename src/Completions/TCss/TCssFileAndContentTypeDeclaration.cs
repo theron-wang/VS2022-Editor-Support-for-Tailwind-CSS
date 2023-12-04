@@ -5,6 +5,7 @@ namespace TailwindCSSIntellisense.Completions.TCss
 {
     internal static class TCssFileAndContentTypeDeclaration
     {
+#pragma warning disable   CS0649
         [Export]
         [Name("tcss")]
         [BaseDefinition("css")]
@@ -14,5 +15,6 @@ namespace TailwindCSSIntellisense.Completions.TCss
         [FileExtension(".tcss")]
         [ContentType("tcss")]
         internal static FileExtensionToContentTypeDefinition TCssFileExtensionDefinition;
+#pragma warning restore
     }
 }

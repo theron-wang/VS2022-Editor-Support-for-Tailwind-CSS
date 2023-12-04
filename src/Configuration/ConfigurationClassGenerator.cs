@@ -416,6 +416,16 @@ namespace TailwindCSSIntellisense.Configuration
             _completionBase.Classes.Sort((x, y) => x.Name.CompareTo(y.Name));
         }
 
+        /// <summary>
+        /// Loads IntelliSense for plugins
+        /// </summary>
+        /// <param name="config">The configuration object</param>
+        private void LoadPlugins(TailwindConfiguration config)
+        {
+            _completionBase.PluginClasses = config.PluginClasses;
+            _completionBase.PluginModifiers = config.PluginModifiers;
+        }
+
         private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors)
         {
             var newColorToRgbMapper = new Dictionary<string, string>();

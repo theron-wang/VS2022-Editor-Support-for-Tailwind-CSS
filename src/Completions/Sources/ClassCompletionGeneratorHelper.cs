@@ -1,4 +1,6 @@
-﻿using Microsoft.VisualStudio.Language.Intellisense;
+﻿using EnvDTE;
+using Microsoft.VisualStudio.Imaging.Interop;
+using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Package;
 using System;
 using System.Collections.Generic;
@@ -198,6 +200,31 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                             null));
                     }
                 }
+
+                if (completionUtils.PluginClasses != null)
+                {
+                    foreach (var pluginClass in completionUtils.PluginClasses)
+                    {
+                        if (pluginClass.EndsWith("[]"))
+                        {
+                            completions.Add(
+                                new Completion3(pluginClass.Replace("[]", "[...]"),
+                                                    modifiersAsString + prefix + pluginClass + "[]",
+                                                    pluginClass.Replace("[]", "") + "[...]:",
+                                                    new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
+                                                    null));
+                        }
+                        else
+                        {
+                            completions.Add(
+                                new Completion3(pluginClass.TrimStart('.'),
+                                                    modifiersAsString + prefix + pluginClass.TrimStart('.'),
+                                                    null,
+                                                    new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
+                                                    null));
+                        }
+                    }
+                }
             }
 
             var completionsToAddToEnd = new List<Completion>();
@@ -208,16 +235,16 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     if (modifier.EndsWith("[]"))
                     {
                         completions.Add(
-                            new Completion(modifier.Replace("[]", "") + "[...]:",
+                            new Completion(modifier.Replace("[]", "[...]:"),
                                                 modifiersAsString + modifier + ":",
-                                                modifier.Replace("[]", "") + "[...]:",
+                                                modifier.Replace("[]", "[...]:"),
                                                 completionUtils.TailwindLogo,
                                                 null));
 
                         completionsToAddToEnd.Add(
-                            new Completion("group-" + modifier.Replace("[]", "") + "[...]:",
+                            new Completion("group-" + modifier.Replace("[]", "[...]:"),
                                                 modifiersAsString + "group-" + modifier + ":",
-                                                "group-" + modifier.Replace("[]", "") + "[...]:",
+                                                "group-" + modifier.Replace("[]", "[...]:"),
                                                 completionUtils.TailwindLogo,
                                                 null));
                     }
@@ -239,6 +266,35 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     }
                 }
             }
+
+            if (completionUtils.PluginModifiers != null)
+            {
+                foreach (var modifier in completionUtils.PluginModifiers)
+            {
+                if (modifiers.Contains(modifier) == false)
+                {
+                    if (modifier.EndsWith("[]"))
+                    {
+                        completions.Add(
+                            new Completion3(modifier.Replace("[]", "[...]:"),
+                                                modifiersAsString + modifier + ":",
+                                                modifier.Replace("[]", "[...]:"),
+                                                new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
+                                                null));
+                    }
+                    else
+                    {
+                        completions.Add(
+                            new Completion3(modifier + ":",
+                                                modifiersAsString + modifier + ":",
+                                                modifier,
+                                                new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
+                                                null));
+                    }
+                }
+            }
+            }
+
             foreach (var screen in completionUtils.Screen)
             {
                 if (modifiers.Contains(screen) == false)

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.9 (November 26th, 2023)
+
+### Additions
+
+- IntelliSense support for plugins ([#24](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/24))
+
+### Fixes
+
+- Default IntelliSense may still show up in some cases ([#30](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/30))
+
 ## 1.1.8.8 (November 24th, 2023)
 
 ### Additions

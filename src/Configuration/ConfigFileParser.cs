@@ -45,23 +45,227 @@ namespace TailwindCSSIntellisense.Configuration
             var process = Process.Start(processInfo);
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
+            var command = $@"(function () {{
+    var Module = require('module');
+    var originalRequire = Module.prototype.require;
 
-            var command = $@"console.log(
-    JSON.stringify(require('{path.Replace('\\', '/')}'),
-        (key, value) => {{
-            if (key.toLowerCase() === 'plugins') {{
-                return undefined;
-            }}
-            return typeof value === 'function' ? value({{
-                theme: (key) => {{
-                    var defaultTheme = require('tailwindcss/defaultTheme');
-                    var custom = require('{path.Replace('\\', '/')}');
-
-                    return {{ ...defaultTheme[key], ...custom.theme[key], ...custom.theme.extend[key] }};
+    Module.prototype.require = function () {{
+        if (arguments[0] === 'tailwindcss/plugin') {{
+            return (function () {{
+                function withOptions(pluginDetails, pluginExports) {{
+                    return function (value) {{
+                        return {{
+                            handler: function (functions) {{
+                                options = value;
+                                return pluginDetails(value)(functions);
+                            }},
+                            config: (pluginExports && typeof pluginExports === 'function') ? pluginExports(value) : {{}}
+                        }}
+                    }};
                 }}
-            }}) : value
-        }})
-);";
+                function main(setup, configuration = {{}}) {{
+                    return function (value) {{
+                        return {{
+                            handler: function (functions) {{
+                                return setup(functions);
+                            }},
+                            config: configuration
+                        }};
+                    }};
+                }}
+                main.withOptions = withOptions;
+                return main;
+            }})();
+        }}
+        return originalRequire.apply(this, arguments);
+    }};
+    var configuration = require('{path.Replace('\\', '/')}');
+
+    function getValueByKeyBracket(object, key) {{
+        const keys = key.split('.');
+
+        const result = keys.reduce((acc, currentKey) => {{
+            if (acc && typeof acc === 'object' && currentKey in acc) {{
+                return acc[currentKey];
+            }}
+            return undefined;
+        }}, object);
+
+        return result;
+    }}
+
+    var pluginTheme = null;
+    var newPlugins = [];
+    configuration.plugins.reverse().forEach(function (plugin) {{
+        if (typeof plugin === 'function') {{
+            try {{
+                var evaluated = plugin({{}});
+
+                if (evaluated && evaluated.handler && evaluated.config) {{
+                    plugin = evaluated;
+                }}
+            }} catch {{
+
+            }}
+        }}
+        if (plugin && plugin.handler && plugin.config) {{
+            if (!pluginTheme) {{
+                pluginTheme = {{}};
+            }}
+
+            Object.keys(plugin.config).forEach(key => {{
+                pluginTheme[key] = {{ ...pluginTheme[key], ...plugin.config[key] }};
+            }});
+
+            newPlugins.push(plugin.handler);
+        }} else {{
+            newPlugins.push(plugin);
+        }}
+    }});
+
+    configuration = {{
+        ...configuration,
+        ...pluginTheme
+    }};
+
+    configuration.plugins = newPlugins;
+
+    const defaultLog = console.log;
+    console.log = function () {{ }}
+
+    var parsed = JSON.stringify(configuration,
+        (key, value) => {{
+            if (key === 'plugins') {{
+                var classes = [];
+                var modifiers = [];
+                value.forEach(function (p) {{
+                    p({{
+                        theme: (key, defaultValue) => {{
+                            var defaultTheme = require('tailwindcss/defaultTheme');
+                            var custom = configuration;
+
+                            var output = {{ ...getValueByKeyBracket(defaultTheme, key), ...getValueByKeyBracket(custom.theme, key), ...getValueByKeyBracket(custom.theme.extend, key) }};
+                            return (!output || Object.keys(output).length === 0) ? defaultValue : output;
+                        }},
+                        config: (key, defaultValue) => {{
+                            return getValueByKeyBracket(configuration, key) || defaultValue;
+                        }},
+                        addUtilities: (utilities, options = null) => {{
+                            if (utilities) {{
+                                if (typeof utilities[Symbol.iterator] === 'function') {{
+                                    utilities.forEach(function (u) {{
+                                        classes.push(...Object.keys(u));
+                                    }})
+                                }} else {{
+                                    classes.push(...Object.keys(utilities));
+                                }}
+                            }}
+                        }},
+                        matchUtilities: (utilities, {{ values, supportsNegativeValues }} = null) => {{
+                            if (utilities) {{
+                                if (values) {{
+                                    for (const v of Object.entries(values)) {{
+                                        for (const u of Object.entries(utilities)) {{
+                                            var input = `${{u[0]}}-${{v[0]}}`.replace('-DEFAULT', '');
+                                            classes.push(input);
+                                            if (supportsNegativeValues === true) {{
+                                                classes.push(`-${{input}}`);
+                                            }}
+                                        }}
+                                    }}
+                                }}
+
+                                for (const u of Object.entries(utilities)) {{
+                                    classes.push(`${{u[0]}}-[]`);
+                                    if (supportsNegativeValues === true) {{
+                                        classes.push(`-${{u[0]}}-[]`);
+                                    }}
+                                }}
+                            }}
+                        }},
+                        addComponents: (components, options = null) => {{
+                            if (components) {{
+                                if (typeof components[Symbol.iterator] === 'function') {{
+                                    components.forEach(function (c) {{
+                                        classes.push(...Object.keys(c));
+                                    }})
+                                }} else {{
+                                    classes.push(...Object.keys(components));
+                                }}
+                            }}
+                        }},
+                        matchComponents: (components, {{ values, supportsNegativeValues }} = null) => {{
+                            if (components) {{
+                                if (values) {{
+                                    for (const v of Object.entries(values)) {{
+                                        for (const u of Object.entries(components)) {{
+                                            var input = `${{u[0]}}-${{v[0]}}`.replace('-DEFAULT', '');
+                                            classes.push(input);
+                                            if (supportsNegativeValues === true) {{
+                                                classes.push(`-${{input}}`);
+                                            }}
+                                        }}
+                                    }}
+                                }}
+
+                                for (const u of Object.entries(components)) {{
+                                    classes.push(`${{u[0]}}-[]`);
+                                    if (supportsNegativeValues === true) {{
+                                        classes.push(`-${{u[0]}}-[]`);
+                                    }}
+                                }}
+                            }}
+                        }},
+                        addBase: (base) => {{
+                            return;
+                        }},
+                        addVariant: (name, value) => {{
+                            modifiers.push(name)
+                        }},
+                        matchVariant: (name, cb, {{ values }} = null) => {{
+                            if (name !== '@') {{
+                                name += '-';
+                            }}
+                            if (values) {{
+                                for (const v of Object.entries(values)) {{
+                                    modifiers.push(`${{name}}${{v[0].replace('DEFAULT', '')}}`);
+                                }}
+                            }}
+
+                            modifiers.push(`${{name}}[]`);
+                        }},
+                        corePlugins: (path) => {{
+                            return configuration.corePlugins[path] !== false;
+                        }},
+                        e: (className) => {{
+                            return className.replace(/[!@#$%^&*(),.?"":{{}}|<> ]/g, '\\$&');
+                        }},
+                        prefix: (className) => {{
+                            return '.' + (configuration.prefix ? '' : configuration.prefix) + className.replace('.', '');
+                        }}
+                    }});
+                }});
+
+                return {{
+                    'classes': classes,
+                    'modifiers': modifiers
+                }};
+            }} else {{
+                return typeof value === 'function' ? value({{
+                    theme: (key, defaultValue) => {{
+                        var defaultTheme = require('tailwindcss/defaultTheme');
+                        var custom = configuration;
+
+                        var output = {{ ...getValueByKeyBracket(defaultTheme, key), ...getValueByKeyBracket(custom.theme, key), ...getValueByKeyBracket(custom.theme.extend, key) }};
+                        return (!output || Object.keys(output).length === 0) ? defaultValue : output;
+                    }}
+                }}) : value;
+            }}
+        }}
+    );
+    console.log = defaultLog;
+    console.log(parsed);
+}})();";
 
             var file = new StringBuilder();
 
@@ -112,12 +316,70 @@ namespace TailwindCSSIntellisense.Configuration
                 return null;
             }
 
+            var plugins = GetTotalValue(obj["plugins"]);
+
             var config = new TailwindConfiguration
             {
                 OverridenValues = GetTotalValue(theme, "extend") ?? new Dictionary<string, object>(),
                 ExtendedValues = GetTotalValue(theme["extend"]) ?? new Dictionary<string, object>(),
-                Prefix = obj["prefix"]?.ToString()
+                Prefix = obj["prefix"]?.ToString(),
             };
+
+            try
+            {
+                config.PluginModifiers = plugins.ContainsKey("modifiers") ? (List<string>)plugins["modifiers"] : null;
+
+                if (plugins.ContainsKey("classes"))
+                {
+                    config.PluginClasses = new List<string>();
+                    var classes = (List<string>)plugins["classes"];
+
+                    foreach (var item in classes)
+                    {
+                        if (item.Contains("@media") || item.Contains("@font-face") || item.Contains("@keyframes") || item.Contains("@supports"))
+                        {
+                            continue;
+                        }
+                        var commaSplitClasses = item.Split(new string[] { ",", " .", "." }, StringSplitOptions.RemoveEmptyEntries);
+
+                        foreach (var className in commaSplitClasses)
+                        {
+                            string toAdd = className.Trim();
+                            if (toAdd.StartsWith("[") && toAdd.EndsWith("]"))
+                            {
+                                continue;
+                            }
+                            if (toAdd.Contains('[') && toAdd.IndexOf('[') != toAdd.IndexOf("-[") + 1)
+                            {
+                                toAdd = toAdd.Substring(0, toAdd.IndexOf('['));
+                            }
+                            if (toAdd.Contains(':'))
+                            {
+                                toAdd = toAdd.Substring(0, toAdd.IndexOf(':'));
+                            }
+                            if (toAdd.Contains(' '))
+                            {
+                                toAdd = toAdd.Substring(0, toAdd.IndexOf(' '));
+                            }
+
+                            toAdd = toAdd.TrimEnd(')');
+
+                            if (config.PluginClasses.Contains(toAdd) == false && string.IsNullOrEmpty(toAdd) == false)
+                            {
+                                config.PluginClasses.Add(toAdd);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    config.PluginClasses = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                await ex.LogAsync();
+            }
 
             return config;
         }
