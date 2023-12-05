@@ -77,7 +77,11 @@ namespace TailwindCSSIntellisense.Configuration
                 return main;
             }})();
         }}
-        return originalRequire.apply(this, arguments);
+        try {{
+            return originalRequire.apply(this, arguments);
+        }} catch {{
+            return import(arguments).then(module => module.default);
+        }}
     }};
     var configuration = require('{path.Replace('\\', '/')}');
 

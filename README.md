@@ -9,7 +9,7 @@ Editor features such as IntelliSense, build integration, among others for Tailwi
 
 Download from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=TheronWang.TailwindCSSIntellisense).
 
-To get started, view this [guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md).
+To get started, view [this guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md).
 
 ## Changelog
 

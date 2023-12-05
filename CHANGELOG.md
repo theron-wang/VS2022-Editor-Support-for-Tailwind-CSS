@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.1.9 (November 26th, 2023)
+## 1.1.9.1 (December 4th, 2023)
+
+### Fixes
+
+- Fixed an exception which could occur when referencing plugins using `import` ([#24](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/24))
+
+## 1.1.9 (December 3rd, 2023)
 
 ### Additions
 
