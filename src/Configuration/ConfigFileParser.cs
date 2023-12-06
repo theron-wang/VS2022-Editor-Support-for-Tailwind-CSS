@@ -38,7 +38,7 @@ namespace TailwindCSSIntellisense.Configuration
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 FileName = "cmd",
-                Arguments = "/c node",
+                Arguments = "/c node --experimental-modules",
                 WorkingDirectory = Path.GetDirectoryName(path)
             };
 
@@ -46,229 +46,233 @@ namespace TailwindCSSIntellisense.Configuration
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             var command = $@"(function () {{
-    var Module = require('module');
-    var originalRequire = Module.prototype.require;
+    (async function () {{
+        var Module = require('module');
+        var originalRequire = Module.prototype.require;
 
-    Module.prototype.require = function () {{
-        if (arguments[0] === 'tailwindcss/plugin') {{
-            return (function () {{
-                function withOptions(pluginDetails, pluginExports) {{
-                    return function (value) {{
-                        return {{
-                            handler: function (functions) {{
-                                options = value;
-                                return pluginDetails(value)(functions);
-                            }},
-                            config: (pluginExports && typeof pluginExports === 'function') ? pluginExports(value) : {{}}
-                        }}
-                    }};
-                }}
-                function main(setup, configuration = {{}}) {{
-                    return function (value) {{
-                        return {{
-                            handler: function (functions) {{
-                                return setup(functions);
-                            }},
-                            config: configuration
+        Module.prototype.require = function () {{
+            if (arguments[0] === 'tailwindcss/plugin') {{
+                return (function () {{
+                    function withOptions(pluginDetails, pluginExports) {{
+                        return function (value) {{
+                            return {{
+                                handler: function (functions) {{
+                                    options = value;
+                                    return pluginDetails(value)(functions);
+                                }},
+                                config: (pluginExports && typeof pluginExports === 'function') ? pluginExports(value) : {{}}
+                            }}
                         }};
-                    }};
-                }}
-                main.withOptions = withOptions;
-                return main;
-            }})();
-        }}
-        try {{
+                    }}
+                    function main(setup, configuration = {{}}) {{
+                        return function (value) {{
+                            return {{
+                                handler: function (functions) {{
+                                    return setup(functions);
+                                }},
+                                config: configuration
+                            }};
+                        }};
+                    }}
+                    main.withOptions = withOptions;
+                    return main;
+                }})();
+            }}
+
             return originalRequire.apply(this, arguments);
-        }} catch {{
-            return import(arguments).then(module => module.default);
+        }};
+
+        var configuration = await import('./{Path.GetFileName(path)}');
+
+        if (configuration.default) {{
+            configuration = configuration.default;
         }}
-    }};
-    var configuration = require('{path.Replace('\\', '/')}');
 
-    function getValueByKeyBracket(object, key) {{
-        const keys = key.split('.');
+        function getValueByKeyBracket(object, key) {{
+            const keys = key.split('.');
 
-        const result = keys.reduce((acc, currentKey) => {{
-            if (acc && typeof acc === 'object' && currentKey in acc) {{
-                return acc[currentKey];
-            }}
-            return undefined;
-        }}, object);
-
-        return result;
-    }}
-
-    var pluginTheme = null;
-    var newPlugins = [];
-    configuration.plugins.reverse().forEach(function (plugin) {{
-        if (typeof plugin === 'function') {{
-            try {{
-                var evaluated = plugin({{}});
-
-                if (evaluated && evaluated.handler && evaluated.config) {{
-                    plugin = evaluated;
+            const result = keys.reduce((acc, currentKey) => {{
+                if (acc && typeof acc === 'object' && currentKey in acc) {{
+                    return acc[currentKey];
                 }}
-            }} catch {{
+                return undefined;
+            }}, object);
 
-            }}
+            return result;
         }}
-        if (plugin && plugin.handler && plugin.config) {{
-            if (!pluginTheme) {{
-                pluginTheme = {{}};
+
+        var pluginTheme = null;
+        var newPlugins = [];
+        configuration.plugins.reverse().forEach(function (plugin) {{
+            if (typeof plugin === 'function') {{
+                try {{
+                    var evaluated = plugin({{}});
+
+                    if (evaluated && evaluated.handler && evaluated.config) {{
+                        plugin = evaluated;
+                    }}
+                }} catch {{
+
+                }}
             }}
+            if (plugin && plugin.handler && plugin.config) {{
+                if (!pluginTheme) {{
+                    pluginTheme = {{}};
+                }}
 
-            Object.keys(plugin.config).forEach(key => {{
-                pluginTheme[key] = {{ ...pluginTheme[key], ...plugin.config[key] }};
-            }});
+                Object.keys(plugin.config).forEach(key => {{
+                    pluginTheme[key] = {{ ...pluginTheme[key], ...plugin.config[key] }};
+                }});
 
-            newPlugins.push(plugin.handler);
-        }} else {{
-            newPlugins.push(plugin);
-        }}
-    }});
+                newPlugins.push(plugin.handler);
+            }} else {{
+                newPlugins.push(plugin);
+            }}
+        }});
 
-    configuration = {{
-        ...configuration,
-        ...pluginTheme
-    }};
+        configuration = {{
+            ...configuration,
+            ...pluginTheme
+        }};
 
-    configuration.plugins = newPlugins;
+        configuration.plugins = newPlugins;
 
-    const defaultLog = console.log;
-    console.log = function () {{ }}
+        const defaultLog = console.log;
+        console.log = function () {{ }}
 
-    var parsed = JSON.stringify(configuration,
-        (key, value) => {{
-            if (key === 'plugins') {{
-                var classes = [];
-                var modifiers = [];
-                value.forEach(function (p) {{
-                    p({{
+        var parsed = JSON.stringify(configuration,
+            (key, value) => {{
+                if (key === 'plugins') {{
+                    var classes = [];
+                    var modifiers = [];
+                    value.forEach(function (p) {{
+                        p({{
+                            theme: (key, defaultValue) => {{
+                                var defaultTheme = require('tailwindcss/defaultTheme');
+                                var custom = configuration;
+
+                                var output = {{ ...getValueByKeyBracket(defaultTheme, key), ...getValueByKeyBracket(custom.theme, key), ...getValueByKeyBracket(custom.theme.extend, key) }};
+                                return (!output || Object.keys(output).length === 0) ? defaultValue : output;
+                            }},
+                            config: (key, defaultValue) => {{
+                                return getValueByKeyBracket(configuration, key) || defaultValue;
+                            }},
+                            addUtilities: (utilities, options = null) => {{
+                                if (utilities) {{
+                                    if (typeof utilities[Symbol.iterator] === 'function') {{
+                                        utilities.forEach(function (u) {{
+                                            classes.push(...Object.keys(u));
+                                        }})
+                                    }} else {{
+                                        classes.push(...Object.keys(utilities));
+                                    }}
+                                }}
+                            }},
+                            matchUtilities: (utilities, {{ values, supportsNegativeValues }} = null) => {{
+                                if (utilities) {{
+                                    if (values) {{
+                                        for (const v of Object.entries(values)) {{
+                                            for (const u of Object.entries(utilities)) {{
+                                                var input = `${{u[0]}}-${{v[0]}}`.replace('-DEFAULT', '');
+                                                classes.push(input);
+                                                if (supportsNegativeValues === true) {{
+                                                    classes.push(`-${{input}}`);
+                                                }}
+                                            }}
+                                        }}
+                                    }}
+
+                                    for (const u of Object.entries(utilities)) {{
+                                        classes.push(`${{u[0]}}-[]`);
+                                        if (supportsNegativeValues === true) {{
+                                            classes.push(`-${{u[0]}}-[]`);
+                                        }}
+                                    }}
+                                }}
+                            }},
+                            addComponents: (components, options = null) => {{
+                                if (components) {{
+                                    if (typeof components[Symbol.iterator] === 'function') {{
+                                        components.forEach(function (c) {{
+                                            classes.push(...Object.keys(c));
+                                        }})
+                                    }} else {{
+                                        classes.push(...Object.keys(components));
+                                    }}
+                                }}
+                            }},
+                            matchComponents: (components, {{ values, supportsNegativeValues }} = null) => {{
+                                if (components) {{
+                                    if (values) {{
+                                        for (const v of Object.entries(values)) {{
+                                            for (const u of Object.entries(components)) {{
+                                                var input = `${{u[0]}}-${{v[0]}}`.replace('-DEFAULT', '');
+                                                classes.push(input);
+                                                if (supportsNegativeValues === true) {{
+                                                    classes.push(`-${{input}}`);
+                                                }}
+                                            }}
+                                        }}
+                                    }}
+
+                                    for (const u of Object.entries(components)) {{
+                                        classes.push(`${{u[0]}}-[]`);
+                                        if (supportsNegativeValues === true) {{
+                                            classes.push(`-${{u[0]}}-[]`);
+                                        }}
+                                    }}
+                                }}
+                            }},
+                            addBase: (base) => {{
+                                return;
+                            }},
+                            addVariant: (name, value) => {{
+                                modifiers.push(name)
+                            }},
+                            matchVariant: (name, cb, {{ values }} = null) => {{
+                                if (name !== '@') {{
+                                    name += '-';
+                                }}
+                                if (values) {{
+                                    for (const v of Object.entries(values)) {{
+                                        modifiers.push(`${{name}}${{v[0].replace('DEFAULT', '')}}`);
+                                    }}
+                                }}
+
+                                modifiers.push(`${{name}}[]`);
+                            }},
+                            corePlugins: (path) => {{
+                                return configuration.corePlugins[path] !== false;
+                            }},
+                            e: (className) => {{
+                                return className.replace(/[!@#$%^&*(),.?"":{{}}|<> ]/g, '\\$&');
+                            }},
+                            prefix: (className) => {{
+                                return '.' + (configuration.prefix ? '' : configuration.prefix) + className.replace('.', '');
+                            }}
+                        }});
+                    }});
+
+                    return {{
+                        'classes': classes,
+                        'modifiers': modifiers
+                    }};
+                }} else {{
+                    return typeof value === 'function' ? value({{
                         theme: (key, defaultValue) => {{
                             var defaultTheme = require('tailwindcss/defaultTheme');
                             var custom = configuration;
 
                             var output = {{ ...getValueByKeyBracket(defaultTheme, key), ...getValueByKeyBracket(custom.theme, key), ...getValueByKeyBracket(custom.theme.extend, key) }};
                             return (!output || Object.keys(output).length === 0) ? defaultValue : output;
-                        }},
-                        config: (key, defaultValue) => {{
-                            return getValueByKeyBracket(configuration, key) || defaultValue;
-                        }},
-                        addUtilities: (utilities, options = null) => {{
-                            if (utilities) {{
-                                if (typeof utilities[Symbol.iterator] === 'function') {{
-                                    utilities.forEach(function (u) {{
-                                        classes.push(...Object.keys(u));
-                                    }})
-                                }} else {{
-                                    classes.push(...Object.keys(utilities));
-                                }}
-                            }}
-                        }},
-                        matchUtilities: (utilities, {{ values, supportsNegativeValues }} = null) => {{
-                            if (utilities) {{
-                                if (values) {{
-                                    for (const v of Object.entries(values)) {{
-                                        for (const u of Object.entries(utilities)) {{
-                                            var input = `${{u[0]}}-${{v[0]}}`.replace('-DEFAULT', '');
-                                            classes.push(input);
-                                            if (supportsNegativeValues === true) {{
-                                                classes.push(`-${{input}}`);
-                                            }}
-                                        }}
-                                    }}
-                                }}
-
-                                for (const u of Object.entries(utilities)) {{
-                                    classes.push(`${{u[0]}}-[]`);
-                                    if (supportsNegativeValues === true) {{
-                                        classes.push(`-${{u[0]}}-[]`);
-                                    }}
-                                }}
-                            }}
-                        }},
-                        addComponents: (components, options = null) => {{
-                            if (components) {{
-                                if (typeof components[Symbol.iterator] === 'function') {{
-                                    components.forEach(function (c) {{
-                                        classes.push(...Object.keys(c));
-                                    }})
-                                }} else {{
-                                    classes.push(...Object.keys(components));
-                                }}
-                            }}
-                        }},
-                        matchComponents: (components, {{ values, supportsNegativeValues }} = null) => {{
-                            if (components) {{
-                                if (values) {{
-                                    for (const v of Object.entries(values)) {{
-                                        for (const u of Object.entries(components)) {{
-                                            var input = `${{u[0]}}-${{v[0]}}`.replace('-DEFAULT', '');
-                                            classes.push(input);
-                                            if (supportsNegativeValues === true) {{
-                                                classes.push(`-${{input}}`);
-                                            }}
-                                        }}
-                                    }}
-                                }}
-
-                                for (const u of Object.entries(components)) {{
-                                    classes.push(`${{u[0]}}-[]`);
-                                    if (supportsNegativeValues === true) {{
-                                        classes.push(`-${{u[0]}}-[]`);
-                                    }}
-                                }}
-                            }}
-                        }},
-                        addBase: (base) => {{
-                            return;
-                        }},
-                        addVariant: (name, value) => {{
-                            modifiers.push(name)
-                        }},
-                        matchVariant: (name, cb, {{ values }} = null) => {{
-                            if (name !== '@') {{
-                                name += '-';
-                            }}
-                            if (values) {{
-                                for (const v of Object.entries(values)) {{
-                                    modifiers.push(`${{name}}${{v[0].replace('DEFAULT', '')}}`);
-                                }}
-                            }}
-
-                            modifiers.push(`${{name}}[]`);
-                        }},
-                        corePlugins: (path) => {{
-                            return configuration.corePlugins[path] !== false;
-                        }},
-                        e: (className) => {{
-                            return className.replace(/[!@#$%^&*(),.?"":{{}}|<> ]/g, '\\$&');
-                        }},
-                        prefix: (className) => {{
-                            return '.' + (configuration.prefix ? '' : configuration.prefix) + className.replace('.', '');
                         }}
-                    }});
-                }});
-
-                return {{
-                    'classes': classes,
-                    'modifiers': modifiers
-                }};
-            }} else {{
-                return typeof value === 'function' ? value({{
-                    theme: (key, defaultValue) => {{
-                        var defaultTheme = require('tailwindcss/defaultTheme');
-                        var custom = configuration;
-
-                        var output = {{ ...getValueByKeyBracket(defaultTheme, key), ...getValueByKeyBracket(custom.theme, key), ...getValueByKeyBracket(custom.theme.extend, key) }};
-                        return (!output || Object.keys(output).length === 0) ? defaultValue : output;
-                    }}
-                }}) : value;
+                    }}) : value;
+                }}
             }}
-        }}
-    );
-    console.log = defaultLog;
-    console.log(parsed);
+        );
+        console.log = defaultLog;
+        console.log(parsed);
+    }})()
 }})();";
 
             var file = new StringBuilder();
