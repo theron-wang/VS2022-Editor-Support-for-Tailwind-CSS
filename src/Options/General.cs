@@ -28,6 +28,11 @@ namespace TailwindCSSIntellisense.Options
         [DefaultValue(true)]
         public bool AutomaticallyUpdateLibrary { get; set; } = true;
         [Category("Build")]
+        [DisplayName("Minify builds")]
+        [Description("Determines whether or not the Tailwind build process minifies by default")]
+        [DefaultValue(false)]
+        public bool AutomaticallyMinify { get; set; } = false;
+        [Category("Build")]
         [DisplayName("Default output file name")]
         [Description("Sets the default name of the built Tailwind CSS file; use {0} if you want to reference the content file name")]
         [DefaultValue("{0}.output.css")]

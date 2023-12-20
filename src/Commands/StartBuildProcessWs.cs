@@ -40,7 +40,7 @@ namespace TailwindCSSIntellisense
         {
             await BuildProcess.InitializeAsync();
 
-            BuildProcess.StartProcess();
+            BuildProcess.StartProcess(false);
         }
     }
 }

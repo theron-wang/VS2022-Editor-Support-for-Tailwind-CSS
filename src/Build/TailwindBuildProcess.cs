@@ -37,6 +37,7 @@ namespace TailwindCSSIntellisense.Build
 
         private bool _initialized;
         private bool _subscribed;
+        private bool _minify;
         private Process _process;
         private Process _otherProcess;
 
@@ -116,7 +117,7 @@ namespace TailwindCSSIntellisense.Build
             // Restart process since SetFilePathsAsync stops the process
             if (processActive)
             {
-                StartProcess();
+                StartProcess(_minify);
             }
         }
 
@@ -131,7 +132,7 @@ namespace TailwindCSSIntellisense.Build
                 if (AreProcessesActive())
                 {
                     EndProcess();
-                    StartProcess();
+                    StartProcess(_settings.AutomaticallyMinify);
                 }
             }
 
@@ -144,13 +145,13 @@ namespace TailwindCSSIntellisense.Build
                 extension == ".razor" ||
                 extension == ".js"))
             {
-                StartProcess();
+                StartProcess(_settings.AutomaticallyMinify);
             }
         }
 
         internal void OnBuild(Project project = null)
         {
-            StartProcess();
+            StartProcess(_settings.AutomaticallyMinify);
         }
 
         /// <summary>
@@ -162,6 +163,8 @@ namespace TailwindCSSIntellisense.Build
             {
                 return;
             }
+
+            _minify = minify;
 
             if (_hasScript == null)
             {

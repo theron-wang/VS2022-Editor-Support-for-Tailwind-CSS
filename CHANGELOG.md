@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.1.9.3 (December 19th, 2023)
+
+### Fixes
+
+- Fixed an exception which could occur when Set up Tailwind CSS ([#31](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/31))
+- `theme` values would sometimes be ignored in configuration files
+- Fixed a bug where certain classes would still appear despite being overriden
+
+### Enhancements
+
+- Added an option in settings to minify builds by default
+- Updated IntelliSense to support Tailwind v3.4
+
 ## 1.1.9.2 (December 5th, 2023)
 
 ### Fixes

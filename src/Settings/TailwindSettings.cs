@@ -12,5 +12,6 @@ namespace TailwindCSSIntellisense.Settings
         public BuildProcessOptions BuildType { get; set; }
         public string BuildScript { get; set; }
         public bool OverrideBuild { get; set; }
+        public bool AutomaticallyMinify { get; set; }
     }
 }

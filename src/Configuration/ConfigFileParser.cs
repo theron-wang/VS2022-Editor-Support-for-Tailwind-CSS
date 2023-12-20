@@ -101,41 +101,43 @@ namespace TailwindCSSIntellisense.Configuration
             return result;
         }}
 
-        var pluginTheme = null;
-        var newPlugins = [];
-        configuration.plugins.reverse().forEach(function (plugin) {{
-            if (typeof plugin === 'function') {{
-                try {{
-                    var evaluated = plugin({{}});
+        if (configuration.plugins) {{
+            var pluginTheme = {{ theme: configuration.theme }};
+            var newPlugins = [];
+            configuration.plugins.reverse().forEach(function (plugin) {{
+                if (typeof plugin === 'function') {{
+                    try {{
+                        var evaluated = plugin({{}});
 
-                    if (evaluated && evaluated.handler && evaluated.config) {{
-                        plugin = evaluated;
+                        if (evaluated && evaluated.handler && evaluated.config) {{
+                            plugin = evaluated;
+                        }}
+                    }} catch {{
+
                     }}
-                }} catch {{
-
                 }}
-            }}
-            if (plugin && plugin.handler && plugin.config) {{
-                if (!pluginTheme) {{
-                    pluginTheme = {{}};
+                if (plugin && plugin.handler && plugin.config) {{
+                    if (!pluginTheme) {{
+                        pluginTheme = {{}};
+                    }}
+
+                    Object.keys(plugin.config).forEach(key => {{
+                        pluginTheme[key] = {{ ...pluginTheme[key], ...plugin.config[key] }};
+                    }});
+
+                    newPlugins.push(plugin.handler);
+                }} else {{
+                    newPlugins.push(plugin);
                 }}
+            }});
 
-                Object.keys(plugin.config).forEach(key => {{
-                    pluginTheme[key] = {{ ...pluginTheme[key], ...plugin.config[key] }};
-                }});
+            configuration = {{
+                ...configuration,
+                ...pluginTheme
+            }};
 
-                newPlugins.push(plugin.handler);
-            }} else {{
-                newPlugins.push(plugin);
-            }}
-        }});
-
-        configuration = {{
-            ...configuration,
-            ...pluginTheme
-        }};
-
-        configuration.plugins = newPlugins;
+            configuration.plugins = newPlugins;
+        }}
 
         const defaultLog = console.log;
         console.log = function () {{ }}

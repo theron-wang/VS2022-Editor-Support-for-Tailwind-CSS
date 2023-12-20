@@ -139,9 +139,25 @@ namespace TailwindCSSIntellisense.Configuration
                         else if (stem.Contains('{'))
                         {
                             s = stem.Replace($"-{stem.Split('-').Last()}", "");
-                            var values = stem.Split('-').Last().Trim('{', '}').Split('|').Select(v => $"{s}-{v}");
+                            var values = stem.Split('-').Last().Trim('{', '}').Split('|');
 
-                            descClasses = _completionBase.Classes.Where(c => values.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            bool negate = false;
+                            if (values[0].StartsWith("!"))
+                            {
+                                negate = true;
+                                values[0] = values[0].Trim('!');
+                            }
+
+                            var classes = values.Select(v => $"{s}-{v}");
+
+                            if (negate)
+                            {
+                                descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && classes.Contains(c.Name) == false && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            }
+                            else
+                            {
+                                descClasses = _completionBase.Classes.Where(c => classes.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            }
                             classesToRemove.AddRange(descClasses);
                         }
                         else
@@ -158,23 +174,27 @@ namespace TailwindCSSIntellisense.Configuration
                                 s = s.Replace("-span", "");
                             }
 
-                            classesToAdd.AddRange(dict.Keys.Select(k =>
-                            {
-                                if (k == "DEFAULT")
+                            classesToAdd.AddRange(dict.Keys
+                                .Where(k => (_completionBase.CustomSpacingMappers.ContainsKey(stem + "-{0}") == false || _completionBase.CustomSpacingMappers[stem + "-{0}"].ContainsKey(k) == false) &&
+                                                  (_completionBase.CustomColorMappers.ContainsKey(stem + "-{0}") == false || _completionBase.CustomColorMappers[stem + "-{0}"].ContainsKey(k) == false))
+                                .Select(k =>
                                 {
-                                    return new TailwindClass()
+                                    if (k == "DEFAULT")
                                     {
-                                        Name = s
-                                    };
-                                }
-                                else
-                                {
-                                    return new TailwindClass()
+                                        return new TailwindClass()
+                                        {
+                                            Name = s
+                                        };
+                                    }
+                                    else
                                     {
-                                        Name = $"{s}-{k}"
-                                    };
+                                        return new TailwindClass()
+                                        {
+                                            Name = $"{s}-{k}"
+                                        };
+                                    }
                                 }
-                            }));
+                            ));
 
                             var texts = descClasses.Where(c => _completionBase.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
                                 _completionBase.DescriptionMapper[c.Name]);
@@ -234,7 +254,7 @@ namespace TailwindCSSIntellisense.Configuration
                 }
             }
 
-            _completionBase.Classes.RemoveAll(c => classesToRemove.Contains(c));
+            _completionBase.Classes.RemoveAll(classesToRemove.Contains);
             _completionBase.Classes.AddRange(classesToAdd);
         }
 

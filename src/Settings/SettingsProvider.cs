@@ -66,7 +66,8 @@ namespace TailwindCSSIntellisense.Settings
                         DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
                         BuildType = general.BuildProcessType,
                         BuildScript = general.BuildScript,
-                        OverrideBuild = general.OverrideBuild
+                        OverrideBuild = general.OverrideBuild,
+                        AutomaticallyMinify = general.AutomaticallyMinify
                     };
                 }
 
@@ -124,7 +125,8 @@ namespace TailwindCSSIntellisense.Settings
                     OverrideBuild = general.OverrideBuild,
                     TailwindConfigurationFile = GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
                     TailwindCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
-                    TailwindOutputCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim())
+                    TailwindOutputCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim()),
+                    AutomaticallyMinify = general.AutomaticallyMinify
                 };
 
                 _cachedSettings = returnSettings;
@@ -190,11 +192,9 @@ namespace TailwindCSSIntellisense.Settings
             }
             else
             {
-                using (var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite))
-                {
-                    _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings);
-                    await _fileWritingTask;
-                }
+                using var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+                _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings);
+                await _fileWritingTask;
             }
 
             _cachedSettings = settings;
@@ -250,13 +250,15 @@ namespace TailwindCSSIntellisense.Settings
                 settings.TailwindOutputFileName != origSettings.DefaultOutputCssName ||
                 settings.BuildProcessType != origSettings.BuildType ||
                 settings.BuildScript != origSettings.BuildScript ||
-                settings.OverrideBuild != origSettings.OverrideBuild)
+                settings.OverrideBuild != origSettings.OverrideBuild ||
+                settings.AutomaticallyMinify != origSettings.AutomaticallyMinify)
             {
                 origSettings.EnableTailwindCss = settings.UseTailwindCss;
                 origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
                 origSettings.BuildType = settings.BuildProcessType;
                 origSettings.BuildScript = settings.BuildScript;
                 origSettings.OverrideBuild = settings.OverrideBuild;
+                origSettings.AutomaticallyMinify = settings.AutomaticallyMinify;
 
                 ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
             }
