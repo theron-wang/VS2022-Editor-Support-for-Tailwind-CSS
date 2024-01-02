@@ -19,6 +19,8 @@ namespace TailwindCSSIntellisense.Configuration
     [Export]
     public sealed partial class CompletionConfiguration
     {
+        internal Action<TailwindConfiguration> ConfigurationUpdated;
+
         [Import]
         internal ConfigFileParser Parser { get; set; }
 
@@ -33,12 +35,14 @@ namespace TailwindCSSIntellisense.Configuration
 
         private bool _areValuesDefault;
         private CompletionUtilities _completionBase;
-
+        
         private List<string> ModifiersOrig { get; set; }
         private List<string> ScreenOrig { get; set; }
         private List<TailwindClass> ClassesOrig { get; set; }
         private Dictionary<string, string> ColorToRgbMapperOrig { get; set; }
         private Dictionary<string, string> SpacingMapperOrig { get; set; }
+
+        internal TailwindConfiguration LastConfig { get; private set; }
 
         /// <summary>
         /// Initializes the configuration file (tailwind.config.js) for completion
@@ -56,11 +60,17 @@ namespace TailwindCSSIntellisense.Configuration
             try
             {
                 var config = await Parser.GetConfigurationAsync();
+                LastConfig = config;
                 _completionBase.Prefix = config.Prefix;
                 LoadGlobalConfiguration(config);
                 LoadIndividualConfigurationOverride(config);
                 LoadIndividualConfigurationExtend(config);
                 LoadPlugins(config);
+
+                if (ConfigurationUpdated is not null)
+                {
+                    ConfigurationUpdated(config);
+                }
             }
             catch (Exception ex)
             {
@@ -79,11 +89,12 @@ namespace TailwindCSSIntellisense.Configuration
             if (Scanner.HasConfigurationFile)
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-                await VS.StatusBar.ShowProgressAsync("Reloading TailwindCSS configuration", 1, 2);
+                await VS.StatusBar.ShowProgressAsync("Reloading Tailwind CSS configuration", 1, 2);
 
                 try
                 {
                     var config = await Parser.GetConfigurationAsync();
+                    LastConfig = config;
                     _completionBase.Prefix = config.Prefix;
                     LoadGlobalConfiguration(config);
                     _completionBase.Modifiers = _completionBase.Modifiers.Distinct().ToList();
@@ -93,8 +104,13 @@ namespace TailwindCSSIntellisense.Configuration
 
                     LoadPlugins(config);
 
+                    if (ConfigurationUpdated is not null)
+                    {
+                        ConfigurationUpdated(config);
+                    }
+
                     await VS.StatusBar.ShowProgressAsync("", 2, 2);
-                    await VS.StatusBar.ShowMessageAsync("Finished reloading TailwindCSS configuration");
+                    await VS.StatusBar.ShowMessageAsync("Finished reloading Tailwind CSS configuration");
                     await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
                 }
                 catch (Exception ex)

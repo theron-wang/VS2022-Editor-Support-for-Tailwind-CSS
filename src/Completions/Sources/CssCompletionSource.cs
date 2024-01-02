@@ -96,10 +96,11 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             };
                             break;
                         case "@media":
-                            completions = new List<Completion>()
+                            completions = [];
+                            foreach (var screen in _completionUtils.Screen)
                             {
-                                new Completion("screen()", "screen()", "screen([breakpoint])", _completionUtils.TailwindLogo, null)
-                            };
+                                completions.Add(new($"screen({screen})", $"screen({screen})", $"screen({screen})", _completionUtils.TailwindLogo, null));
+                            }
                             break;
                     }
                 }
@@ -201,7 +202,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 start -= 1;
             }
 
-            while (end.Position < snapshot.Length && end.GetChar() != '"' && end.GetChar() != '\'' && !char.IsWhiteSpace(end.GetChar()))
+            while (end.Position < snapshot.Length && !"\"';".Contains(end.GetChar()) && !char.IsWhiteSpace(end.GetChar()))
             {
                 end += 1;
             }
@@ -211,7 +212,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 start += 1;
             }
 
-            return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end - 1), SpanTrackingMode.EdgeInclusive);
+            return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end), SpanTrackingMode.EdgeInclusive);
         }
 
         public void Dispose()

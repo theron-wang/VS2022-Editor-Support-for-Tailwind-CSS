@@ -9,6 +9,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -77,12 +78,12 @@ namespace TailwindCSSIntellisense.Completions
 
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
 
-                await VS.StatusBar.ShowProgressAsync("Loading TailwindCSS classes", 1, 3);
+                await VS.StatusBar.ShowProgressAsync("Loading Tailwind CSS classes", 1, 3);
                 await LoadClassesAsync();
-                await VS.StatusBar.ShowProgressAsync("Loading TailwindCSS configuration", 2, 3);
+                await VS.StatusBar.ShowProgressAsync("Loading Tailwind CSS configuration", 2, 3);
 
                 await Configuration.InitializeAsync(this);
-                await VS.StatusBar.ShowProgressAsync("TailwindCSS IntelliSense initialized", 3, 3);
+                await VS.StatusBar.ShowProgressAsync("Tailwind CSS IntelliSense initialized", 3, 3);
 
                 Initialized = true;
                 return true;
@@ -93,7 +94,7 @@ namespace TailwindCSSIntellisense.Completions
 
                 // Clear progress
                 await VS.StatusBar.ShowProgressAsync("", 3, 3);
-                await VS.StatusBar.ShowMessageAsync("TailwindCSS initialization failed: check extension output");
+                await VS.StatusBar.ShowMessageAsync("Tailwind CSS initialization failed: check extension output");
 
                 return false;
             }
@@ -339,7 +340,70 @@ namespace TailwindCSSIntellisense.Completions
             return output.ToString().Trim();
         }
 
-        internal string GetDescription(string tailwindClass)
+        internal string GetDescriptionFromClass(string text, bool shouldFormat = true)
+        {
+            text = text.Split(':').Last();
+
+            if (string.IsNullOrWhiteSpace(Prefix) == false && text.StartsWith(Prefix))
+            {
+                text = text.Substring(Prefix.Length);
+            }
+
+            var description = GetDescription(text, shouldFormat: shouldFormat);
+            if (string.IsNullOrEmpty(description) == false)
+            {
+                return description;
+            }
+
+            var segments = text.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
+
+            if (segments.Length >= 2)
+            {
+                string color;
+                if (segments.Length >= 3)
+                {
+                    color = $"{segments[segments.Length - 2]}-{segments[segments.Length - 1]}";
+                }
+                else
+                {
+                    color = segments[segments.Length - 1];
+                }
+                var stem = text.Replace(color, "{0}");
+
+                var opacityText = color.Split('/').Last();
+                int? opacity = null;
+
+                if (opacityText != color)
+                {
+                    color = color.Replace($"/{opacityText}", "");
+                    if (int.TryParse(opacityText, out var o))
+                    {
+                        opacity = o;
+                    }
+                }
+
+                description = GetDescription(stem, color, opacity: opacity != null, shouldFormat: shouldFormat);
+
+                if (string.IsNullOrEmpty(description) == false)
+                {
+                    if (opacity != null)
+                    {
+                        description = string.Format(description, opacity.Value / 100f);
+                    }
+
+                    return description;
+                }
+
+                var spacing = segments.Last();
+                stem = text.Replace(spacing, "{0}");
+
+                return GetDescription(stem, spacing, shouldFormat: shouldFormat);
+            }
+
+            return null;
+        }
+
+        internal string GetDescription(string tailwindClass, bool shouldFormat = true)
         {
             string description = null;
             if (CustomDescriptionMapper.ContainsKey(tailwindClass))
@@ -380,10 +444,14 @@ namespace TailwindCSSIntellisense.Completions
                 description = oldDescription;
             }
 
-            return FormatDescription(description);
+            if (shouldFormat)
+            {
+                return FormatDescription(description);
+            }
+            return description;
         }
 
-        internal string GetDescription(string tailwindClass, string spacing)
+        internal string GetDescription(string tailwindClass, string spacing, bool shouldFormat = true)
         {
             var negative = tailwindClass.StartsWith("-");
             string spacingValue;
@@ -406,7 +474,12 @@ namespace TailwindCSSIntellisense.Completions
 
             if (DescriptionMapper.ContainsKey(key))
             {
-                return FormatDescription(string.Format(DescriptionMapper[key], (negative ? "-" : "") + spacingValue));
+                var format = string.Format(DescriptionMapper[key], (negative ? "-" : "") + spacingValue);
+                if (shouldFormat)
+                {
+                    return FormatDescription(format);
+                }
+                return format;
             }
             else
             {
@@ -414,10 +487,10 @@ namespace TailwindCSSIntellisense.Completions
             }
         }
 
-        internal string GetDescription(string tailwindClass, string color, bool opacity)
+        internal string GetDescription(string tailwindClass, string color, bool opacity, bool shouldFormat = true)
         {
             var value = new StringBuilder(GetColorDescription(color, tailwindClass));
-            
+
             if (string.IsNullOrEmpty(value.ToString()) || DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
             {
                 return null;
@@ -430,7 +503,12 @@ namespace TailwindCSSIntellisense.Completions
             {
                 if (value.ToString().StartsWith("{noparse}"))
                 {
-                    return FormatDescription(string.Format(format.ToString(), value.Replace("{noparse}", "")));
+                    var returnFormat = string.Format(format.ToString(), value.Replace("{noparse}", ""));
+                    if (shouldFormat)
+                    {
+                        return FormatDescription(returnFormat);
+                    }
+                    return returnFormat;
                 }
                 else
                 {
@@ -438,7 +516,13 @@ namespace TailwindCSSIntellisense.Completions
                     {
                         format.Replace(": 1;", ": {1};");
                     }
-                    return FormatDescription(string.Format(format.ToString(), value + ")", "{0}"));
+
+                    var returnFormat = string.Format(format.ToString(), value + ")", "{0}");
+                    if (shouldFormat)
+                    {
+                        return FormatDescription(returnFormat);
+                    }
+                    return returnFormat;
                 }
             }
 
@@ -450,7 +534,12 @@ namespace TailwindCSSIntellisense.Completions
                 format.Replace(replace, "");
                 value.Replace("{noparse}", "");
 
-                return FormatDescription(string.Format(format.ToString(), value.ToString()));
+                var returnFormat = string.Format(format.ToString(), value.ToString());
+                if (shouldFormat)
+                {
+                    return FormatDescription(returnFormat);
+                }
+                return returnFormat;
             }
             else
             {
@@ -458,7 +547,14 @@ namespace TailwindCSSIntellisense.Completions
                 {
                     format.Replace(": 1;", ": {1};");
                 }
-                return FormatDescription(string.Format(format.ToString(), value.ToString() + " ", "{0}"));
+
+                var returnFormat = string.Format(format.ToString(), value.ToString() + " ", "{0}");
+
+                if (shouldFormat)
+                {
+                    return FormatDescription(returnFormat);
+                }
+                return returnFormat;
             }
         }
 

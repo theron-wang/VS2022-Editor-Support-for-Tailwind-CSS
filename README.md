@@ -3,13 +3,13 @@
 ![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/TheronWang.TailwindCSSIntellisense)
 ![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/TheronWang.TailwindCSSIntellisense)
 
-Editor features such as IntelliSense, build integration, among others for Tailwind CSS to enhance the development experience in Visual Studio 2022.
+Editor features such as IntelliSense, build integration, linting, and more for Tailwind CSS to enhance the development experience in Visual Studio 2022.
 
 **NOTE**: this extension is designed to be used with the latest version of Tailwind; there may be unintended effects when using earlier versions.
 
 Download from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=TheronWang.TailwindCSSIntellisense).
 
-To get started, view [this guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md).
+To get started, view [the Getting Started guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md).
 
 ## Changelog
 
@@ -27,7 +27,13 @@ To check if you have `npm` installed, run `npm -v` in the terminal.
 
 If you do not have `npm` installed, follow [this tutorial](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) from the official npm docs.
 
-## Usage
+## Setup
+
+The extension will start in any solution with a `tailwind.config.js` file in any project.
+
+If your configuration file is named differently, or it is not found by the extension, you can set the file by right-clicking on it (must be a `.js` file).
+
+## Features
 
 ### IntelliSense
 
@@ -35,29 +41,29 @@ Tailwind CSS classes show up in the IntelliSense completion menus in Razor, HTML
 
 ![Intellisense Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-1.gif)
 
-Customization support for `theme` values and plugins (experimental):
+### Linting
 
-![Custom Configuration File](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-2-Configuration.png)
+The linter will mark all class conflicts as well as invalid `theme()`, `screen()`, and `@tailwind` values:
 
-![Intellisense Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-3.png)
+![Linter](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Linter.png)
+
+Linter options can be found in Tools > Options > Tailwind CSS IntelliSense > Linter.
+
+Extensions do not have the ability to override existing error tags, so `@tailwind`, `@apply`, and other Tailwind-specific functions will be underlined by Visual Studio. 
 
 ### Build Integration
 
-When in a project, you can run the project to build Tailwind CSS or access it via the Build menu:
+When in a project, you can run the project to build Tailwind CSS or access it via the Build menu. Build details and errors will be logged to the Build output window:
 
 ![Build Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-1.png)
-
-In an open folder context, however, you must right click the folder instead to toggle the build process.
-
-After the process has started, the process will continue to build and output data to the Build window pane:
-
 ![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-2.png)
 
-Custom `package.json` scripts are supported on build:
+Set your configuration, build and output files by right-clicking on any `.js` or `.css` file:
 
-![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
+![Customizability Build 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-1.png)
+![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-2.png)
 
-You can customize the behavior in Tools > Options > Tailwind CSS Intellisense > Custom Build.
+Your preferences will be stored in a `tailwind.extension.json` file in your project root.
 
 ### NPM Integration
 
@@ -65,27 +71,13 @@ When getting started in a new project, you can import the necessary modules by r
 
 ![NPM Shortcut 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-Shortcuts-1.png)
 
-### Customizability
+If you prefer a different build command, `package.json` scripts are also supported:
 
-#### Build
+![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
 
-When using the default Tailwind build process, you can set the following:
+### Extension Options
 
-If you want to explicitly state the configuration file, you can right click any JavaScript file as follows:
-
-![Customizability Build 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-1.png)
-
-Likewise, for the build file and the output file, you can also explicitly state which CSS files you want:
-
-![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-2.png)
-
-If you right click on each file again, you will find a remove option to set it back to the default.
-
-Please note that the extension creates a `tailwind.extension.json` file in your project root.
-
-#### Extension Options
-
-Extension settings are located in Tools > Options > Tailwind CSS Intellisense.
+Extension settings are located in Tools > Options > Tailwind CSS IntelliSense.
 
 ## Troubleshooting
 
@@ -94,17 +86,12 @@ Extension settings are located in Tools > Options > Tailwind CSS Intellisense.
 If you notice that your build file is not being updated, check the Build output window to see if you have any syntax errors:
 
 ![Build Error Output](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Troubleshooting-Build.png)<br>
-*Build output modified for brevity*
 
 ### Extension
 
 If something doesn't work as expected or you see an exception message, you can check the detailed log in the Extensions output window.
 
 Please report any errors that you encounter!
-
-## Limitations
-
-Visual Studio does not provide an API to override error tagging, so you will see the CSS directives (`@apply`, `@tailwind`, etc.) marked as errors.
 
 ## Bugs / Suggestions
 

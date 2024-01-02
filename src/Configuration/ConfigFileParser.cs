@@ -326,7 +326,7 @@ namespace TailwindCSSIntellisense.Configuration
                 return null;
             }
 
-            var plugins = GetTotalValue(obj["plugins"]);
+            var plugins = GetTotalValue(obj["plugins"]) ?? [];
 
             var config = new TailwindConfiguration
             {

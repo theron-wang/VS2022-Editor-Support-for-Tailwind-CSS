@@ -241,29 +241,34 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 return false;
             }
 
-            if (!_currentSession.SelectedCompletionSet.SelectionStatus.IsSelected && !force)
+            if (!_currentSession.SelectedCompletionSet.SelectionStatus.IsSelected)
             {
-                _currentSession.Dismiss();
-                return false;
+                if (force)
+                {
+                    _currentSession.SelectedCompletionSet.SelectBestMatch();
+                }
+                else
+                {
+                    _currentSession.Dismiss();
+                    return false;
+                }
             }
-            else
+
+            var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
+            var moveOneBack = completionText.EndsWith("]");
+            var moveTwoBack = completionText.EndsWith("]:");
+            _currentSession.Commit();
+
+            if (moveOneBack)
             {
-                var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
-                var moveOneBack = completionText.EndsWith("]");
-                var moveTwoBack = completionText.EndsWith("]:");
-                _currentSession.Commit();
-
-                if (moveOneBack)
-                {
-                    TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
-                }
-                else if (moveTwoBack)
-                {
-                    TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
-                }
-
-                return true;
+                TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
             }
+            else if (moveTwoBack)
+            {
+                TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
+            }
+
+            return true;
         }
 
         /// <summary>

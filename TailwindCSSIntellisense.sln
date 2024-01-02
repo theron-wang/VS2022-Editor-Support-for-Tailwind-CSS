@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		CHANGELOG.md = CHANGELOG.md
 		Getting-Started.md = Getting-Started.md
+		art\Linter.png = art\Linter.png
 		README.md = README.md
 	EndProjectSection
 EndProject
@@ -21,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "art", "art", "{691DF4C7-034
 		art\IntelliSense-Demo-1.gif = art\IntelliSense-Demo-1.gif
 		art\IntelliSense-Demo-2-Configuration.png = art\IntelliSense-Demo-2-Configuration.png
 		art\IntelliSense-Demo-3.png = art\IntelliSense-Demo-3.png
+		art\Linter.png = art\Linter.png
 		art\NPM-package-json.png = art\NPM-package-json.png
 		art\NPM-Shortcuts-1.png = art\NPM-Shortcuts-1.png
 		art\Troubleshooting-Build.png = art\Troubleshooting-Build.png

@@ -123,9 +123,9 @@ namespace TailwindCSSIntellisense.Settings
                     BuildType = general.BuildProcessType,
                     BuildScript = general.BuildScript,
                     OverrideBuild = general.OverrideBuild,
-                    TailwindConfigurationFile = GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
-                    TailwindCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
-                    TailwindOutputCssFile = GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim()),
+                    TailwindConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
+                    TailwindCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
+                    TailwindOutputCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim()),
                     AutomaticallyMinify = general.AutomaticallyMinify
                 };
 
@@ -174,9 +174,9 @@ namespace TailwindCSSIntellisense.Settings
             var projectRoot = await GetActiveProjectDirectoryAsync();
             var projectSettings = new TailwindSettingsProjectOnly()
             {
-                ConfigurationFile = GetRelativePath(settings.TailwindConfigurationFile, projectRoot),
-                InputCssFile = GetRelativePath(settings.TailwindCssFile, projectRoot),
-                OutputCssFile = GetRelativePath(settings.TailwindOutputCssFile, projectRoot)
+                ConfigurationFile = PathHelpers.GetRelativePath(settings.TailwindConfigurationFile, projectRoot),
+                InputCssFile = PathHelpers.GetRelativePath(settings.TailwindCssFile, projectRoot),
+                OutputCssFile = PathHelpers.GetRelativePath(settings.TailwindOutputCssFile, projectRoot)
             };
 
             if (projectSettings.ConfigurationFile == null && projectSettings.InputCssFile == null && projectSettings.OutputCssFile == null && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
@@ -264,42 +264,6 @@ namespace TailwindCSSIntellisense.Settings
             }
 
             _cachedSettings = origSettings;
-        }
-
-        // https://stackoverflow.com/questions/703281/getting-path-relative-to-the-current-working-directory
-        private string GetRelativePath(string file, string folder)
-        {
-            if (file is null)
-            {
-                return null;
-            }
-
-            Uri pathUri = new Uri(file);
-            // Folders must end in a slash
-            if (!folder.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                folder += Path.DirectorySeparatorChar;
-            }
-            Uri folderUri = new Uri(folder);
-            return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
-        }
-
-        private string GetAbsolutePath(string dir, string rel)
-        {
-            if (rel is null)
-            {
-                return null;
-            }
-            // Folders must end in a slash
-            if (!dir.EndsWith(Path.DirectorySeparatorChar.ToString()))
-            {
-                dir += Path.DirectorySeparatorChar;
-            }
-
-            var dirUri = new Uri(dir);
-            var absUri = new Uri(dirUri, rel);
-
-            return Uri.UnescapeDataString(absUri.AbsolutePath.Replace('/', Path.DirectorySeparatorChar));
         }
 
         private void InvalidateCacheAndSettingsChanged(string file)

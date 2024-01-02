@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0 (January 1st, 2023)
+
+### Fixes
+
+- Fixed an exception which could occur when typing in `css` files
+
+### Additions
+
+- Linting support in all related files ([#28](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/28))
+- Error list support
+- Linter configuration settings
+
 ## 1.1.9.3 (December 19th, 2023)
 
 ### Fixes

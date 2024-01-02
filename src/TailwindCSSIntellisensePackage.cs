@@ -35,6 +35,7 @@ namespace TailwindCSSIntellisense
     [Guid(PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideOptionPage(typeof(OptionsProvider.GeneralOptions), "Tailwind CSS IntelliSense", "General", 0, 0, true, SupportsProfiles = true)]
+    [ProvideOptionPage(typeof(OptionsProvider.LinterOptions), "Tailwind CSS IntelliSense", "Linter", 0, 0, true, SupportsProfiles = true)]
     [InstalledProductRegistration(Vsix.Name, Vsix.Description, Vsix.Version)]
     // Makes sure that the package is initialized early so the solution explorer commands are showing up
     [ProvideAutoLoad(VSConstants.UICONTEXT.NoSolution_string, PackageAutoLoadFlags.BackgroundLoad)]

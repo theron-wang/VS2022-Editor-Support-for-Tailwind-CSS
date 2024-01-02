@@ -6,7 +6,7 @@ namespace TailwindCSSIntellisense.Configuration
     internal class TailwindConfiguration
     {
         /// <summary>
-        /// Corresponds to theme.____
+        /// Corresponds to theme.____. This value will NEVER be null.
         /// </summary>
         /// <remarks>
         /// The key is the class being overriden, such as color. <br></br>
@@ -15,7 +15,7 @@ namespace TailwindCSSIntellisense.Configuration
         public Dictionary<string, object> OverridenValues { get; set; } = new Dictionary<string, object>();
 
         /// <summary>
-        /// Corresponds to theme.extend.____
+        /// Corresponds to theme.extend.____. This value will NEVER be null.
         /// </summary>
         /// <remarks>
         /// The key is the class being extended, such as color. <br></br>

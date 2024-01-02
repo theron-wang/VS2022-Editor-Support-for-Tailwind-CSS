@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Text.Adornments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
@@ -40,17 +41,10 @@ namespace TailwindCSSIntellisense.QuickInfo
 
             if (triggerPoint != null && IsInClassScope(session, out var classSpan) && classSpan != null)
             {
-                var classText = classSpan.Value.GetText().Split(':').Last();
+                var fullText = classSpan.Value.GetText();
+                var classText = fullText.Split(':').Last();
 
-                string desc;
-                if (string.IsNullOrWhiteSpace(_completionUtilities.Prefix) == false && classText.StartsWith(_completionUtilities.Prefix))
-                {
-                    desc = GetDescription(classText.Substring(_completionUtilities.Prefix.Length));
-                }
-                else
-                {
-                    desc = GetDescription(classText);
-                }
+                var desc = _completionUtilities.GetDescriptionFromClass(classText);
 
                 var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
 
@@ -59,7 +53,7 @@ namespace TailwindCSSIntellisense.QuickInfo
                     var classElement = new ContainerElement(
                         ContainerElementStyle.Wrapped,
                         new ClassifiedTextElement(
-                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, $".{classText} {{")
+                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Literal, $".{CssEscape(fullText)} {{", ClassifiedTextRunStyle.UseClassificationFont)
                         ));
 
                     var descriptionLines = new List<ClassifiedTextElement>();
@@ -73,11 +67,11 @@ namespace TailwindCSSIntellisense.QuickInfo
 
                         descriptionLines.Add(
                             new ClassifiedTextElement(
-                                new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, "  "),
-                                new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttribute, keyword),
-                                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ": "),
-                                    new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttributeValue, value),
-                                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ";")
+                                new ClassifiedTextRun(PredefinedClassificationTypeNames.WhiteSpace, "  ", ClassifiedTextRunStyle.UseClassificationFont),
+                                new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttribute, keyword, ClassifiedTextRunStyle.UseClassificationFont),
+                                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ": ", ClassifiedTextRunStyle.UseClassificationFont),
+                                    new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttributeValue, value, ClassifiedTextRunStyle.UseClassificationFont),
+                                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ";", ClassifiedTextRunStyle.UseClassificationFont)
                             )
                         );
                     }
@@ -89,7 +83,7 @@ namespace TailwindCSSIntellisense.QuickInfo
                     var closingBracket = new ContainerElement(
                         ContainerElementStyle.Wrapped,
                         new ClassifiedTextElement(
-                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, "}")
+                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, "}", ClassifiedTextRunStyle.UseClassificationFont)
                         )
                     );
 
@@ -107,64 +101,15 @@ namespace TailwindCSSIntellisense.QuickInfo
             return Task.FromResult<QuickInfoItem>(null);
         }
 
-        protected abstract bool IsInClassScope(IAsyncQuickInfoSession session, out SnapshotSpan? span);
-
-        private string GetDescription(string text)
+        private static string CssEscape(string input)
         {
-            text = text.Split(':').Last();
+            string pattern = "(['\"{}()\\[\\]:;,.<>+*~?\\s!@#$%^&*()])";
 
-            var description = _completionUtilities.GetDescription(text);
-            if (string.IsNullOrEmpty(description) == false)
-            {
-                return description;
-            }
+            string escapedString = Regex.Replace(input, pattern, "\\$1");
 
-            var segments = text.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries);
-
-            if (segments.Length >= 2)
-            {
-                string color;
-                if (segments.Length >= 3)
-                {
-                    color = $"{segments[segments.Length - 2]}-{segments[segments.Length - 1]}";
-                }
-                else
-                {
-                    color = segments[segments.Length - 1];
-                }
-                var stem = text.Replace(color, "{0}");
-
-                var opacityText = color.Split('/').Last();
-                int? opacity = null;
-
-                if (opacityText != color)
-                {
-                    color = color.Replace($"/{opacityText}", "");
-                    if (int.TryParse(opacityText, out var o))
-                    {
-                        opacity = o;
-                    }
-                }
-
-                description = _completionUtilities.GetDescription(stem, color, opacity != null);
-
-                if (opacity != null)
-                {
-                    description = string.Format(description, opacity.Value / 100f);
-                }
-
-                if (string.IsNullOrEmpty(description) == false)
-                {
-                    return description;
-                }
-
-                var spacing = segments.Last();
-                stem = text.Replace(spacing, "{0}");
-
-                return _completionUtilities.GetDescription(stem, spacing);
-            }
-
-            return null;
+            return escapedString;
         }
+
+        protected abstract bool IsInClassScope(IAsyncQuickInfoSession session, out SnapshotSpan? span);
     }
 }

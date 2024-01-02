@@ -63,7 +63,7 @@ namespace TailwindCSSIntellisense.Node
             try
             {
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.Sync);
-                await VS.StatusBar.ShowProgressAsync("Checking for TailwindCSS updates...", 1, 3);
+                await VS.StatusBar.ShowProgressAsync("Checking for Tailwind CSS updates...", 1, 3);
                 var processInfo = new ProcessStartInfo()
                 {
                     UseShellExecute = false,
@@ -104,11 +104,11 @@ namespace TailwindCSSIntellisense.Node
                 if (currentVersion == newVersion && currentVersion == null)
                 {
                     await VS.StatusBar.ShowProgressAsync("", 3, 3);
-                    await VS.StatusBar.ShowMessageAsync("TailwindCSS is up to date");
+                    await VS.StatusBar.ShowMessageAsync("Tailwind CSS is up to date");
                     return;
                 }
 
-                await VS.StatusBar.ShowProgressAsync($"Updating TailwindCSS ({currentVersion} -> {newVersion})", 2, 3);
+                await VS.StatusBar.ShowProgressAsync($"Updating Tailwind CSS ({currentVersion} -> {newVersion})", 2, 3);
 
                 processInfo = new ProcessStartInfo()
                 {
@@ -130,14 +130,14 @@ namespace TailwindCSSIntellisense.Node
                 await process.WaitForExitAsync();
 
                 await VS.StatusBar.ShowProgressAsync("", 3, 3);
-                await VS.StatusBar.ShowMessageAsync($"TailwindCSS update successful (updated to version {newVersion})");
+                await VS.StatusBar.ShowMessageAsync($"Tailwind CSS update successful (updated to version {newVersion})");
 
                 _configFilesChecked.Add(settings.TailwindConfigurationFile);
             }
             catch (Exception ex)
             {
                 await VS.StatusBar.ShowProgressAsync("", 3, 3);
-                await VS.StatusBar.ShowMessageAsync("TailwindCSS update/check failed; check 'Extensions' output window for more details");
+                await VS.StatusBar.ShowMessageAsync("Tailwind CSS update/check failed; check 'Extensions' output window for more details");
                 await ex.LogAsync();
             }
             finally

@@ -97,13 +97,13 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             completions.Add(
                                         new Completion(className,
                                                             modifiersAsString + className,
-                                                            completionUtils.GetDescription(twClass.Name, color, false),
+                                                            completionUtils.GetDescription(twClass.Name, color, opacity: false),
                                                             completionUtils.GetImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
                                                             null));
 
                             if (twClass.UseOpacity && currentClass.Contains(color) && currentClass.Contains('/'))
                             {
-                                var description = completionUtils.GetDescription(twClass.Name, color, true);
+                                var description = completionUtils.GetDescription(twClass.Name, color, opacity: true);
 
                                 foreach (var opacity in completionUtils.Opacity)
                                 {

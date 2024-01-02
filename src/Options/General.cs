@@ -8,6 +8,9 @@ namespace TailwindCSSIntellisense.Options
     {
         [ComVisible(true)]
         public class GeneralOptions : BaseOptionPage<General> { }
+
+        [ComVisible(true)]
+        public class LinterOptions : BaseOptionPage<Linter> { }
     }
 
     public class General : BaseOptionModel<General>

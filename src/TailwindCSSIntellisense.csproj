@@ -83,9 +83,24 @@
     <Compile Include="Configuration\Descriptions\FontFamilyDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\FontSizeDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\GeneratorAggregator.cs" />
+    <Compile Include="Helpers\PathHelpers.cs" />
+    <Compile Include="Linting\Error.cs" />
+    <Compile Include="Linting\ErrorList\ErrorListContext.cs" />
+    <Compile Include="Linting\ErrorList\HtmlErrorListListener.cs" />
+    <Compile Include="Linting\ErrorList\CssErrorListListener.cs" />
+    <Compile Include="Linting\Validators\Validator.cs" />
+    <Compile Include="Linting\Validators\CssValidator.cs" />
+    <Compile Include="Linting\Validators\HtmlValidator.cs" />
+    <Compile Include="Linting\Taggers\CssErrorTagger.cs" />
+    <Compile Include="Linting\ErrorSeverity.cs" />
+    <Compile Include="Linting\Taggers\ErrorTaggerBase.cs" />
+    <Compile Include="Linting\ErrorType.cs" />
+    <Compile Include="Linting\Taggers\HtmlErrorTagger.cs" />
+    <Compile Include="Linting\LinterUtilities.cs" />
     <Compile Include="Node\PackageJsonReader.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
+    <Compile Include="Options\Linter.cs" />
     <Compile Include="QuickInfo\CssQuickInfoSource.cs" />
     <Compile Include="QuickInfo\HtmlQuickInfoSource.cs" />
     <Compile Include="QuickInfo\CssQuickInfoSourceProvider.cs" />
@@ -96,6 +111,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>source.extension.vsixmanifest</DependentUpon>
     </Compile>
+    <Compile Include="Usings.cs" />
     <Compile Include="VSPackage.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -179,6 +195,7 @@
       <Version>7.0.3</Version>
     </PackageReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
