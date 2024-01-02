@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 (January 1st, 2023)
+## 1.2.0 (January 1st, 2024)
 
 ### Fixes
 
