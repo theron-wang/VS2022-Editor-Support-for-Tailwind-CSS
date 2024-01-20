@@ -192,7 +192,7 @@
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Text.Json">
-      <Version>7.0.3</Version>
+      <Version>7.0.4</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup />

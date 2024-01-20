@@ -3,7 +3,7 @@
 ![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/TheronWang.TailwindCSSIntellisense)
 ![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/TheronWang.TailwindCSSIntellisense)
 
-Editor features such as IntelliSense, build integration, linting, and more for Tailwind CSS to enhance the development experience in Visual Studio 2022.
+IntelliSense, linting, build shortcuts, and more for Tailwind CSS to enhance the development experience in Visual Studio 2022.
 
 **NOTE**: this extension is designed to be used with the latest version of Tailwind; there may be unintended effects when using earlier versions.
 

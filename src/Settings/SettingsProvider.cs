@@ -56,7 +56,7 @@ namespace TailwindCSSIntellisense.Settings
             {
                 var general = await General.GetLiveInstanceAsync();
 
-                var activeProjectPath = await GetActiveProjectDirectoryAsync();
+                var activeProjectPath = await GetTailwindProjectDirectoryAsync();
 
                 if (activeProjectPath == null)
                 {
@@ -171,7 +171,7 @@ namespace TailwindCSSIntellisense.Settings
                 }
             }
 
-            var projectRoot = await GetActiveProjectDirectoryAsync();
+            var projectRoot = await GetTailwindProjectDirectoryAsync();
             var projectSettings = new TailwindSettingsProjectOnly()
             {
                 ConfigurationFile = PathHelpers.GetRelativePath(settings.TailwindConfigurationFile, projectRoot),
@@ -213,7 +213,7 @@ namespace TailwindCSSIntellisense.Settings
             VS.Events.DocumentEvents.Saved -= OnFileSaved;
         }
 
-        private async Task<string> GetActiveProjectDirectoryAsync()
+        private async Task<string> GetTailwindProjectDirectoryAsync()
         {
             var projects = await VS.Solutions.GetAllProjectsAsync();
 
@@ -231,7 +231,14 @@ namespace TailwindCSSIntellisense.Settings
                     }
                 }
 
-                return Path.GetDirectoryName(projects.First().FullPath);
+                return Path.GetDirectoryName(
+                    projects.FirstOrDefault(p =>
+                        File.Exists(
+                            Path.Combine(
+                                Path.GetDirectoryName(p.FullPath), "tailwind.config.js")
+                            )
+                        )?.FullPath ?? 
+                    projects.First().FullPath);
             }
         }
 

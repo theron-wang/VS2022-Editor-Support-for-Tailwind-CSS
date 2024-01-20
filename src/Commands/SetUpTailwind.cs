@@ -27,18 +27,22 @@ namespace TailwindCSSIntellisense
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
             Command.Visible = settings.EnableTailwindCss && (string.IsNullOrEmpty(settings.TailwindConfigurationFile) || File.Exists(settings.TailwindConfigurationFile) == false);
+            Command.Enabled = !TailwindSetUpProcess.IsSettingUp;
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
         {
-            var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
-            await TailwindSetUpProcess.RunAsync(directory);
+            if (!TailwindSetUpProcess.IsSettingUp)
+            {
+                var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
+                await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory));
+                
+                var configFile = Path.Combine(directory, "tailwind.config.js");
 
-            var configFile = Path.Combine(directory, "tailwind.config.js");
-
-            var settings = await SettingsProvider.GetSettingsAsync();
-            settings.TailwindConfigurationFile = configFile;
-            await SettingsProvider.OverrideSettingsAsync(settings);
+                var settings = await SettingsProvider.GetSettingsAsync();
+                settings.TailwindConfigurationFile = configFile;
+                await SettingsProvider.OverrideSettingsAsync(settings);
+            }
         }
     }
 }

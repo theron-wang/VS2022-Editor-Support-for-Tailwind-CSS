@@ -14,12 +14,15 @@ namespace TailwindCSSIntellisense.Node
     [Export]
     internal sealed class TailwindSetUpProcess
     {
+        public bool IsSettingUp { get; private set; }
+
         /// <summary>
         /// Starts a process to install Tailwind in the specified directory (uses npm)
         /// </summary>
         /// <param name="directory">The directory to install in</param>
         public async Task RunAsync(string directory)
         {
+            IsSettingUp = true;
             var processInfo = new ProcessStartInfo()
             {
                 UseShellExecute = false,
@@ -33,11 +36,11 @@ namespace TailwindCSSIntellisense.Node
 
             try
             {
+                await VS.StatusBar.ShowMessageAsync("Setting up Tailwind CSS");
                 var process = Process.Start(processInfo);
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 
-                process.OutputDataReceived += OutputDataReceived;
                 process.ErrorDataReceived += ErrorDataReceived;
 
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
@@ -51,16 +54,9 @@ namespace TailwindCSSIntellisense.Node
             }
             finally
             {
+                IsSettingUp = false;
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
-        }
-
-        private void OutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
-            {
-                await VS.StatusBar.ShowMessageAsync(e.Data);
-            });
         }
 
         private void ErrorDataReceived(object sender, DataReceivedEventArgs e)

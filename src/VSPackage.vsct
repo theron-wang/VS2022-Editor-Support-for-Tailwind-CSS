@@ -94,6 +94,7 @@
 				<Icon guid="ImageCatalogGuid" id="BuildSelection" />
 				<CommandFlag>IconIsMoniker</CommandFlag>
 				<CommandFlag>DynamicVisibility</CommandFlag>
+				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
 					<ButtonText>Build Tailwind CSS</ButtonText>
 				</Strings>
@@ -102,6 +103,7 @@
 			<Button guid="guidVSPackageCmdSet" id="StartMinifyBuildProcessCmdId" priority="0x0101" type="Button">
 				<Parent guid="guidVSPackageCmdSet" id="BuildMenuGroup"/>
 				<CommandFlag>DynamicVisibility</CommandFlag>
+				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
 					<ButtonText>Build and minify Tailwind CSS</ButtonText>
 				</Strings>

@@ -62,7 +62,7 @@ internal abstract class ErrorTaggerBase : ITagger<IErrorTag>
         {
             foreach (var scope in _errorChecker.GetScopes(span, span.Snapshot))
             {
-                var errors = _errorChecker.GetErrors(scope, true).ToList();
+                var errors = _errorChecker.GetErrors(scope, true);
                 foreach (var error in errors)
                 {
                     yield return _linterUtils.CreateTagSpan(error.Span, error.ErrorMessage, error.ErrorType);
@@ -71,7 +71,7 @@ internal abstract class ErrorTaggerBase : ITagger<IErrorTag>
         }
         else
         {
-            var errors = _errorChecker.Errors.Where(e => span.IntersectsWith(e.Span)).ToList();
+            var errors = _errorChecker.Errors.Where(e => span.IntersectsWith(e.Span));
             foreach (var error in errors)
             {
                 yield return _linterUtils.CreateTagSpan(error.Span, error.ErrorMessage, error.ErrorType);

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 (January 20th, 2024)
+
+### Fixes
+
+- Fixed a bug where the `tailwind.extension.json` file preferences would be ignored ([#32](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/32))
+
 ## 1.2.0 (January 1st, 2024)
 
 ### Fixes
