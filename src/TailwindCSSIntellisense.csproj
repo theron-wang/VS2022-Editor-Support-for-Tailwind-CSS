@@ -86,8 +86,11 @@
     <Compile Include="Helpers\PathHelpers.cs" />
     <Compile Include="Linting\Error.cs" />
     <Compile Include="Linting\ErrorList\ErrorListContext.cs" />
+    <Compile Include="Linting\ErrorList\RazorErrorListListener.cs" />
     <Compile Include="Linting\ErrorList\HtmlErrorListListener.cs" />
     <Compile Include="Linting\ErrorList\CssErrorListListener.cs" />
+    <Compile Include="Linting\Taggers\RazorErrorTagger.cs" />
+    <Compile Include="Linting\Validators\RazorValidator.cs" />
     <Compile Include="Linting\Validators\Validator.cs" />
     <Compile Include="Linting\Validators\CssValidator.cs" />
     <Compile Include="Linting\Validators\HtmlValidator.cs" />
@@ -192,7 +195,7 @@
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="System.Text.Json">
-      <Version>7.0.4</Version>
+      <Version>6.0.9</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup />

@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
+using Microsoft.VisualStudio.Language.CodeCleanUp;
 using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Package;
@@ -9,9 +10,11 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Windows.Documents;
 
 namespace TailwindCSSIntellisense.Completions.Controllers
 {
@@ -178,8 +181,67 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
             else
             {
-                classText = null;
-                return false;
+                var segments = text.Substring(quotationMarkAfterLastClassAttribute + 1).Split([' '], StringSplitOptions.RemoveEmptyEntries);
+                
+                bool isInRazor = false;
+                int depth = 0;
+                // Number of quotes (excluding \")
+                // Odd if in string context, even if not
+                int numberOfQuotes = 0;
+
+                foreach (var segment in segments)
+                {
+                    if (segment.StartsWith("@") || isInRazor)
+                    {
+                        bool isEscaping = false;
+
+                        foreach (var character in segment)
+                        {
+                            bool escape = isEscaping;
+                            isEscaping = false;
+
+                            if (numberOfQuotes % 2 == 1)
+                            {
+                                if (character == '\\')
+                                {
+                                    isEscaping = true;
+                                }
+                            }
+                            else
+                            {
+                                if (character == '(')
+                                {
+                                    depth++;
+                                }
+                                else if (character == ')')
+                                {
+                                    depth--;
+                                }
+                            }
+
+                            if (character == '"' && !escape)
+                            {
+                                numberOfQuotes++;
+                            }
+                        }
+
+                        isInRazor = depth != 0 || numberOfQuotes % 2 == 1;
+                    }
+                    else if (segment.Contains('"'))
+                    {
+                        classText = null;
+                        return false;
+                    }
+                }
+
+                if (depth != 0 || numberOfQuotes % 2 == 1)
+                {
+                    classText = null;
+                    return false;
+                }
+
+                classText = text.Substring(quotationMarkAfterLastClassAttribute + 1);
+                return true;
             }
         }
 

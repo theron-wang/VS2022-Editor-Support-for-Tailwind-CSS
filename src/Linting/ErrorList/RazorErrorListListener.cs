@@ -18,10 +18,12 @@ using TailwindCSSIntellisense.Linting.Validators;
 namespace TailwindCSSIntellisense.Linting.ErrorList;
 
 [Export(typeof(ITextViewCreationListener))]
-[ContentType("html")]
-[ContentType("WebForms")]
+[ContentType("razor")]
+[ContentType("LegacyRazorCSharp")]
+[ContentType("LegacyRazor")]
+[ContentType("LegacyRazorCoreCSharp")]
 [TextViewRole(PredefinedTextViewRoles.PrimaryDocument)]
-public class HtmlErrorListListener : ITextViewCreationListener, IDisposable
+public class RazorErrorListListener : ITextViewCreationListener, IDisposable
 {
     [Import]
     private LinterUtilities _linterUtilities = null;
@@ -41,7 +43,7 @@ public class HtmlErrorListListener : ITextViewCreationListener, IDisposable
 
             var project = ThreadHelper.JoinableTaskFactory.Run(() => PhysicalFile.FromFileAsync(file)).ContainingProject;
 
-            var validator = HtmlValidator.Create(view.TextBuffer, _linterUtilities, _completionUtilities);
+            var validator = RazorValidator.Create(view.TextBuffer, _linterUtilities, _completionUtilities);
             validator.BufferValidated += UpdateErrorList;
 
             _contexts[view.TextBuffer] = new()

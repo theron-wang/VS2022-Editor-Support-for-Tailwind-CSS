@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.2 (February 7th, 2024)
+
+### Fixes
+
+- Fixed a `System.IO.FileNotFoundException` which could occur in rare cases ([#31](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/31))
+- Linting, completions, and quick info now work in Razor files when `@` is used within class attributes
+
 ## 1.2.1 (January 20th, 2024)
 
 ### Fixes

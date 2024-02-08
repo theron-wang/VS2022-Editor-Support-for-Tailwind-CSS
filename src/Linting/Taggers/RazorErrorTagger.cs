@@ -16,11 +16,13 @@ namespace TailwindCSSIntellisense.Linting.Taggers;
 
 [Export(typeof(ITaggerProvider))]
 [TagType(typeof(IErrorTag))]
-[ContentType("html")]
-[ContentType("WebForms")]
+[ContentType("razor")]
+[ContentType("LegacyRazorCSharp")]
+[ContentType("LegacyRazor")]
+[ContentType("LegacyRazorCoreCSharp")]
 [TextViewRole(PredefinedTextViewRoles.Document)]
 [TextViewRole(PredefinedTextViewRoles.Analyzable)]
-internal class HtmlErrorTaggerProvider : ITaggerProvider
+internal class RazorErrorTaggerProvider : ITaggerProvider
 {
     [Import]
     public LinterUtilities LinterUtilities { get; set; }
@@ -29,14 +31,14 @@ internal class HtmlErrorTaggerProvider : ITaggerProvider
 
     public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new HtmlErrorTagger(buffer, LinterUtilities, CompletionUtilities)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new RazorErrorTagger(buffer, LinterUtilities, CompletionUtilities)) as ITagger<T>;
     }
 
-    internal sealed class HtmlErrorTagger: ErrorTaggerBase, IDisposable
+    internal sealed class RazorErrorTagger : ErrorTaggerBase, IDisposable
     {
-        public HtmlErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils)
+        public RazorErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils)
         {
-            _errorChecker = HtmlValidator.Create(buffer, linterUtils, completionUtilities);
+            _errorChecker = RazorValidator.Create(buffer, linterUtils, completionUtilities);
             _errorChecker.Validated += UpdateErrors;
         }
 
