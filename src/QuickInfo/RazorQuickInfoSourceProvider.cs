@@ -13,17 +13,19 @@ using TailwindCSSIntellisense.Completions;
 namespace TailwindCSSIntellisense.QuickInfo
 {
     [Export(typeof(IAsyncQuickInfoSourceProvider))]
-    [Name("HTML Async Quick Info Provider")]
-    [ContentType("html")]
-    [ContentType("WebForms")]
-    internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
+    [Name("Razor Async Quick Info Provider")]
+    [ContentType("razor")]
+    [ContentType("LegacyRazorCSharp")]
+    [ContentType("LegacyRazor")]
+    [ContentType("LegacyRazorCoreCSharp")]
+    internal sealed class RazorQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     {
         [Import]
         public CompletionUtilities CompletionUtilities { get; set; }
 
         public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
         {
-            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, CompletionUtilities));
+            return textBuffer.Properties.GetOrCreateSingletonProperty(() => new RazorQuickInfoSource(textBuffer, CompletionUtilities));
         }
     }
 }

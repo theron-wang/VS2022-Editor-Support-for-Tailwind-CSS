@@ -120,7 +120,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
         {
             var sessions = _completionBroker.GetSessions(e.TextView);
 
-            var tailwindSession = sessions.FirstOrDefault(s => s.SelectedCompletionSet is TailwindCssCompletionSet);
+            var tailwindSession = sessions.FirstOrDefault(s => s.IsStarted && !s.IsDismissed && s.SelectedCompletionSet is TailwindCssCompletionSet);
 
             if (tailwindSession != null && IsInClassScope(tailwindSession, out string classText) && tailwindSession.SelectedCompletionSet is TailwindCssCompletionSet tailwindCompletionSet)
             {
@@ -133,8 +133,11 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 e.CompletionSession.Dismiss();
                 foreach (var session in otherSessions)
                 {
-                    tailwindCompletionSet.AddCompletions(session.SelectedCompletionSet.Completions);
-                    session.Dismiss();
+                    if (session.IsStarted && !session.IsDismissed)
+                    {
+                        tailwindCompletionSet.AddCompletions(session.SelectedCompletionSet.Completions);
+                        session.Dismiss();
+                    }
                 }
 
                 // Prevent word cutoff by re-rendering completion GUI

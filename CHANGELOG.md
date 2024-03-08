@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.3 (March 7th, 2024)
+
+### Fixes
+
+- Certain `theme.colors` attributes would not appear in IntelliSense
+
+### Additions
+
+- Adds support for `.ts` files as configuration files
+
 ## 1.2.2 (February 7th, 2024)
 
 ### Fixes

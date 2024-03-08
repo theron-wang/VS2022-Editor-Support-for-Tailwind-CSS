@@ -18,7 +18,7 @@ namespace TailwindCSSIntellisense.Configuration
         /// Finds all Javascript files (.js) within the solution
         /// </summary>
         /// <returns>The absolute paths to all Javascript files</returns>
-        internal Task<List<string>> GetJavascriptFilesAsync() => TraverseAllProjectsAndFindFilesOfTypeAsync(".js");
+        internal Task<List<string>> GetJavascriptFilesAsync() => TraverseAllProjectsAndFindFilesOfTypeAsync(".js", ".ts");
         /// <summary>
         /// Finds all CSS files (.css) within the solution
         /// </summary>
@@ -74,7 +74,7 @@ namespace TailwindCSSIntellisense.Configuration
             return path + Path.DirectorySeparatorChar;
         }
 
-        private async Task<List<string>> TraverseAllProjectsAndFindFilesOfTypeAsync(string extension)
+        private async Task<List<string>> TraverseAllProjectsAndFindFilesOfTypeAsync(params string[] extensions)
         {
             var projects = await GetAllProjectsAsync();
 
@@ -82,24 +82,24 @@ namespace TailwindCSSIntellisense.Configuration
 
             foreach (var project in projects)
             {
-                projectItems.AddRange(GetProjectItems(project.Children.ToList(), extension));
+                projectItems.AddRange(GetProjectItems(project.Children.ToList(), extensions));
             }
 
             return projectItems.Select(i => i.Name).ToList();
         }
 
-        private List<SolutionItem> GetProjectItems(List<SolutionItem> projectItems, string extension)
+        private List<SolutionItem> GetProjectItems(List<SolutionItem> projectItems, params string[] extensions)
         {
             var list = new List<SolutionItem>();
             foreach (var item in projectItems)
             {
-                if (item.Type == SolutionItemType.PhysicalFile && Path.GetExtension(item.Name) == extension)
+                if (item.Type == SolutionItemType.PhysicalFile && extensions.Contains(Path.GetExtension(item.Name)))
                 {
                     list.Add(item);
                 }
                 else if (item.Type == SolutionItemType.PhysicalFolder)
                 {
-                    list.AddRange(GetProjectItems(item.Children.ToList(), extension));
+                    list.AddRange(GetProjectItems(item.Children.ToList(), extensions));
                 }
             }
 

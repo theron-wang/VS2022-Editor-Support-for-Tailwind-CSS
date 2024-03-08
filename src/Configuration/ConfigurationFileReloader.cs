@@ -58,7 +58,7 @@ namespace TailwindCSSIntellisense.Configuration
 
         private async Task OnSettingsChangedAsync(TailwindSettings settings)
         {
-            if (settings.TailwindConfigurationFile != await Scanner.FindConfigurationFilePathAsync())
+            if (settings.TailwindConfigurationFile != await Scanner.FindConfigurationFilePathAsync() || _fileName != settings.TailwindConfigurationFile)
             {
                 _fileName = await Scanner.FindConfigurationFilePathAsync(true);
                 await _config.ReloadCustomAttributesAsync();

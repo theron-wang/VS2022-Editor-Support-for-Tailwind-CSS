@@ -509,7 +509,15 @@ namespace TailwindCSSIntellisense.Configuration
                                     {
                                         newColorToRgbMapper[key] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
                                     }
+                                    else
+                                    {
+                                        newColorToRgbMapper[key] = "{noparse}" + colorVariants[colorVariant];
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                newColorToRgbMapper[key] = "{noparse}" + colorVariants[colorVariant];
                             }
                         }
                         else
@@ -532,10 +540,17 @@ namespace TailwindCSSIntellisense.Configuration
                                     {
                                         newColorToRgbMapper[key + "-" + colorVariant] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
                                     }
+                                    else
+                                    {
+                                        newColorToRgbMapper[key + "-" + colorVariant] = "{noparse}" + colorVariants[colorVariant];
+                                    }
                                 }
                             }
+                            else
+                            {
+                                newColorToRgbMapper[key + "-" + colorVariant] = "{noparse}" + colorVariants[colorVariant];
+                            }
                         }
-
                     }
                 }
             }

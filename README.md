@@ -31,7 +31,9 @@ If you do not have `npm` installed, follow [this tutorial](https://docs.npmjs.co
 
 The extension will start in any solution with a `tailwind.config.js` file in any project.
 
-If your configuration file is named differently, or it is not found by the extension, you can set the file by right-clicking on it (must be a `.js` file).
+If your configuration file is named differently, or it is not found by the extension, you can set the file by right-clicking on it (must be a `.js` or `.ts` file).
+
+Using TypeScript files will download the `ts-node` module globally for extension features to work. If this is not desirable, use `.js` files instead.
 
 ## Features
 
@@ -40,6 +42,8 @@ If your configuration file is named differently, or it is not found by the exten
 Tailwind CSS classes show up in the IntelliSense completion menus in Razor, HTML, and CSS files:
 
 ![Intellisense Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-1.gif)
+
+*Due to limitations of Visual Studio, `.tsx` and `.jsx` files do not support Tailwind CSS IntelliSense.*
 
 ### Linting
 

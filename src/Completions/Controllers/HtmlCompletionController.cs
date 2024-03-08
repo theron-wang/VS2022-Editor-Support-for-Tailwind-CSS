@@ -11,6 +11,7 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using static Microsoft.VisualStudio.Shell.ThreadedWaitDialogHelper;
 
 namespace TailwindCSSIntellisense.Completions.Controllers
 {
@@ -165,6 +166,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 classText = null;
                 return false;
             }
+
             var quotationMarkAfterLastClassAttribute = text.IndexOf('\"', indexOfCurrentClassAttribute);
             var lastQuotationMark = text.LastIndexOf('\"');
 
@@ -200,8 +202,8 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
                 return;
 
-            _currentSession.SelectedCompletionSet.Filter();
-            _currentSession.SelectedCompletionSet.SelectBestMatch();
+            _currentSession?.SelectedCompletionSet?.Filter();
+            _currentSession?.SelectedCompletionSet?.SelectBestMatch();
         }
 
         /// <summary>
@@ -279,21 +281,26 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             if (_currentSession != null)
                 return false;
 
-            SnapshotPoint caret = TextView.Caret.Position.BufferPosition;
-            ITextSnapshot snapshot = caret.Snapshot;
+            var caret = TextView.Caret.Position.Point.GetPoint(
+                textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
+
+            if (!caret.HasValue)
+                return false;
+
+            ITextSnapshot snapshot = caret.Value.Snapshot;
 
             var completionActive = Broker.IsCompletionActive(TextView);
 
             if (completionActive)
             {
                 _currentSession = Broker.GetSessions(TextView)[0];
-                _currentSession.Dismissed += (sender, args) => _currentSession = null;
+                _currentSession.Dismissed += OnSessionDismissed;
             }
             else
             {
                 DismissOtherSessions();
-                _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
-                _currentSession.Dismissed += (sender, args) => _currentSession = null;
+                _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret.Value.Position, PointTrackingMode.Positive), true);
+                _currentSession.Dismissed += OnSessionDismissed;
                 _currentSession.Start();
 
                 // Sometimes, creating another session will have irrelevant completions, so we need to filter
@@ -317,6 +324,12 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 }
             }
             return Next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+        }
+
+        private void OnSessionDismissed(object sender, EventArgs e)
+        {
+            _currentSession.Dismissed -= OnSessionDismissed;
+            _currentSession = null;
         }
     }
 
