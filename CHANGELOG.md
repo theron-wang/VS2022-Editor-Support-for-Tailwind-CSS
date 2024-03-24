@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.4 (March 24th, 2024)
+
+### Additions
+
+- Support for arm64 ([#37](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/37))
+- Support for standalone Tailwind CSS CLI
+
 ## 1.2.3 (March 7th, 2024)
 
 ### Fixes

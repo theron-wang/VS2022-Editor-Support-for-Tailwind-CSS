@@ -121,13 +121,22 @@
 				</Strings>
 			</Button>
 
-			<Button guid="guidVSPackageCmdSet" id="SetUpTailwindCmdId" priority="0x0100" type="Button">
+			<Button guid="guidVSPackageCmdSet" id="SetUpAndInstallTailwindCmdId" priority="0x0100" type="Button">
 				<Parent guid="guidVSPackageCmdSet" id="ProjMenuGroup"/>
 				<Icon guid="guidImages" id="tailwindLogo" />
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set up Tailwind CSS</ButtonText>
+					<ButtonText>Set up and install Tailwind CSS</ButtonText>
+				</Strings>
+			</Button>
+			
+			<Button guid="guidVSPackageCmdSet" id="SetUpTailwindCliCmdId" priority="0x0101" type="Button">
+				<Parent guid="guidVSPackageCmdSet" id="ProjMenuGroup"/>
+				<CommandFlag>DynamicVisibility</CommandFlag>
+				<CommandFlag>DefaultInvisible</CommandFlag>
+				<Strings>
+					<ButtonText>Set up Tailwind CSS (use CLI)</ButtonText>
 				</Strings>
 			</Button>
 
@@ -257,10 +266,11 @@
 			<IDSymbol name="StartBuildProcessCmdId" value="0x0106" />
 			<IDSymbol name="StartMinifyBuildProcessCmdId" value="0x0107" />
 			<IDSymbol name="StopBuildProcessCmdId" value="0x0108" />
-			<IDSymbol name="SetUpTailwindCmdId" value="0x0109" />
-			<IDSymbol name="SetUpTailwindWsCmdId" value="0x0110" />
-			<IDSymbol name="StartBuildProcessWsCmdId" value="0x0111" />
-			<IDSymbol name="StopBuildProcessWsCmdId" value="0x0112" />
+			<IDSymbol name="SetUpAndInstallTailwindCmdId" value="0x0109" />
+			<IDSymbol name="SetUpTailwindCliCmdId" value="0x0110" />
+			<IDSymbol name="SetUpTailwindWsCmdId" value="0x0111" />
+			<IDSymbol name="StartBuildProcessWsCmdId" value="0x0112" />
+			<IDSymbol name="StopBuildProcessWsCmdId" value="0x0113" />
 		</GuidSymbol>
 
 		<GuidSymbol name="guidImages" value="{2320d8cb-5f2f-4c20-af58-1877e2b1d14a}" >

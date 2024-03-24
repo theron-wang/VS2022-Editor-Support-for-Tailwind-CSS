@@ -24,11 +24,16 @@ If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJ
 
 ## New Project
 
-2a.	Once you have created a project, **right click on the project node and click 'Set up Tailwind CSS'**:
+2a.	Once you have created a project, **right click on the project node and click 'Set up and install Tailwind CSS'**:
 
 ![Set up TailwindCSS](art/NPM-Shortcuts-1.png)
 
 This will import the Tailwind CSS node modules and configure your `tailwind.config.js`.
+
+**Using the standalone Tailwind CSS CLI:**
+- If you have the Tailwind CSS CLI installed, you can click 'Set up Tailwind CSS (use CLI)' instead once you have specified the CLI path in Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path.
+- Following builds in the project will use the Tailwind CLI instead of `npx tailwindcss`
+- If you want to switch between `npx tailwindcss` and the standalone CLI, adjust the `UseCli` property in `tailwind.extension.json`
 
 2b. To configure Tailwind CSS, follow the [official documentation](https://tailwindcss.com/docs/installation) (specifically steps 2, 3, and 5).
 

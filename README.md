@@ -75,6 +75,10 @@ When getting started in a new project, you can import the necessary modules by r
 
 ![NPM Shortcut 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-Shortcuts-1.png)
 
+**Using the standalone Tailwind CSS CLI:**
+- Specify the absolute path in Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path.
+- Click 'Set up Tailwind CSS (use CLI)'
+
 If you prefer a different build command, `package.json` scripts are also supported:
 
 ![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)

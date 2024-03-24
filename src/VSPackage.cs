@@ -43,10 +43,11 @@ namespace TailwindCSSIntellisense
         public const int StartBuildProcessCmdId = 0x0106;
         public const int StartMinifyBuildProcessCmdId = 0x0107;
         public const int StopBuildProcessCmdId = 0x0108;
-        public const int SetUpTailwindCmdId = 0x0109;
-        public const int SetUpTailwindWsCmdId = 0x0110;
-        public const int StartBuildProcessWsCmdId = 0x0111;
-        public const int StopBuildProcessWsCmdId = 0x0112;
+        public const int SetUpAndInstallTailwindCmdId = 0x0109;
+        public const int SetUpTailwindCliCmdId = 0x0110;
+        public const int SetUpTailwindWsCmdId = 0x0111;
+        public const int StartBuildProcessWsCmdId = 0x0112;
+        public const int StopBuildProcessWsCmdId = 0x0113;
         public const int tailwindLogo = 0x0001;
     }
 }

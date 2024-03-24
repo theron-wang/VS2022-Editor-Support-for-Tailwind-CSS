@@ -199,7 +199,7 @@ namespace TailwindCSSIntellisense.Build
                 {
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
                     }
                     else if (_settings.OverrideBuild)
                     {
@@ -214,7 +214,7 @@ namespace TailwindCSSIntellisense.Build
 
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
                     }
                     else if (_settings.OverrideBuild)
                     {
@@ -276,7 +276,7 @@ namespace TailwindCSSIntellisense.Build
 
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"npx tailwindcss -i \"{cssFile}\" -o \"{outputFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
                     }
                     else if (_settings.OverrideBuild)
                     {
@@ -360,6 +360,15 @@ namespace TailwindCSSIntellisense.Build
                     _otherProcess = null;
                 }
             }
+        }
+
+        private string GetCommand()
+        {
+            if (string.IsNullOrWhiteSpace(_settings.TailwindCliPath))
+            {
+                return "npx tailwindcss";
+            }
+            return _settings.TailwindCliPath;
         }
 
         /// <summary>

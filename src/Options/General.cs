@@ -41,6 +41,10 @@ namespace TailwindCSSIntellisense.Options
         [DefaultValue("{0}.output.css")]
         public string TailwindOutputFileName { get; set; } = "{0}.output.css";
         [Category("Build")]
+        [DisplayName("Tailwind CLI path")]
+        [Description("The absolute path to the Tailwind CLI executable for building: if empty, the default npx tailwindcss build command will run; if not, the specified Tailwind CLI will be called")]
+        public string TailwindCliPath { get; set; }
+        [Category("Build")]
         [DisplayName("Build type")]
         [Description("Files can be built in four ways: Default (Tailwind JIT), OnSave (on file save), OnBuild (on project build), and None (no building)")]
         [TypeConverter(typeof(EnumConverter))]

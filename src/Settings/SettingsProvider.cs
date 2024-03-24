@@ -67,7 +67,8 @@ namespace TailwindCSSIntellisense.Settings
                         BuildType = general.BuildProcessType,
                         BuildScript = general.BuildScript,
                         OverrideBuild = general.OverrideBuild,
-                        AutomaticallyMinify = general.AutomaticallyMinify
+                        AutomaticallyMinify = general.AutomaticallyMinify,
+                        TailwindCliPath = general.TailwindCliPath
                     };
                 }
 
@@ -126,7 +127,9 @@ namespace TailwindCSSIntellisense.Settings
                     TailwindConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
                     TailwindCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
                     TailwindOutputCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim()),
-                    AutomaticallyMinify = general.AutomaticallyMinify
+                    AutomaticallyMinify = general.AutomaticallyMinify,
+                    TailwindCliPath = general.TailwindCliPath,
+                    UseCli = projectSettings.UseCli
                 };
 
                 _cachedSettings = returnSettings;
@@ -176,7 +179,8 @@ namespace TailwindCSSIntellisense.Settings
             {
                 ConfigurationFile = PathHelpers.GetRelativePath(settings.TailwindConfigurationFile, projectRoot),
                 InputCssFile = PathHelpers.GetRelativePath(settings.TailwindCssFile, projectRoot),
-                OutputCssFile = PathHelpers.GetRelativePath(settings.TailwindOutputCssFile, projectRoot)
+                OutputCssFile = PathHelpers.GetRelativePath(settings.TailwindOutputCssFile, projectRoot),
+                UseCli = settings.UseCli
             };
 
             if (projectSettings.ConfigurationFile == null && projectSettings.InputCssFile == null && projectSettings.OutputCssFile == null && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
@@ -258,7 +262,8 @@ namespace TailwindCSSIntellisense.Settings
                 settings.BuildProcessType != origSettings.BuildType ||
                 settings.BuildScript != origSettings.BuildScript ||
                 settings.OverrideBuild != origSettings.OverrideBuild ||
-                settings.AutomaticallyMinify != origSettings.AutomaticallyMinify)
+                settings.AutomaticallyMinify != origSettings.AutomaticallyMinify ||
+                settings.TailwindCliPath != origSettings.TailwindCliPath)
             {
                 origSettings.EnableTailwindCss = settings.UseTailwindCss;
                 origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
@@ -266,6 +271,7 @@ namespace TailwindCSSIntellisense.Settings
                 origSettings.BuildScript = settings.BuildScript;
                 origSettings.OverrideBuild = settings.OverrideBuild;
                 origSettings.AutomaticallyMinify = settings.AutomaticallyMinify;
+                origSettings.TailwindCliPath = settings.TailwindCliPath;
 
                 ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
             }
@@ -276,6 +282,7 @@ namespace TailwindCSSIntellisense.Settings
         private void InvalidateCacheAndSettingsChanged(string file)
         {
             _cacheValid = false;
+            _cachedSettings = null;
             if (OnSettingsChanged != null)
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
@@ -289,6 +296,7 @@ namespace TailwindCSSIntellisense.Settings
         private void InvalidateCacheAndSettingsChanged(Project project)
         {
             _cacheValid = false;
+            _cachedSettings = null;
             if (OnSettingsChanged != null)
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>

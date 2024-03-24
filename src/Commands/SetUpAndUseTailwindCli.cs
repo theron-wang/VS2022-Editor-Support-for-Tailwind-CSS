@@ -8,8 +8,8 @@ using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
 {
-    [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetUpTailwindCmdId)]
-    internal sealed class SetUpTailwind : BaseCommand<SetUpTailwind>
+    [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetUpTailwindCliCmdId)]
+    internal sealed class SetUpAndUseTailwindCli : BaseCommand<SetUpAndUseTailwindCli>
     {
         protected override async Task InitializeCompletedAsync()
         {
@@ -26,7 +26,7 @@ namespace TailwindCSSIntellisense
         {
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
-            Command.Visible = settings.EnableTailwindCss && (string.IsNullOrEmpty(settings.TailwindConfigurationFile) || File.Exists(settings.TailwindConfigurationFile) == false);
+            Command.Visible = settings.EnableTailwindCss && File.Exists(settings.TailwindCliPath) && (string.IsNullOrEmpty(settings.TailwindConfigurationFile) || File.Exists(settings.TailwindConfigurationFile) == false);
             Command.Enabled = !TailwindSetUpProcess.IsSettingUp;
         }
 
@@ -35,12 +35,14 @@ namespace TailwindCSSIntellisense
             if (!TailwindSetUpProcess.IsSettingUp)
             {
                 var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
-                await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory));
+                var settings = await SettingsProvider.GetSettingsAsync();
+
+                await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, settings.TailwindCliPath));
                 
                 var configFile = Path.Combine(directory, "tailwind.config.js");
 
-                var settings = await SettingsProvider.GetSettingsAsync();
                 settings.TailwindConfigurationFile = configFile;
+                settings.UseCli = true;
                 await SettingsProvider.OverrideSettingsAsync(settings);
             }
         }
