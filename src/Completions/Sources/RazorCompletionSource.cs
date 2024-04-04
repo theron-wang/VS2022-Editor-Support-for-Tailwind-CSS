@@ -133,8 +133,12 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 e.CompletionSession.Dismiss();
                 foreach (var session in otherSessions)
                 {
-                    if (session.IsStarted && !session.IsDismissed)
+                    if (!session.IsDismissed)
                     {
+                        if (!session.IsStarted)
+                        {
+                            session.Start();
+                        }
                         tailwindCompletionSet.AddCompletions(session.SelectedCompletionSet.Completions);
                         session.Dismiss();
                     }

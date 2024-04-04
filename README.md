@@ -33,8 +33,6 @@ The extension will start in any solution with a `tailwind.config.js` file in any
 
 If your configuration file is named differently, or it is not found by the extension, you can set the file by right-clicking on it (must be a `.js` or `.ts` file).
 
-Using TypeScript files will download the `ts-node` module globally for extension features to work. If this is not desirable, use `.js` files instead.
-
 ## Features
 
 ### IntelliSense

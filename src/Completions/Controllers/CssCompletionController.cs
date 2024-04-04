@@ -102,6 +102,16 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                         break;
                 }
             }
+            else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
+            {
+                switch ((VSConstants.VSStd97CmdID)nCmdID)
+                {
+                    case VSConstants.VSStd97CmdID.Paste:
+                    case VSConstants.VSStd97CmdID.Undo:
+                        Cancel();
+                        break;
+                }
+            }
 
             if (!handled)
             {
@@ -138,6 +148,10 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             StartSession(true);
                             break;
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
+                            if (classText.Any() && char.IsWhiteSpace(classText.Last()))
+                            {
+                                break;
+                            }
                             // backspace is applied after this function is called, so this is actually
                             // equivalent to <= 1 (like above)
                             if (isInApply && (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/")))

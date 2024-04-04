@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.5 (April 3rd, 2024)
+
+### Changes
+
+- IntelliSense no longer triggered when backspacing whitespace
+- IntelliSense no longer triggered on paste
+- `ts-node` dependency no longer required for `.ts` files
+
+### Fixes
+
+- Certain class descriptions missing (i.e. `max-w-md`)
+
 ## 1.2.4 (March 24th, 2024)
 
 ### Additions

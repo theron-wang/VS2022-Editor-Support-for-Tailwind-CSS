@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
@@ -71,7 +72,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             ThreadHelper.ThrowIfNotOnUIThread();
 
             // Is the caret in a class="" scope?
-            if (IsInClassScope(out string classText) == false)
+            if (IsInClassScope(out string classText) == false || (string.IsNullOrWhiteSpace(classText) == false && classText.Split(' ').Last().StartsWith("@")))
             {
                 return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
@@ -99,6 +100,16 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                         break;
                     case VSConstants.VSStd2KCmdID.CANCEL:
                         handled = Cancel();
+                        break;
+                }
+            }
+            else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
+            {
+                switch ((VSConstants.VSStd97CmdID)nCmdID)
+                {
+                    case VSConstants.VSStd97CmdID.Paste:
+                    case VSConstants.VSStd97CmdID.Undo:
+                        Cancel();
                         break;
                 }
             }
@@ -137,6 +148,10 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             StartSession();
                             break;
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
+                            if (classText.Any() && char.IsWhiteSpace(classText.Last()))
+                            {
+                                break;
+                            }
                             // backspace is applied after this function is called, so this is actually
                             // equivalent to <= 1 (like above)
                             if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
@@ -317,7 +332,14 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 }
             }
 
-            var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
+            var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion?.InsertionText;
+            
+            if (string.IsNullOrWhiteSpace(completionText))
+            {
+                _currentSession?.Dismiss();
+                return false;
+            }
+            
             var moveOneBack = completionText.EndsWith("]");
             var moveTwoBack = completionText.EndsWith("]:");
             _currentSession.Commit();
@@ -364,7 +386,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
 
         public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
         {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            ThreadHelper.ThrowIfNotOnUIThread();
             if (pguidCmdGroup == VSConstants.VSStd2K)
             {
                 switch ((VSConstants.VSStd2KCmdID)prgCmds[0].cmdID)

@@ -104,7 +104,6 @@
     <Compile Include="Node\PackageJsonReader.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
-    <Compile Include="Node\TSNodeHandler.cs" />
     <Compile Include="Options\Linter.cs" />
     <Compile Include="QuickInfo\CssQuickInfoSource.cs" />
     <Compile Include="QuickInfo\RazorQuickInfoSourceProvider.cs" />
