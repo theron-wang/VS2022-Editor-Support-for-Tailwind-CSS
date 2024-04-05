@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 using TailwindCSSIntellisense.Build;
+using TailwindCSSIntellisense.ClassSort;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Options;
@@ -55,6 +56,8 @@ namespace TailwindCSSIntellisense
         private CheckForUpdates _checkForUpdates;
         private TailwindBuildProcess _buildProcess;
         private CompletionUtilities _completionUtils;
+        private ClassSortUtilities _classSortUtilities;
+        private ClassSorter _classSorter;
 
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
@@ -74,6 +77,8 @@ namespace TailwindCSSIntellisense
             _checkForUpdates = await VS.GetMefServiceAsync<CheckForUpdates>();
             _buildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
             _completionUtils = await VS.GetMefServiceAsync<CompletionUtilities>();
+            _classSortUtilities = await VS.GetMefServiceAsync<ClassSortUtilities>();
+            _classSorter = await VS.GetMefServiceAsync<ClassSorter>();
 
             // Reload Intellisense and build so everything starts clean in the new project/folder
             VS.Events.SolutionEvents.OnAfterOpenProject += ProjectLoaded;
@@ -87,7 +92,9 @@ namespace TailwindCSSIntellisense
                 {
                     await _buildProcess.InitializeAsync(true);
                     await _completionUtils.InitializeAsync();
+                    await _classSortUtilities.InitializeAsync();
                     await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
+                    _classSorter.Initialize();
                 }).FireAndForget();
 
                 foreach (var project in await VS.Solutions.GetAllProjectsAsync())
@@ -110,8 +117,10 @@ namespace TailwindCSSIntellisense
                 {
                     await _buildProcess.InitializeAsync(true);
                     await _completionUtils.InitializeAsync();
+                    await _classSortUtilities.InitializeAsync();
                     await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
                     await _checkForUpdates.UpdateIfNeededAsync(folderName);
+                    _classSorter.Initialize();
                 }).FireAndForget();
             }
             catch (Exception ex)

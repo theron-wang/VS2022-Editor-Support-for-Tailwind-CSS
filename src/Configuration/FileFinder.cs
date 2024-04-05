@@ -18,12 +18,12 @@ namespace TailwindCSSIntellisense.Configuration
         /// Finds all Javascript files (.js) within the solution
         /// </summary>
         /// <returns>The absolute paths to all Javascript files</returns>
-        internal Task<List<string>> GetJavascriptFilesAsync() => TraverseAllProjectsAndFindFilesOfTypeAsync(".js", ".ts");
+        internal Task<List<string>> GetJavascriptFilesAsync() => FindAllFilesAsync(".js", ".ts");
         /// <summary>
         /// Finds all CSS files (.css) within the solution
         /// </summary>
         /// <returns>The absolute paths to all CSS files</returns>
-        internal Task<List<string>> GetCssFilesAsync() => TraverseAllProjectsAndFindFilesOfTypeAsync(".css");
+        internal Task<List<string>> GetCssFilesAsync() => FindAllFilesAsync(".css");
 
         /// <summary>
         /// Gets the current miscellaneous project (if applicable)
@@ -74,7 +74,12 @@ namespace TailwindCSSIntellisense.Configuration
             return path + Path.DirectorySeparatorChar;
         }
 
-        private async Task<List<string>> TraverseAllProjectsAndFindFilesOfTypeAsync(params string[] extensions)
+        private Task<List<string>> FindAllFilesAsync(params string[] extensions)
+        {
+            return TraverseAllProjectsAndFindFilesOfTypeAsync(extensions);
+        }
+            
+        internal async Task<List<string>> TraverseAllProjectsAndFindFilesOfTypeAsync(IEnumerable<string> extensions)
         {
             var projects = await GetAllProjectsAsync();
 
@@ -88,7 +93,7 @@ namespace TailwindCSSIntellisense.Configuration
             return projectItems.Select(i => i.Name).ToList();
         }
 
-        private List<SolutionItem> GetProjectItems(List<SolutionItem> projectItems, params string[] extensions)
+        private List<SolutionItem> GetProjectItems(List<SolutionItem> projectItems, IEnumerable<string> extensions)
         {
             var list = new List<SolutionItem>();
             foreach (var item in projectItems)

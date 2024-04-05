@@ -91,8 +91,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             {
                 var defaultCompletionSet = completionSets[0];
 
-                // Must convert defaultCompletionSet.Completions to a list because original list is read only
-                var newCompletionList = defaultCompletionSet.Completions.ToList().Concat(completions);
+                var newCompletionList = defaultCompletionSet.Completions.Concat(completions);
 
                 var overridenCompletionSet = new TailwindCssCompletionSet(
                     defaultCompletionSet.Moniker,

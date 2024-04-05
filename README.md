@@ -53,6 +53,16 @@ Linter options can be found in Tools > Options > Tailwind CSS IntelliSense > Lin
 
 Extensions do not have the ability to override existing error tags, so `@tailwind`, `@apply`, and other Tailwind-specific functions will be underlined by Visual Studio. 
 
+### Class Sorting
+
+Classes can be sorted in the recommended Tailwind manner on a per-file basis on file save or by the whole solution on build:
+
+![Class Sort Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/class-sort-demo.gif)
+
+You can also manually sort by clicking the Tools menu at the top and selecting a sort option:
+
+![Class Sort Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Class-Sort-2.png)
+
 ### Build Integration
 
 When in a project, you can run the project to build Tailwind CSS or access it via the Build menu. Build details and errors will be logged to the Build output window:

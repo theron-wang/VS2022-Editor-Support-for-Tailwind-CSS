@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.3.0 (April 5th, 2024)
+
+### Additions
+
+- Added support for `peer` and `peer-*`
+- Class sorting in `.html`, `.ascx`, `.aspx`, `.razor`, `.cshtml`, `.css`, `.tcss` files ([#29](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/29))
+
+### Fixes
+
+- Fixed an edge case exception which could occur when parsing `.razor` files
+- Fixed an exception which could occur when backspacing in `.css` files
+- Fixed an error which could occur when opening a Git compare window
+
 ## 1.2.5 (April 3rd, 2024)
 
 ### Changes

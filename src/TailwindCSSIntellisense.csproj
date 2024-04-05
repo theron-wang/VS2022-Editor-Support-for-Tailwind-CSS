@@ -52,9 +52,18 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Build\TailwindBuildProcess.cs" />
+    <Compile Include="ClassSort\ClassSorter.cs" />
+    <Compile Include="ClassSort\ClassSortUtilities.cs" />
+    <Compile Include="ClassSort\Sorters\CssSorter.cs" />
+    <Compile Include="ClassSort\Sorters\RazorSorter.cs" />
+    <Compile Include="ClassSort\Sorters\HtmlSorter.cs" />
+    <Compile Include="ClassSort\Sorters\Sorter.cs" />
+    <Compile Include="ClassSort\Sorters\SorterAggregator.cs" />
     <Compile Include="Commands\RemoveAsOutputFile.cs" />
     <Compile Include="Commands\RemoveAsInputFile.cs" />
     <Compile Include="Commands\RemoveAsConfigFile.cs" />
+    <Compile Include="Commands\SortClassesInSolution.cs" />
+    <Compile Include="Commands\SortClassesInOpenFile.cs" />
     <Compile Include="Commands\SetUpAndUseTailwindCli.cs" />
     <Compile Include="Commands\SetUpTailwindWs.cs" />
     <Compile Include="Commands\SetUpAndInstallTailwind.cs" />
@@ -172,6 +181,12 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <None Include="README.md" />
+    <Content Include="Resources\tailwindmodifiersorder.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\tailwindorder.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>

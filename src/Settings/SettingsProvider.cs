@@ -68,7 +68,8 @@ namespace TailwindCSSIntellisense.Settings
                         BuildScript = general.BuildScript,
                         OverrideBuild = general.OverrideBuild,
                         AutomaticallyMinify = general.AutomaticallyMinify,
-                        TailwindCliPath = general.TailwindCliPath
+                        TailwindCliPath = general.TailwindCliPath,
+                        SortClassesType = general.ClassSortType
                     };
                 }
 
@@ -129,7 +130,8 @@ namespace TailwindCSSIntellisense.Settings
                     TailwindOutputCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim()),
                     AutomaticallyMinify = general.AutomaticallyMinify,
                     TailwindCliPath = general.TailwindCliPath,
-                    UseCli = projectSettings.UseCli
+                    UseCli = projectSettings.UseCli,
+                    SortClassesType = general.ClassSortType
                 };
 
                 _cachedSettings = returnSettings;
@@ -263,7 +265,8 @@ namespace TailwindCSSIntellisense.Settings
                 settings.BuildScript != origSettings.BuildScript ||
                 settings.OverrideBuild != origSettings.OverrideBuild ||
                 settings.AutomaticallyMinify != origSettings.AutomaticallyMinify ||
-                settings.TailwindCliPath != origSettings.TailwindCliPath)
+                settings.TailwindCliPath != origSettings.TailwindCliPath ||
+                settings.ClassSortType != origSettings.SortClassesType)
             {
                 origSettings.EnableTailwindCss = settings.UseTailwindCss;
                 origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
@@ -272,6 +275,7 @@ namespace TailwindCSSIntellisense.Settings
                 origSettings.OverrideBuild = settings.OverrideBuild;
                 origSettings.AutomaticallyMinify = settings.AutomaticallyMinify;
                 origSettings.TailwindCliPath = settings.TailwindCliPath;
+                origSettings.SortClassesType = settings.ClassSortType;
 
                 ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
             }

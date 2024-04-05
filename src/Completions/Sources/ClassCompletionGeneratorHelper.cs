@@ -247,6 +247,13 @@ namespace TailwindCSSIntellisense.Completions.Sources
                                                 "group-" + modifier.Replace("[]", "[...]:"),
                                                 completionUtils.TailwindLogo,
                                                 null));
+
+                        completionsToAddToEnd.Add(
+                            new Completion("peer-" + modifier.Replace("[]", "[...]:"),
+                                                modifiersAsString + "peer-" + modifier + ":",
+                                                "peer-" + modifier.Replace("[]", "[...]:"),
+                                                completionUtils.TailwindLogo,
+                                                null));
                     }
                     else
                     {
@@ -261,6 +268,13 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             new Completion("group-" + modifier + ":",
                                                 modifiersAsString + "group-" + modifier + ":",
                                                 "group-" + modifier,
+                                                completionUtils.TailwindLogo,
+                                                null));
+
+                        completionsToAddToEnd.Add(
+                            new Completion("peer-" + modifier + ":",
+                                                modifiersAsString + "peer-" + modifier + ":",
+                                                "peer-" + modifier,
                                                 completionUtils.TailwindLogo,
                                                 null));
                     }

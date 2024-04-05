@@ -46,7 +46,7 @@ namespace TailwindCSSIntellisense.QuickInfo
                 searchSnapshot = new SnapshotSpan(_textBuffer.CurrentSnapshot, startIndex, length);
                 var last = searchSnapshot.GetText().Last();
 
-                while (char.IsWhiteSpace(last) == false && last != '"' && last != '\'')
+                while (char.IsWhiteSpace(last) == false && last != '"' && last != '\'' && searchSnapshot.End < _textBuffer.CurrentSnapshot.Length)
                 {
                     length++;
                     searchSnapshot = new SnapshotSpan(_textBuffer.CurrentSnapshot, startIndex, length);

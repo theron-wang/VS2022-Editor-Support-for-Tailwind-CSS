@@ -148,7 +148,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             StartSession(true);
                             break;
                         case VSConstants.VSStd2KCmdID.BACKSPACE:
-                            if (classText.Any() && char.IsWhiteSpace(classText.Last()))
+                            if (isInApply && classText is not null && classText.Any() && char.IsWhiteSpace(classText.Last()))
                             {
                                 break;
                             }

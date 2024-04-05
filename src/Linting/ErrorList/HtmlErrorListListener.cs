@@ -37,6 +37,12 @@ public class HtmlErrorListListener : ITextViewCreationListener, IDisposable
             view.Closed += ViewClosed;
 
             var file = view.TextBuffer.GetFileName();
+
+            if (file is null)
+            {
+                return;
+            }
+
             var tableDataSource = new TableDataSource(Vsix.Name + file);
 
             var project = ThreadHelper.JoinableTaskFactory.Run(() => PhysicalFile.FromFileAsync(file)).ContainingProject;

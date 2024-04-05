@@ -12,6 +12,7 @@ namespace TailwindCSSIntellisense.Settings
         public string TailwindCliPath { get; set; }
         public bool EnableTailwindCss { get; set; }
         public BuildProcessOptions BuildType { get; set; }
+        public SortClassesOptions SortClassesType { get; set; }
         public string BuildScript { get; set; }
         public bool OverrideBuild { get; set; }
         public bool AutomaticallyMinify { get; set; }

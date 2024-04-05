@@ -50,6 +50,12 @@ namespace TailwindCSSIntellisense.Options
         [TypeConverter(typeof(EnumConverter))]
         [DefaultValue(BuildProcessOptions.Default)]
         public BuildProcessOptions BuildProcessType { get; set; } = BuildProcessOptions.Default;
+        [Category("Class Sort")]
+        [DisplayName("Class sort type")]
+        [Description("Classes can be sorted on file save (only sorts open file), on build (entire solution), or never.")]
+        [TypeConverter(typeof(EnumConverter))]
+        [DefaultValue(SortClassesOptions.OnSave)]
+        public SortClassesOptions ClassSortType { get; set; } = SortClassesOptions.OnSave;
         [Category("Custom Build")]
         [DisplayName("Build script")]
         [Description("The name of the script to execute on build (defined in package.json); leave blank to use the default Tailwind CSS build")]
@@ -66,6 +72,13 @@ namespace TailwindCSSIntellisense.Options
         Default,
         OnSave,
         OnBuild,
-        None,
+        None
+    }
+
+    public enum SortClassesOptions
+    {
+        OnSave,
+        OnBuild,
+        None
     }
 }
