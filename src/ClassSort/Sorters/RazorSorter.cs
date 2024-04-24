@@ -1,11 +1,5 @@
-﻿using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Text;
-using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
@@ -43,7 +37,7 @@ internal class RazorSorter : Sorter
             int numberOfQuotes = 0;
             bool isEscaping = false;
 
-            List<string> tokens = [];
+            List<Token> tokens = [];
             string totalText = "";
 
             while (lastIndex < file.Length && (depth != 0 || numberOfQuotes % 2 == 1 || terminator != file[lastIndex]))
@@ -58,7 +52,7 @@ internal class RazorSorter : Sorter
                     {
                         if (string.IsNullOrWhiteSpace(totalText) == false)
                         {
-                            tokens.Add(totalText.Trim());
+                            tokens.Add(new Token(totalText.Trim(), isInRazor));
                         }
                         totalText = "";
                     }
@@ -100,7 +94,7 @@ internal class RazorSorter : Sorter
                     if (depth == 0 && numberOfQuotes % 2 == 0 && character == ' ')
                     {
                         isInRazor = false;
-                        tokens.Add(totalText.Trim());
+                        tokens.Add(new Token(totalText.Trim(), isInRazor));
                         totalText = "";
                     }
                 }
@@ -110,7 +104,7 @@ internal class RazorSorter : Sorter
 
             if (string.IsNullOrWhiteSpace(totalText) == false)
             {
-                tokens.Add(totalText.Trim());
+                tokens.Add(new Token(totalText.Trim(), isInRazor));
             }
 
             if (lastIndex >= file.Length)
@@ -121,10 +115,93 @@ internal class RazorSorter : Sorter
 
             // return class=" or class='
             yield return file.Substring(indexOfClass, 7);
-            yield return SortSegment(tokens, config);
+
+            bool inside = false;
+            bool sortedYet = false;
+
+            char lookFor = file[indexOfClass + 6] == '"' ? '\'' : '"';
+            int token = 0;
+
+            var textTokens = new List<string>();
+
+            while (token < tokens.Count)
+            {
+                int index = tokens[token].Text.IndexOf(lookFor);
+                if (index == -1 || tokens[token].IsInRazor)
+                {
+                    textTokens.Add(tokens[token].Text);
+
+                    token++;
+                    continue;
+                }
+
+                var from = 0;
+                while (index != -1)
+                {
+                    if (index == 0 || tokens[token].Text[index - 1] != '\\')
+                    {
+                        if (inside)
+                        {
+                            if (index == 0)
+                            {
+                                yield return lookFor + SortSegment(textTokens, config);
+                            }
+                            else
+                            {
+                                var f = from == 0 ? 0 : from + 1;
+                                textTokens.Add(tokens[token].Text.Substring(f, index - f));
+                                yield return lookFor + SortSegment(textTokens, config);
+                            }
+                            sortedYet = true;
+                            inside = false;
+                            textTokens.Clear();
+                        }
+                        else
+                        {
+                            textTokens.Add(tokens[token].Text.Substring(from, index - from));
+                            yield return string.Join(" ", textTokens);
+                            inside = true;
+                            textTokens.Clear();
+                        }
+                        from = index;
+                    }
+
+                    index = tokens[token].Text.IndexOf(lookFor, index + 1);
+
+                    if (index == -1)
+                    {
+                        if (inside)
+                        {
+                            textTokens.Add(tokens[token].Text.Substring(from + 1));
+                        }
+                        else
+                        {
+                            textTokens.Add(tokens[token].Text.Substring(from));
+                        }
+                    }
+                }
+
+                token++;
+            }
+
+            if (sortedYet)
+            {
+                yield return string.Join(" ", textTokens);
+            }
+            else
+            {
+                yield return SortSegment(textTokens, config);
+            }
+
             (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
         }
 
         yield return file.Substring(lastIndex);
+    }
+
+    private class Token(string text, bool isInRazor)
+    {
+        public string Text { get; set; } = text;
+        public bool IsInRazor { get; set; } = isInRazor;
     }
 }

@@ -43,7 +43,55 @@ internal class HtmlSorter : Sorter
 
             // return class=" or class='
             yield return file.Substring(indexOfClass, 7);
-            yield return SortSegment(file.Substring(indexOfClass + 7, lastIndex - (indexOfClass + 7)).Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+
+            // Handle edge cases: Alpine JS, Vue, etc.
+            // <div x-bind:class="! open ? 'hidden' : ''">
+            var classText = file.Substring(indexOfClass + 7, lastIndex - (indexOfClass + 7));
+
+            bool inside = false;
+            int index = 0;
+
+            char lookFor = file[indexOfClass + 6] == '"' ? '\'' : '"';
+
+            var from = 0;
+
+            while (index != -1)
+            {
+                index = classText.IndexOf(lookFor, index + 1);
+                if (index == -1)
+                {
+                    if (from == 0)
+                    {
+                        yield return SortSegment(classText.Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+                    }
+                    else if (inside)
+                    {
+                        yield return lookFor + SortSegment(classText.Substring(from + 1).Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+                    }
+                    else
+                    {
+                        yield return classText.Substring(from);
+                    }
+
+                    break;
+                }
+
+                if (index == 0 || classText[index - 1] != '\\')
+                {
+                    if (inside)
+                    {
+                        yield return lookFor + SortSegment(classText.Substring(from + 1, index - from - 1).Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+                        inside = false;
+                    }
+                    else
+                    {
+                        yield return classText.Substring(from, index - from);
+                        inside = true;
+                    }
+                    from = index;
+                }
+            }
+            
             (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
         }
 

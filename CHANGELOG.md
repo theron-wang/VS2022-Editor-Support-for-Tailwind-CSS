@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1 (April 23rd, 2024)
+
+### Fixes
+
+- Format broken when sorting classes with Alpine JS, Vue, etc. ([#39](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/39))
+
 ## 1.3.0 (April 5th, 2024)
 
 ### Additions
