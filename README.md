@@ -1,5 +1,6 @@
 # Tailwind CSS VS2022 Editor Support 
 
+![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/i/TheronWang.TailwindCSSIntellisense)
 ![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/TheronWang.TailwindCSSIntellisense)
 ![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/TheronWang.TailwindCSSIntellisense)
 
