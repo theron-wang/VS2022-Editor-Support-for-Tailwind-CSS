@@ -93,8 +93,8 @@ internal class RazorSorter : Sorter
 
                     if (depth == 0 && numberOfQuotes % 2 == 0 && character == ' ')
                     {
-                        isInRazor = false;
                         tokens.Add(new Token(totalText.Trim(), isInRazor));
+                        isInRazor = false;
                         totalText = "";
                     }
                 }
@@ -123,6 +123,7 @@ internal class RazorSorter : Sorter
             int token = 0;
 
             var textTokens = new List<string>();
+            var razorIndices = new HashSet<int>();
 
             while (token < tokens.Count)
             {
@@ -130,6 +131,11 @@ internal class RazorSorter : Sorter
                 if (index == -1 || tokens[token].IsInRazor)
                 {
                     textTokens.Add(tokens[token].Text);
+
+                    if (tokens[token].IsInRazor)
+                    {
+                        razorIndices.Add(textTokens.Count - 1);
+                    }
 
                     token++;
                     continue;
@@ -144,17 +150,18 @@ internal class RazorSorter : Sorter
                         {
                             if (index == 0)
                             {
-                                yield return lookFor + SortSegment(textTokens, config);
+                                yield return lookFor + string.Join(" ", SortRazorSegment(textTokens, razorIndices, config));
                             }
                             else
                             {
                                 var f = from == 0 ? 0 : from + 1;
                                 textTokens.Add(tokens[token].Text.Substring(f, index - f));
-                                yield return lookFor + SortSegment(textTokens, config);
+                                yield return lookFor + string.Join(" ", SortRazorSegment(textTokens, razorIndices, config));
                             }
                             sortedYet = true;
                             inside = false;
                             textTokens.Clear();
+                            razorIndices.Clear();
                         }
                         else
                         {
@@ -162,6 +169,7 @@ internal class RazorSorter : Sorter
                             yield return string.Join(" ", textTokens);
                             inside = true;
                             textTokens.Clear();
+                            razorIndices.Clear();
                         }
                         from = index;
                     }
@@ -190,7 +198,7 @@ internal class RazorSorter : Sorter
             }
             else
             {
-                yield return SortSegment(textTokens, config);
+                yield return string.Join(" ", SortRazorSegment(textTokens, razorIndices, config));
             }
 
             (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);

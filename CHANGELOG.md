@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2 (May 11th, 2024)
+
+### Changes
+
+- Razor order persisted on class sort (i.e. `class="text-gray-100 p-4 @Css"` would be sorted to `class="p-4 text-gray-100 @Css"`) ([#40](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/40))
+
 ## 1.3.1 (April 23rd, 2024)
 
 ### Fixes

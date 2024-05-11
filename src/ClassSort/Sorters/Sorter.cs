@@ -31,7 +31,47 @@ internal abstract class Sorter
 
     protected abstract IEnumerable<string> GetSegments(string input, TailwindConfiguration config);
 
+    protected IEnumerable<string> SortRazorSegment(List<string> classes, HashSet<int> razorIndices, TailwindConfiguration config)
+    {
+        var sorted = Sort(classes
+            .Select((v, i) => (v, i))
+            .Where(v => !razorIndices.Contains(v.i))
+            .Select(v => v.v), config);
+
+        int lastIndex = -1;
+        int start = 0;
+
+        foreach (int index in razorIndices)
+        {
+            int between = index - lastIndex - 1;
+
+            if (between < 0)
+            {
+                between = 0;
+            }
+
+            foreach (var s in sorted.Skip(start).Take(between))
+            {
+                yield return s;
+            }
+            yield return classes[index];
+
+            lastIndex = index;
+            start += between;
+        }
+
+        foreach (var s in sorted.Skip(start))
+        {
+            yield return s;
+        }
+    }
+
     protected string SortSegment(IEnumerable<string> classes, TailwindConfiguration config)
+    {
+        return string.Join(" ", Sort(classes, config));
+    }
+
+    private IEnumerable<string> Sort(IEnumerable<string> classes, TailwindConfiguration config)
     {
         var result = classes.OrderBy(className => className.Count(c => c == ':'))
             .ThenBy(className =>
@@ -98,7 +138,7 @@ internal abstract class Sorter
                 return ClassSortUtilities.ClassOrder.TryGetValue(classToSearch, out int index) ? index : -1;
             });
 
-        return string.Join(" ", result);
+        return result;
     }
 
     protected (int index, char terminator) GetNextIndexOfClass(string file, int startIndex)
