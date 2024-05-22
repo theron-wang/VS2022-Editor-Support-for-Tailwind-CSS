@@ -125,6 +125,8 @@ internal class RazorSorter : Sorter
             var textTokens = new List<string>();
             var razorIndices = new HashSet<int>();
 
+            int startToken = -1;
+
             while (token < tokens.Count)
             {
                 int index = tokens[token].Text.IndexOf(lookFor);
@@ -154,12 +156,13 @@ internal class RazorSorter : Sorter
                             }
                             else
                             {
-                                var f = from == 0 ? 0 : from + 1;
+                                var f = (from == 0 && startToken != token) ? 0 : from + 1;
                                 textTokens.Add(tokens[token].Text.Substring(f, index - f));
                                 yield return lookFor + string.Join(" ", SortRazorSegment(textTokens, razorIndices, config));
                             }
                             sortedYet = true;
                             inside = false;
+                            startToken = -1;
                             textTokens.Clear();
                             razorIndices.Clear();
                         }
@@ -168,6 +171,7 @@ internal class RazorSorter : Sorter
                             textTokens.Add(tokens[token].Text.Substring(from, index - from));
                             yield return string.Join(" ", textTokens);
                             inside = true;
+                            startToken = token;
                             textTokens.Clear();
                             razorIndices.Clear();
                         }

@@ -1,18 +1,15 @@
-﻿using Microsoft.VisualStudio.Package;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Tagging;
+﻿using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Linting.Taggers;
 
 namespace TailwindCSSIntellisense.Linting.Validators;
 internal class HtmlValidator : Validator
 {
-    private HtmlValidator(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils, completionUtilities)
+    protected virtual string SearchFor => $"class=";
+
+    protected HtmlValidator(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils, completionUtilities)
     {
 
     }
@@ -25,7 +22,7 @@ internal class HtmlValidator : Validator
         var last = text.LastIndexOfAny(endings);
 
         // The goal of this method is to split a larger SnapshotSpan into smaller SnapshotSpans
-        // Each smaller SnapshotSpan will be a segment between class=" and ", or class=' and ', and snapshot boundaries
+        // Each smaller SnapshotSpan will be a segment between className=" and ", or className=' and ', and snapshot boundaries
 
         if (span.End != snapshot.Length && (string.IsNullOrWhiteSpace(text) || last == -1 || string.IsNullOrWhiteSpace(text.Substring(last + 1)) == false))
         {
@@ -60,8 +57,8 @@ internal class HtmlValidator : Validator
         int first;
         string[] searchFor;
 
-        var doubleQuoteClass = text.IndexOf("class=\"", StringComparison.InvariantCultureIgnoreCase);
-        var singleQuoteClass = text.IndexOf("class='", StringComparison.InvariantCultureIgnoreCase);
+        var doubleQuoteClass = text.IndexOf($"{SearchFor}\"", StringComparison.InvariantCultureIgnoreCase);
+        var singleQuoteClass = text.IndexOf($"{SearchFor}'", StringComparison.InvariantCultureIgnoreCase);
 
         if (doubleQuoteClass == -1 || singleQuoteClass == -1)
         {
@@ -74,15 +71,15 @@ internal class HtmlValidator : Validator
 
         if (first == -1)
         {
-            searchFor = ["class=\"", "class='"];
+            searchFor = [$"{SearchFor}\"", $"{SearchFor}'"];
         }
         else if (doubleQuoteClass == first)
         {
-            searchFor = ["class=\""];
+            searchFor = [$"{SearchFor}\""];
         }
         else
         {
-            searchFor = ["class='"];
+            searchFor = [$"{SearchFor}'"];
         }
 
         if (string.IsNullOrWhiteSpace(text) || first == -1 || string.IsNullOrWhiteSpace(text.Substring(0, first)) == false)
@@ -98,7 +95,7 @@ internal class HtmlValidator : Validator
                 start -= 1;
             }
 
-            while (start > 0 && !searchFor.Contains(start.Snapshot.GetText(start, Math.Min(start.Snapshot.Length - start, 6)).ToLower()))
+            while (start > 0 && !searchFor.Contains(start.Snapshot.GetText(start, Math.Min(start.Snapshot.Length - start, SearchFor.Length)).ToLower()))
             {
                 start -= 1;
             }
@@ -106,22 +103,22 @@ internal class HtmlValidator : Validator
             span = new SnapshotSpan(start, span.End);
         }
 
-        var segmentStart = span.Start;
+        SnapshotPoint segmentStart;
         var segmentEnd = span.Start;
 
         text = span.GetText().ToLower();
 
-        if (text.Contains("class=\"") == false && text.Contains("class='") == false)
+        if (text.IndexOf($"{SearchFor}\"", StringComparison.InvariantCultureIgnoreCase) == -1 && text.IndexOf($"{SearchFor}'", StringComparison.InvariantCultureIgnoreCase) == -1)
         {
             yield break;
         }
 
         var index = segmentEnd - span.Start;
 
-        while (text.IndexOf("class=\"", index) != -1 || text.IndexOf("class='", index) != -1)
+        while (text.IndexOf($"{SearchFor}\"", index, StringComparison.InvariantCultureIgnoreCase) != -1 || text.IndexOf($"{SearchFor}'", index, StringComparison.InvariantCultureIgnoreCase) != -1)
         {
-            doubleQuoteClass = text.IndexOf("class=\"", index, StringComparison.InvariantCultureIgnoreCase);
-            singleQuoteClass = text.IndexOf("class='", index, StringComparison.InvariantCultureIgnoreCase);
+            doubleQuoteClass = text.IndexOf($"{SearchFor}\"", index, StringComparison.InvariantCultureIgnoreCase);
+            singleQuoteClass = text.IndexOf($"{SearchFor}'", index, StringComparison.InvariantCultureIgnoreCase);
 
             if (doubleQuoteClass == -1 || singleQuoteClass == -1)
             {
@@ -143,7 +140,7 @@ internal class HtmlValidator : Validator
                 end = '\'';
             }
 
-            segmentEnd = segmentStart + 8;
+            segmentEnd = segmentStart + SearchFor.Length + 2;
 
             while (segmentEnd < span.End && segmentEnd + 1 < snapshot.Length)
             {
@@ -158,7 +155,6 @@ internal class HtmlValidator : Validator
                         yield break;
                     }
 
-                    segmentStart = segmentEnd + 1;
                     break;
                 }
             }
@@ -176,8 +172,8 @@ internal class HtmlValidator : Validator
 
         var text = span.GetText();
 
-        bool doubleQuote = OnlyOneOccurance(text, "class=\"");
-        bool singleQuote = OnlyOneOccurance(text, "class='");
+        bool doubleQuote = OnlyOneOccurance(text, $"{SearchFor}\"");
+        bool singleQuote = OnlyOneOccurance(text, $"{SearchFor}'");
 
         #region Css conflict
         if (_linterUtils.GetErrorSeverity(ErrorType.CssConflict) != ErrorSeverity.None && doubleQuote != singleQuote)
@@ -190,14 +186,14 @@ internal class HtmlValidator : Validator
             {
                 classes =
                 [
-                    .. text.Substring(text.IndexOf("class=\"", StringComparison.InvariantCultureIgnoreCase) + 7).Split('"')[0].Trim().Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries),
+                    .. text.Substring(text.IndexOf($"{SearchFor}\"", StringComparison.InvariantCultureIgnoreCase) + SearchFor.Length + 1).Split('"')[0].Trim().Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries),
                 ];
             }
             else
             {
                 classes =
                 [
-                    .. text.Substring(text.IndexOf("class='", StringComparison.InvariantCultureIgnoreCase) + 7).Split('\'')[0].Trim().Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries),
+                    .. text.Substring(text.IndexOf($"{SearchFor}'", StringComparison.InvariantCultureIgnoreCase) + SearchFor.Length + 1).Split('\'')[0].Trim().Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries),
                 ];
             }
 
@@ -268,6 +264,8 @@ internal class HtmlValidator : Validator
 
     private bool OnlyOneOccurance(string text, string item)
     {
-        return text.Contains(item) && text.IndexOf(item, text.IndexOf(item, StringComparison.InvariantCultureIgnoreCase) + 1, StringComparison.InvariantCultureIgnoreCase) == -1;
+        var first = text.IndexOf(item, StringComparison.InvariantCultureIgnoreCase);
+
+        return first != -1 && text.IndexOf(item, first + 1, StringComparison.InvariantCultureIgnoreCase) == -1;
     }
 }

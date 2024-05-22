@@ -20,10 +20,14 @@ namespace TailwindCSSIntellisense.Settings
     {
         public SettingsProvider()
         {
-            General.Saved += GeneralSettingsChanged;
-            VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCacheAndSettingsChanged;
-            VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
-            VS.Events.DocumentEvents.Saved += OnFileSaved;
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                General.Saved += GeneralSettingsChanged;
+                VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCacheAndSettingsChanged;
+                VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
+                VS.Events.DocumentEvents.Saved += OnFileSaved;
+            });
         }
 
         [Import]

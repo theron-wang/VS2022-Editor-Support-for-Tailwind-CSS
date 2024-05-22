@@ -1,5 +1,7 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Differencing;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -148,7 +150,8 @@ internal sealed class ClassSorter : IDisposable
                 if (await VS.Documents.IsOpenAsync(path))
                 {
                     var view = await VS.Documents.GetDocumentViewAsync(path);
-                    view?.Document?.Reload();
+                    
+                    view?.Document?.Reload(new EditOptions(new(StringDifferenceTypes.Word, 0, false)));
                 }
             }
             _sorted.Add(path.ToLower());

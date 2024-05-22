@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.4.0 (May 21st, 2024)
+
+### Additions
+
+- Added IntelliSense, lint, quick info, and sort support for `.jsx` and `.tsx` files ([#41](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/41), [#35](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/35))
+
+### Fixes
+
+- Fix extra apostrophe being appended to class names ([#42](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/42))
+- Fix spontaneous `COMException` which could occur when opening a project
+
 ## 1.3.2 (May 11th, 2024)
 
 ### Changes

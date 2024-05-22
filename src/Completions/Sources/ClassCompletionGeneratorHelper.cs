@@ -226,112 +226,114 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     }
                 }
             }
-
-            var completionsToAddToEnd = new List<Completion>();
-            foreach (var modifier in completionUtils.Modifiers)
+            else
             {
-                if (modifiers.Contains(modifier) == false)
+                var completionsToAddToEnd = new List<Completion>();
+                foreach (var modifier in completionUtils.Modifiers)
                 {
-                    if (modifier.EndsWith("[]"))
+                    if (modifiers.Contains(modifier) == false)
                     {
-                        completions.Add(
-                            new Completion(modifier.Replace("[]", "[...]:"),
-                                                modifiersAsString + modifier + ":",
-                                                modifier.Replace("[]", "[...]:"),
-                                                completionUtils.TailwindLogo,
-                                                null));
+                        if (modifier.EndsWith("[]"))
+                        {
+                            completions.Add(
+                                new Completion(modifier.Replace("[]", "[...]:"),
+                                                    modifiersAsString + modifier + ":",
+                                                    modifier.Replace("[]", "[...]:"),
+                                                    completionUtils.TailwindLogo,
+                                                    null));
 
-                        completionsToAddToEnd.Add(
-                            new Completion("group-" + modifier.Replace("[]", "[...]:"),
-                                                modifiersAsString + "group-" + modifier + ":",
-                                                "group-" + modifier.Replace("[]", "[...]:"),
-                                                completionUtils.TailwindLogo,
-                                                null));
+                            completionsToAddToEnd.Add(
+                                new Completion("group-" + modifier.Replace("[]", "[...]:"),
+                                                    modifiersAsString + "group-" + modifier + ":",
+                                                    "group-" + modifier.Replace("[]", "[...]:"),
+                                                    completionUtils.TailwindLogo,
+                                                    null));
 
-                        completionsToAddToEnd.Add(
-                            new Completion("peer-" + modifier.Replace("[]", "[...]:"),
-                                                modifiersAsString + "peer-" + modifier + ":",
-                                                "peer-" + modifier.Replace("[]", "[...]:"),
-                                                completionUtils.TailwindLogo,
-                                                null));
-                    }
-                    else
-                    {
-                        completions.Add(
-                            new Completion(modifier + ":",
-                                                modifiersAsString + modifier + ":",
-                                                modifier,
-                                                completionUtils.TailwindLogo,
-                                                null));
+                            completionsToAddToEnd.Add(
+                                new Completion("peer-" + modifier.Replace("[]", "[...]:"),
+                                                    modifiersAsString + "peer-" + modifier + ":",
+                                                    "peer-" + modifier.Replace("[]", "[...]:"),
+                                                    completionUtils.TailwindLogo,
+                                                    null));
+                        }
+                        else
+                        {
+                            completions.Add(
+                                new Completion(modifier + ":",
+                                                    modifiersAsString + modifier + ":",
+                                                    modifier,
+                                                    completionUtils.TailwindLogo,
+                                                    null));
 
-                        completionsToAddToEnd.Add(
-                            new Completion("group-" + modifier + ":",
-                                                modifiersAsString + "group-" + modifier + ":",
-                                                "group-" + modifier,
-                                                completionUtils.TailwindLogo,
-                                                null));
+                            completionsToAddToEnd.Add(
+                                new Completion("group-" + modifier + ":",
+                                                    modifiersAsString + "group-" + modifier + ":",
+                                                    "group-" + modifier,
+                                                    completionUtils.TailwindLogo,
+                                                    null));
 
-                        completionsToAddToEnd.Add(
-                            new Completion("peer-" + modifier + ":",
-                                                modifiersAsString + "peer-" + modifier + ":",
-                                                "peer-" + modifier,
-                                                completionUtils.TailwindLogo,
-                                                null));
+                            completionsToAddToEnd.Add(
+                                new Completion("peer-" + modifier + ":",
+                                                    modifiersAsString + "peer-" + modifier + ":",
+                                                    "peer-" + modifier,
+                                                    completionUtils.TailwindLogo,
+                                                    null));
+                        }
                     }
                 }
-            }
 
-            if (completionUtils.PluginModifiers != null)
-            {
-                foreach (var modifier in completionUtils.PluginModifiers)
-            {
-                if (modifiers.Contains(modifier) == false)
+                if (completionUtils.PluginModifiers != null)
                 {
-                    if (modifier.EndsWith("[]"))
+                    foreach (var modifier in completionUtils.PluginModifiers)
                     {
-                        completions.Add(
-                            new Completion3(modifier.Replace("[]", "[...]:"),
-                                                modifiersAsString + modifier + ":",
-                                                modifier.Replace("[]", "[...]:"),
-                                                new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
-                                                null));
-                    }
-                    else
-                    {
-                        completions.Add(
-                            new Completion3(modifier + ":",
-                                                modifiersAsString + modifier + ":",
-                                                modifier,
-                                                new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
-                                                null));
+                        if (modifiers.Contains(modifier) == false)
+                        {
+                            if (modifier.EndsWith("[]"))
+                            {
+                                completions.Add(
+                                    new Completion3(modifier.Replace("[]", "[...]:"),
+                                                        modifiersAsString + modifier + ":",
+                                                        modifier.Replace("[]", "[...]:"),
+                                                        new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
+                                                        null));
+                            }
+                            else
+                            {
+                                completions.Add(
+                                    new Completion3(modifier + ":",
+                                                        modifiersAsString + modifier + ":",
+                                                        modifier,
+                                                        new ImageMoniker() { Guid = new Guid("ae27a6b0-e345-4288-96df-5eaf394ee369"), Id = 127 },
+                                                        null));
+                            }
+                        }
                     }
                 }
-            }
-            }
 
-            foreach (var screen in completionUtils.Screen)
-            {
-                if (modifiers.Contains(screen) == false)
+                foreach (var screen in completionUtils.Screen)
                 {
-                    completions.Add(
-                        new Completion(screen + ":",
-                                            modifiersAsString + screen + ":",
-                                            screen,
-                                            completionUtils.TailwindLogo,
-                                            null));
+                    if (modifiers.Contains(screen) == false)
+                    {
+                        completions.Add(
+                            new Completion(screen + ":",
+                                                modifiersAsString + screen + ":",
+                                                screen,
+                                                completionUtils.TailwindLogo,
+                                                null));
 
-                    completionsToAddToEnd.Add(
-                        new Completion("max-" + screen + ":",
-                                            modifiersAsString + "max-" + screen + ":",
-                                            screen,
-                                            completionUtils.TailwindLogo,
-                                            null));
+                        completionsToAddToEnd.Add(
+                            new Completion("max-" + screen + ":",
+                                                modifiersAsString + "max-" + screen + ":",
+                                                screen,
+                                                completionUtils.TailwindLogo,
+                                                null));
 
+                    }
                 }
-            }
 
-            // this is to keep a decent order within the completion list
-            completions.AddRange(completionsToAddToEnd);
+                // this is to keep a decent order within the completion list
+                completions.AddRange(completionsToAddToEnd);
+            }
             return completions;
         }
     }

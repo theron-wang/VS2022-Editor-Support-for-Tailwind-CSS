@@ -1,23 +1,14 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
-using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Adornments;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.QuickInfo
 {
-    internal class HtmlQuickInfoSource : QuickInfoSource
+    internal class HtmlQuickInfoSource(ITextBuffer textBuffer, CompletionUtilities completionUtilities) : QuickInfoSource(textBuffer, completionUtilities)
     {
-        protected string _classKeywordToSearchFor;
-        public HtmlQuickInfoSource(ITextBuffer textBuffer, CompletionUtilities completionUtilities) : base(textBuffer, completionUtilities)
-        {
-            _classKeywordToSearchFor = "class=\"";
-        }
+        protected virtual string ClassKeywordToSearchFor => "class=\"";
 
         protected override bool IsInClassScope(IAsyncQuickInfoSession session, out SnapshotSpan? span)
         {
@@ -33,7 +24,7 @@ namespace TailwindCSSIntellisense.QuickInfo
             var searchSnapshot = new SnapshotSpan(startPos, searchPos.Value);
             var text = searchSnapshot.GetText();
 
-            var indexOfCurrentClassAttribute = text.LastIndexOf(_classKeywordToSearchFor, StringComparison.InvariantCultureIgnoreCase);
+            var indexOfCurrentClassAttribute = text.LastIndexOf(ClassKeywordToSearchFor, StringComparison.InvariantCultureIgnoreCase);
             if (indexOfCurrentClassAttribute == -1)
             {
                 span = null;

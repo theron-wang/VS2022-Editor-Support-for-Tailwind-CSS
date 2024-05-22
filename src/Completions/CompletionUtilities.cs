@@ -1,5 +1,7 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.Core.Imaging;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text.Adornments;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;

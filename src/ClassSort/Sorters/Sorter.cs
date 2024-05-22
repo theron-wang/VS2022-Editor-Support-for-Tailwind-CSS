@@ -141,10 +141,10 @@ internal abstract class Sorter
         return result;
     }
 
-    protected (int index, char terminator) GetNextIndexOfClass(string file, int startIndex)
+    protected (int index, char terminator) GetNextIndexOfClass(string file, int startIndex, string searchFor = "class=")
     {
-        var single = file.IndexOf("class='", startIndex, StringComparison.InvariantCultureIgnoreCase);
-        var doubleQuote = file.IndexOf("class=\"", startIndex, StringComparison.InvariantCultureIgnoreCase);
+        var single = file.IndexOf($"{searchFor}'", startIndex, StringComparison.InvariantCultureIgnoreCase);
+        var doubleQuote = file.IndexOf($"{searchFor}\"", startIndex, StringComparison.InvariantCultureIgnoreCase);
 
         if (single == -1 && doubleQuote == -1)
         {

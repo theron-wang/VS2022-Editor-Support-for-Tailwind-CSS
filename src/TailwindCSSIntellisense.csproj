@@ -55,6 +55,7 @@
     <Compile Include="ClassSort\ClassSorter.cs" />
     <Compile Include="ClassSort\ClassSortUtilities.cs" />
     <Compile Include="ClassSort\Sorters\CssSorter.cs" />
+    <Compile Include="ClassSort\Sorters\JSSorter.cs" />
     <Compile Include="ClassSort\Sorters\RazorSorter.cs" />
     <Compile Include="ClassSort\Sorters\HtmlSorter.cs" />
     <Compile Include="ClassSort\Sorters\Sorter.cs" />
@@ -76,6 +77,9 @@
     <Compile Include="Commands\SetAsInputFile.cs" />
     <Compile Include="Commands\SetAsConfigFile.cs" />
     <Compile Include="Completions\BulkInsertObservableCollection.cs" />
+    <Compile Include="Completions\Controllers\JavaScriptCompletionController.cs" />
+    <Compile Include="Completions\JS\JavaScriptAsyncCompletionSource.cs" />
+    <Compile Include="Completions\JS\JavaScriptAsyncCompletionSourceProvider.cs" />
     <Compile Include="Completions\TCss\TCssFileAndContentTypeDeclaration.cs" />
     <Compile Include="Configuration\CompletionConfiguration.cs" />
     <Compile Include="Completions\Controllers\CssCompletionController.cs" />
@@ -96,10 +100,14 @@
     <Compile Include="Helpers\PathHelpers.cs" />
     <Compile Include="Linting\Error.cs" />
     <Compile Include="Linting\ErrorList\ErrorListContext.cs" />
+    <Compile Include="Linting\ErrorList\ErrorListListener.cs" />
+    <Compile Include="Linting\ErrorList\JSErrorListListener.cs" />
     <Compile Include="Linting\ErrorList\RazorErrorListListener.cs" />
     <Compile Include="Linting\ErrorList\HtmlErrorListListener.cs" />
     <Compile Include="Linting\ErrorList\CssErrorListListener.cs" />
+    <Compile Include="Linting\Taggers\JSErrorTagger.cs" />
     <Compile Include="Linting\Taggers\RazorErrorTagger.cs" />
+    <Compile Include="Linting\Validators\JSValidator.cs" />
     <Compile Include="Linting\Validators\RazorValidator.cs" />
     <Compile Include="Linting\Validators\Validator.cs" />
     <Compile Include="Linting\Validators\CssValidator.cs" />
@@ -115,6 +123,8 @@
     <Compile Include="Node\CheckForUpdates.cs" />
     <Compile Include="Options\Linter.cs" />
     <Compile Include="QuickInfo\CssQuickInfoSource.cs" />
+    <Compile Include="QuickInfo\JSQuickInfoSource.cs" />
+    <Compile Include="QuickInfo\JSQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\RazorQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\RazorQuickInfoSource.cs" />
     <Compile Include="QuickInfo\HtmlQuickInfoSource.cs" />

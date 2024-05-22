@@ -44,8 +44,6 @@ Tailwind CSS classes show up in the IntelliSense completion menus in Razor, HTML
 
 ![Intellisense Demo](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/IntelliSense-Demo-1.gif)
 
-*Due to limitations of Visual Studio, `.tsx` and `.jsx` files do not support Tailwind CSS IntelliSense.*
-
 ### Linting
 
 The linter will mark all class conflicts as well as invalid `theme()`, `screen()`, and `@tailwind` values:

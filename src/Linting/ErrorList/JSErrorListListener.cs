@@ -6,15 +6,14 @@ using TailwindCSSIntellisense.Linting.Validators;
 namespace TailwindCSSIntellisense.Linting.ErrorList;
 
 [Export(typeof(ITextViewCreationListener))]
-[ContentType("razor")]
-[ContentType("LegacyRazorCSharp")]
-[ContentType("LegacyRazor")]
-[ContentType("LegacyRazorCoreCSharp")]
+[ContentType("JavaScript")]
+[ContentType("TypeScript")]
+[ContentType("jsx")]
 [TextViewRole(PredefinedTextViewRoles.PrimaryDocument)]
-internal class RazorErrorListListener : ErrorListListener
+internal class JSErrorListListener : ErrorListListener
 {
     protected override Validator GetValidator(ITextView view)
     {
-        return RazorValidator.Create(view.TextBuffer, _linterUtilities, _completionUtilities);
+        return JSValidator.Create(view.TextBuffer, _linterUtilities, _completionUtilities);
     }
 }
