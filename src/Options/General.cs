@@ -52,7 +52,7 @@ namespace TailwindCSSIntellisense.Options
         public BuildProcessOptions BuildProcessType { get; set; } = BuildProcessOptions.Default;
         [Category("Class Sort")]
         [DisplayName("Class sort type")]
-        [Description("Classes can be sorted on file save (only sorts open file), on build (entire solution), or never.")]
+        [Description("Classes can be sorted manually (with 'Tools' options), on file save (only sorts open file), on build (entire solution), or never.")]
         [TypeConverter(typeof(EnumConverter))]
         [DefaultValue(SortClassesOptions.OnSave)]
         public SortClassesOptions ClassSortType { get; set; } = SortClassesOptions.OnSave;
@@ -79,6 +79,7 @@ namespace TailwindCSSIntellisense.Options
     {
         OnSave,
         OnBuild,
+        Manual,
         None
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -34,10 +35,11 @@ namespace TailwindCSSIntellisense
             if (!ClassSorter.Sorting)
             {
                 var file = await VS.Documents.GetActiveDocumentViewAsync();
+                var path = file.TextBuffer.GetFileName();
 
-                if (string.IsNullOrWhiteSpace(file?.FilePath))
+                if (!string.IsNullOrWhiteSpace(path))
                 {
-                    await ClassSorter.SortAsync(file.FilePath, true);
+                    await ClassSorter.SortAsync(path, true);
                 }
             }
         }
