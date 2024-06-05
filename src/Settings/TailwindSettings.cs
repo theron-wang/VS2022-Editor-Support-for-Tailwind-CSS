@@ -8,6 +8,7 @@ namespace TailwindCSSIntellisense.Settings
         public string DefaultOutputCssName { get; set; }
         public string TailwindCssFile { get; set; }
         public string TailwindOutputCssFile { get; set; }
+        public string PackageConfigurationFile { get; set; }
         public bool UseCli { get; set; }
         public string TailwindCliPath { get; set; }
         public bool EnableTailwindCss { get; set; }

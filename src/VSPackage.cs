@@ -51,6 +51,8 @@ namespace TailwindCSSIntellisense
         public const int StopBuildProcessWsCmdId = 0x0113;
         public const int SortInOpenFileCmdId = 0x0114;
         public const int SortEntireSolutionCmdId = 0x0115;
+        public const int SetAsPackageConfigFileCmdId = 0x0116;
+        public const int RemoveAsPackageConfigFileCmdId = 0x0117;
         public const int tailwindLogo = 0x0001;
     }
 }

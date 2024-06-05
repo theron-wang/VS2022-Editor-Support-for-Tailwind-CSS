@@ -60,9 +60,11 @@
     <Compile Include="ClassSort\Sorters\HtmlSorter.cs" />
     <Compile Include="ClassSort\Sorters\Sorter.cs" />
     <Compile Include="ClassSort\Sorters\SorterAggregator.cs" />
+    <Compile Include="Commands\RemoveAsPackageConfigFile.cs" />
     <Compile Include="Commands\RemoveAsOutputFile.cs" />
     <Compile Include="Commands\RemoveAsInputFile.cs" />
     <Compile Include="Commands\RemoveAsConfigFile.cs" />
+    <Compile Include="Commands\SetAsPackageConfigFile.cs" />
     <Compile Include="Commands\SortClassesInSolution.cs" />
     <Compile Include="Commands\SortClassesInOpenFile.cs" />
     <Compile Include="Commands\SetUpAndUseTailwindCli.cs" />

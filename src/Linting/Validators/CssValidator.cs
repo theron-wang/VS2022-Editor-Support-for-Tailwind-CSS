@@ -231,7 +231,7 @@ internal class CssValidator : Validator
         {
             text = GetFullScope(span, text);
 
-            var tailwindDirective = text.Substring(text.IndexOf("@tailwind") + 10).Trim().TrimEnd(';').TrimEnd();
+            var tailwindDirective = text.Substring(text.IndexOf("@tailwind") + 9).Trim().TrimEnd(';').TrimEnd();
             List<string> valid = ["base", "components", "utilities", "variants"];
             if (valid.Contains(tailwindDirective) == false)
             {

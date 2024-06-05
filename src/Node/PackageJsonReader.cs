@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Node
 {
@@ -14,6 +15,9 @@ namespace TailwindCSSIntellisense.Node
         [Import]
         internal ConfigFileScanner ConfigFileScanner { get; set; }
 
+        [Import]
+        internal SettingsProvider SettingsProvider { get; set; }
+
         internal async Task<(bool exists, string fileName)> ScriptExistsAsync(string scriptName)
         {
             if (scriptName == null)
@@ -21,18 +25,28 @@ namespace TailwindCSSIntellisense.Node
                 return (exists: false, fileName: null);
             }
 
-            var configFileName = await ConfigFileScanner.FindConfigurationFilePathAsync();
+            var settings = await SettingsProvider.GetSettingsAsync();
+            string packageJsonFileName;
 
-            if (configFileName == null)
+            if (settings.PackageConfigurationFile is not null && File.Exists(settings.PackageConfigurationFile))
             {
-                return (exists: false, fileName: null);
+                packageJsonFileName = settings.PackageConfigurationFile;
             }
-
-            var packageJsonFileName = Path.Combine(Path.GetDirectoryName(configFileName), "package.json");
-
-            if (packageJsonFileName == null || File.Exists(packageJsonFileName) == false)
+            else
             {
-                return (exists: false, fileName: null);
+                var configFileName = await ConfigFileScanner.FindConfigurationFilePathAsync();
+
+                if (configFileName == null)
+                {
+                    return (exists: false, fileName: null);
+                }
+
+                packageJsonFileName = Path.Combine(Path.GetDirectoryName(configFileName), "package.json");
+
+                if (packageJsonFileName == null || File.Exists(packageJsonFileName) == false)
+                {
+                    return (exists: false, fileName: null);
+                }
             }
 
             try

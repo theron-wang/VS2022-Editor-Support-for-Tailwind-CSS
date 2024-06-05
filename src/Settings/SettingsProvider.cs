@@ -132,6 +132,7 @@ namespace TailwindCSSIntellisense.Settings
                     TailwindConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
                     TailwindCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
                     TailwindOutputCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim()),
+                    PackageConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.PackageConfigurationFile?.Trim()),
                     AutomaticallyMinify = general.AutomaticallyMinify,
                     TailwindCliPath = general.TailwindCliPath,
                     UseCli = projectSettings.UseCli,
@@ -186,6 +187,7 @@ namespace TailwindCSSIntellisense.Settings
                 ConfigurationFile = PathHelpers.GetRelativePath(settings.TailwindConfigurationFile, projectRoot),
                 InputCssFile = PathHelpers.GetRelativePath(settings.TailwindCssFile, projectRoot),
                 OutputCssFile = PathHelpers.GetRelativePath(settings.TailwindOutputCssFile, projectRoot),
+                PackageConfigurationFile = PathHelpers.GetRelativePath(settings.PackageConfigurationFile, projectRoot),
                 UseCli = settings.UseCli
             };
 

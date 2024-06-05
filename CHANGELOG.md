@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.1 (June 5th, 2024)
+
+### Changes
+
+- Configuration files can be `.cjs` and `.mjs` files ([#44](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/44))
+- Add manual file sorting ([#45](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/45))
+- Set `package.json` file path ([#47](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/47))
+
+### Fixes
+
+- Sort current file does not work ([#48](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/48))
+- Fixed an exception which could occur when triggering IntelliSense on `@tailwind` directives
+ 
 ## 1.4.0 (May 21st, 2024)
 
 ### Additions

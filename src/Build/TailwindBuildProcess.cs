@@ -83,6 +83,12 @@ namespace TailwindCSSIntellisense.Build
             VS.Events.BuildEvents.ProjectBuildStarted -= OnBuild;
             VS.Events.DocumentEvents.Saved -= OnFileSave;
             SettingsProvider.OnSettingsChanged -= SettingsChangedAsync;
+
+            _process?.Dispose();
+            _otherProcess?.Dispose();
+
+            _process = null;
+            _otherProcess = null;
         }
 
         internal bool AreProcessesActive()
@@ -203,7 +209,7 @@ namespace TailwindCSSIntellisense.Build
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
                     }
                 }
                 else
@@ -218,7 +224,7 @@ namespace TailwindCSSIntellisense.Build
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
                     }
 
                     _process.BeginOutputReadLine();
@@ -238,6 +244,7 @@ namespace TailwindCSSIntellisense.Build
                     {
                         ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
 
+                        processInfo.WorkingDirectory = Path.GetDirectoryName(_packageJsonPath);
                         _otherProcess = Process.Start(processInfo);
 
                         _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
@@ -280,7 +287,7 @@ namespace TailwindCSSIntellisense.Build
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
                         _process.StandardInput.Flush();
                         _process.StandardInput.Close();
                     }
@@ -297,6 +304,8 @@ namespace TailwindCSSIntellisense.Build
                 if (IsProcessActive(_otherProcess) == false && needOtherProcess)
                 {
                     ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
+
+                    processInfo.WorkingDirectory = Path.GetDirectoryName(_packageJsonPath);
                     _otherProcess = Process.Start(processInfo);
 
                     _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
