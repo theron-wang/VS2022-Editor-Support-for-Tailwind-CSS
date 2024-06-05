@@ -3,6 +3,7 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using TailwindCSSIntellisense.Node;
@@ -13,6 +14,8 @@ namespace TailwindCSSIntellisense
     [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetAsConfigFileCmdId)]
     internal sealed class SetAsConfigFile : BaseCommand<SetAsConfigFile>
     {
+        private static readonly string[] _extensions = [ ".js", ".ts", ".cjs", ".mjs" ];
+
         protected override async Task InitializeCompletedAsync()
         {
             SolutionExplorerSelection = await VS.GetMefServiceAsync<SolutionExplorerSelectionService>();
@@ -27,7 +30,7 @@ namespace TailwindCSSIntellisense
 
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
-            Command.Visible = settings.EnableTailwindCss && settings.TailwindConfigurationFile != filePath && (Path.GetExtension(filePath) == ".js" || Path.GetExtension(filePath) == ".ts");
+            Command.Visible = settings.EnableTailwindCss && settings.TailwindConfigurationFile != filePath && _extensions.Contains(Path.GetExtension(filePath));
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
