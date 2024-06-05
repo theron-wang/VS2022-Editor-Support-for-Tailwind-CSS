@@ -35,7 +35,7 @@ namespace TailwindCSSIntellisense
             {
                 var file = await VS.Documents.GetActiveDocumentViewAsync();
 
-                if (string.IsNullOrWhiteSpace(file?.FilePath))
+                if (!string.IsNullOrWhiteSpace(file?.FilePath))
                 {
                     await ClassSorter.SortAsync(file.FilePath, true);
                 }
