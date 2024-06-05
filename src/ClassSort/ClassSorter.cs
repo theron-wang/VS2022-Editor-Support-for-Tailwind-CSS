@@ -124,7 +124,7 @@ internal sealed class ClassSorter : IDisposable
         {
             return;
         }
-        if (GetSettings().EnableTailwindCss && GetSettings().SortClassesType != SortClassesOptions.None)
+        if (GetSettings().EnableTailwindCss && (GetSettings().SortClassesType != SortClassesOptions.None || GetSettings().SortClassesType != SortClassesOptions.Manual))
         {
             string fileContent;
             Encoding encoding;
