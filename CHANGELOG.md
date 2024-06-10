@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.2 (June 10th, 2024)
+
+### Changes
+
+- Removed `OnSave` build option (redundant due to Tailwind JIT)
+- Added `Manual` build option, triggered by Ctrl + 1 followed by Ctrl + 2 ([#49](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/49))
+
 ## 1.4.1 (June 5th, 2024)
 
 ### Changes

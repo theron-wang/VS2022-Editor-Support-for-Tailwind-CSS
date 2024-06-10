@@ -38,17 +38,17 @@ namespace TailwindCSSIntellisense.Configuration
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 FileName = "cmd",
-                Arguments = "/c node --experimental-modules",
+                Arguments = "/c node",
                 WorkingDirectory = Path.GetDirectoryName(path)
             };
 
-            var process = Process.Start(processInfo);
+            using var process = Process.Start(processInfo);
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
 
             string command;
 
-                command = $@"(function () {{
+            command = $@"(function () {{
     (async function () {{
         var Module = require('module');
         var originalRequire = Module.prototype.require;

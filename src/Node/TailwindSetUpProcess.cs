@@ -37,7 +37,7 @@ namespace TailwindCSSIntellisense.Node
             try
             {
                 await VS.StatusBar.ShowMessageAsync("Setting up Tailwind CSS");
-                var process = Process.Start(processInfo);
+                using var process = Process.Start(processInfo);
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
 

@@ -288,7 +288,12 @@
 			<Bitmap guid="guidImages" href="Resources\tailwindlogo.png" usedList="tailwindLogo"/>
 		</Bitmaps>
 	</Commands>
-	
+
+	<KeyBindings>
+		<KeyBinding guid="guidVSPackageCmdSet" id="StartBuildProcessCmdId" editor="guidVSStd97" key1="1" mod1="CONTROL" key2="2" mod2="CONTROL" />
+		<KeyBinding guid="guidVSPackageCmdSet" id="StartMinifyBuildProcessCmdId" editor="guidVSStd97" key1="1" mod1="CONTROL" key2="3" mod2="CONTROL" />
+	</KeyBindings>
+
 	<Symbols>
 		<GuidSymbol name="guidVSPackage" value="{615fb6c4-7ae7-4ae8-b3ec-271ea26d9481}" />
 

@@ -74,41 +74,44 @@ namespace TailwindCSSIntellisense.Node
                     WorkingDirectory = Path.GetDirectoryName(folder)
                 };
 
-                var process = Process.Start(processInfo);
-                process.BeginOutputReadLine();
-
-                string currentVersion = null;
                 string newVersion = null;
 
-                // Data is given one line at a time; look through each line and see if it is what we want
-                process.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
+                using (var process = Process.Start(processInfo))
                 {
-                    var line = e.Data?.Trim();
+                    process.BeginOutputReadLine();
 
-                    if (line != null && line.StartsWith("tailwindcss"))
+                    string currentVersion = null;
+
+                    // Data is given one line at a time; look through each line and see if it is what we want
+                    process.OutputDataReceived += (object sender, DataReceivedEventArgs e) =>
                     {
-                        var data = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        var line = e.Data?.Trim();
 
-                        // Sample data:
-                        // Package      Current  Wanted  Latest  Location                  Depended by
-                        // tailwindcss    3.3.2   3.3.3   3.3.3  node_modules/tailwindcss  project_name
+                        if (line != null && line.StartsWith("tailwindcss"))
+                        {
+                            var data = line.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-                        currentVersion = data[1];
-                        newVersion = data[2];
+                            // Sample data:
+                            // Package      Current  Wanted  Latest  Location                  Depended by
+                            // tailwindcss    3.3.2   3.3.3   3.3.3  node_modules/tailwindcss  project_name
+
+                            currentVersion = data[1];
+                            newVersion = data[2];
+                        }
+                    };
+
+                    await process.StandardInput.WriteLineAsync("npm outdated tailwindcss & exit");
+                    await process.WaitForExitAsync();
+
+                    if (currentVersion == newVersion && currentVersion == null)
+                    {
+                        await VS.StatusBar.ShowProgressAsync("", 3, 3);
+                        await VS.StatusBar.ShowMessageAsync("Tailwind CSS is up to date");
+                        return;
                     }
-                };
 
-                await process.StandardInput.WriteLineAsync("npm outdated tailwindcss & exit");
-                await process.WaitForExitAsync();
-
-                if (currentVersion == newVersion && currentVersion == null)
-                {
-                    await VS.StatusBar.ShowProgressAsync("", 3, 3);
-                    await VS.StatusBar.ShowMessageAsync("Tailwind CSS is up to date");
-                    return;
+                    await VS.StatusBar.ShowProgressAsync($"Updating Tailwind CSS ({currentVersion} -> {newVersion})", 2, 3);
                 }
-
-                await VS.StatusBar.ShowProgressAsync($"Updating Tailwind CSS ({currentVersion} -> {newVersion})", 2, 3);
 
                 processInfo = new ProcessStartInfo()
                 {
@@ -120,14 +123,16 @@ namespace TailwindCSSIntellisense.Node
                     WorkingDirectory = Path.GetDirectoryName(folder)
                 };
 
-                process = Process.Start(processInfo);
-                process.BeginErrorReadLine();
+                using (var process = Process.Start(processInfo))
+                {
+                    process.BeginErrorReadLine();
 
-                process.ErrorDataReceived += ErrorDataReceived;
+                    process.ErrorDataReceived += ErrorDataReceived;
 
-                await process.StandardInput.WriteLineAsync("npm update --save tailwindcss & exit");
+                    await process.StandardInput.WriteLineAsync("npm update --save tailwindcss & exit");
 
-                await process.WaitForExitAsync();
+                    await process.WaitForExitAsync();
+                }
 
                 await VS.StatusBar.ShowProgressAsync("", 3, 3);
                 await VS.StatusBar.ShowMessageAsync($"Tailwind CSS update successful (updated to version {newVersion})");
