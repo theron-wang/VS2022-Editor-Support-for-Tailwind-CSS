@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.3 (June 11th, 2024)
+
+### Changes
+
+- Reverted removal of `OnSave` build option ([#50](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/50))
+
 ## 1.4.2 (June 10th, 2024)
 
 ### Changes

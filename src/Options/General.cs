@@ -46,7 +46,7 @@ namespace TailwindCSSIntellisense.Options
         public string TailwindCliPath { get; set; }
         [Category("Build")]
         [DisplayName("Build type")]
-        [Description("Files can be built in three ways: Default (Tailwind JIT), Manual (Ctrl+1, Ctrl+B), OnBuild (once, on project build), and None (no building)")]
+        [Description("Files can be built in three ways: Default (Tailwind JIT), Manual (Ctrl+1, Ctrl+B), OnBuild (once, on project build), OnSave (on file save), and None (no building)")]
         [TypeConverter(typeof(EnumConverter))]
         [DefaultValue(BuildProcessOptions.Default)]
         public BuildProcessOptions BuildProcessType { get; set; } = BuildProcessOptions.Default;
@@ -72,7 +72,8 @@ namespace TailwindCSSIntellisense.Options
         Default,
         Manual,
         OnBuild,
-        None
+        OnSave,
+        None = 1000
     }
 
     public enum SortClassesOptions

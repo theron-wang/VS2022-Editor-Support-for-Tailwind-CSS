@@ -128,7 +128,7 @@ namespace TailwindCSSIntellisense.Build
         }
 
         /// <summary>
-        /// Reloads if package.json has been modified
+        /// Reloads if package.json has been modified + starts build process (OnBuild)
         /// </summary>
         internal void OnFileSave(string filePath)
         {
@@ -140,6 +140,18 @@ namespace TailwindCSSIntellisense.Build
                     EndProcess();
                     StartProcess(_settings.AutomaticallyMinify);
                 }
+            }
+
+            var extension = Path.GetExtension(filePath);
+            if (_settings.BuildType == BuildProcessOptions.OnSave &&
+                (extension == ".css" ||
+                extension == ".html" ||
+                extension == ".cshtml" ||
+                extension == ".razor" ||
+                extension == ".js"))
+            {
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Building..."));
+                StartProcess(_settings.AutomaticallyMinify);
             }
         }
 
@@ -187,60 +199,130 @@ namespace TailwindCSSIntellisense.Build
                 WorkingDirectory = dir
             };
 
-            #region Default process
-
-            if (!IsProcessActive(_process))
+            if (_settings.BuildType == BuildProcessOptions.OnSave)
             {
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
-
-                _process = Process.Start(processInfo);
-
-                _process.Exited += (s, e) =>
+                // Is the default process active?
+                #region Default process
+                if (IsProcessActive(_process))
                 {
-                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
-                    _process.Dispose();
-                    _process = null;
-                };
-
-                if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
-                {
-                    _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                    if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                    {
+                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                    }
+                    else if (_settings.OverrideBuild)
+                    {
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
+                    }
                 }
-                else if (_settings.OverrideBuild)
+                else
                 {
-                    _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
 
-                    _process.StandardInput.Flush();
-                    _process.StandardInput.Close();
+                    _process = Process.Start(processInfo);
+
+                    _process.Exited += (s, e) =>
+                    {
+                        ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
+                        _process.Dispose();
+                        _process = null;
+                    };
+
+                    if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                    {
+                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                    }
+                    else if (_settings.OverrideBuild)
+                    {
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
+                    }
+
+                    _process.BeginOutputReadLine();
+                    _process.BeginErrorReadLine();
+                    _process.OutputDataReceived += OutputDataReceived;
+                    _process.ErrorDataReceived += OutputDataReceived;
                 }
+                #endregion
+                #region Secondary process
+                if (needOtherProcess)
+                {
+                    if (IsProcessActive(_otherProcess))
+                    {
+                        _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                    }
+                    else
+                    {
+                        ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
 
-                _process.BeginOutputReadLine();
-                _process.BeginErrorReadLine();
-                _process.OutputDataReceived += OutputDataReceived;
-                _process.ErrorDataReceived += OutputDataReceived;
+                        processInfo.WorkingDirectory = Path.GetDirectoryName(_packageJsonPath);
+                        _otherProcess = Process.Start(processInfo);
+
+                        _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+
+                        _otherProcess.BeginOutputReadLine();
+                        _otherProcess.BeginErrorReadLine();
+                        _otherProcess.OutputDataReceived += OutputDataReceived;
+                        _otherProcess.ErrorDataReceived += OutputDataReceived;
+                    }
+                }
+                #endregion
             }
-
-            #endregion
-            #region Secondary process
-
-            if (IsProcessActive(_otherProcess) == false && needOtherProcess)
+            else
             {
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
+                #region Default process
 
-                processInfo.WorkingDirectory = Path.GetDirectoryName(_packageJsonPath);
-                _otherProcess = Process.Start(processInfo);
+                if (!IsProcessActive(_process))
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
 
-                _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
-                _otherProcess.StandardInput.Flush();
-                _otherProcess.StandardInput.Close();
+                    _process = Process.Start(processInfo);
 
-                _otherProcess.BeginOutputReadLine();
-                _otherProcess.BeginErrorReadLine();
-                _otherProcess.OutputDataReceived += OutputDataReceived;
-                _otherProcess.ErrorDataReceived += OutputDataReceived;
+                    _process.Exited += (s, e) =>
+                    {
+                        ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
+                        _process.Dispose();
+                        _process = null;
+                    };
+
+                    if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                    {
+                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                    }
+                    else if (_settings.OverrideBuild)
+                    {
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
+
+                        _process.StandardInput.Flush();
+                        _process.StandardInput.Close();
+                    }
+
+                    _process.BeginOutputReadLine();
+                    _process.BeginErrorReadLine();
+                    _process.OutputDataReceived += OutputDataReceived;
+                    _process.ErrorDataReceived += OutputDataReceived;
+                }
+
+                #endregion
+                #region Secondary process
+
+                if (IsProcessActive(_otherProcess) == false && needOtherProcess)
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
+
+                    processInfo.WorkingDirectory = Path.GetDirectoryName(_packageJsonPath);
+                    _otherProcess = Process.Start(processInfo);
+
+                    _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                    _otherProcess.StandardInput.Flush();
+                    _otherProcess.StandardInput.Close();
+
+                    _otherProcess.BeginOutputReadLine();
+                    _otherProcess.BeginErrorReadLine();
+                    _otherProcess.OutputDataReceived += OutputDataReceived;
+                    _otherProcess.ErrorDataReceived += OutputDataReceived;
+                }
+
+                #endregion
             }
-
-            #endregion
         }
 
         /// <summary>
