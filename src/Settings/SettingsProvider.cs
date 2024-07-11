@@ -225,6 +225,11 @@ namespace TailwindCSSIntellisense.Settings
             VS.Events.DocumentEvents.Saved -= OnFileSaved;
         }
 
+        public async Task<string> GetFilePath()
+        {
+            return Path.Combine(await GetTailwindProjectDirectoryAsync(), ExtensionConfigFileName);
+        }
+
         private async Task<string> GetTailwindProjectDirectoryAsync()
         {
             var projects = await VS.Solutions.GetAllProjectsAsync();

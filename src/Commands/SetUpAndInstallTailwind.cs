@@ -42,6 +42,15 @@ namespace TailwindCSSIntellisense
                 var settings = await SettingsProvider.GetSettingsAsync();
                 settings.TailwindConfigurationFile = configFile;
                 await SettingsProvider.OverrideSettingsAsync(settings);
+
+                var file = await PhysicalFile.FromFileAsync(configFile);
+
+                if (file.ContainingProject is not null)
+                {
+                    // tailwind.extension.json is placed in the same directory as tailwind.config.js
+                    var tailwindExtensionJson = await SettingsProvider.GetFilePath();
+                    await file.ContainingProject.AddExistingFilesAsync(configFile, tailwindExtensionJson);
+                }
             }
         }
     }
