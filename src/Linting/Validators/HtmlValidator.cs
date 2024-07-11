@@ -115,7 +115,7 @@ internal class HtmlValidator : Validator
 
         var index = segmentEnd - span.Start;
 
-        while (text.IndexOf($"{SearchFor}\"", index, StringComparison.InvariantCultureIgnoreCase) != -1 || text.IndexOf($"{SearchFor}'", index, StringComparison.InvariantCultureIgnoreCase) != -1)
+        while (index < text.Length && (text.IndexOf($"{SearchFor}\"", index, StringComparison.InvariantCultureIgnoreCase) != -1 || text.IndexOf($"{SearchFor}'", index, StringComparison.InvariantCultureIgnoreCase) != -1))
         {
             doubleQuoteClass = text.IndexOf($"{SearchFor}\"", index, StringComparison.InvariantCultureIgnoreCase);
             singleQuoteClass = text.IndexOf($"{SearchFor}'", index, StringComparison.InvariantCultureIgnoreCase);
