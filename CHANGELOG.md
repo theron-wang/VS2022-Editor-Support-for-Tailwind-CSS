@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.4.4 (July 10th, 2024)
+
+### Additions
+
+- Automatically add `tailwind.config.js` and `tailwind.extension.json` to project ([#52](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/52))
+
+### Fixes
+
+- Fix an `ArgumentOutOfRangeException` when backspacing quotation marks in `<div class="..."></div>` (related to [#54](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/54))
+
+### Changes
+
+- Upgrade `System.Text.Json` to `8.0.4`
+
 ## 1.4.3 (June 11th, 2024)
 
 ### Changes
