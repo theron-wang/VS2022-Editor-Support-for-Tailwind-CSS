@@ -11,6 +11,7 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.ClassSort;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
@@ -21,16 +22,17 @@ namespace TailwindCSSIntellisense.Linting;
 internal sealed class LinterUtilities : IDisposable
 {
     private readonly CompletionUtilities _completionUtilities;
-
+    private readonly ClassSortUtilities _classSortUtilities;
     private readonly Dictionary<string, string> _cacheCssAttributes = [];
 
     private Linter _linterOptions;
     private General _generalOptions;
 
     [ImportingConstructor]
-    public LinterUtilities(CompletionUtilities completionUtilities)
+    public LinterUtilities(CompletionUtilities completionUtilities, ClassSortUtilities classSortUtilities)
     {
         _completionUtilities = completionUtilities;
+        _classSortUtilities = classSortUtilities;
         Linter.Saved += LinterSettingsChanged;
         General.Saved += GeneralSettingsChanged;
         _completionUtilities.Configuration.ConfigurationUpdated += ConfigurationUpdated;
@@ -48,7 +50,7 @@ internal sealed class LinterUtilities : IDisposable
         foreach (var c in classes)
         {
             var classTrimmed = c.Split(':').Last().Trim();
-            
+
             if (_cacheCssAttributes.ContainsKey(classTrimmed) == false)
             {
                 var desc = _completionUtilities.GetDescriptionFromClass(classTrimmed, shouldFormat: false);
@@ -70,6 +72,19 @@ internal sealed class LinterUtilities : IDisposable
             var count = erroneous.Count();
             if (count > 1)
             {
+                var mostPrecedencePairs =
+                    _classSortUtilities.ClassOrder
+                        .Where(c => erroneous.Any(e => e.Split(':').Last().Trim() == c.Key))
+                        .OrderBy(c => c.Value);
+
+                // The sort order is the same as the order in which Tailwind generates classes
+                string classWithMostPrecedence = null;
+                if (mostPrecedencePairs.Any())
+                {
+                    classWithMostPrecedence = classes.Where(e => e.Split(':').Last().Trim() == mostPrecedencePairs.First().Key)
+                        .First();
+                }
+
                 int i = 0;
                 foreach (var className in erroneous)
                 {
@@ -83,8 +98,21 @@ internal sealed class LinterUtilities : IDisposable
                         $"{(count > 2 ? " and " : "")}" +
                         $"{others.Last()}.";
 
-                    yield return new(className, errorMessage);
-                    i++;
+                    if (classWithMostPrecedence is not null)
+                    {
+                        errorMessage += "\n";
+                        if (className == classWithMostPrecedence)
+                        {
+                            errorMessage += $"'{className}' styles will override others.";
+                        }
+                        else
+                        {
+                            errorMessage += $"'{className}' styles will be overriden by '{classWithMostPrecedence}'.";
+                        }
+
+                        yield return new(className, errorMessage);
+                        i++;
+                    }
                 }
             }
         }
@@ -102,7 +130,7 @@ internal sealed class LinterUtilities : IDisposable
     {
         _linterOptions = linter;
     }
-    
+
     private void GeneralSettingsChanged(General general)
     {
         _generalOptions = general;
