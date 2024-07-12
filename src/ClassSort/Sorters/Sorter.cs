@@ -79,11 +79,16 @@ internal abstract class Sorter
                 if (className.Contains(':'))
                 {
                     var modifier = className.Split(':').First();
-                    if (ClassSortUtilities.ModifierOrder.TryGetValue(modifier, out int index) == false)
+                    // Modifiers should be sorted after
+                    if (CompletionUtilities.Screen.Contains(modifier))
                     {
-                        return int.MaxValue;
+                        return ClassSortUtilities.ModifierOrder.Count + CompletionUtilities.Screen.IndexOf(modifier);
                     }
-                    return index;
+                    else if (ClassSortUtilities.ModifierOrder.TryGetValue(modifier, out int index))
+                    {
+                        return index;
+                    }
+                    return int.MaxValue;
                 }
                 return 0;
             })
