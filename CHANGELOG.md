@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.5 (July 11th, 2024)
+
+### Enhancements
+
+- More detailed `cssConflict` error message to show which class takes precedence ([#55](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/55))
+- `sm`, `md`, `lg`, `xl`, `2xl` breakpoints are now properly sorted
+- Update assembly version to reflect extension version ([#56](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/56))
+
 ## 1.4.4 (July 10th, 2024)
 
 ### Additions
