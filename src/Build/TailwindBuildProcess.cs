@@ -211,7 +211,7 @@ namespace TailwindCSSIntellisense.Build
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
                     }
                 }
                 else
@@ -233,7 +233,7 @@ namespace TailwindCSSIntellisense.Build
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
                     }
 
                     _process.BeginOutputReadLine();
@@ -289,7 +289,7 @@ namespace TailwindCSSIntellisense.Build
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)};npm run {_settings.BuildScript}");
+                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
 
                         _process.StandardInput.Flush();
                         _process.StandardInput.Close();
