@@ -68,6 +68,7 @@ namespace TailwindCSSIntellisense.Settings
                     {
                         EnableTailwindCss = general.UseTailwindCss,
                         DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
+                        OnSaveTriggerFileExtensions = general.TailwindOnSaveTriggerFileExtensions.Split(';'),
                         BuildType = general.BuildProcessType,
                         BuildScript = general.BuildScript,
                         OverrideBuild = general.OverrideBuild,
@@ -126,6 +127,7 @@ namespace TailwindCSSIntellisense.Settings
                 {
                     EnableTailwindCss = general.UseTailwindCss,
                     DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
+                    OnSaveTriggerFileExtensions = general.TailwindOnSaveTriggerFileExtensions.Split(';'),
                     BuildType = general.BuildProcessType,
                     BuildScript = general.BuildScript,
                     OverrideBuild = general.OverrideBuild,
@@ -254,7 +256,7 @@ namespace TailwindCSSIntellisense.Settings
                             Path.Combine(
                                 Path.GetDirectoryName(p.FullPath), "tailwind.config.js")
                             )
-                        )?.FullPath ?? 
+                        )?.FullPath ??
                     projects.First().FullPath);
             }
         }
@@ -272,6 +274,7 @@ namespace TailwindCSSIntellisense.Settings
 
             if (settings.UseTailwindCss != origSettings.EnableTailwindCss ||
                 settings.TailwindOutputFileName != origSettings.DefaultOutputCssName ||
+                !settings.TailwindOnSaveTriggerFileExtensions.Equals(origSettings.OnSaveTriggerFileExtensions) ||
                 settings.BuildProcessType != origSettings.BuildType ||
                 settings.BuildScript != origSettings.BuildScript ||
                 settings.OverrideBuild != origSettings.OverrideBuild ||
@@ -281,6 +284,7 @@ namespace TailwindCSSIntellisense.Settings
             {
                 origSettings.EnableTailwindCss = settings.UseTailwindCss;
                 origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
+                origSettings.OnSaveTriggerFileExtensions = settings.TailwindOnSaveTriggerFileExtensions.Split(';');
                 origSettings.BuildType = settings.BuildProcessType;
                 origSettings.BuildScript = settings.BuildScript;
                 origSettings.OverrideBuild = settings.OverrideBuild;
