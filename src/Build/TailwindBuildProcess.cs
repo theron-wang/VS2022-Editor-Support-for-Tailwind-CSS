@@ -143,8 +143,7 @@ namespace TailwindCSSIntellisense.Build
             }
 
             var extension = Path.GetExtension(filePath);
-            string[] extensions = new[] { ".css", ".html", ".cshtml", ".razor", ".js" };
-            if (_settings.BuildType == BuildProcessOptions.OnSave && extensions.Contains(extension))
+            if (_settings.BuildType == BuildProcessOptions.OnSave && _settings.OnSaveTriggerFileExtensions.Contains(extension))
             {
                 ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Building..."));
                 StartProcess(_settings.AutomaticallyMinify);
