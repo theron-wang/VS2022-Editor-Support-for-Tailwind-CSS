@@ -45,6 +45,11 @@ internal sealed class LinterUtilities : IDisposable
     /// <returns>A list of Tuples containing the class name and error message</returns>
     public IEnumerable<Tuple<string, string>> CheckForClassDuplicates(IEnumerable<string> classes)
     {
+        if (_classSortUtilities.ClassOrder is null)
+        {
+            yield break;
+        }
+
         var cssAttributes = new Dictionary<string, string>();
 
         foreach (var c in classes)

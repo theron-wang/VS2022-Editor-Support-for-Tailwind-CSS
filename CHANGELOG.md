@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4.6 (August 2nd, 2024)
+
+### Enhancements
+
+- Setting to specify files affected by `OnSave` build option ([#61](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/pull/61))
+- Class sorting should respect newlines
+
+### Fixes
+
+- `System cannot find the path specified` error ([#59](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/pull/59))
+- `@("")` pattern in Razor could affect quick info popup description
+
 ## 1.4.5 (July 11th, 2024)
 
 ### Enhancements

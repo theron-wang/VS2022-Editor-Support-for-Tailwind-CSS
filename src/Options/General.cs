@@ -41,8 +41,8 @@ namespace TailwindCSSIntellisense.Options
         [DefaultValue("{0}.output.css")]
         public string TailwindOutputFileName { get; set; } = "{0}.output.css";
         [Category("Build")]
-        [DisplayName("OnSave Trigger : File extensions")]
-        [Description("File extensions which will trigger the build at the onsave event.")]
+        [DisplayName("OnSave trigger: file extensions")]
+        [Description("File extensions which will trigger the OnSave build event. Only takes effect when \"Build type\" is set to OnSave.")]
         [DefaultValue(".css;.html;.cshtml;.razor;.js")]
         public string TailwindOnSaveTriggerFileExtensions { get; set; } = ".css;.html;.cshtml;.razor;.js";
         [Category("Build")]

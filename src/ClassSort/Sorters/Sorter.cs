@@ -66,9 +66,42 @@ internal abstract class Sorter
         }
     }
 
-    protected string SortSegment(IEnumerable<string> classes, TailwindConfiguration config)
+    protected string SortSegment(string classText, TailwindConfiguration config)
     {
-        return string.Join(" ", Sort(classes, config));
+        var classes = classText.Split(new char[0], StringSplitOptions.RemoveEmptyEntries);
+
+        var sorted = Sort(classes, config);
+
+        var newlines = classText.Select((c, i) => (c, i))
+            .Where(p => p.c == '\n')
+            .Select(p => p.i).ToList();
+
+        var sortedSegment = new StringBuilder();
+
+        int index = 0;
+        int nextNewLineIndex = 0;
+
+        foreach (var sortedClass in sorted)
+        {
+            var before = index;
+
+            sortedSegment.Append(sortedClass);
+            index += sortedClass.Length;
+
+            if (nextNewLineIndex < newlines.Count && 
+                before <= newlines[nextNewLineIndex] && newlines[nextNewLineIndex] <= index)
+            {
+                sortedSegment.AppendLine();
+                nextNewLineIndex++;
+            }
+            else
+            {
+                sortedSegment.Append(' ');
+            }
+            index++;
+        }
+
+        return sortedSegment.ToString().Trim();
     }
 
     private IEnumerable<string> Sort(IEnumerable<string> classes, TailwindConfiguration config)

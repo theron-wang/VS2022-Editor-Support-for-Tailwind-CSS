@@ -136,6 +136,27 @@ namespace TailwindCSSIntellisense.QuickInfo
 
                 var startIndex = lastQuotationMark + 1;
                 text = text.Substring(startIndex);
+
+                // Handle a case where razor code would leave a trailing ) in the beginning
+                // of a quick info popup
+                if (text.StartsWith(")"))
+                {
+                    int change = 0;
+                    while (change < text.Length && (text[change] == ')' || char.IsWhiteSpace(text[change])))
+                    {
+                        change++;
+                    }
+
+                    if (change >= text.Length)
+                    {
+                        span = null;
+                        return false;
+                    }
+
+                    startIndex += change;
+                    text = text.Substring(change);
+                }
+
                 startIndex += text.LastIndexOf(' ') + 1;
 
                 span = new SnapshotSpan(new SnapshotPoint(_textBuffer.CurrentSnapshot, startIndex), end);

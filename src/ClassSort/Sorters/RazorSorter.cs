@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
+using System.Text;
 using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
@@ -39,6 +41,9 @@ internal class RazorSorter : Sorter
 
             List<Token> tokens = [];
             string totalText = "";
+            // A list of numbers that represent where a new line should be inserted;
+            // each number represents a text token in tokens
+            var newLines = new HashSet<int>();
 
             while (lastIndex < file.Length && (depth != 0 || numberOfQuotes % 2 == 1 || terminator != file[lastIndex]))
             {
@@ -50,6 +55,13 @@ internal class RazorSorter : Sorter
                 {
                     if (char.IsWhiteSpace(character))
                     {
+                        if (character == '\n')
+                        {
+                            // Insert directly after the current token
+                            // If the current token count is 1, then it should
+                            // apply after index 0
+                            newLines.Add(tokens.Count - 1);
+                        }
                         if (string.IsNullOrWhiteSpace(totalText) == false)
                         {
                             tokens.Add(new Token(totalText.Trim(), isInRazor));
@@ -91,7 +103,7 @@ internal class RazorSorter : Sorter
                         numberOfQuotes++;
                     }
 
-                    if (depth == 0 && numberOfQuotes % 2 == 0 && character == ' ')
+                    if (depth == 0 && numberOfQuotes % 2 == 0 && char.IsWhiteSpace(character))
                     {
                         tokens.Add(new Token(totalText.Trim(), isInRazor));
                         isInRazor = false;
@@ -198,11 +210,42 @@ internal class RazorSorter : Sorter
 
             if (sortedYet)
             {
-                yield return string.Join(" ", textTokens);
+                var text = new StringBuilder();
+
+                for (int i = 0; i < textTokens.Count; i++)
+                {
+                    text.Append(textTokens[i]);
+                    if (newLines.Contains(i))
+                    {
+                        text.AppendLine();
+                    }
+                    else
+                    {
+                        text.Append(' ');
+                    }
+                }
+
+                yield return text.ToString().Trim();
             }
             else
             {
-                yield return string.Join(" ", SortRazorSegment(textTokens, razorIndices, config));
+                var sorted = SortRazorSegment(textTokens, razorIndices, config).ToList();
+                var text = new StringBuilder();
+
+                for (int i = 0; i < sorted.Count; i++)
+                {
+                    text.Append(sorted[i]);
+                    if (newLines.Contains(i))
+                    {
+                        text.AppendLine();
+                    }
+                    else
+                    {
+                        text.Append(' ');
+                    }
+                }
+
+                yield return text.ToString().Trim();
             }
 
             (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);

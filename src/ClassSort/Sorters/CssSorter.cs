@@ -43,7 +43,7 @@ internal class CssSorter : Sorter
 
             // return @apply
             yield return "@apply ";
-            yield return SortSegment(file.Substring(indexOfApply + 6, lastIndex - (indexOfApply + 6)).Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+            yield return SortSegment(file.Substring(indexOfApply + 6, lastIndex - (indexOfApply + 6)), config);
             indexOfApply = file.IndexOf("@apply", indexOfApply + 1);
         }
 

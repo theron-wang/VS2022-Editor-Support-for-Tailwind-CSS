@@ -62,11 +62,11 @@ internal class HtmlSorter : Sorter
                 {
                     if (from == 0)
                     {
-                        yield return SortSegment(classText.Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+                        yield return SortSegment(classText, config);
                     }
                     else if (inside)
                     {
-                        yield return lookFor + SortSegment(classText.Substring(from + 1).Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+                        yield return lookFor + SortSegment(classText.Substring(from + 1), config);
                     }
                     else
                     {
@@ -80,7 +80,7 @@ internal class HtmlSorter : Sorter
                 {
                     if (inside)
                     {
-                        yield return lookFor + SortSegment(classText.Substring(from + 1, index - from - 1).Split(new char[0], StringSplitOptions.RemoveEmptyEntries), config);
+                        yield return lookFor + SortSegment(classText.Substring(from + 1, index - from - 1), config);
                         inside = false;
                     }
                     else
