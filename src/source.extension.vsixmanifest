@@ -1,34 +1,31 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
-    <Metadata>
-        <Identity Id="TailwindCSSIntellisense.b29696d4-76a4-43d1-a203-c8e692368847" Version="1.4.6" Language="en-US" Publisher="Theron Wang" />
-        <DisplayName>Tailwind CSS VS2022 Editor Support</DisplayName>
-        <Description xml:space="preserve">Unofficial VS2022 Tailwind CSS extension for IntelliSense, linting, sorting, and more.</Description>
-        <MoreInfo>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS</MoreInfo>
-        <GettingStartedGuide>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md</GettingStartedGuide>
-        <ReleaseNotes>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/CHANGELOG.md</ReleaseNotes>
-        <Icon>Resources\icon.png</Icon>
-        <PreviewImage>Resources\icon.png</PreviewImage>
-        <Tags>tailwind, tailwind css, css, html, cshtml, razor, blazor, intellisense, auto-completion</Tags>
-    </Metadata>
-    <Installation>
-        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
-            <ProductArchitecture>amd64</ProductArchitecture>
-        </InstallationTarget>
-        <InstallationTarget Version="[17.0,18.0)" Id="Microsoft.VisualStudio.Community">
-            <ProductArchitecture>arm64</ProductArchitecture>
-        </InstallationTarget>
-        <InstallationTarget Version="[17.0,18.0)" Id="Microsoft.VisualStudio.Community">
-            <ProductArchitecture>x86</ProductArchitecture>
-        </InstallationTarget>
-    </Installation>
-    <Dependencies>
-    </Dependencies>
-    <Prerequisites>
-        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,18.0)" DisplayName="Visual Studio core editor" />
-    </Prerequisites>
-    <Assets>
-        <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
-        <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
-    </Assets>
+	<Metadata>
+		<Identity Id="TailwindCSSIntellisense.b29696d4-76a4-43d1-a203-c8e692368847" Version="1.4.6" Language="en-US" Publisher="Theron Wang" />
+		<DisplayName>Tailwind CSS VS2022 Editor Support</DisplayName>
+		<Description xml:space="preserve">Unofficial VS2022 Tailwind CSS extension for IntelliSense, linting, sorting, and more.</Description>
+		<MoreInfo>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS</MoreInfo>
+		<GettingStartedGuide>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md</GettingStartedGuide>
+		<ReleaseNotes>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/CHANGELOG.md</ReleaseNotes>
+		<Icon>Resources\icon.png</Icon>
+		<PreviewImage>Resources\icon.png</PreviewImage>
+		<Tags>tailwind, tailwind css, css, html, cshtml, razor, blazor, intellisense, auto-completion</Tags>
+	</Metadata>
+	<Installation>
+		<InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0, 18.0)">
+			<ProductArchitecture>amd64</ProductArchitecture>
+		</InstallationTarget>
+		<InstallationTarget Version="[17.0,18.0)" Id="Microsoft.VisualStudio.Community">
+			<ProductArchitecture>arm64</ProductArchitecture>
+		</InstallationTarget>
+	</Installation>
+	<Dependencies>
+	</Dependencies>
+	<Prerequisites>
+		<Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,18.0)" DisplayName="Visual Studio core editor" />
+	</Prerequisites>
+	<Assets>
+		<Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+		<Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
+	</Assets>
 </PackageManifest>
