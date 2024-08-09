@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.4.7 (August 8th, 2024)
+
+### Fixes
+
+- Referencing `theme()` values which internally require `colors` (i.e. `({ colors }) => ...`) would result in incomplete IntelliSense ([#57](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/57))
+- Nested theme values may not be parsed correctly ([#62](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/62))
+- `!important` should be sorted to the end of the `@apply` list ([#63](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/63))
+ 
 ## 1.4.6 (August 2nd, 2024)
 
 ### Enhancements
