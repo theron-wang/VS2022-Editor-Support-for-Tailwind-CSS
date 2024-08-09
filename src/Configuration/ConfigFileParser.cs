@@ -90,7 +90,7 @@ namespace TailwindCSSIntellisense.Configuration
         try {{
             configuration = require('./{Path.GetFileName(path)}');
         }} catch {{
-            configuration = await import('./{Path.GetFileName(path)}');
+            configuration = await import('././{Path.GetFileName(path)}');
         }}
 
         if (configuration.default) {{
@@ -147,6 +147,28 @@ namespace TailwindCSSIntellisense.Configuration
             configuration.plugins = newPlugins;
         }}
 
+        function theme(key, defaultValue) {{
+            const defaultTheme = require('tailwindcss/defaultTheme');
+            const colors = require('tailwindcss/colors');
+            const custom = configuration;
+
+            let defaultThemeValue = getValueByKeyBracket(defaultTheme, key);
+
+            // Default theme may contain functions, so we should provide that
+            if (typeof defaultThemeValue === 'function') {{
+                console.log(theme);
+                defaultThemeValue = defaultThemeValue({{ theme: theme, colors: colors }});
+            }}
+
+            const output = {{
+                ...defaultThemeValue,
+                ...getValueByKeyBracket(custom.theme, key),
+                ...getValueByKeyBracket(custom.theme.extend, key)
+            }};
+            
+            return (!output || Object.keys(output).length === 0) ? defaultValue : output;
+        }}
+
         const defaultLog = console.log;
         console.log = function () {{ }}
 
@@ -157,13 +179,7 @@ namespace TailwindCSSIntellisense.Configuration
                     var modifiers = [];
                     value.forEach(function (p) {{
                         p({{
-                            theme: (key, defaultValue) => {{
-                                var defaultTheme = require('tailwindcss/defaultTheme');
-                                var custom = configuration;
-
-                                var output = {{ ...getValueByKeyBracket(defaultTheme, key), ...getValueByKeyBracket(custom.theme, key), ...getValueByKeyBracket(custom.theme.extend, key) }};
-                                return (!output || Object.keys(output).length === 0) ? defaultValue : output;
-                            }},
+                            theme: theme,
                             config: (key, defaultValue) => {{
                                 return getValueByKeyBracket(configuration, key) || defaultValue;
                             }},
@@ -269,13 +285,7 @@ namespace TailwindCSSIntellisense.Configuration
                     }};
                 }} else {{
                     return typeof value === 'function' ? value({{
-                        theme: (key, defaultValue) => {{
-                            var defaultTheme = require('tailwindcss/defaultTheme');
-                            var custom = configuration;
-
-                            var output = {{ ...getValueByKeyBracket(defaultTheme, key), ...getValueByKeyBracket(custom.theme, key), ...getValueByKeyBracket(custom.theme.extend, key) }};
-                            return (!output || Object.keys(output).length === 0) ? defaultValue : output;
-                        }}
+                        theme: theme
                     }}) : value;
                 }}
             }}

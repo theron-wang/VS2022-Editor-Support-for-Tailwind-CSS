@@ -115,12 +115,12 @@ namespace TailwindCSSIntellisense.QuickInfo
                             numberOfQuotes++;
                         }
 
-                        if (depth == 0 && numberOfQuotes % 2 == 0 && character == ' ')
+                        if (depth == 0 && numberOfQuotes % 2 == 0 && char.IsWhiteSpace(character))
                         {
                             isInRazor = false;
                         }
                     }
-                    else if (character == ' ' && searchPos <= end)
+                    else if (char.IsWhiteSpace(character) && searchPos <= end)
                     {
                         break;
                     }

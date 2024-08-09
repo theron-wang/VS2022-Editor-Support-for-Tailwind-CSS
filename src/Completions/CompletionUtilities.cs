@@ -364,7 +364,7 @@ namespace TailwindCSSIntellisense.Completions
                 string color;
                 if (segments.Length >= 3)
                 {
-                    color = $"{segments[segments.Length - 2]}-{segments[segments.Length - 1]}";
+                    color = string.Join("-", segments.Skip(1));
                 }
                 else
                 {

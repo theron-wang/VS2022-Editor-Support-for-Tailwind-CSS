@@ -446,7 +446,7 @@ namespace TailwindCSSIntellisense.Configuration
             _completionBase.PluginModifiers = config.PluginModifiers;
         }
 
-        private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors)
+        private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors, string prev = "")
         {
             var newColorToRgbMapper = new Dictionary<string, string>();
 
@@ -454,12 +454,24 @@ namespace TailwindCSSIntellisense.Configuration
             {
                 var value = colors[key];
 
+                var actual = prev;
+
+                // when the root key is DEFAULT, it takes no effect on class names
+                if (prev == "" || key != "DEFAULT")
+                {
+                    if (actual != "")
+                    {
+                        actual += "-";
+                    }
+                    actual += key;
+                }
+
                 if (value is string s)
                 {
                     if (IsHex(s, out string hex))
                     {
                         var color = ColorTranslator.FromHtml($"#{hex}");
-                        newColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
+                        newColorToRgbMapper[actual] = $"{color.R},{color.G},{color.B}";
                     }
                     else if (s.StartsWith("rgb"))
                     {
@@ -472,85 +484,24 @@ namespace TailwindCSSIntellisense.Configuration
 
                             if (values.Length >= 3 && values.Take(3).All(v => float.TryParse(v, out _)))
                             {
-                                newColorToRgbMapper[key] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
+                                newColorToRgbMapper[actual] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
                             }
                             else
                             {
-                                newColorToRgbMapper[key] = "{noparse}" + s;
+                                newColorToRgbMapper[actual] = "{noparse}" + s;
                             }
                         }
                     }
                     else
                     {
-                        newColorToRgbMapper[key] = "{noparse}" + s;
+                        newColorToRgbMapper[actual] = "{noparse}" + s;
                     }
                 }
                 else if (value is Dictionary<string, object> colorVariants)
                 {
-                    foreach (var colorVariant in colorVariants.Keys)
+                    foreach (var pair in GetColorMapper(colorVariants, actual))
                     {
-                        if (colorVariant == "DEFAULT")
-                        {
-                            if (IsHex(colorVariants[colorVariant], out string hex))
-                            {
-                                var color = ColorTranslator.FromHtml($"#{hex}");
-                                newColorToRgbMapper[key] = $"{color.R},{color.G},{color.B}";
-                            }
-                            else if (colorVariants[colorVariant].ToString().StartsWith("rgb"))
-                            {
-                                var openParen = colorVariants[colorVariant].ToString().IndexOf('(');
-                                var closeParen = colorVariants[colorVariant].ToString().IndexOf(')', openParen);
-                                if (openParen != -1 && closeParen != -1 && closeParen - openParen > 1)
-                                {
-                                    var text = colorVariants[colorVariant].ToString().Substring(openParen + 1, closeParen - openParen - 1);
-                                    var values = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                                    if (values.Length >= 3 && values.Take(3).All(v => float.TryParse(v, out _)))
-                                    {
-                                        newColorToRgbMapper[key] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
-                                    }
-                                    else
-                                    {
-                                        newColorToRgbMapper[key] = "{noparse}" + colorVariants[colorVariant];
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                newColorToRgbMapper[key] = "{noparse}" + colorVariants[colorVariant];
-                            }
-                        }
-                        else
-                        {
-                            if (IsHex(colorVariants[colorVariant], out string hex))
-                            {
-                                var color = ColorTranslator.FromHtml($"#{hex}");
-                                newColorToRgbMapper[key + "-" + colorVariant] = $"{color.R},{color.G},{color.B}";
-                            }
-                            else if (colorVariants[colorVariant].ToString().StartsWith("rgb"))
-                            {
-                                var openParen = colorVariants[colorVariant].ToString().IndexOf('(');
-                                var closeParen = colorVariants[colorVariant].ToString().IndexOf(')', openParen);
-                                if (openParen != -1 && closeParen != -1 && closeParen - openParen > 1)
-                                {
-                                    var text = colorVariants[colorVariant].ToString().Substring(openParen + 1, closeParen - openParen - 1);
-                                    var values = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-                                    if (values.Length >= 3 && values.Take(3).All(v => float.TryParse(v, out _)))
-                                    {
-                                        newColorToRgbMapper[key + "-" + colorVariant] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
-                                    }
-                                    else
-                                    {
-                                        newColorToRgbMapper[key + "-" + colorVariant] = "{noparse}" + colorVariants[colorVariant];
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                newColorToRgbMapper[key + "-" + colorVariant] = "{noparse}" + colorVariants[colorVariant];
-                            }
-                        }
+                        newColorToRgbMapper[pair.Key] = pair.Value;
                     }
                 }
             }
