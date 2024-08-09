@@ -72,6 +72,8 @@ internal abstract class Sorter
 
         var sorted = Sort(classes, config);
 
+        bool shouldMoveImportant = Handled.Contains(".css") && sorted.Contains("!important");
+
         var newlines = classText.Select((c, i) => (c, i))
             .Where(p => p.c == '\n')
             .Select(p => p.i).ToList();
@@ -83,6 +85,11 @@ internal abstract class Sorter
 
         foreach (var sortedClass in sorted)
         {
+            if (shouldMoveImportant && sortedClass == "!important")
+            {
+                continue;
+            }
+
             var before = index;
 
             sortedSegment.Append(sortedClass);
@@ -99,6 +106,11 @@ internal abstract class Sorter
                 sortedSegment.Append(' ');
             }
             index++;
+        }
+
+        if (shouldMoveImportant)
+        {
+            sortedSegment.Append("!important");
         }
 
         return sortedSegment.ToString().Trim();
