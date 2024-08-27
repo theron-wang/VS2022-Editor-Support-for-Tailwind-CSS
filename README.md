@@ -34,7 +34,7 @@ If you do not have `npm` installed, follow [this tutorial](https://docs.npmjs.co
 
 The extension will start in any solution with a `tailwind.config.js` file in any project.
 
-If your configuration file is named differently, or it is not found by the extension, you can set the file by right-clicking on it (must be a `.js` or `.ts` file).
+If your configuration file is named differently/not found by the extension, you can set the file by right-clicking on it (must be a `.js` or `.ts` file).
 
 ## Features
 
@@ -56,7 +56,7 @@ Extensions do not have the ability to override existing error tags, so `@tailwin
 
 ### Class Sorting
 
-Classes can be sorted in the recommended Tailwind manner on a per-file basis on file save or by the whole solution on build:
+Classes can be sorted on a per-file basis on file save or by the whole solution on build:
 
 ![Class Sort Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/class-sort-demo.gif)
 
@@ -66,12 +66,12 @@ You can also manually sort by clicking the Tools menu at the top and selecting a
 
 ### Build Integration
 
-When in a project, you can run the project to build Tailwind CSS or access it via the Build menu. Build details and errors will be logged to the Build output window:
+To build your Tailwind file, ensure that your input and output css files are defined. By default, a project build will trigger the Tailwind build process, but this can be manually triggered under the Build menu. Build details and errors will be logged to the Build output window:
 
 ![Build Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-1.png)
 ![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-2.png)
 
-Set your configuration, build and output files by right-clicking on any `.js` or `.css` file:
+Set your configuration, build and output files by right-clicking on any `.js`, `.ts`, or `.css` file:
 
 ![Customizability Build 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-1.png)
 ![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-2.png)
@@ -88,9 +88,7 @@ When getting started in a new project, you can import the necessary modules by r
 - Specify the absolute path in Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path.
 - Click 'Set up Tailwind CSS (use CLI)'
 
-If you prefer a different build command, `package.json` scripts are also supported:
-
-![NPM Package.json](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-package-json.png)
+If you need to override the default build command, `package.json` scripts are also supported. The extension will run the build as `npm run {your task}`, where the task can be defined in the extension settings.
 
 ### Extension Options
 

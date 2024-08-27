@@ -47,7 +47,7 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 
 ## Setting Up the Extension
 
-3. Before you are ready to build, **set your input CSS file**. Your output file will automatically be generated as `{input file name}.output.css`. If you want to specify a certain file, you can right click and click 'Set as Tailwind CSS output file'.
+3. Before you are ready to build, **set your input CSS file**. Your output file will automatically be generated as `{input file name}.output.css`. If you want to specify a certain file, you can right click and click 'Link as Tailwind CSS output file' and select the corresponding input file. **Input files must already be defined prior to selecting an output file.**
 
 ![Input and output CSS files](art/Customizability-Build-2.png)
 
