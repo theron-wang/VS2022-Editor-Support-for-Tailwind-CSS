@@ -88,8 +88,7 @@ namespace TailwindCSSIntellisense.Configuration
         {
             if (Scanner.HasConfigurationFile)
             {
-                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-                await VS.StatusBar.ShowProgressAsync("Reloading Tailwind CSS configuration", 1, 2);
+                await VS.StatusBar.ShowMessageAsync("Reloading Tailwind CSS configuration");
 
                 try
                 {
@@ -109,15 +108,11 @@ namespace TailwindCSSIntellisense.Configuration
                         ConfigurationUpdated(config);
                     }
 
-                    await VS.StatusBar.ShowProgressAsync("", 2, 2);
                     await VS.StatusBar.ShowMessageAsync("Finished reloading Tailwind CSS configuration");
-                    await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
                 }
                 catch (Exception ex)
                 {
-                    await VS.StatusBar.ShowProgressAsync("", 2, 2);
                     await VS.StatusBar.ShowMessageAsync("Tailwind CSS: Failed to load configuration file; check the 'Extensions' output window for more details");
-                    await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
                     await ex.LogAsync();
                 }
             }

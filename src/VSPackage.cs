@@ -35,9 +35,9 @@ namespace TailwindCSSIntellisense
         public const int BuildMenuGroup = 0x1030;
         public const int ProjMenuGroup = 0x1040;
         public const int ToolsMenuGroup = 0x1050;
+        public const int OutputMenuGroup = 0x1060;
         public const int SetAsConfigFileCmdId = 0x0100;
         public const int SetAsCssFileCmdId = 0x0101;
-        public const int SetAsOutputCssFileCmdId = 0x0102;
         public const int RemoveAsConfigFileCmdId = 0x0103;
         public const int RemoveAsCssFileCmdId = 0x0104;
         public const int RemoveAsOutputCssFileCmdId = 0x0105;
@@ -53,6 +53,8 @@ namespace TailwindCSSIntellisense
         public const int SortEntireSolutionCmdId = 0x0115;
         public const int SetAsPackageConfigFileCmdId = 0x0116;
         public const int RemoveAsPackageConfigFileCmdId = 0x0117;
+        public const int SetAsOutputCssFileMenu = 0x0118;
+        public const int SetAsOutputCssFileCmdId = 0x0200;
         public const int tailwindLogo = 0x0001;
     }
 }

@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.5.0 (August 26th, 2024)
+
+### Additions
+
+- Ability to add multiple input/output css files ([#46](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/46))
+
+### Fixes
+
+- Slight performance boost on solution startup
+- Fixed a bug where the update status message does not accurately reflect the newest version
+
+### Enhancements
+
+- Removed many status progress bars and animations to reduce clutter
+
 ## 1.4.7 (August 8th, 2024)
 
 ### Fixes

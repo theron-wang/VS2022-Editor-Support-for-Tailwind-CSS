@@ -50,7 +50,7 @@ namespace TailwindCSSIntellisense
                 if (file.ContainingProject is not null)
                 {
                     // tailwind.extension.json is placed in the same directory as tailwind.config.js
-                    var tailwindExtensionJson = await SettingsProvider.GetFilePath();
+                    var tailwindExtensionJson = await SettingsProvider.GetFilePathAsync();
                     await file.ContainingProject.AddExistingFilesAsync(configFile, tailwindExtensionJson);
                 }
             }

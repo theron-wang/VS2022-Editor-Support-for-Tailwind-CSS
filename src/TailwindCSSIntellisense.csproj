@@ -64,6 +64,7 @@
     <Compile Include="Commands\RemoveAsOutputFile.cs" />
     <Compile Include="Commands\RemoveAsInputFile.cs" />
     <Compile Include="Commands\RemoveAsConfigFile.cs" />
+    <Compile Include="Commands\SetAsOutputFileMenu.cs" />
     <Compile Include="Commands\SetAsPackageConfigFile.cs" />
     <Compile Include="Commands\SortClassesInSolution.cs" />
     <Compile Include="Commands\SortClassesInOpenFile.cs" />
@@ -133,6 +134,7 @@
     <Compile Include="QuickInfo\CssQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\HtmlQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\QuickInfoSource.cs" />
+    <Compile Include="Settings\BuildPair.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

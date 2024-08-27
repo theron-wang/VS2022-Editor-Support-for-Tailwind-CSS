@@ -1,6 +1,7 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
@@ -27,8 +28,7 @@ namespace TailwindCSSIntellisense.Build
         [Import]
         internal PackageJsonReader PackageJsonReader { get; set; }
 
-        private string _cssFilePath;
-        private string _cssOutputFilePath;
+        private Dictionary<string, string> _inputToOutputFile = [];
         private string _configPath;
 
         private bool? _hasScript = null;
@@ -38,8 +38,8 @@ namespace TailwindCSSIntellisense.Build
         private bool _initialized;
         private bool _subscribed;
         private bool _minify;
-        private Process _process;
-        private Process _otherProcess;
+        private readonly Dictionary<string, Process> _outputFileToProcesses = [];
+        private Process _secondaryProcess;
 
         private TailwindSettings _settings;
 
@@ -84,16 +84,19 @@ namespace TailwindCSSIntellisense.Build
             VS.Events.DocumentEvents.Saved -= OnFileSave;
             SettingsProvider.OnSettingsChanged -= SettingsChangedAsync;
 
-            _process?.Dispose();
-            _otherProcess?.Dispose();
+            foreach (var process in _outputFileToProcesses.Values)
+            {
+                process?.Dispose();
+            }
+            _outputFileToProcesses.Clear();
+            _secondaryProcess?.Dispose();
 
-            _process = null;
-            _otherProcess = null;
+            _secondaryProcess = null;
         }
 
         internal bool AreProcessesActive()
         {
-            return IsProcessActive(_process) || IsProcessActive(_otherProcess);
+            return _outputFileToProcesses.Values.Any(IsProcessActive) || IsProcessActive(_secondaryProcess);
         }
 
         /// <summary>
@@ -163,7 +166,7 @@ namespace TailwindCSSIntellisense.Build
         /// </summary>
         internal void StartProcess(bool minify = false)
         {
-            if (Scanner.HasConfigurationFile == false || _cssFilePath == null || _settings.BuildType == BuildProcessOptions.None)
+            if (Scanner.HasConfigurationFile == false || _inputToOutputFile == null || _inputToOutputFile.Count == 0 || _settings.BuildType == BuildProcessOptions.None)
             {
                 return;
             }
@@ -180,83 +183,87 @@ namespace TailwindCSSIntellisense.Build
 
             var needOtherProcess = _settings.OverrideBuild == false && _hasScript.Value && string.IsNullOrWhiteSpace(_settings.BuildScript) == false;
             var dir = Path.GetDirectoryName(_configPath);
-            var cssFile = GetRelativePath(_cssFilePath, dir);
-            var outputFile = GetRelativePath(_cssOutputFilePath, dir);
-
-            var processInfo = new ProcessStartInfo()
-            {
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                RedirectStandardInput = true,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                FileName = "cmd",
-                WorkingDirectory = dir
-            };
+            var configFile = Path.GetFileName(_configPath);
 
             if (_settings.BuildType == BuildProcessOptions.OnSave)
             {
-                // Is the default process active?
+                // Are all default processes active?
                 #region Default process
-                if (IsProcessActive(_process))
+                if (_outputFileToProcesses.Count > 0 && _outputFileToProcesses.Values.All(IsProcessActive))
                 {
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                        foreach (var pair in _inputToOutputFile)
+                        {
+                            var inputFile = pair.Key;
+                            var outputFile = pair.Value;
+
+                            if (_outputFileToProcesses.TryGetValue(outputFile, out var process))
+                            {
+                                process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                            }
+                            else
+                            {
+                                // Realistically, this shouldn't happen since all processes are stopped when
+                                // the configuration is changed
+                                EndProcess();
+                                throw new InvalidOperationException("Attempted to access a process that wasn't there. Try restarting the build process.");
+                            }
+                        }
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
+                        _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
                     }
                 }
                 else
                 {
+                    // If one of them have terminated, stop and restart
+                    EndProcess();
+
                     ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
-
-                    _process = Process.Start(processInfo);
-
-                    _process.Exited += (s, e) =>
-                    {
-                        ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
-                        _process.Dispose();
-                        _process = null;
-                    };
 
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                        foreach (var pair in _inputToOutputFile)
+                        {
+                            var inputFile = pair.Key;
+                            var outputFile = pair.Value;
+
+                            var process = CreateAndStartProcess(GetProcessStartInfo(dir));
+                            process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                            PostSetupProcess(process);
+
+                            _outputFileToProcesses[outputFile] = process;
+                        }
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
-                    }
+                        CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(dir));
 
-                    _process.BeginOutputReadLine();
-                    _process.BeginErrorReadLine();
-                    _process.OutputDataReceived += OutputDataReceived;
-                    _process.ErrorDataReceived += OutputDataReceived;
+                        _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
+
+                        PostSetupProcess(_secondaryProcess);
+                    }
                 }
                 #endregion
                 #region Secondary process
                 if (needOtherProcess)
                 {
-                    if (IsProcessActive(_otherProcess))
+                    if (IsProcessActive(_secondaryProcess))
                     {
-                        _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                        _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
                     }
                     else
                     {
                         ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
 
-                        processInfo.WorkingDirectory = Path.GetDirectoryName(_packageJsonPath);
-                        _otherProcess = Process.Start(processInfo);
+                        var processInfo = GetProcessStartInfo(Path.GetDirectoryName(_packageJsonPath));
+                        CreateAndSetAndStartSecondaryProcess(processInfo);
 
-                        _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                        _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
 
-                        _otherProcess.BeginOutputReadLine();
-                        _otherProcess.BeginErrorReadLine();
-                        _otherProcess.OutputDataReceived += OutputDataReceived;
-                        _otherProcess.ErrorDataReceived += OutputDataReceived;
+                        PostSetupProcess(_secondaryProcess);
                     }
                 }
                 #endregion
@@ -265,55 +272,50 @@ namespace TailwindCSSIntellisense.Build
             {
                 #region Default process
 
-                if (!IsProcessActive(_process))
+                if (_outputFileToProcesses.Count == 0 || !_outputFileToProcesses.Values.All(IsProcessActive))
                 {
                     ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
 
-                    _process = Process.Start(processInfo);
-
-                    _process.Exited += (s, e) =>
-                    {
-                        ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
-                        _process.Dispose();
-                        _process = null;
-                    };
-
                     if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
                     {
-                        _process.StandardInput.WriteLine($"{GetCommand()} -i \"{cssFile}\" -o \"{outputFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                        foreach (var pair in _inputToOutputFile)
+                        {
+                            var inputFile = pair.Key;
+                            var outputFile = pair.Value;
+
+                            var process = CreateAndStartProcess(GetProcessStartInfo(dir));
+                            process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                            PostSetupProcess(process);
+
+                            _outputFileToProcesses[outputFile] = process;
+                        }
                     }
                     else if (_settings.OverrideBuild)
                     {
-                        _process.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
+                        CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(dir));
 
-                        _process.StandardInput.Flush();
-                        _process.StandardInput.Close();
+                        _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
+
+                        PostSetupProcess(_secondaryProcess);
+                        _secondaryProcess.StandardInput.Flush();
+                        _secondaryProcess.StandardInput.Close();
                     }
-
-                    _process.BeginOutputReadLine();
-                    _process.BeginErrorReadLine();
-                    _process.OutputDataReceived += OutputDataReceived;
-                    _process.ErrorDataReceived += OutputDataReceived;
                 }
 
                 #endregion
                 #region Secondary process
 
-                if (IsProcessActive(_otherProcess) == false && needOtherProcess)
+                if (IsProcessActive(_secondaryProcess) == false && needOtherProcess)
                 {
                     ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
 
-                    processInfo.WorkingDirectory = Path.GetDirectoryName(_packageJsonPath);
-                    _otherProcess = Process.Start(processInfo);
+                    CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(Path.GetDirectoryName(_packageJsonPath)));
 
-                    _otherProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
-                    _otherProcess.StandardInput.Flush();
-                    _otherProcess.StandardInput.Close();
+                    _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                    PostSetupProcess(_secondaryProcess);
 
-                    _otherProcess.BeginOutputReadLine();
-                    _otherProcess.BeginErrorReadLine();
-                    _otherProcess.OutputDataReceived += OutputDataReceived;
-                    _otherProcess.ErrorDataReceived += OutputDataReceived;
+                    _secondaryProcess.StandardInput.Flush();
+                    _secondaryProcess.StandardInput.Close();
                 }
 
                 #endregion
@@ -325,27 +327,28 @@ namespace TailwindCSSIntellisense.Build
         /// </summary>
         internal void EndProcess()
         {
-            if (IsProcessActive(_process))
+            foreach (var process in _outputFileToProcesses.Values)
             {
-                // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
-                // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
-                _process.StandardInput.WriteLine("\x3");
-                _process.StandardInput.Close();
-                _process.Kill();
-                _process.Dispose();
-                _process = null;
+                if (IsProcessActive(process))
+                {
+                    // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
+                    // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
+                    process.StandardInput.WriteLine("\x3");
+                    process.StandardInput.Close();
+                    process.Kill();
+                }
             }
-            if (IsProcessActive(_otherProcess))
+            _outputFileToProcesses.Clear();
+            if (IsProcessActive(_secondaryProcess))
             {
                 ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build script '{_settings.BuildScript}' stopped"));
 
                 // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
                 // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
-                _otherProcess.StandardInput.WriteLine("\x3");
-                _otherProcess.StandardInput.Close();
-                _otherProcess.Kill();
-                _otherProcess.Dispose();
-                _otherProcess = null;
+                _secondaryProcess.StandardInput.WriteLine("\x3");
+                _secondaryProcess.StandardInput.Close();
+                _secondaryProcess.Kill();
+                _secondaryProcess = null;
             }
         }
 
@@ -367,7 +370,9 @@ namespace TailwindCSSIntellisense.Build
             _settings = settings;
             _hasScript = null;
 
-            if (string.IsNullOrEmpty(settings.TailwindCssFile))
+            var buildFiles = settings.BuildFiles;
+
+            if (buildFiles is null || buildFiles.Count == 0)
             {
                 // Check the smallest css files first since tailwind css files (should) be small
                 var cssFiles = (await Scanner.FileFinder.GetCssFilesAsync()).OrderBy(f => new FileInfo(f).Length).ToList();
@@ -381,23 +386,27 @@ namespace TailwindCSSIntellisense.Build
                 {
                     if (await IsFileTailwindCssAsync(file))
                     {
-                        _cssFilePath = file;
+                        buildFiles = [..buildFiles];
+                        buildFiles.Add(new() { Input = file });
                         break;
                     }
                 }
             }
-            else
-            {
-                _cssFilePath = settings.TailwindCssFile;
-            }
 
-            if (_cssFilePath != null && string.IsNullOrEmpty(settings.TailwindOutputCssFile))
+            var buildFilesFiltered = buildFiles
+                .Where(f => !string.IsNullOrEmpty(f.Input) && File.Exists(f.Input))
+                .Select(f =>
+                {
+                    f.Output = string.IsNullOrEmpty(f.Output) ?
+                        Path.Combine(Path.GetDirectoryName(f.Input), string.Format(settings.DefaultOutputCssName.EndsWith(".css") ? settings.DefaultOutputCssName : settings.DefaultOutputCssName + ".css", Path.GetFileNameWithoutExtension(f.Input))) : f.Output;
+                    return f;
+                });
+
+            _inputToOutputFile = [];
+
+            foreach (var pair in buildFilesFiltered)
             {
-                _cssOutputFilePath = Path.Combine(Path.GetDirectoryName(_cssFilePath), string.Format(settings.DefaultOutputCssName.EndsWith(".css") ? settings.DefaultOutputCssName : settings.DefaultOutputCssName + ".css", Path.GetFileNameWithoutExtension(_cssFilePath)));
-            }
-            else
-            {
-                _cssOutputFilePath = settings.TailwindOutputCssFile;
+                _inputToOutputFile[pair.Input] = pair.Output;
             }
 
             _configPath = await Scanner.FindConfigurationFilePathAsync();
@@ -505,21 +514,70 @@ namespace TailwindCSSIntellisense.Build
             return false;
         }
 
-        // https://stackoverflow.com/questions/703281/getting-path-relative-to-the-current-working-directory
-        private string GetRelativePath(string file, string folder)
+        private static ProcessStartInfo GetProcessStartInfo(string dir)
         {
-            if (folder is null)
+            return new ProcessStartInfo()
             {
-                return folder;
-            }
-            Uri pathUri = new Uri(file);
-            // Folders must end in a slash
-            if (!folder.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardInput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true,
+                FileName = "cmd",
+                WorkingDirectory = dir
+            };
+        }
+
+        private void CreateAndSetAndStartSecondaryProcess(ProcessStartInfo startInfo)
+        {
+            _secondaryProcess = Process.Start(startInfo);
+            _secondaryProcess.EnableRaisingEvents = true;
+
+            _secondaryProcess.Exited += (s, e) =>
             {
-                folder += Path.DirectorySeparatorChar;
-            }
-            Uri folderUri = new Uri(folder);
-            return Uri.UnescapeDataString(folderUri.MakeRelativeUri(pathUri).ToString().Replace('/', Path.DirectorySeparatorChar));
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
+                _secondaryProcess?.Dispose();
+                _secondaryProcess = null;
+            };
+        }
+
+        private Process CreateAndStartProcess(ProcessStartInfo startInfo)
+        {
+            var process = Process.Start(startInfo);
+            process.EnableRaisingEvents = true;
+
+            process.Exited += (s, e) =>
+            {
+                var proc = (Process)s;
+
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build stopped ({_outputFileToProcesses.Count} processes left)"));
+                proc?.Dispose();
+                string keyToRemove = null;
+                foreach (var kvp in _outputFileToProcesses)
+                {
+                    if (kvp.Value == proc)
+                    {
+                        keyToRemove = kvp.Key;
+                        break;
+                    }
+                }
+
+                if (keyToRemove != null)
+                {
+                    _outputFileToProcesses.Remove(keyToRemove);
+                }
+                proc = null;
+            };
+
+            return process;
+        }
+
+        private void PostSetupProcess(Process process)
+        {
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.OutputDataReceived += OutputDataReceived;
+            process.ErrorDataReceived += OutputDataReceived;
         }
     }
 }

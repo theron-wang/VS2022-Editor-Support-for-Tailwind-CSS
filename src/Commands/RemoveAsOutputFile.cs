@@ -1,6 +1,7 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Settings;
 
@@ -24,14 +25,22 @@ namespace TailwindCSSIntellisense
 
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
-            Command.Visible = settings.EnableTailwindCss && settings.TailwindOutputCssFile == filePath;
+            Command.Visible = settings.EnableTailwindCss && settings.BuildFiles.Any(f => f.Output is not null && f.Output.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
         {
             var settings = await SettingsProvider.GetSettingsAsync();
+            var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
 
-            settings.TailwindOutputCssFile = null;
+            foreach (var file in settings.BuildFiles)
+            {
+                if (file.Output.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    file.Output = null;
+                }
+            }
+
             await SettingsProvider.OverrideSettingsAsync(settings);
         }
     }

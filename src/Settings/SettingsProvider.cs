@@ -1,10 +1,12 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
@@ -97,10 +99,8 @@ namespace TailwindCSSIntellisense.Settings
                     }
                     try
                     {
-                        using (var fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
-                        {
-                            projectSettings = await JsonSerializer.DeserializeAsync<TailwindSettingsProjectOnly>(fs);
-                        }
+                        using var fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                        projectSettings = await JsonSerializer.DeserializeAsync<TailwindSettingsProjectOnly>(fs);
                     }
                     catch (Exception ex)
                     {
@@ -108,6 +108,16 @@ namespace TailwindCSSIntellisense.Settings
 
                         await VS.StatusBar.ShowMessageAsync("Tailwind CSS extension configuration file failed to load properly (check 'Extensions' output window for more details)");
                         await ex.LogAsync();
+
+                        projectSettings = new TailwindSettingsProjectOnly()
+                        {
+                            ConfigurationFile = await FindExistingConfigurationFileAsync()
+                        };
+
+                        if (projectSettings.ConfigurationFile != null)
+                        {
+                            changed = true;
+                        }
                     }
                 }
                 else
@@ -123,6 +133,45 @@ namespace TailwindCSSIntellisense.Settings
                     }
                 }
 
+#pragma warning disable CS0612 // Type or member is obsolete
+                // Backwards compatibility
+                if (projectSettings.InputCssFile != null)
+                {
+                    projectSettings.BuildFiles = [
+                        new BuildPair()
+                        {
+                            Input = projectSettings.InputCssFile,
+                            Output = projectSettings.OutputCssFile
+                        }
+                    ];
+                    projectSettings.InputCssFile = null;
+                    projectSettings.OutputCssFile = null;
+                    changed = true;
+                }
+#pragma warning restore CS0612 // Type or member is obsolete
+
+                var inputFiles = new HashSet<string>();
+
+                if (projectSettings.BuildFiles is not null)
+                {
+                    for (int i = 0; i < projectSettings.BuildFiles.Count; i++)
+                    {
+                        var buildPair = projectSettings.BuildFiles[i];
+
+                        buildPair.Input = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Input?.Trim());
+                        buildPair.Output = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Output?.Trim());
+                        if (buildPair.Input == null || File.Exists(buildPair.Input) == false || inputFiles.Contains(buildPair.Input))
+                        {
+                            projectSettings.BuildFiles.Remove(buildPair);
+                            i--;
+                            changed = true;
+                            continue;
+                        }
+
+                        inputFiles.Add(buildPair.Input);
+                    }
+                }
+
                 returnSettings = new TailwindSettings()
                 {
                     EnableTailwindCss = general.UseTailwindCss,
@@ -132,8 +181,7 @@ namespace TailwindCSSIntellisense.Settings
                     BuildScript = general.BuildScript,
                     OverrideBuild = general.OverrideBuild,
                     TailwindConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
-                    TailwindCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.InputCssFile?.Trim()),
-                    TailwindOutputCssFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.OutputCssFile?.Trim()),
+                    BuildFiles = projectSettings.BuildFiles ?? [],
                     PackageConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.PackageConfigurationFile?.Trim()),
                     AutomaticallyMinify = general.AutomaticallyMinify,
                     TailwindCliPath = general.TailwindCliPath,
@@ -148,11 +196,6 @@ namespace TailwindCSSIntellisense.Settings
             if (returnSettings.TailwindConfigurationFile != null && File.Exists(returnSettings.TailwindConfigurationFile) == false)
             {
                 returnSettings.TailwindConfigurationFile = null;
-                changed = true;
-            }
-            if (returnSettings.TailwindCssFile != null && File.Exists(returnSettings.TailwindCssFile) == false)
-            {
-                returnSettings.TailwindCssFile = null;
                 changed = true;
             }
 
@@ -184,16 +227,26 @@ namespace TailwindCSSIntellisense.Settings
             }
 
             var projectRoot = await GetTailwindProjectDirectoryAsync();
+            var copyBuildFilePair = new List<BuildPair>();
+
+            foreach (var buildFilePair in settings.BuildFiles)
+            {
+                copyBuildFilePair.Add(new()
+                {
+                    Input = PathHelpers.GetRelativePath(buildFilePair.Input, projectRoot),
+                    Output = PathHelpers.GetRelativePath(buildFilePair.Output, projectRoot)
+                });
+            }
+
             var projectSettings = new TailwindSettingsProjectOnly()
             {
                 ConfigurationFile = PathHelpers.GetRelativePath(settings.TailwindConfigurationFile, projectRoot),
-                InputCssFile = PathHelpers.GetRelativePath(settings.TailwindCssFile, projectRoot),
-                OutputCssFile = PathHelpers.GetRelativePath(settings.TailwindOutputCssFile, projectRoot),
+                BuildFiles = copyBuildFilePair,
                 PackageConfigurationFile = PathHelpers.GetRelativePath(settings.PackageConfigurationFile, projectRoot),
                 UseCli = settings.UseCli
             };
 
-            if (projectSettings.ConfigurationFile == null && projectSettings.InputCssFile == null && projectSettings.OutputCssFile == null && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
+            if (projectSettings.ConfigurationFile == null && (projectSettings.BuildFiles == null || projectSettings.BuildFiles.Count == 0) && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
             {
                 try
                 {
@@ -207,7 +260,10 @@ namespace TailwindCSSIntellisense.Settings
             else
             {
                 using var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-                _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings);
+                _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings, options: new()
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                });
                 await _fileWritingTask;
             }
 
@@ -227,7 +283,7 @@ namespace TailwindCSSIntellisense.Settings
             VS.Events.DocumentEvents.Saved -= OnFileSaved;
         }
 
-        public async Task<string> GetFilePath()
+        public async Task<string> GetFilePathAsync()
         {
             return Path.Combine(await GetTailwindProjectDirectoryAsync(), ExtensionConfigFileName);
         }

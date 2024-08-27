@@ -78,14 +78,12 @@ namespace TailwindCSSIntellisense.Completions
                     return false;
                 }
 
-                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
-
-                await VS.StatusBar.ShowProgressAsync("Loading Tailwind CSS classes", 1, 3);
+                await VS.StatusBar.ShowMessageAsync("Loading Tailwind CSS classes");
                 await LoadClassesAsync();
-                await VS.StatusBar.ShowProgressAsync("Loading Tailwind CSS configuration", 2, 3);
+                await VS.StatusBar.ShowMessageAsync("Loading Tailwind CSS configuration");
 
                 await Configuration.InitializeAsync(this);
-                await VS.StatusBar.ShowProgressAsync("Tailwind CSS IntelliSense initialized", 3, 3);
+                await VS.StatusBar.ShowMessageAsync("Tailwind CSS IntelliSense initialized");
 
                 Initialized = true;
                 return true;
@@ -95,15 +93,9 @@ namespace TailwindCSSIntellisense.Completions
                 await ex.LogAsync();
 
                 // Clear progress
-                await VS.StatusBar.ShowProgressAsync("", 3, 3);
                 await VS.StatusBar.ShowMessageAsync("Tailwind CSS initialization failed: check extension output");
 
                 return false;
-            }
-            finally
-            {
-                await VS.StatusBar.ShowProgressAsync("", 3, 3);
-                await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
         }
 
@@ -115,48 +107,20 @@ namespace TailwindCSSIntellisense.Completions
         private async Task LoadClassesAsync()
         {
             var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
-            List<Variant> variants;
+            List<Variant> variants = [];
 
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindclasses.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
+            var loadTasks = new List<Task>
             {
-                variants = await JsonSerializer.DeserializeAsync<List<Variant>>(fs);
-            }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindmodifiers.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                Modifiers = await JsonSerializer.DeserializeAsync<List<string>>(fs);
-            }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindrgbmapper.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                ColorToRgbMapper = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(fs);
-            }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindspacing.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                var spacing = await JsonSerializer.DeserializeAsync<List<string>>(fs);
-                SpacingMapper = new Dictionary<string, string>();
-                foreach (var s in spacing)
-                {
-                    if (s == "px")
-                    {
-                        SpacingMapper[s] = "1px";
-                    }
-                    else
-                    {
-                        SpacingMapper[s] = $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
-                    }
-                }
-            }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindopacity.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                Opacity = await JsonSerializer.DeserializeAsync<List<int>>(fs);
-            }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindconfig.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                ConfigurationValueToClassStems = await JsonSerializer.DeserializeAsync<Dictionary<string, List<string>>>(fs);
-            }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwinddesc.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                DescriptionMapper = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(fs);
-            }
+                LoadJsonAsync<List<Variant>>(Path.Combine(baseFolder, "tailwindclasses.json"), v => variants = v),
+                LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindmodifiers.json"), m => Modifiers = m),
+                LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwindrgbmapper.json"), c => ColorToRgbMapper = c),
+                LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), s => ProcessSpacing(s)),
+                LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "tailwindopacity.json"), o => Opacity = o),
+                LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => ConfigurationValueToClassStems = c),
+                LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwinddesc.json"), d => DescriptionMapper = d)
+            };
+
+            await Task.WhenAll(loadTasks);
 
             Classes = new List<TailwindClass>();
 
@@ -403,6 +367,15 @@ namespace TailwindCSSIntellisense.Completions
             }
 
             return null;
+        }
+
+        private void ProcessSpacing(List<string> spacing)
+        {
+            SpacingMapper = new Dictionary<string, string>();
+            foreach (var s in spacing)
+            {
+                SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
+            }
         }
 
         internal string GetDescription(string tailwindClass, bool shouldFormat = true)
@@ -709,6 +682,13 @@ namespace TailwindCSSIntellisense.Completions
             ColorDescriptionMapper[key] = result;
 
             return result;
+        }
+
+        private async Task LoadJsonAsync<T>(string path, Action<T> process)
+        {
+            using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            var data = await JsonSerializer.DeserializeAsync<T>(fs);
+            process(data);
         }
     }
 }

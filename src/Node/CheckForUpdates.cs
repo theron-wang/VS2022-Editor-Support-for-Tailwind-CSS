@@ -62,8 +62,7 @@ namespace TailwindCSSIntellisense.Node
 
             try
             {
-                await VS.StatusBar.StartAnimationAsync(StatusAnimation.Sync);
-                await VS.StatusBar.ShowProgressAsync("Checking for Tailwind CSS updates...", 1, 3);
+                await VS.StatusBar.ShowMessageAsync("Checking for Tailwind CSS updates");
                 var processInfo = new ProcessStartInfo()
                 {
                     UseShellExecute = false,
@@ -78,6 +77,7 @@ namespace TailwindCSSIntellisense.Node
 
                 using (var process = Process.Start(processInfo))
                 {
+                    await process.StandardInput.WriteLineAsync("npm outdated tailwindcss & exit");
                     process.BeginOutputReadLine();
 
                     string currentVersion = null;
@@ -96,21 +96,19 @@ namespace TailwindCSSIntellisense.Node
                             // tailwindcss    3.3.2   3.3.3   3.3.3  node_modules/tailwindcss  project_name
 
                             currentVersion = data[1];
-                            newVersion = data[2];
+                            newVersion = data[3];
                         }
                     };
 
-                    await process.StandardInput.WriteLineAsync("npm outdated tailwindcss & exit");
                     await process.WaitForExitAsync();
 
                     if (currentVersion == newVersion && currentVersion == null)
                     {
-                        await VS.StatusBar.ShowProgressAsync("", 3, 3);
                         await VS.StatusBar.ShowMessageAsync("Tailwind CSS is up to date");
                         return;
                     }
 
-                    await VS.StatusBar.ShowProgressAsync($"Updating Tailwind CSS ({currentVersion} -> {newVersion})", 2, 3);
+                    await VS.StatusBar.ShowMessageAsync($"Updating Tailwind CSS ({currentVersion} -> {newVersion})");
                 }
 
                 processInfo = new ProcessStartInfo()
@@ -134,20 +132,14 @@ namespace TailwindCSSIntellisense.Node
                     await process.WaitForExitAsync();
                 }
 
-                await VS.StatusBar.ShowProgressAsync("", 3, 3);
                 await VS.StatusBar.ShowMessageAsync($"Tailwind CSS update successful (updated to version {newVersion})");
 
                 _configFilesChecked.Add(settings.TailwindConfigurationFile);
             }
             catch (Exception ex)
             {
-                await VS.StatusBar.ShowProgressAsync("", 3, 3);
                 await VS.StatusBar.ShowMessageAsync("Tailwind CSS update/check failed; check 'Extensions' output window for more details");
                 await ex.LogAsync();
-            }
-            finally
-            {
-                await VS.StatusBar.EndAnimationAsync(StatusAnimation.Sync);
             }
         }
 

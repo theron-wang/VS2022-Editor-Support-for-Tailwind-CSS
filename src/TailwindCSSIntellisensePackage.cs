@@ -95,12 +95,12 @@ namespace TailwindCSSIntellisense
                     await _classSortUtilities.InitializeAsync();
                     await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
                     _classSorter.Initialize();
-                }).FireAndForget();
 
-                foreach (var project in await VS.Solutions.GetAllProjectsAsync())
-                {
-                    JoinableTaskFactory.RunAsync(() => _checkForUpdates.UpdateIfNeededAsync(Path.GetDirectoryName(project.FullPath))).FireAndForget();
-                }
+                    foreach (var project in await VS.Solutions.GetAllProjectsAsync())
+                    {
+                        await _checkForUpdates.UpdateIfNeededAsync(Path.GetDirectoryName(project.FullPath));
+                    }
+                }).FireAndForget();
             }
         }
 
