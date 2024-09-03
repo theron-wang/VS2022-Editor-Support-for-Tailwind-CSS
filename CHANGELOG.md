@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.1 (September 2nd, 2024)
+
+### Fixes
+
+- Modified color hint in IntelliSense menu to reflect actual color in some cases ([#64](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/64))
+
 ## 1.5.0 (August 26th, 2024)
 
 ### Additions

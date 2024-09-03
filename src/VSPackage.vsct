@@ -35,7 +35,7 @@
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<CommandFlag>DontCache</CommandFlag>
 				<Strings>
-					<ButtonText>Link as Tailwind CSS output file</ButtonText>
+					<ButtonText>Set as Tailwind CSS output file</ButtonText>
 				</Strings>
 			</Menu>
 		</Menus>

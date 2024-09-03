@@ -578,12 +578,12 @@ namespace TailwindCSSIntellisense.Completions
             var b = byte.Parse(rgb[2]);
             var a = (byte)Math.Round(opacity / 100d * 255);
 
-            var pen = new Pen() { Thickness = 7, Brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)) };
-            var mainImage = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(11, 2, 5, 8)), Pen = pen };
+            var pen = new Pen() { Thickness = 8, Brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)) };
+            var mainImage = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(4, 5, 9, 8)), Pen = pen };
 
             // https://stackoverflow.com/questions/37663993/preventing-icon-color-and-size-distortions-when-bundling-a-visual-studio-project
             var pen2 = new Pen() { Thickness = 1, Brush = new SolidColorBrush(Color.FromArgb(1, 0, 255, 255)) };
-            var vsPrevent = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(18, -2, 1, 1)), Pen = pen2 };
+            var vsPrevent = new GeometryDrawing() { Geometry = new RectangleGeometry(new Rect(16, 0, 1, 1)), Pen = pen2 };
 
             var geometry = new DrawingGroup();
             geometry.Children.Add(mainImage);
