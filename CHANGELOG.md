@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.2 (September 4th, 2024)
+
+### Fixes
+
+- Null reference exception when opening a `.js` file not in solution
+- Fixed an error: `addDefaults` function not defined when parsing configuration files with plugins ([#65](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/65))
+
 ## 1.5.1 (September 2nd, 2024)
 
 ### Fixes

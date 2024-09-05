@@ -275,6 +275,9 @@ namespace TailwindCSSIntellisense.Configuration
                             }},
                             prefix: (className) => {{
                                 return '.' + (configuration.prefix ? '' : configuration.prefix) + className.replace('.', '');
+                            }},
+                            addDefaults: (className) => {{
+                                return;
                             }}
                         }});
                     }});
