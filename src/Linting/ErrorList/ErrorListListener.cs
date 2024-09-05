@@ -39,7 +39,12 @@ internal abstract class ErrorListListener : ITextViewCreationListener, IDisposab
 
             var tableDataSource = new TableDataSource(Vsix.Name + file);
 
-            var project = ThreadHelper.JoinableTaskFactory.Run(() => PhysicalFile.FromFileAsync(file)).ContainingProject;
+            var project = ThreadHelper.JoinableTaskFactory.Run(() => PhysicalFile.FromFileAsync(file))?.ContainingProject;
+
+            if (project is null)
+            {
+                return;
+            }
 
             var validator = GetValidator(view);
             validator.BufferValidated += UpdateErrorList;
