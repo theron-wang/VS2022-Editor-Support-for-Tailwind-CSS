@@ -28,5 +28,7 @@ namespace TailwindCSSIntellisense.Configuration
         public List<string> PluginClasses { get; set; }
 
         public List<string> PluginModifiers { get; set; }
+
+        public Dictionary<string, string> PluginDescriptions { get; set; }
     }
 }

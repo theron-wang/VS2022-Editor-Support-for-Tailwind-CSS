@@ -18,6 +18,7 @@ namespace TailwindCSSIntellisense.Configuration
             _completionBase.Screen = ScreenOrig.ToList();
             _completionBase.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
             _completionBase.ColorToRgbMapperCache.Clear();
+            _completionBase.CustomDescriptionMapper = config.PluginDescriptions ?? [];
 
             if (config is null && _areValuesDefault == false)
             {

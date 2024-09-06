@@ -149,6 +149,10 @@
     <Content Include="Resources\icon.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\parser.js">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <Content Include="Resources\tailwindlogo.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
