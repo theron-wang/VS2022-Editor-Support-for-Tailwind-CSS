@@ -199,7 +199,6 @@
     <Content Include="Resources\tailwinddesc.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <None Include="README.md" />
     <Content Include="Resources\tailwindmodifiersorder.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
