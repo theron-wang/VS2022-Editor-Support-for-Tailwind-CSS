@@ -469,7 +469,7 @@ namespace TailwindCSSIntellisense.Configuration
 
                 if (value is string s)
                 {
-                    if (IsHex(s, out string hex))
+                    if (ColorHelpers.IsHex(s, out string hex))
                     {
                         var color = ColorTranslator.FromHtml($"#{hex}");
                         newColorToRgbMapper[actual] = $"{color.R},{color.G},{color.B}";

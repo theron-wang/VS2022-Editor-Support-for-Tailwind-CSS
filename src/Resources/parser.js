@@ -3,7 +3,6 @@
         var Module = require('module');
         var path = require('path');
         var originalRequire = Module.prototype.require;
-        console.log(process.cwd());
 
         Module.prototype.require = function () {
             if (arguments[0] === 'tailwindcss/plugin') {

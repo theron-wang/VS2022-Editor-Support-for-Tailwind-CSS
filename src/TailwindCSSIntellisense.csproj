@@ -100,6 +100,7 @@
     <Compile Include="Configuration\Descriptions\FontFamilyDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\FontSizeDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\GeneratorAggregator.cs" />
+    <Compile Include="Helpers\ColorHelpers.cs" />
     <Compile Include="Helpers\PathHelpers.cs" />
     <Compile Include="Linting\Error.cs" />
     <Compile Include="Linting\ErrorList\ErrorListContext.cs" />

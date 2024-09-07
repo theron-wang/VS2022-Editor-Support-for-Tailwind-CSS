@@ -31,41 +31,6 @@ internal abstract class Sorter
 
     protected abstract IEnumerable<string> GetSegments(string input, TailwindConfiguration config);
 
-    protected IEnumerable<string> SortRazorSegment(List<string> classes, HashSet<int> razorIndices, TailwindConfiguration config)
-    {
-        var sorted = Sort(classes
-            .Select((v, i) => (v, i))
-            .Where(v => !razorIndices.Contains(v.i))
-            .Select(v => v.v), config);
-
-        int lastIndex = -1;
-        int start = 0;
-
-        foreach (int index in razorIndices)
-        {
-            int between = index - lastIndex - 1;
-
-            if (between < 0)
-            {
-                between = 0;
-            }
-
-            foreach (var s in sorted.Skip(start).Take(between))
-            {
-                yield return s;
-            }
-            yield return classes[index];
-
-            lastIndex = index;
-            start += between;
-        }
-
-        foreach (var s in sorted.Skip(start))
-        {
-            yield return s;
-        }
-    }
-
     protected string SortSegment(string classText, TailwindConfiguration config)
     {
         var classes = classText.Split(new char[0], StringSplitOptions.RemoveEmptyEntries);
@@ -116,16 +81,31 @@ internal abstract class Sorter
         return sortedSegment.ToString().Trim();
     }
 
-    private IEnumerable<string> Sort(IEnumerable<string> classes, TailwindConfiguration config)
+    protected IEnumerable<string> Sort(IEnumerable<string> classes, TailwindConfiguration config)
     {
-        var result = classes.OrderBy(className => className.Count(c => c == ':'))
+        var result = classes
+            .OrderBy(className =>
+            {
+                var count = className.Count(c => c == ':');
+
+                if (count > 0 && className.StartsWith("group-"))
+                {
+                    return 0;
+                }
+
+                return count;
+            })
             .ThenBy(className =>
             {
                 if (className.Contains(':'))
                 {
                     var modifier = className.Split(':').First();
                     // Modifiers should be sorted after
-                    if (CompletionUtilities.Screen.Contains(modifier))
+                    if (modifier.StartsWith("group-"))
+                    {
+                        return 0;
+                    }
+                    else if (CompletionUtilities.Screen.Contains(modifier))
                     {
                         return ClassSortUtilities.ModifierOrder.Count + CompletionUtilities.Screen.IndexOf(modifier);
                     }
@@ -159,14 +139,32 @@ internal abstract class Sorter
                     var stem = classToSearch.Substring(0, classToSearch.LastIndexOf('-'));
 
                     if (CompletionUtilities.SpacingMapper.ContainsKey(ending) ||
+                        (
+                            ending.Length > 2 &&
+                            ending[0] == '[' &&
+                            ending[ending.Length - 1] == ']' &&
+                            ClassSortUtilities.ClassOrder.ContainsKey($"{stem}-{{s}}")
+                        ) ||
                         CompletionUtilities.CustomSpacingMappers.ContainsKey($"{stem}-{{0}}"))
                     {
                         classToSearch = $"{stem}-{{s}}";
                     }
                     else if (CompletionUtilities.ColorToRgbMapper.ContainsKey(ending) ||
+                            (
+                                ending.Length > 2 &&
+                                ending[0] == '[' &&
+                                ending[ending.Length - 1] == ']' &&
+                                ClassSortUtilities.ClassOrder.ContainsKey($"{stem}-{{c}}")
+                            ) ||
                             CompletionUtilities.CustomColorMappers.ContainsKey($"{stem}-{{0}}"))
                     {
                         classToSearch = $"{stem}-{{c}}";
+                    }
+                    else if (ending.Length > 2 && ending[0] == '[' && ending[ending.Length - 1] == ']')
+                    {
+                        // We'll approximate the class here. For example, if we do rounded-[1.2rem],
+                        // find rounded instead
+                        classToSearch = stem;
                     }
                     else
                     {

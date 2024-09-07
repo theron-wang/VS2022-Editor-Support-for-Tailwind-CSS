@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.3 (September 6th, 2024)
+
+### Fixes
+
+- `has-[]` modifier should now be sorted to the correct spot
+- Fixed unreliable descriptions for classes using spacing
+- Modify incorrect sorting order ([#67](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/67))
+
+### Additions
+
+- Added definitions for classes defined in plugins or with custom values (i.e. `min-w-[10px]` and `bg-[#abcdef]`) ([#66](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/66))
+ 
 ## 1.5.2 (September 4th, 2024)
 
 ### Fixes

@@ -1,17 +1,11 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio.Core.Imaging;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text.Adornments;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -431,7 +425,16 @@ namespace TailwindCSSIntellisense.Completions
             var negative = tailwindClass.StartsWith("-");
             string spacingValue;
 
-            if (CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
+            if (spacing[0] == '[' && spacing[spacing.Length - 1] == ']')
+            {
+                spacingValue = spacing.Substring(1, spacing.Length - 2);
+
+                if (string.IsNullOrWhiteSpace(spacingValue))
+                {
+                    return null;
+                }
+            }
+            else if (CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
             {
                 spacingValue = dict[spacing].Trim();
             }
@@ -464,7 +467,25 @@ namespace TailwindCSSIntellisense.Completions
 
         internal string GetDescription(string tailwindClass, string color, bool opacity, bool shouldFormat = true)
         {
-            var value = new StringBuilder(GetColorDescription(color, tailwindClass));
+            var value = new StringBuilder();
+
+            if (color[0] == '[' && color[color.Length - 1] == ']')
+            {
+                var c = color.Substring(1, color.Length - 2);
+                if (ColorHelpers.IsHex(c, out string hex))
+                {
+                    var rgb = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
+                    value.Append($"rgb({rgb.R} {rgb.G} {rgb.B}");
+                }
+                else if (c.StartsWith("rgb"))
+                {
+                    value.Append(c.TrimEnd(')'));
+                }
+            }
+            else
+            {
+                value.Append(GetColorDescription(color, tailwindClass));
+            }
 
             if (string.IsNullOrEmpty(value.ToString()) || DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
             {

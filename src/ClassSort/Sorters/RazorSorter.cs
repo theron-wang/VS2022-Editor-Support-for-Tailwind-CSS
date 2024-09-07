@@ -253,6 +253,40 @@ internal class RazorSorter : Sorter
 
         yield return file.Substring(lastIndex);
     }
+    private IEnumerable<string> SortRazorSegment(List<string> classes, HashSet<int> razorIndices, TailwindConfiguration config)
+    {
+        var sorted = Sort(classes
+            .Select((v, i) => (v, i))
+            .Where(v => !razorIndices.Contains(v.i))
+            .Select(v => v.v), config);
+
+        int lastIndex = -1;
+        int start = 0;
+
+        foreach (int index in razorIndices)
+        {
+            int between = index - lastIndex - 1;
+
+            if (between < 0)
+            {
+                between = 0;
+            }
+
+            foreach (var s in sorted.Skip(start).Take(between))
+            {
+                yield return s;
+            }
+            yield return classes[index];
+
+            lastIndex = index;
+            start += between;
+        }
+
+        foreach (var s in sorted.Skip(start))
+        {
+            yield return s;
+        }
+    }
 
     private class Token(string text, bool isInRazor)
     {
