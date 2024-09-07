@@ -244,7 +244,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     return false;
                 }
             }
-            
+
             var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
             // ) is for theme()
             var moveOneBack = completionText.EndsWith("]") || completionText.EndsWith(")");

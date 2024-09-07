@@ -14,18 +14,17 @@ namespace TailwindCSSIntellisense.Completions.Sources
     /// <summary>
     /// Completion provider for all CSS files to provide Intellisense support for TailwindCSS classes, functions, and directives
     /// </summary>
-    internal class CssCompletionSource : ICompletionSource
+    internal class CssCompletionSource : ClassCompletionGenerator, ICompletionSource
     {
-        private ITextBuffer _textBuffer;
-        private readonly CompletionUtilities _completionUtils;
+        private readonly ITextBuffer _textBuffer;
         private readonly SettingsProvider _settingsProvider;
         private bool? _showAutocomplete;
         private bool _initializeSuccess = true;
 
-        public CssCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, SettingsProvider settingsProvider)
+        public CssCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, SettingsProvider settingsProvider, DescriptionGenerator descriptionGenerator)
+            : base(completionUtils, descriptionGenerator)
         {
             _textBuffer = textBuffer;
-            _completionUtils = completionUtils;
             _settingsProvider = settingsProvider;
 
             _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
@@ -120,7 +119,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 {
                     var classRaw = applicableTo.GetText(snapshot).Split(new[] { "@apply" }, StringSplitOptions.None).Last().TrimStart().Split(' ').Last() ?? "";
 
-                    completions = ClassCompletionGeneratorHelper.GetCompletions(classRaw, _completionUtils);
+                    completions = GetCompletions(classRaw);
                 }
                 else if (CanShowApplyDirective(session))
                 {

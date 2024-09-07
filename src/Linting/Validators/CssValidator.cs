@@ -1,14 +1,8 @@
-﻿using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Threading;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Configuration;
-using TailwindCSSIntellisense.Linting.Taggers;
-using TailwindCSSIntellisense.Options;
 
 namespace TailwindCSSIntellisense.Linting.Validators;
 
@@ -16,7 +10,7 @@ internal class CssValidator : Validator
 {
     private CssValidator(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils, completionUtilities)
     {
-        
+
     }
 
     public override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot)

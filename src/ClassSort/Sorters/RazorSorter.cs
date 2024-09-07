@@ -9,7 +9,7 @@ namespace TailwindCSSIntellisense.ClassSort.Sorters;
 internal class RazorSorter : Sorter
 {
     public override string[] Handled { get; } = [".razor", ".cshtml"];
-    
+
     protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
     {
         (int indexOfClass, char terminator) = GetNextIndexOfClass(file, 0);

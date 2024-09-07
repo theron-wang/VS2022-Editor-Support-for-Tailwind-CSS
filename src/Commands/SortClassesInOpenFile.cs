@@ -2,10 +2,8 @@
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.ClassSort;
-using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense

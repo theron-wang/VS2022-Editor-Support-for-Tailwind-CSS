@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Diagnostics.Contracts;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Configuration.Descriptions
 {
     /// <summary>
     /// --tw-drop-shadow: drop-shadow(0 35px 35px rgba(0, 0, 0, 0.25)) drop-shadow(0 45px 65px rgba(0, 0, 0, 0.15));
-  /// filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)
+    /// filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)
     /// </summary>
     [Export(typeof(DescriptionGenerator))]
     internal class DropShadowDescriptionGenerator : DescriptionGenerator
@@ -31,7 +26,7 @@ namespace TailwindCSSIntellisense.Configuration.Descriptions
                 {
                     input += $"drop-shadow({v}) ";
                 }
-                
+
                 return $"--tw-drop-shadow: {input.Trim()};filter: var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)";
             }
             return null;

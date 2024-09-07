@@ -1,7 +1,4 @@
 ﻿using Microsoft.VisualStudio.Text;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Linting.Validators;

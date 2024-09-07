@@ -25,7 +25,7 @@ namespace TailwindCSSIntellisense
 
         protected override void BeforeQueryStatus(EventArgs e)
         {
-            var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync); 
+            var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
             Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() == false && ConfigFileScanner.HasConfigurationFile && settings.BuildType != BuildProcessOptions.None;
         }
 

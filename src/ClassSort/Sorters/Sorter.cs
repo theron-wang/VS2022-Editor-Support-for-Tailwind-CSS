@@ -1,11 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.VisualStudio.Shell;
 using System;
-using TailwindCSSIntellisense.Configuration;
-using System.Linq;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using TailwindCSSIntellisense.Completions;
-using Microsoft.VisualStudio.Shell;
+using System.Linq;
 using System.Text;
+using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
 internal abstract class Sorter
@@ -60,7 +60,7 @@ internal abstract class Sorter
             sortedSegment.Append(sortedClass);
             index += sortedClass.Length;
 
-            if (nextNewLineIndex < newlines.Count && 
+            if (nextNewLineIndex < newlines.Count &&
                 before <= newlines[nextNewLineIndex] && newlines[nextNewLineIndex] <= index)
             {
                 sortedSegment.AppendLine();

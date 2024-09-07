@@ -16,9 +16,8 @@ namespace TailwindCSSIntellisense.Completions.Sources
     /// <summary>
     /// Completion provider for all HTML content files to provide Intellisense support for TailwindCSS classes
     /// </summary>
-    internal class RazorCompletionSource : ICompletionSource
+    internal class RazorCompletionSource : ClassCompletionGenerator, ICompletionSource
     {
-        private readonly CompletionUtilities _completionUtils;
         private readonly SettingsProvider _settingsProvider;
         private readonly IAsyncCompletionBroker _asyncCompletionBroker;
         private readonly ICompletionBroker _completionBroker;
@@ -27,9 +26,9 @@ namespace TailwindCSSIntellisense.Completions.Sources
         private bool? _showAutocomplete;
         private bool _initializeSuccess = true;
 
-        public RazorCompletionSource(CompletionUtilities completionUtils, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker, ITextBuffer textBuffer)
+        public RazorCompletionSource(CompletionUtilities completionUtils, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker, ITextBuffer textBuffer)
+            : base(completionUtils, descriptionGenerator)
         {
-            _completionUtils = completionUtils;
             _settingsProvider = settingsProvider;
             _asyncCompletionBroker = asyncCompletionBroker;
             _completionBroker = completionBroker;
@@ -85,7 +84,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var applicableTo = GetApplicableTo(triggerPoint, snapshot);
             var currentClassTotal = classAttributeValueUpToPosition.Split(' ').Last();
 
-            var completions = ClassCompletionGeneratorHelper.GetCompletions(applicableTo.GetText(snapshot), _completionUtils);
+            var completions = GetCompletions(applicableTo.GetText(snapshot));
 
             if (completionSets.Count == 1)
             {

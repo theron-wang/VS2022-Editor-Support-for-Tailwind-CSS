@@ -38,7 +38,7 @@ namespace TailwindCSSIntellisense
                 var settings = await SettingsProvider.GetSettingsAsync();
 
                 await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, settings.TailwindCliPath));
-                
+
                 var configFile = Path.Combine(directory, "tailwind.config.js");
 
                 settings.TailwindConfigurationFile = configFile;

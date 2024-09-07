@@ -90,7 +90,7 @@
     <Compile Include="Completions\Providers\RazorCompletionSourceProvider.cs" />
     <Compile Include="Completions\Providers\HtmlCompletionSourceProvider.cs" />
     <Compile Include="Completions\Controllers\RazorCompletionController.cs" />
-    <Compile Include="Completions\Sources\ClassCompletionGeneratorHelper.cs" />
+    <Compile Include="Completions\Sources\ClassCompletionGenerator.cs" />
     <Compile Include="Completions\Sources\RazorCompletionSource.cs" />
     <Compile Include="Completions\TailwindCssCompletionSet.cs" />
     <Compile Include="Configuration\ConfigFileParser.cs" />
@@ -101,6 +101,7 @@
     <Compile Include="Configuration\Descriptions\FontSizeDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\GeneratorAggregator.cs" />
     <Compile Include="Helpers\ColorHelpers.cs" />
+    <Compile Include="Helpers\DescriptionGenerator.cs" />
     <Compile Include="Helpers\PathHelpers.cs" />
     <Compile Include="Linting\Error.cs" />
     <Compile Include="Linting\ErrorList\ErrorListContext.cs" />

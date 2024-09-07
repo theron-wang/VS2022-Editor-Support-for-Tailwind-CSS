@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -417,7 +416,7 @@ namespace TailwindCSSIntellisense.Configuration
                                 {
                                     description = string.Format(format, pair.Value.ToString());
                                 }
-                                
+
                                 if (pair.Key == "DEFAULT")
                                 {
                                     _completionBase.CustomDescriptionMapper[insertStem] = description;

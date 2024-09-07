@@ -36,7 +36,7 @@ namespace TailwindCSSIntellisense
             {
                 var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
                 await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory));
-                
+
                 var configFile = Path.Combine(directory, "tailwind.config.js");
 
                 var settings = await SettingsProvider.GetSettingsAsync();

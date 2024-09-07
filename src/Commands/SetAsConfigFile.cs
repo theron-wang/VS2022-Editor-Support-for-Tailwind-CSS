@@ -1,12 +1,9 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
@@ -14,7 +11,7 @@ namespace TailwindCSSIntellisense
     [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetAsConfigFileCmdId)]
     internal sealed class SetAsConfigFile : BaseCommand<SetAsConfigFile>
     {
-        private static readonly string[] _extensions = [ ".js", ".ts", ".cjs", ".mjs" ];
+        private static readonly string[] _extensions = [".js", ".ts", ".cjs", ".mjs"];
 
         protected override async Task InitializeCompletedAsync()
         {

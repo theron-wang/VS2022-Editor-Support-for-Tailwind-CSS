@@ -2,13 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text.Json;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Configuration.Descriptions;
 
 namespace TailwindCSSIntellisense.Configuration
@@ -35,7 +31,7 @@ namespace TailwindCSSIntellisense.Configuration
 
         private bool _areValuesDefault;
         private CompletionUtilities _completionBase;
-        
+
         private List<string> ModifiersOrig { get; set; }
         private List<string> ScreenOrig { get; set; }
         private List<TailwindClass> ClassesOrig { get; set; }

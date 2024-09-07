@@ -78,7 +78,7 @@ namespace TailwindCSSIntellisense.Configuration
         {
             return TraverseAllProjectsAndFindFilesOfTypeAsync(extensions);
         }
-            
+
         internal async Task<List<string>> TraverseAllProjectsAndFindFilesOfTypeAsync(IEnumerable<string> extensions)
         {
             var projects = await GetAllProjectsAsync();

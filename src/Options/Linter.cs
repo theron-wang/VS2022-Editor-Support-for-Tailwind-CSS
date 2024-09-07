@@ -1,6 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
 using System.ComponentModel;
-using System.Runtime.InteropServices;
 using TailwindCSSIntellisense.Linting;
 
 namespace TailwindCSSIntellisense.Options;

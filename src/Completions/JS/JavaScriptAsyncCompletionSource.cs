@@ -13,19 +13,18 @@ using TailwindCSSIntellisense.Completions.Sources;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.JS;
-internal class JavaScriptAsyncCompletionSource : IAsyncCompletionSource
+internal class JavaScriptAsyncCompletionSource : ClassCompletionGenerator, IAsyncCompletionSource
 {
     private static ImageElement _icon = new(KnownMonikers.Field.ToImageId(), "Tailwind CSS Class");
 
-    private readonly CompletionUtilities _completionUtilities;
     private readonly SettingsProvider _settingsProvider;
 
     private bool? _showAutocomplete;
     private bool _initializeSuccess = true;
 
-    public JavaScriptAsyncCompletionSource(CompletionUtilities completionUtilities, SettingsProvider settingsProvider)
+    public JavaScriptAsyncCompletionSource(CompletionUtilities completionUtilities, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider)
+        : base(completionUtilities, descriptionGenerator)
     {
-        _completionUtilities = completionUtilities;
         _settingsProvider = settingsProvider;
 
         _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
@@ -59,14 +58,14 @@ internal class JavaScriptAsyncCompletionSource : IAsyncCompletionSource
             _showAutocomplete = (await _settingsProvider.GetSettingsAsync()).EnableTailwindCss;
         }
 
-        if (_showAutocomplete == false || _completionUtilities.Scanner.HasConfigurationFile == false)
+        if (_showAutocomplete == false || _completionUtils.Scanner.HasConfigurationFile == false)
         {
             return new CompletionContext(ImmutableArray<CompletionItem>.Empty, null);
         }
 
-        if (!_completionUtilities.Initialized || _initializeSuccess == false)
+        if (!_completionUtils.Initialized || _initializeSuccess == false)
         {
-            _initializeSuccess = await _completionUtilities.InitializeAsync();
+            _initializeSuccess = await _completionUtils.InitializeAsync();
 
             if (_initializeSuccess == false)
             {
@@ -81,7 +80,7 @@ internal class JavaScriptAsyncCompletionSource : IAsyncCompletionSource
 
         applicableToSpan = GetApplicableTo(triggerLocation, session.TextView.TextSnapshot);
 
-        var items = ClassCompletionGeneratorHelper.GetCompletions(classText.Split().Last(), _completionUtilities)
+        var items = GetCompletions(classText.Split().Last())
             .Select(c =>
             {
                 var item = new CompletionItem(c.DisplayText, this, _icon, ImmutableArray<CompletionFilter>.Empty, null, c.InsertionText, c.DisplayText, c.DisplayText, null, ImmutableArray<ImageElement>.Empty, ImmutableArray<char>.Empty, applicableToSpan, false, false);

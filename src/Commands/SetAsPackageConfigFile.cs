@@ -1,12 +1,8 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
-using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense

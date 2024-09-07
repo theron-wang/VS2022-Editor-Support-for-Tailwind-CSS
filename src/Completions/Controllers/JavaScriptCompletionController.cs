@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.OLE.Interop;
@@ -11,7 +10,6 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -50,7 +48,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         public JavaScriptCommandFilter(IWpfTextView textView, IAsyncCompletionBroker broker)
         {
             _currentSession = null;
-            
+
             TextView = textView;
             Broker = broker;
         }
@@ -273,7 +271,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             var moveTwoBack = completionText.EndsWith("]:");
 
             _currentSession.Commit(default, default);
-            
+
             if (moveOneBack)
             {
                 TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
@@ -301,7 +299,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                 return false;
 
             ITextSnapshot snapshot = caret.Value.Snapshot;
-            
+
             var completionActive = Broker.IsCompletionActive(TextView);
 
             if (completionActive)

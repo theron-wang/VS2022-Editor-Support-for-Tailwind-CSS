@@ -3,11 +3,8 @@ using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
-using TailwindCSSIntellisense.Linting.Taggers;
 using TailwindCSSIntellisense.Options;
 
 namespace TailwindCSSIntellisense.Linting.Validators;
@@ -131,7 +128,7 @@ internal abstract class Validator : IDisposable
             BufferValidated?.Invoke(_buffer);
         }
     }
-    
+
     public void Dispose()
     {
         _buffer.ChangedHighPriority -= OnBufferChange;

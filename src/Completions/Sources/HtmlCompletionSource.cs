@@ -14,20 +14,18 @@ namespace TailwindCSSIntellisense.Completions.Sources
     /// <summary>
     /// Completion provider for all HTML content files to provide Intellisense support for TailwindCSS classes
     /// </summary>
-    internal class HtmlCompletionSource : ICompletionSource
+    internal class HtmlCompletionSource : ClassCompletionGenerator, ICompletionSource
     {
-        private CompletionUtilities _completionUtils;
-        private SettingsProvider _settingsProvider;
-        private ITextBuffer _textBuffer;
-
+        private readonly ITextBuffer _textBuffer;
+        private readonly SettingsProvider _settingsProvider;
         private bool? _showAutocomplete;
         private bool _initializeSuccess = true;
 
-        public HtmlCompletionSource(CompletionUtilities completionUtils, SettingsProvider settingsProvider, ITextBuffer textBuffer)
+        public HtmlCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, SettingsProvider settingsProvider, DescriptionGenerator descriptionGenerator)
+            : base(completionUtils, descriptionGenerator)
         {
-            _completionUtils = completionUtils;
-            _settingsProvider = settingsProvider;
             _textBuffer = textBuffer;
+            _settingsProvider = settingsProvider;
 
             _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
         }
@@ -77,7 +75,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
             var currentClassTotal = classAttributeValueUpToPosition.Split(' ').Last();
 
-            var completions = ClassCompletionGeneratorHelper.GetCompletions(applicableTo.GetText(snapshot), _completionUtils);
+            var completions = GetCompletions(applicableTo.GetText(snapshot));
 
             if (completionSets.Count == 1)
             {

@@ -29,10 +29,12 @@ namespace TailwindCSSIntellisense.Completions.Providers
         internal IAsyncCompletionBroker AsyncCompletionBroker { get; set; }
         [Import]
         internal ICompletionBroker CompletionBroker { get; set; }
+        [Import]
+        internal DescriptionGenerator DescriptionGenerator { get; set; }
 
         public ICompletionSource TryCreateCompletionSource(ITextBuffer textBuffer)
         {
-            return new RazorCompletionSource(CompletionUtils, SettingsProvider, AsyncCompletionBroker, CompletionBroker, textBuffer);
+            return new RazorCompletionSource(CompletionUtils, DescriptionGenerator, SettingsProvider, AsyncCompletionBroker, CompletionBroker, textBuffer);
         }
     }
 }

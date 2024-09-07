@@ -1,10 +1,5 @@
-﻿using Microsoft.VisualStudio.Shell;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Text;
-using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
@@ -91,7 +86,7 @@ internal class HtmlSorter : Sorter
                     from = index;
                 }
             }
-            
+
             (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
         }
 

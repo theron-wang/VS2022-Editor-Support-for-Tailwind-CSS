@@ -3,7 +3,6 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
 using System.Threading.Tasks;
-using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Configuration

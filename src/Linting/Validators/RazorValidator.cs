@@ -1,15 +1,8 @@
-﻿using EnvDTE80;
-using Microsoft.VisualStudio.Package;
-using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Tagging;
+﻿using Microsoft.VisualStudio.Text;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Linting.Taggers;
 
 namespace TailwindCSSIntellisense.Linting.Validators;
 internal class RazorValidator : Validator

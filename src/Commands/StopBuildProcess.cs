@@ -1,6 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Text.Editor.Commanding.Commands;
 using System;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Build;

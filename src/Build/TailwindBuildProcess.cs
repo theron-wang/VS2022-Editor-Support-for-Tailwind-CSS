@@ -386,7 +386,7 @@ namespace TailwindCSSIntellisense.Build
                 {
                     if (await IsFileTailwindCssAsync(file))
                     {
-                        buildFiles = [..buildFiles];
+                        buildFiles = [.. buildFiles];
                         buildFiles.Add(new() { Input = file });
                         break;
                     }

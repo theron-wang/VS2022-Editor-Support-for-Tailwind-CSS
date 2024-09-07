@@ -1,10 +1,5 @@
-﻿using Microsoft.VisualStudio.Shell;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Text;
-using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
@@ -16,7 +11,7 @@ internal class JSSorter : Sorter
     protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
     {
         (int indexOfClass, char terminator) = GetNextIndexOfClass(file, 0, " className=");
-        
+
         int lastIndex = 0;
 
         while (indexOfClass != -1)
@@ -91,7 +86,7 @@ internal class JSSorter : Sorter
                     from = index;
                 }
             }
-            
+
             (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
         }
 

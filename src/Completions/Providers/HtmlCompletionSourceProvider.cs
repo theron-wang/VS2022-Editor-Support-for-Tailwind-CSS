@@ -22,10 +22,12 @@ namespace TailwindCSSIntellisense.Completions.Providers
         internal CompletionUtilities CompletionUtils { get; set; }
         [Import]
         internal SettingsProvider SettingsProvider { get; set; }
+        [Import]
+        internal DescriptionGenerator DescriptionGenerator { get; set; }
 
         public ICompletionSource TryCreateCompletionSource(ITextBuffer textBuffer)
         {
-            return new HtmlCompletionSource(CompletionUtils, SettingsProvider, textBuffer);
+            return new HtmlCompletionSource(textBuffer, CompletionUtils, SettingsProvider, DescriptionGenerator);
         }
     }
 }

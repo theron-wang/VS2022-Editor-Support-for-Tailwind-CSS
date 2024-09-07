@@ -150,7 +150,7 @@ internal sealed class ClassSorter : IDisposable
                 if (await VS.Documents.IsOpenAsync(path))
                 {
                     var view = await VS.Documents.GetDocumentViewAsync(path);
-                    
+
                     view?.Document?.Reload(new EditOptions(new(StringDifferenceTypes.Word, 0, false)));
                 }
             }

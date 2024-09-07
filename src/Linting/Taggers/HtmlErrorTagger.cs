@@ -3,14 +3,9 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using Microsoft.VisualStudio.Utilities;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Security.Cryptography;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Linting.Validators;
-using TailwindCSSIntellisense.Options;
 
 namespace TailwindCSSIntellisense.Linting.Taggers;
 
@@ -32,7 +27,7 @@ internal class HtmlErrorTaggerProvider : ITaggerProvider
         return buffer.Properties.GetOrCreateSingletonProperty(() => new HtmlErrorTagger(buffer, LinterUtilities, CompletionUtilities)) as ITagger<T>;
     }
 
-    internal sealed class HtmlErrorTagger: ErrorTaggerBase, IDisposable
+    internal sealed class HtmlErrorTagger : ErrorTaggerBase, IDisposable
     {
         public HtmlErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils)
         {

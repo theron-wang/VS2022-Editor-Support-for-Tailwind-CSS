@@ -1,13 +1,8 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.Text.Operations;
 using Microsoft.VisualStudio.Utilities;
-using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.JS;
@@ -28,12 +23,15 @@ internal class JavaScriptAsyncCompletionSourceProvider : IAsyncCompletionSourceP
     [Import]
     public SettingsProvider SettingsProvider { get; set; }
 
+    [Import]
+    public DescriptionGenerator DescriptionGenerator { get; set; }
+
     public IAsyncCompletionSource GetOrCreate(ITextView textView)
     {
         if (_cache.TryGetValue(textView, out var itemSource))
             return itemSource;
 
-        var source = new JavaScriptAsyncCompletionSource(CompletionUtilities, SettingsProvider);
+        var source = new JavaScriptAsyncCompletionSource(CompletionUtilities, DescriptionGenerator, SettingsProvider);
         textView.Closed += (o, e) => _cache.Remove(textView);
         _cache.Add(textView, source);
         return source;
