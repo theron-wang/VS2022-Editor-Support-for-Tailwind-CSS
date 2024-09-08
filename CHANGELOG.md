@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.5.4 (September 8th, 2024)
+
+### Additions
+
+- Quick info descriptions for non-spacing, non-color arbitrary classes ([#66](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/66))
+
+### Fixes
+
+- Fixed an exception which could occur when no `theme` is present in the configuration file
+- Fixed an error which occurred when using `export default` instead of `module.exports`
+- `extend` values should not be overridden when a plugin is defined ([#67](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/67))
+- Fixed an error which occurred when reloading the configuration file before other extension components are loaded
+- More accurately differentiate between hex values and rgb values in class descriptions
+
 ## 1.5.3 (September 6th, 2024)
 
 ### Fixes

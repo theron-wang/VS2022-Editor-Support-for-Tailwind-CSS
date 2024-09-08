@@ -2,6 +2,7 @@
     (async function () {
         var Module = require('module');
         var path = require('path');
+        const { pathToFileURL } = require('url');
         var originalRequire = Module.prototype.require;
 
         Module.prototype.require = function () {
@@ -47,7 +48,8 @@
         try {
             configuration = require(filePath);
         } catch {
-            configuration = await import(filePath);
+            const fileUrl = pathToFileURL(filePath).href;
+            configuration = await import(fileUrl);
         }
 
         if (configuration.default) {
@@ -64,6 +66,17 @@
             }, object);
 
             return result;
+        }
+
+        function mergeDeep(target, source) {
+            for (const key of Object.keys(source)) {
+                if (source[key] instanceof Object && key in target) {
+                    target[key] = mergeDeep(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
+                }
+            }
+            return target;
         }
 
         if (configuration.plugins) {
@@ -87,7 +100,7 @@
                     }
 
                     Object.keys(plugin.config).forEach(key => {
-                        pluginTheme[key] = { ...pluginTheme[key], ...plugin.config[key] };
+                        pluginTheme[key] = mergeDeep(pluginTheme[key] || {}, plugin.config[key]);
                     });
 
                     newPlugins.push(plugin.handler);

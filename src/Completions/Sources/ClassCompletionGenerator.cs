@@ -168,7 +168,7 @@ internal abstract class ClassCompletionGenerator(CompletionUtilities completionU
 
                     completions.Add(
                     new Completion(className + "[]",
-                                        modifiersAsString + prefix + twClass.Name + "[]",
+                                        modifiersAsString + className + "[]",
                                         twClass.Name + "[]",
                                         _completionUtils.TailwindLogo,
                                         null));
@@ -188,7 +188,7 @@ internal abstract class ClassCompletionGenerator(CompletionUtilities completionU
 
                     completions.Add(
                     new Completion(className,
-                                        modifiersAsString + prefix + twClass.Name,
+                                        modifiersAsString + className,
                                         _descriptionGenerator.GetDescription(twClass.Name),
                                         _completionUtils.TailwindLogo,
                                         null));

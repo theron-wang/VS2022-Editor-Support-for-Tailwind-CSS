@@ -47,8 +47,6 @@ namespace TailwindCSSIntellisense.Completions
         internal Dictionary<string, string> DescriptionMapper { get; set; } = new Dictionary<string, string>();
         internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = new Dictionary<string, string>();
 
-        internal Dictionary<string, string> ColorDescriptionMapper { get; set; } = new Dictionary<string, string>();
-
         internal List<string> PluginClasses { get; set; }
         internal List<string> PluginModifiers { get; set; }
 

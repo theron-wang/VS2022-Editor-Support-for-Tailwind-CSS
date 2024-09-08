@@ -20,6 +20,7 @@ namespace TailwindCSSIntellisense.Linting;
 internal sealed class LinterUtilities : IDisposable
 {
     private readonly CompletionUtilities _completionUtilities;
+    private readonly DescriptionGenerator _descriptionGenerator;
     private readonly ClassSortUtilities _classSortUtilities;
     private readonly Dictionary<string, string> _cacheCssAttributes = [];
 
@@ -27,9 +28,10 @@ internal sealed class LinterUtilities : IDisposable
     private General _generalOptions;
 
     [ImportingConstructor]
-    public LinterUtilities(CompletionUtilities completionUtilities, ClassSortUtilities classSortUtilities)
+    public LinterUtilities(CompletionUtilities completionUtilities, DescriptionGenerator descriptionGenerator, ClassSortUtilities classSortUtilities)
     {
         _completionUtilities = completionUtilities;
+        _descriptionGenerator = descriptionGenerator;
         _classSortUtilities = classSortUtilities;
         Linter.Saved += LinterSettingsChanged;
         General.Saved += GeneralSettingsChanged;
@@ -56,7 +58,7 @@ internal sealed class LinterUtilities : IDisposable
 
             if (_cacheCssAttributes.ContainsKey(classTrimmed) == false)
             {
-                var desc = _completionUtilities.GetDescriptionFromClass(classTrimmed, shouldFormat: false);
+                var desc = _descriptionGenerator.GetDescription(classTrimmed, shouldFormat: false);
 
                 if (string.IsNullOrWhiteSpace(desc))
                 {

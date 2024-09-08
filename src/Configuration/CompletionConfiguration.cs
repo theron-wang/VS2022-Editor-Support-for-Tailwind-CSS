@@ -82,7 +82,7 @@ namespace TailwindCSSIntellisense.Configuration
         /// </summary>
         public async Task ReloadCustomAttributesAsync()
         {
-            if (Scanner.HasConfigurationFile)
+            if (_completionBase is not null && Scanner.HasConfigurationFile)
             {
                 await VS.StatusBar.ShowMessageAsync("Reloading Tailwind CSS configuration");
 

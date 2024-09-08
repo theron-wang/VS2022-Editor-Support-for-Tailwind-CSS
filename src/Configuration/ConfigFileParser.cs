@@ -102,17 +102,12 @@ namespace TailwindCSSIntellisense.Configuration
 
             var theme = obj["theme"];
 
-            if (theme == null)
-            {
-                return null;
-            }
-
             var plugins = GetTotalValue(obj["plugins"]) ?? [];
 
             var config = new TailwindConfiguration
             {
-                OverridenValues = GetTotalValue(theme, "extend") ?? new Dictionary<string, object>(),
-                ExtendedValues = GetTotalValue(theme["extend"]) ?? new Dictionary<string, object>(),
+                OverridenValues = theme is null ? [] : GetTotalValue(theme, "extend") ?? [],
+                ExtendedValues = theme is null ? [] : GetTotalValue(theme["extend"]) ?? [],
                 Prefix = obj["prefix"]?.ToString(),
             };
 
@@ -167,7 +162,10 @@ namespace TailwindCSSIntellisense.Configuration
                     config.PluginClasses = null;
                 }
 
-                config.PluginDescriptions = JsonSerializer.Deserialize<Dictionary<string, string>>(obj["plugins"]["descriptions"]);
+                if (obj["plugins"]?["descriptions"] is not null)
+                {
+                    config.PluginDescriptions = JsonSerializer.Deserialize<Dictionary<string, string>>(obj["plugins"]["descriptions"]);
+                }
             }
             catch (Exception ex)
             {
