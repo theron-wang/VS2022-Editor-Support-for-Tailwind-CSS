@@ -18,24 +18,17 @@ namespace TailwindCSSIntellisense.Completions.Sources
     /// </summary>
     internal class RazorCompletionSource : ClassCompletionGenerator, ICompletionSource
     {
-        private readonly SettingsProvider _settingsProvider;
+        private bool _initializeSuccess = true;
         private readonly IAsyncCompletionBroker _asyncCompletionBroker;
         private readonly ICompletionBroker _completionBroker;
-        private readonly ITextBuffer _textBuffer;
 
-        private bool? _showAutocomplete;
-        private bool _initializeSuccess = true;
-
-        public RazorCompletionSource(CompletionUtilities completionUtils, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker, ITextBuffer textBuffer)
-            : base(completionUtils, descriptionGenerator)
+        public RazorCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker)
+            : base(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider)
         {
-            _settingsProvider = settingsProvider;
             _asyncCompletionBroker = asyncCompletionBroker;
             _completionBroker = completionBroker;
-            _textBuffer = textBuffer;
 
             _asyncCompletionBroker.CompletionTriggered += OnAsyncCompletionSessionStarted;
-            _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
         }
 
         /// <summary>
@@ -255,16 +248,10 @@ namespace TailwindCSSIntellisense.Completions.Sources
             return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end), SpanTrackingMode.EdgeInclusive);
         }
 
-        public void Dispose()
+        public override void Dispose()
         {
             _asyncCompletionBroker.CompletionTriggered -= OnAsyncCompletionSessionStarted;
-            _settingsProvider.OnSettingsChanged -= SettingsChangedAsync;
-        }
-
-        private Task SettingsChangedAsync(TailwindSettings settings)
-        {
-            _showAutocomplete = settings.EnableTailwindCss;
-            return Task.CompletedTask;
+            base.Dispose();
         }
     }
 }

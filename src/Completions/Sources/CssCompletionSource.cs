@@ -14,21 +14,10 @@ namespace TailwindCSSIntellisense.Completions.Sources
     /// <summary>
     /// Completion provider for all CSS files to provide Intellisense support for TailwindCSS classes, functions, and directives
     /// </summary>
-    internal class CssCompletionSource : ClassCompletionGenerator, ICompletionSource
+    internal class CssCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider) :
+        ClassCompletionGenerator(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider), ICompletionSource
     {
-        private readonly ITextBuffer _textBuffer;
-        private readonly SettingsProvider _settingsProvider;
-        private bool? _showAutocomplete;
         private bool _initializeSuccess = true;
-
-        public CssCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, SettingsProvider settingsProvider, DescriptionGenerator descriptionGenerator)
-            : base(completionUtils, descriptionGenerator)
-        {
-            _textBuffer = textBuffer;
-            _settingsProvider = settingsProvider;
-
-            _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
-        }
 
         /// <summary>
         /// Provides relevant TailwindCSS completions
@@ -214,11 +203,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
             return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end), SpanTrackingMode.EdgeInclusive);
         }
 
-        public void Dispose()
-        {
-            _settingsProvider.OnSettingsChanged -= SettingsChangedAsync;
-        }
-
         private bool IsCaretInBlock(ICompletionSession session, out bool isInBaseDirectiveBlock)
         {
             var startPos = new SnapshotPoint(session.TextView.TextSnapshot, 0);
@@ -340,12 +324,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 directive = null;
                 return false;
             }
-        }
-
-        private Task SettingsChangedAsync(TailwindSettings settings)
-        {
-            _showAutocomplete = settings.EnableTailwindCss;
-            return Task.CompletedTask;
         }
     }
 }

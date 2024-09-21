@@ -19,15 +19,17 @@ namespace TailwindCSSIntellisense.Completions.Providers
     internal class CssCompletionSourceProvider : ICompletionSourceProvider
     {
         [Import]
-        internal CompletionUtilities TailwindEssentials { get; set; }
+        internal CompletionUtilities CompletionUtils { get; set; }
         [Import]
         internal SettingsProvider SettingsProvider { get; set; }
         [Import]
         internal DescriptionGenerator DescriptionGenerator { get; set; }
+        [Import]
+        internal ColorIconGenerator ColorIconGenerator { get; set; }
 
         public ICompletionSource TryCreateCompletionSource(ITextBuffer textBuffer)
         {
-            return new CssCompletionSource(textBuffer, TailwindEssentials, SettingsProvider, DescriptionGenerator);
+            return new CssCompletionSource(textBuffer, CompletionUtils, ColorIconGenerator, DescriptionGenerator, SettingsProvider);
         }
     }
 }

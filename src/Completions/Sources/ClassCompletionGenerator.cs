@@ -1,14 +1,34 @@
-﻿using Microsoft.VisualStudio.Language.Intellisense;
+﻿using EnvDTE;
+using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
+using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Sources;
 
-internal abstract class ClassCompletionGenerator(CompletionUtilities completionUtils, DescriptionGenerator descriptionGenerator)
+internal abstract class ClassCompletionGenerator : IDisposable
 {
-    protected readonly CompletionUtilities _completionUtils = completionUtils;
-    private readonly DescriptionGenerator _descriptionGenerator = descriptionGenerator;
+    protected readonly CompletionUtilities _completionUtils;
+    protected readonly ColorIconGenerator _colorIconGenerator;
+    private readonly DescriptionGenerator _descriptionGenerator;
+    protected readonly SettingsProvider _settingsProvider;
+    protected readonly ITextBuffer _textBuffer;
+
+    protected bool? _showAutocomplete;
+
+    protected ClassCompletionGenerator(ITextBuffer textBuffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider)
+    {
+        _textBuffer = textBuffer;
+        _completionUtils = completionUtils;
+        _colorIconGenerator = colorIconGenerator;
+        _descriptionGenerator = descriptionGenerator;
+        _settingsProvider = settingsProvider;
+
+        _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
+    }
 
     /// <summary>
     /// Gets relevant Tailwind CSS completions for a certain input
@@ -94,7 +114,7 @@ internal abstract class ClassCompletionGenerator(CompletionUtilities completionU
                                     new Completion(className,
                                                         modifiersAsString + className,
                                                         _descriptionGenerator.GetDescription(className),
-                                                        _completionUtils.GetImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
+                                                        _colorIconGenerator.GetImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
                                                         null));
 
                         if (twClass.UseOpacity && currentClass.Contains(color) && currentClass.Contains('/'))
@@ -105,7 +125,7 @@ internal abstract class ClassCompletionGenerator(CompletionUtilities completionU
                                         new Completion($"{className}/{opacity}",
                                                             $"{modifiersAsString}{className}/{opacity}",
                                                             _descriptionGenerator.GetDescription($"{className}/{opacity}"),
-                                                            _completionUtils.GetImageFromColor(twClass.Name, color, opacity),
+                                                            _colorIconGenerator.GetImageFromColor(twClass.Name, color, opacity),
                                                             null));
                             }
                             completions.Add(
@@ -276,5 +296,16 @@ internal abstract class ClassCompletionGenerator(CompletionUtilities completionU
         // this is to keep a decent order within the completion list
         completions.AddRange(completionsToAddToEnd);
         return completions;
+    }
+
+    public virtual void Dispose()
+    {
+        _settingsProvider.OnSettingsChanged -= SettingsChangedAsync;
+    }
+
+    private Task SettingsChangedAsync(TailwindSettings settings)
+    {
+        _showAutocomplete = settings.EnableTailwindCss;
+        return Task.CompletedTask;
     }
 }

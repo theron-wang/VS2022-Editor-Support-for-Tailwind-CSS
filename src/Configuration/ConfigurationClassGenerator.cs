@@ -16,7 +16,7 @@ namespace TailwindCSSIntellisense.Configuration
             _completionBase.SpacingMapper = SpacingMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
             _completionBase.Screen = ScreenOrig.ToList();
             _completionBase.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
-            _completionBase.ColorToRgbMapperCache.Clear();
+            ColorIconGenerator.ClearCache();
             _completionBase.CustomDescriptionMapper = config.PluginDescriptions ?? [];
 
             if (config is null && _areValuesDefault == false)
@@ -32,7 +32,7 @@ namespace TailwindCSSIntellisense.Configuration
                 var newColorToRgbMapper = GetColorMapper(dict);
 
                 _completionBase.ColorToRgbMapper = newColorToRgbMapper;
-                _completionBase.ColorToRgbMapperCache.Clear();
+                ColorIconGenerator.ClearCache();
             }
             if (config.ExtendedValues.ContainsKey("colors") && GetDictionary(config.ExtendedValues["colors"], out dict))
             {

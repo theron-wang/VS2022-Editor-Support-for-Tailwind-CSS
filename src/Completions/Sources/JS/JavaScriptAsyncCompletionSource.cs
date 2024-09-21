@@ -9,26 +9,15 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using TailwindCSSIntellisense.Completions.Sources;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense.Completions.JS;
-internal class JavaScriptAsyncCompletionSource : ClassCompletionGenerator, IAsyncCompletionSource
+namespace TailwindCSSIntellisense.Completions.Sources.JS;
+internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider) :
+    ClassCompletionGenerator(buffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider), IAsyncCompletionSource
 {
-    private static ImageElement _icon = new(KnownMonikers.Field.ToImageId(), "Tailwind CSS Class");
+    private static readonly ImageElement _icon = new(KnownMonikers.Field.ToImageId(), "Tailwind CSS Class");
 
-    private readonly SettingsProvider _settingsProvider;
-
-    private bool? _showAutocomplete;
     private bool _initializeSuccess = true;
-
-    public JavaScriptAsyncCompletionSource(CompletionUtilities completionUtilities, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider)
-        : base(completionUtilities, descriptionGenerator)
-    {
-        _settingsProvider = settingsProvider;
-
-        _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
-    }
 
     public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
     {
@@ -157,10 +146,5 @@ internal class JavaScriptAsyncCompletionSource : ClassCompletionGenerator, IAsyn
         start += 1;
 
         return new SnapshotSpan(start, end);
-    }
-    private Task SettingsChangedAsync(TailwindSettings settings)
-    {
-        _showAutocomplete = settings.EnableTailwindCss;
-        return Task.CompletedTask;
     }
 }

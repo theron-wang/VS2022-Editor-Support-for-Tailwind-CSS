@@ -3,9 +3,10 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Utilities;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using TailwindCSSIntellisense.Completions.Sources.JS;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense.Completions.JS;
+namespace TailwindCSSIntellisense.Completions.Providers.JS;
 
 [Export(typeof(IAsyncCompletionSourceProvider))]
 [Order(Before = "High")]
@@ -26,12 +27,15 @@ internal class JavaScriptAsyncCompletionSourceProvider : IAsyncCompletionSourceP
     [Import]
     public DescriptionGenerator DescriptionGenerator { get; set; }
 
+    [Import]
+    public ColorIconGenerator ColorIconGenerator { get; set; }
+
     public IAsyncCompletionSource GetOrCreate(ITextView textView)
     {
         if (_cache.TryGetValue(textView, out var itemSource))
             return itemSource;
-
-        var source = new JavaScriptAsyncCompletionSource(CompletionUtilities, DescriptionGenerator, SettingsProvider);
+        
+        var source = new JavaScriptAsyncCompletionSource(textView.TextBuffer, CompletionUtilities, ColorIconGenerator, DescriptionGenerator, SettingsProvider);
         textView.Closed += (o, e) => _cache.Remove(textView);
         _cache.Add(textView, source);
         return source;

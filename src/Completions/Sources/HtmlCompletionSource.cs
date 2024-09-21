@@ -14,21 +14,10 @@ namespace TailwindCSSIntellisense.Completions.Sources
     /// <summary>
     /// Completion provider for all HTML content files to provide Intellisense support for TailwindCSS classes
     /// </summary>
-    internal class HtmlCompletionSource : ClassCompletionGenerator, ICompletionSource
+    internal class HtmlCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider) :
+        ClassCompletionGenerator(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider), ICompletionSource
     {
-        private readonly ITextBuffer _textBuffer;
-        private readonly SettingsProvider _settingsProvider;
-        private bool? _showAutocomplete;
         private bool _initializeSuccess = true;
-
-        public HtmlCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, SettingsProvider settingsProvider, DescriptionGenerator descriptionGenerator)
-            : base(completionUtils, descriptionGenerator)
-        {
-            _textBuffer = textBuffer;
-            _settingsProvider = settingsProvider;
-
-            _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
-        }
 
         /// <summary>
         /// Overrides the original completion set to include TailwindCSS classes
@@ -171,17 +160,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
             start += 1;
 
             return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end), SpanTrackingMode.EdgeInclusive);
-        }
-
-        private Task SettingsChangedAsync(TailwindSettings settings)
-        {
-            _showAutocomplete = settings.EnableTailwindCss;
-            return Task.CompletedTask;
-        }
-
-        public void Dispose()
-        {
-            _settingsProvider.OnSettingsChanged -= SettingsChangedAsync;
         }
     }
 }

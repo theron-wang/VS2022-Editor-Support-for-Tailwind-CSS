@@ -29,6 +29,9 @@ namespace TailwindCSSIntellisense.Configuration
         [Import(typeof(GeneratorAggregator))]
         internal GeneratorAggregator DescriptionGenerator { get; set; }
 
+        [Import]
+        internal ColorIconGenerator ColorIconGenerator { get; set; }
+
         private bool _areValuesDefault;
         private CompletionUtilities _completionBase;
 
