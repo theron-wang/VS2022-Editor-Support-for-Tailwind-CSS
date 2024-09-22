@@ -1,10 +1,11 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using System.Linq;
+using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
-internal class CssQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator) : QuickInfoSource(textBuffer, descriptionGenerator)
+internal class CssQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, CompletionUtilities completionUtilities) : QuickInfoSource(textBuffer, descriptionGenerator, completionUtilities)
 {
     protected override bool IsInClassScope(IAsyncQuickInfoSession session, out SnapshotSpan? span)
     {

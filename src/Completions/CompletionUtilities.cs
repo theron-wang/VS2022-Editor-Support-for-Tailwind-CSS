@@ -48,6 +48,9 @@ public sealed class CompletionUtilities
     internal List<string> PluginClasses { get; set; }
     internal List<string> PluginModifiers { get; set; }
 
+    private HashSet<string> _blocklist = [];
+    private List<string> _allowedCorePlugins = [];
+
     /// <summary>
     /// Initializes the necessary utilities to provide completion
     /// </summary>
@@ -86,6 +89,25 @@ public sealed class CompletionUtilities
 
             return false;
         }
+    }
+
+    public void SetBlocklist(HashSet<string> blocklist)
+    {
+        _blocklist = blocklist;
+    }
+    
+    public void SetCorePlugins(List<string> corePlugins)
+    {
+        _allowedCorePlugins = corePlugins;
+    }
+
+    /// <summary>
+    /// Is the class in the blocklist?
+    /// </summary>
+    /// <param name="className">The class to check</param>
+    public bool IsClassAllowed(string className)
+    {
+        return !_blocklist.Contains(className);
     }
 
     private async Task<bool> ShouldInitializeAsync()

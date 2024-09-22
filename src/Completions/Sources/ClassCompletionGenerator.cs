@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
+using System.IO.Ports;
 using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Settings;
@@ -110,6 +111,11 @@ internal abstract class ClassCompletionGenerator : IDisposable
                             className = $"{prefix}{className}";
                         }
 
+                        if (!_completionUtils.IsClassAllowed(className))
+                        {
+                            continue;
+                        }
+
                         completions.Add(
                                     new Completion(className,
                                                         modifiersAsString + className,
@@ -121,6 +127,11 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         {
                             foreach (var opacity in _completionUtils.Opacity)
                             {
+                                if (!_completionUtils.IsClassAllowed($"{className}/{opacity}"))
+                                {
+                                    continue;
+                                }
+
                                 completions.Add(
                                         new Completion($"{className}/{opacity}",
                                                             $"{modifiersAsString}{className}/{opacity}",
@@ -165,6 +176,11 @@ internal abstract class ClassCompletionGenerator : IDisposable
                             className = $"{prefix}{className}";
                         }
 
+                        if (!_completionUtils.IsClassAllowed(className))
+                        {
+                            continue;
+                        }
+
                         completions.Add(
                             new Completion(className,
                                                 modifiersAsString + className,
@@ -206,6 +222,11 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         className = $"{prefix}{className}";
                     }
 
+                    if (!_completionUtils.IsClassAllowed(className))
+                    {
+                        continue;
+                    }
+
                     completions.Add(
                     new Completion(className,
                                         modifiersAsString + className,
@@ -219,6 +240,11 @@ internal abstract class ClassCompletionGenerator : IDisposable
             {
                 foreach (var pluginClass in _completionUtils.PluginClasses)
                 {
+                    if (!_completionUtils.IsClassAllowed(pluginClass))
+                    {
+                        continue;
+                    }
+
                     completions.Add(
                         new Completion(pluginClass.TrimStart('.'),
                                             modifiersAsString + prefix + pluginClass.TrimStart('.'),

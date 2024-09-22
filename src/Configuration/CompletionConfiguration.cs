@@ -32,7 +32,6 @@ namespace TailwindCSSIntellisense.Configuration
         [Import]
         internal ColorIconGenerator ColorIconGenerator { get; set; }
 
-        private bool _areValuesDefault;
         private CompletionUtilities _completionBase;
 
         private List<string> ModifiersOrig { get; set; }

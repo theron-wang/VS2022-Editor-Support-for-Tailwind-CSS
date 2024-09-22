@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
@@ -14,13 +15,15 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
 {
     protected ITextBuffer _textBuffer;
     protected DescriptionGenerator _descriptionGenerator;
+    private readonly CompletionUtilities _completionUtilities;
 
     private const string PropertyKey = "tailwindintellisensequickinfoadded";
 
-    public QuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator)
+    public QuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, CompletionUtilities completionUtilities)
     {
         _textBuffer = textBuffer;
         _descriptionGenerator = descriptionGenerator;
+        _completionUtilities = completionUtilities;
     }
 
     public void Dispose()
@@ -41,6 +44,11 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
         {
             var fullText = classSpan.Value.GetText();
             var classText = fullText.Split(':').Last();
+
+            if (!_completionUtilities.IsClassAllowed(classText))
+            {
+                return Task.FromResult<QuickInfoItem>(null);
+            }
 
             var desc = _descriptionGenerator.GetDescription(classText);
 

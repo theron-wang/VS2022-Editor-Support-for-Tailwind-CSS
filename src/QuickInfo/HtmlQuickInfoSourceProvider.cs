@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
+using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
@@ -14,8 +15,11 @@ internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvide
     [Import]
     public DescriptionGenerator DescriptionGenerator { get; set; }
 
+    [Import]
+    public CompletionUtilities CompletionUtilities { get; set; }
+
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
-        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, DescriptionGenerator));
+        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, DescriptionGenerator, CompletionUtilities));
     }
 }

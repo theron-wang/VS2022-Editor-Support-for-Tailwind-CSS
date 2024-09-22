@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.5 (September 22nd, 2024)
+
+### Additions
+
+- `blocklist` and `corePlugins` support ([#69](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/69))
+- Explicitly include `Microsoft.Bcl.AsyncInterfaces` DLL in extension to prevent an error ([#68](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/68))
+ 
+### Fixes
+
+- Incorrect IntelliSense order for non-color, non-spacing classes (i.e. `opacity-5` would appear between `opacity-40` and `opacity-50`)
+
 ## 1.5.4 (September 8th, 2024)
 
 ### Additions

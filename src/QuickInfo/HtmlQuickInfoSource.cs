@@ -2,10 +2,11 @@
 using Microsoft.VisualStudio.Text;
 using System;
 using System.Linq;
+using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
-internal class HtmlQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator) : QuickInfoSource(textBuffer, descriptionGenerator)
+internal class HtmlQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, CompletionUtilities completionUtilities) : QuickInfoSource(textBuffer, descriptionGenerator, completionUtilities)
 {
     protected virtual string ClassKeywordToSearchFor => "class=\"";
 

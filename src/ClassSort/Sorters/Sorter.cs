@@ -183,6 +183,11 @@ internal abstract class Sorter
                     }
                 }
 
+                if (!CompletionUtilities.IsClassAllowed(className))
+                {
+                    return -1;
+                }
+
                 return ClassSortUtilities.ClassOrder.TryGetValue(classToSearch, out int index) ? index : -1;
             });
 

@@ -102,7 +102,7 @@ namespace TailwindCSSIntellisense.Configuration
 
             var theme = obj["theme"];
 
-            var plugins = GetTotalValue(obj["plugins"]) ?? [];
+            var plugins = GetTotalValue(obj["plugins"]) ?? [];  
 
             var config = new TailwindConfiguration
             {
@@ -165,6 +165,42 @@ namespace TailwindCSSIntellisense.Configuration
                 if (obj["plugins"]?["descriptions"] is not null)
                 {
                     config.PluginDescriptions = JsonSerializer.Deserialize<Dictionary<string, string>>(obj["plugins"]["descriptions"]);
+                }
+            }
+            catch (Exception ex)
+            {
+                await ex.LogAsync();
+            }
+
+            try
+            {
+                if (obj["blocklist"] is not null)
+                {
+                    config.Blocklist = JsonSerializer.Deserialize<List<string>>(obj["blocklist"]);
+                }
+            }
+            catch (Exception ex)
+            {
+                await ex.LogAsync();
+            }
+            
+
+            try
+            {
+                if (obj["corePlugins"] is not null)
+                {
+                    var kind = obj["corePlugins"].GetValueKind();
+                    if (obj["corePlugins"].GetValueKind() == JsonValueKind.Array)
+                    {
+                        config.EnabledCorePlugins = JsonSerializer.Deserialize<List<string>>(obj["corePlugins"]);
+                    }
+                    else
+                    {
+                        config.DisabledCorePlugins = JsonSerializer.Deserialize<Dictionary<string, bool>>(obj["corePlugins"])
+                            .Where(kvp => !kvp.Value)
+                            .Select(kvp => kvp.Key)
+                            .ToList();
+                    }
                 }
             }
             catch (Exception ex)

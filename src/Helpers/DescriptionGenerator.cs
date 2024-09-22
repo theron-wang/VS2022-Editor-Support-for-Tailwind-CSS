@@ -214,7 +214,14 @@ internal sealed class DescriptionGenerator : IDisposable
         }
         else if (_completionUtilities.CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
         {
-            spacingValue = dict[spacing].Trim();
+            if (dict.TryGetValue(spacing, out var val))
+            {
+                spacingValue = val.Trim();
+            }
+            else
+            {
+                return null;
+            }
         }
         else if (_completionUtilities.SpacingMapper.TryGetValue(spacing, out spacingValue) == false)
         {

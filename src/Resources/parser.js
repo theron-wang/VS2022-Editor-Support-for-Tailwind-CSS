@@ -81,6 +81,7 @@
 
         if (configuration.plugins) {
             var pluginTheme = { theme: configuration.theme };
+            var pluginCorePlugins = {};
             var newPlugins = [];
             configuration.plugins.reverse().forEach(function (plugin) {
                 if (typeof plugin === 'function') {
@@ -103,11 +104,21 @@
                         pluginTheme[key] = mergeDeep(pluginTheme[key] || {}, plugin.config[key]);
                     });
 
+                    if (plugin.config.corePlugins) {
+                        if (Array.isArray(plugin.config.corePlugins)) {
+                            pluginCorePlugins = plugin.config.corePlugins;
+                        } else if (!Array.isArray(pluginCorePlugins)) {
+                            pluginCorePlugins = { ...pluginCorePlugins, ...plugin.config.corePlugins };
+                        }
+                    }
+
                     newPlugins.push(plugin.handler);
                 } else {
                     newPlugins.push(plugin);
                 }
             });
+
+            const originalCorePlugins = configuration.corePlugins;
 
             configuration = {
                 ...configuration,
@@ -115,6 +126,12 @@
             };
 
             configuration.plugins = newPlugins;
+
+            if (!originalCorePlugins && !Array.isArray(originalCorePlugins)) {
+                configuration.corePlugins = pluginCorePlugins;
+            } else {
+                configuration.corePlugins = originalCorePlugins;
+            }
         }
 
         function theme(key, defaultValue) {
@@ -126,7 +143,6 @@
 
             // Default theme may contain functions, so we should provide that
             if (typeof defaultThemeValue === 'function') {
-                console.log(theme);
                 defaultThemeValue = defaultThemeValue({ theme: theme, colors: colors });
             }
 

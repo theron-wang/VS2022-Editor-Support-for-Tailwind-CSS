@@ -7,25 +7,23 @@ using TailwindCSSIntellisense.Completions;
 namespace TailwindCSSIntellisense.Configuration
 {
     public sealed partial class CompletionConfiguration
-    {
-        /// <summary>
-        /// Reconfigures colors, spacing, and screen
-        /// </summary>
+    {/// <summary>
+     /// Reconfigures colors, spacing, and screen as well as any non-theme properties (prefix, blocklist, etc.)
+     /// </summary>
         private void LoadGlobalConfiguration(TailwindConfiguration config)
         {
             _completionBase.SpacingMapper = SpacingMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
             _completionBase.Screen = ScreenOrig.ToList();
             _completionBase.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
             ColorIconGenerator.ClearCache();
-            _completionBase.CustomDescriptionMapper = config.PluginDescriptions ?? [];
+            _completionBase.CustomDescriptionMapper = config?.PluginDescriptions ?? [];
+            _completionBase.SetBlocklist(new HashSet<string>(config?.Blocklist ?? []));
 
-            if (config is null && _areValuesDefault == false)
+            if (config is null)
             {
                 // Reset to default; either user has changed/deleted config file or there is none
                 return;
             }
-
-            _areValuesDefault = true;
 
             if (config.OverridenValues.ContainsKey("colors") && GetDictionary(config.OverridenValues["colors"], out Dictionary<string, object> dict))
             {
@@ -63,7 +61,142 @@ namespace TailwindCSSIntellisense.Configuration
                 }
             }
 
-            _areValuesDefault = false;
+            _completionBase.SetCorePlugins(config.EnabledCorePlugins ?? []);
+        }
+
+        /// <summary>
+        /// If config.EnabledCorePlugins is not null, all classes will be disabled except
+        /// for those in enabled core plugins. If config.DisabledCorePlugins is not null and empty,
+        /// all classes will exist except for those explicitly disabled.
+        /// </summary>
+        private void HandleCorePlugins(TailwindConfiguration config)
+        {
+            var enabledClasses = new List<TailwindClass>();
+            if (config.EnabledCorePlugins is not null)
+            {
+                foreach (var plugin in config.EnabledCorePlugins)
+                {
+                    if (_completionBase.ConfigurationValueToClassStems.ContainsKey(plugin))
+                    {
+                        var stems = _completionBase.ConfigurationValueToClassStems[plugin];
+
+                        foreach (var stem in stems)
+                        {
+                            if (stem.Contains("{*}"))
+                            {
+                                var s = stem.Replace("-{*}", "");
+
+                                enabledClasses.AddRange(ClassesOrig.Where(c => c.Name.StartsWith(s) && c.UseColors == false && c.UseSpacing == false));
+                            }
+                            else if (stem.Contains("{s}"))
+                            {
+                                var s = stem.Replace("-{s}", "");
+
+                                enabledClasses.AddRange(ClassesOrig.Where(c => c.Name.StartsWith(s) && c.UseColors == false && c.UseSpacing));
+                            }
+                            else if (stem.Contains("{c}"))
+                            {
+                                var s = stem.Replace("-{c}", "");
+
+                                enabledClasses.AddRange(ClassesOrig.Where(c => c.Name.StartsWith(s) && c.UseColors && c.UseSpacing == false));
+                            }
+                            else if (stem.Contains('{'))
+                            {
+                                var s = stem.Replace($"-{stem.Split('-').Last()}", "");
+                                var values = stem.Split('-').Last().Trim('{', '}').Split('|');
+
+                                bool negate = false;
+                                if (values[0].StartsWith("!"))
+                                {
+                                    negate = true;
+                                    values[0] = values[0].Trim('!');
+                                }
+
+                                var classes = values.Select(v => $"{s}-{v}");
+
+                                if (negate)
+                                {
+                                    enabledClasses.AddRange(ClassesOrig.Where(c => c.Name.StartsWith(s) && classes.Contains(c.Name) == false && c.UseColors == false && c.UseSpacing == false));
+                                }
+                                else
+                                {
+                                    enabledClasses.AddRange(ClassesOrig.Where(c => classes.Contains(c.Name) && c.UseColors == false && c.UseSpacing == false));
+                                }
+                            }
+                            else
+                            {
+                                enabledClasses.AddRange(ClassesOrig.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.UseColors == false && c.UseSpacing == false));
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                enabledClasses = [.. ClassesOrig];
+
+                if (config.DisabledCorePlugins is not null && config.DisabledCorePlugins.Count > 0)
+                {
+                    foreach (var plugin in config.DisabledCorePlugins)
+                    {
+                        if (_completionBase.ConfigurationValueToClassStems.ContainsKey(plugin))
+                        {
+                            var stems = _completionBase.ConfigurationValueToClassStems[plugin];
+
+                            foreach (var stem in stems)
+                            {
+                                if (stem.Contains("{*}"))
+                                {
+                                    var s = stem.Replace("-{*}", "");
+
+                                    enabledClasses.RemoveAll(c => c.Name.StartsWith(s) && c.UseColors == false && c.UseSpacing == false);
+                                }
+                                else if (stem.Contains("{s}"))
+                                {
+                                    var s = stem.Replace("-{s}", "");
+
+                                    enabledClasses.RemoveAll(c => c.Name.StartsWith(s) && c.UseColors == false && c.UseSpacing);
+                                }
+                                else if (stem.Contains("{c}"))
+                                {
+                                    var s = stem.Replace("-{c}", "");
+
+                                    enabledClasses.RemoveAll(c => c.Name.StartsWith(s) && c.UseColors && c.UseSpacing == false);
+                                }
+                                else if (stem.Contains('{'))
+                                {
+                                    var s = stem.Replace($"-{stem.Split('-').Last()}", "");
+                                    var values = stem.Split('-').Last().Trim('{', '}').Split('|');
+
+                                    bool negate = false;
+                                    if (values[0].StartsWith("!"))
+                                    {
+                                        negate = true;
+                                        values[0] = values[0].Trim('!');
+                                    }
+
+                                    var classes = values.Select(v => $"{s}-{v}");
+
+                                    if (negate)
+                                    {
+                                        enabledClasses.RemoveAll(c => c.Name.StartsWith(s) && classes.Contains(c.Name) == false && c.UseColors == false && c.UseSpacing == false);
+                                    }
+                                    else
+                                    {
+                                        enabledClasses.RemoveAll(c => classes.Contains(c.Name) && c.UseColors == false && c.UseSpacing == false);
+                                    }
+                                }
+                                else
+                                {
+                                    enabledClasses.RemoveAll(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.UseColors == false && c.UseSpacing == false);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            _completionBase.Classes = enabledClasses;
         }
 
         /// <summary>
@@ -77,8 +210,9 @@ namespace TailwindCSSIntellisense.Configuration
                 return;
             }
 
+            HandleCorePlugins(config);
+
             var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
-            _completionBase.Classes = ClassesOrig.ToList();
             _completionBase.Modifiers = ModifiersOrig.ToList();
             var classesToRemove = new List<TailwindClass>();
             var classesToAdd = new List<TailwindClass>();
@@ -186,6 +320,13 @@ namespace TailwindCSSIntellisense.Configuration
                                             Name = s
                                         };
                                     }
+                                    else if (k.StartsWith("-"))
+                                    {
+                                        return new TailwindClass()
+                                        {
+                                            Name = $"-{s}-{k.Substring(1)}"
+                                        };
+                                    }
                                     else
                                     {
                                         return new TailwindClass()
@@ -193,8 +334,7 @@ namespace TailwindCSSIntellisense.Configuration
                                             Name = $"{s}-{k}"
                                         };
                                     }
-                                }
-                            ));
+                                }));
 
                             var texts = descClasses.Where(c => _completionBase.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
                                 _completionBase.DescriptionMapper[c.Name]);
@@ -355,13 +495,28 @@ namespace TailwindCSSIntellisense.Configuration
 
                         if (GetDictionary(config.ExtendedValues[key], out var dict))
                         {
-                            classesToAdd.AddRange(dict.Keys
-                                .Where(k => _completionBase.Classes.Any(c => c.Name == $"{s}-{k}") == false)
+                            classesToAdd.AddRange(
+                                dict.Keys.Select(k =>
+                                {
+                                    if (k == "DEFAULT")
+                                    {
+                                        return insertStem;
+                                    }
+                                    else if (k.StartsWith("-"))
+                                    {
+                                        return $"-{insertStem}-{k.Substring(1)}";
+                                    }
+                                    else
+                                    {
+                                        return $"{insertStem}-{k}";
+                                    }
+                                })
+                                .Where(k => _completionBase.Classes.Any(c => c.Name == k) == false)
                                 .Select(k =>
                                 {
                                     return new TailwindClass()
                                     {
-                                        Name = $"{insertStem}-{k}"
+                                        Name = k
                                     };
                                 }));
 
@@ -433,7 +588,53 @@ namespace TailwindCSSIntellisense.Configuration
             _completionBase.Classes.AddRange(classesToAdd);
 
             // fix order
-            _completionBase.Classes.Sort((x, y) => x.Name.CompareTo(y.Name));
+
+            // Order by ending number, if applicable, then any text after
+            // i.e. inherit, 10, 20, 30, 40, 5, 50 -> 5, 10, 20, 30, 40, 50, inherit
+
+            _completionBase.Classes.Sort((x, y) =>
+            {
+                if (!x.Name.Contains('-') || !y.Name.Contains('-'))
+                {
+                    return x.Name.CompareTo(y.Name);
+                }
+
+                // Compare the base names (before the hyphen)
+                var xBaseName = x.Name.Substring(0, x.Name.LastIndexOf('-'));
+                var yBaseName = y.Name.Substring(0, y.Name.LastIndexOf('-'));
+
+                var baseNameComparison = xBaseName.CompareTo(yBaseName);
+                if (baseNameComparison != 0)
+                {
+                    return baseNameComparison; // If base names are different, return comparison
+                }
+
+                // If base names are the same, compare the numeric part after the last hyphen (if present)
+                if (xBaseName == yBaseName)
+                {
+                    var xIsNumeric = double.TryParse(x.Name.Substring(x.Name.LastIndexOf('-') + 1), out double xNumber);
+                    var yIsNumeric = double.TryParse(y.Name.Substring(y.Name.LastIndexOf('-') + 1), out double yNumber);
+
+                    if (xIsNumeric && yIsNumeric)
+                    {
+                        // Compare numerically if both are valid numbers
+                        return xNumber.CompareTo(yNumber);
+                    }
+                    else if (xIsNumeric)
+                    {
+                        // If only x is numeric, x comes before y
+                        return -1;
+                    }
+                    else if (yIsNumeric)
+                    {
+                        // If only y is numeric, y comes before x
+                        return 1;
+                    }
+                }
+
+                // If either has no numeric part or neither can be parsed as a number, compare lexicographically
+                return string.Join(x.Name).CompareTo(y.Name);
+            });
         }
 
         /// <summary>
