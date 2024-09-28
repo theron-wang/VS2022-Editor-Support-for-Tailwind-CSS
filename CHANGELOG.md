@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.5.1 (September 27th, 2024)
+
+### Fixes
+
+- Include all `System.Text.Json` dependencies in the extension to prevent an error ([#70](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/70))
+
 ## 1.5.5 (September 22nd, 2024)
 
 ### Additions
