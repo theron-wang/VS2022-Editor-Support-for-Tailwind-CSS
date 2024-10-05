@@ -279,4 +279,11 @@
     </ItemGroup>
     <Copy SourceFiles="@(NuGetAssemblies)" DestinationFolder="$(MSBuildProjectDirectory)" />
   </Target>
+  <ItemGroup>
+    <SuppressFromVsix Include="Microsoft.Bcl.AsyncInterfaces.dll" Visible="false" />
+    <SuppressFromVsix Include="System.Buffers.dll" Visible="false" />
+    <SuppressFromVsix Include="System.Memory.dll" Visible="false" />
+    <SuppressFromVsix Include="System.Text.Encodings.Web.dll" Visible="false" />
+    <SuppressFromVsix Include="System.Text.Json.dll" Visible="false" />
+  </ItemGroup>
 </Project>

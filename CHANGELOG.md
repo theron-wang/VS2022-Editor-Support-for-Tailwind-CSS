@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.5.2 (October 4th, 2024)
+
+### Fixes
+
+- Correct `.vsixmanifest` assembly versions to prevent version mismatch ([#70](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/70))
+
 ## 1.5.5.1 (September 27th, 2024)
 
 ### Fixes
