@@ -149,6 +149,10 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>VSPackage.vsct</DependentUpon>
     </Compile>
+    <Content Include="Microsoft.Bcl.AsyncInterfaces.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\icon.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
@@ -177,6 +181,30 @@
     <Compile Include="TailwindCSSIntellisensePackage.cs" />
     <Compile Include="Completions\CompletionUtilities.cs" />
     <Compile Include="Completions\Variant.cs" />
+    <Content Include="System.Buffers.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="System.Memory.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="System.Runtime.CompilerServices.Unsafe.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="System.Text.Encodings.Web.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="System.Threading.Tasks.Extensions.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="System.ValueTuple.dll">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\tailwindmodifiers.json">
@@ -279,11 +307,4 @@
     </ItemGroup>
     <Copy SourceFiles="@(NuGetAssemblies)" DestinationFolder="$(MSBuildProjectDirectory)" />
   </Target>
-  <ItemGroup>
-    <SuppressFromVsix Include="Microsoft.Bcl.AsyncInterfaces.dll" Visible="false" />
-    <SuppressFromVsix Include="System.Buffers.dll" Visible="false" />
-    <SuppressFromVsix Include="System.Memory.dll" Visible="false" />
-    <SuppressFromVsix Include="System.Text.Encodings.Web.dll" Visible="false" />
-    <SuppressFromVsix Include="System.Text.Json.dll" Visible="false" />
-  </ItemGroup>
 </Project>
