@@ -189,8 +189,7 @@ namespace TailwindCSSIntellisense.Configuration
             {
                 if (obj["corePlugins"] is not null)
                 {
-                    var kind = obj["corePlugins"].GetValueKind();
-                    if (obj["corePlugins"].GetValueKind() == JsonValueKind.Array)
+                    if (GetValueKind(obj["corePlugins"]) == JsonValueKind.Array)
                     {
                         config.EnabledCorePlugins = JsonSerializer.Deserialize<List<string>>(obj["corePlugins"]);
                     }
