@@ -148,7 +148,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             var searchSnapshot = new SnapshotSpan(startPos, caretPos);
             var text = searchSnapshot.GetText();
 
-            var indexOfCurrentClassAttribute = text.LastIndexOf("class=\"", StringComparison.InvariantCultureIgnoreCase);
+            var indexOfCurrentClassAttribute = RazorClassScopeHelper.GetLastClassIndex(text);
             if (indexOfCurrentClassAttribute == -1)
             {
                 classText = null;

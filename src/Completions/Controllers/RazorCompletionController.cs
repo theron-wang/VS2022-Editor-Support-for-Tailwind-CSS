@@ -11,6 +11,7 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace TailwindCSSIntellisense.Completions.Controllers
 {
@@ -175,7 +176,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             var searchSnapshot = new SnapshotSpan(startPos, caretPos);
             var text = searchSnapshot.GetText();
 
-            var indexOfCurrentClassAttribute = text.LastIndexOf("class=\"", StringComparison.InvariantCultureIgnoreCase);
+            var indexOfCurrentClassAttribute = RazorClassScopeHelper.GetLastClassIndex(text);
             if (indexOfCurrentClassAttribute == -1)
             {
                 classText = null;

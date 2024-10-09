@@ -22,7 +22,7 @@ internal class RazorQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator
         var searchSnapshot = new SnapshotSpan(startPos, searchPos.Value);
         var text = searchSnapshot.GetText();
 
-        var indexOfCurrentClassAttribute = text.LastIndexOf("class=\"", StringComparison.InvariantCultureIgnoreCase);
+        var indexOfCurrentClassAttribute = RazorClassScopeHelper.GetLastClassIndex(text);
         if (indexOfCurrentClassAttribute == -1)
         {
             span = null;
