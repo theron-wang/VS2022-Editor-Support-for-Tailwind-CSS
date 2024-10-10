@@ -69,7 +69,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     {
         var tags = new List<ITagSpan<IntraTextAdornmentTag>>();
 
-        if (!spans.Any() || _buffer.CurrentSnapshot.Length > 10000)
+        if (!spans.Any())
         {
             return tags;
         }
