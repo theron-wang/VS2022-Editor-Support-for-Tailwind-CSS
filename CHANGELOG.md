@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.5.6 (October 9th, 2024)
+
+### Additions
+
+- Add color preview for color classes ([#74](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/74))
+- Support for IntelliSense in Razor variable declarations ([#73](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/73))
+
+### Fixes
+
+- Class sorting did not work for `.jsx` files
+- Downgrade `System.Text.Json` to `6.0.10` to match .NET Framework compatibility ([#70](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/70))
+
 ## 1.5.5.2 (October 4th, 2024)
 
 ### Fixes

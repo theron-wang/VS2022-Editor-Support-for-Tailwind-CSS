@@ -51,6 +51,12 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Adornments\ColorAdornment.cs" />
+    <Compile Include="Adornments\Taggers\ColorCssTagger.cs" />
+    <Compile Include="Adornments\Taggers\ColorJSTagger.cs" />
+    <Compile Include="Adornments\Taggers\ColorHtmlTagger.cs" />
+    <Compile Include="Adornments\Taggers\ColorTaggerBase.cs" />
+    <Compile Include="Adornments\Taggers\ColorRazorTagger.cs" />
     <Compile Include="Build\TailwindBuildProcess.cs" />
     <Compile Include="ClassSort\ClassSorter.cs" />
     <Compile Include="ClassSort\ClassSortUtilities.cs" />
@@ -104,6 +110,7 @@
     <Compile Include="Helpers\ColorIconGenerator.cs" />
     <Compile Include="Helpers\DescriptionGenerator.cs" />
     <Compile Include="Helpers\PathHelpers.cs" />
+    <Compile Include="Helpers\RazorClassScopeHelper.cs" />
     <Compile Include="Linting\Error.cs" />
     <Compile Include="Linting\ErrorList\ErrorListContext.cs" />
     <Compile Include="Linting\ErrorList\ErrorListListener.cs" />
@@ -128,6 +135,10 @@
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
     <Compile Include="Options\Linter.cs" />
+    <Compile Include="Parsers\JSParser.cs" />
+    <Compile Include="Parsers\HtmlParser.cs" />
+    <Compile Include="Parsers\CssParser.cs" />
+    <Compile Include="Parsers\RazorParser.cs" />
     <Compile Include="QuickInfo\CssQuickInfoSource.cs" />
     <Compile Include="QuickInfo\JSQuickInfoSource.cs" />
     <Compile Include="QuickInfo\JSQuickInfoSourceProvider.cs" />

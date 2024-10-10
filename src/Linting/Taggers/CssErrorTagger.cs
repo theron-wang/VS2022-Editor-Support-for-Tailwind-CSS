@@ -11,6 +11,7 @@ namespace TailwindCSSIntellisense.Linting.Taggers;
 [Export(typeof(ITaggerProvider))]
 [TagType(typeof(IErrorTag))]
 [ContentType("css")]
+[ContentType("tcss")]
 [TextViewRole(PredefinedTextViewRoles.Document)]
 [TextViewRole(PredefinedTextViewRoles.Analyzable)]
 internal class CssErrorTaggerProvider : ITaggerProvider

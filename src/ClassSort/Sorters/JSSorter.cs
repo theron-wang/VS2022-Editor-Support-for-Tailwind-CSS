@@ -10,7 +10,7 @@ internal class JSSorter : Sorter
 
     protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
     {
-        (int indexOfClass, char terminator) = GetNextIndexOfClass(file, 0, " className=");
+        (int indexOfClass, char terminator) = GetNextIndexOfClass(file, 0, "className=");
 
         int lastIndex = 0;
 
@@ -22,7 +22,7 @@ internal class JSSorter : Sorter
 
             if (openAngleBracket == -1 || closeAngleBracket > openAngleBracket)
             {
-                (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
+                (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1, "className=");
                 continue;
             }
 
@@ -36,17 +36,17 @@ internal class JSSorter : Sorter
                 yield break;
             }
 
-            // return class=" or class='
-            yield return file.Substring(indexOfClass, 7);
+            // return className=" or className='
+            yield return file.Substring(indexOfClass, 11);
 
             // Handle edge cases: Alpine JS, Vue, etc.
             // <div x-bind:class="! open ? 'hidden' : ''">
-            var classText = file.Substring(indexOfClass + 7, lastIndex - (indexOfClass + 7));
+            var classText = file.Substring(indexOfClass + 11, lastIndex - (indexOfClass + 11));
 
             bool inside = false;
             int index = 0;
 
-            char lookFor = file[indexOfClass + 6] == '"' ? '\'' : '"';
+            char lookFor = file[indexOfClass + 10] == '"' ? '\'' : '"';
 
             var from = 0;
 
@@ -87,7 +87,7 @@ internal class JSSorter : Sorter
                 }
             }
 
-            (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
+            (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1, "className=");
         }
 
         yield return file.Substring(lastIndex);
