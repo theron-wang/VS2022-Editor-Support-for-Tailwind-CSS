@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
+using System;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions;
 
@@ -20,6 +21,12 @@ internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvide
 
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
+        // Handle legacy Razor editor; this completion controller is prioritized but
+        // we should only use the Razor completion controller in that case
+        if (textBuffer.IsLegacyRazorEditor())
+        {
+            return null;
+        }
         return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, DescriptionGenerator, CompletionUtilities));
     }
 }

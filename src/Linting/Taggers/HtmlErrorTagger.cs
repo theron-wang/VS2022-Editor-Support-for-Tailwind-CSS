@@ -24,6 +24,13 @@ internal class HtmlErrorTaggerProvider : ITaggerProvider
 
     public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
+        // Handle legacy Razor editor; this completion controller is prioritized but
+        // we should only use the Razor completion controller in that case
+        if (buffer.IsLegacyRazorEditor())
+        {
+            return null;
+        }
+
         return buffer.Properties.GetOrCreateSingletonProperty(() => new HtmlErrorTagger(buffer, LinterUtilities, CompletionUtilities)) as ITagger<T>;
     }
 

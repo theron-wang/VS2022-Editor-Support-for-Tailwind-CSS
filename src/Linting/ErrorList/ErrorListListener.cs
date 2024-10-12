@@ -24,7 +24,7 @@ internal abstract class ErrorListListener : ITextViewCreationListener, IDisposab
 
     private readonly Dictionary<ITextBuffer, ErrorListContext> _contexts = [];
 
-    public void TextViewCreated(ITextView view)
+    public virtual void TextViewCreated(ITextView view)
     {
         if (_contexts.ContainsKey(view.TextBuffer) == false)
         {

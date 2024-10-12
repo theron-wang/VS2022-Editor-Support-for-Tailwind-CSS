@@ -11,6 +11,14 @@ namespace TailwindCSSIntellisense.Linting.ErrorList;
 [TextViewRole(PredefinedTextViewRoles.PrimaryDocument)]
 internal class HtmlErrorListListener : ErrorListListener
 {
+    public override void TextViewCreated(ITextView view)
+    {
+        if (!LegacyRazorEditorHelper.IsLegacyRazorEditor(view.TextBuffer))
+        {
+            base.TextViewCreated(view);
+        }
+    }
+
     protected override Validator GetValidator(ITextView view)
     {
         return HtmlValidator.Create(view.TextBuffer, _linterUtilities, _completionUtilities);

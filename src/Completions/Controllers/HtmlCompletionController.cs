@@ -4,11 +4,13 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
@@ -31,6 +33,13 @@ namespace TailwindCSSIntellisense.Completions.Controllers
         public void VsTextViewCreated(IVsTextView textViewAdapter)
         {
             IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
+
+            // Handle legacy Razor editor; this completion controller is prioritized but
+            // we should only use the Razor completion controller in that case
+            if (view.TextBuffer.IsLegacyRazorEditor())
+            {
+                return;
+            }
 
             var filter = new HtmlCommandFilter(view, CompletionBroker);
 
