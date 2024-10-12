@@ -172,7 +172,7 @@ internal static class RazorParser
 
             char end;
 
-            if (doubleQuoteClass == segmentStart)
+            if (segmentStart == span.Start + doubleQuoteClass)
             {
                 end = '"';
             }

@@ -115,9 +115,9 @@ internal sealed class LinterUtilities : IDisposable
                             errorMessage += $"'{className}' styles will be overriden by '{classWithMostPrecedence}'.";
                         }
 
-                        yield return new(className, errorMessage);
-                        i++;
                     }
+                    yield return new(className, errorMessage);
+                    i++;
                 }
             }
         }

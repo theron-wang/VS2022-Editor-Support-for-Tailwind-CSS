@@ -1,7 +1,11 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using EnvDTE80;
+using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static System.Net.Mime.MediaTypeNames;
+using System.Windows.Documents;
+using System.Windows.Shapes;
 
 namespace TailwindCSSIntellisense.Parsers;
 internal static class HtmlParser
@@ -18,7 +22,7 @@ internal static class HtmlParser
         var last = text.LastIndexOfAny(endings);
 
         // The goal of this method is to split a larger SnapshotSpan into smaller SnapshotSpans
-        // Each smaller SnapshotSpan will be a segment between className=" and ", or className=' and ', and snapshot boundaries
+        // Each smaller SnapshotSpan will be a segment between class=" and ", or class=' and ', and snapshot boundaries
 
         if (span.End != snapshot.Length && (string.IsNullOrWhiteSpace(text) || last == -1 || string.IsNullOrWhiteSpace(text.Substring(last + 1)) == false))
         {
@@ -104,14 +108,14 @@ internal static class HtmlParser
 
         text = span.GetText().ToLower();
 
-        if (text.IndexOf($"{search}\"", StringComparison.InvariantCultureIgnoreCase) == -1 && text.IndexOf($"{search}'", StringComparison.InvariantCultureIgnoreCase) == -1)
+        if (text.Contains($"{search}\"") == false && text.Contains($"{search}'") == false)
         {
             yield break;
         }
 
         var index = segmentEnd - span.Start;
 
-        while (index < text.Length && (text.IndexOf($"{search}\"", index, StringComparison.InvariantCultureIgnoreCase) != -1 || text.IndexOf($"{search}'", index, StringComparison.InvariantCultureIgnoreCase) != -1))
+        while (index < text.Length && (text.IndexOf($"{search}\"", index) != -1 || text.IndexOf($"{search}'", index) != -1))
         {
             doubleQuoteClass = text.IndexOf($"{search}\"", index, StringComparison.InvariantCultureIgnoreCase);
             singleQuoteClass = text.IndexOf($"{search}'", index, StringComparison.InvariantCultureIgnoreCase);
@@ -127,7 +131,7 @@ internal static class HtmlParser
 
             char end;
 
-            if (doubleQuoteClass == segmentStart)
+            if (segmentStart == span.Start + doubleQuoteClass)
             {
                 end = '"';
             }
@@ -136,7 +140,7 @@ internal static class HtmlParser
                 end = '\'';
             }
 
-            segmentEnd = segmentStart + search.Length + 2;
+            segmentEnd = segmentStart + search.Length + 1;
 
             while (segmentEnd < span.End && segmentEnd + 1 < snapshot.Length)
             {
