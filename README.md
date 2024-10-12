@@ -108,6 +108,6 @@ If something doesn't work as expected or you see an exception message, you can c
 
 Please report any errors that you encounter!
 
-## Bugs / Suggestions
+## Support
 
-If you run into any issues or come up with any feature suggestions while using this extension, please create an issue [on the GitHub repo](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/new).
+To report issues or share feature suggestions, feel free to create an issue [on GitHub](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/new).
