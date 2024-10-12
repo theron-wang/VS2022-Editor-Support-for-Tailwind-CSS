@@ -1,6 +1,18 @@
 # Changelog
 
-## 1.5.6 (October 9th, 2024)
+## 1.6.1 (October 11th, 2024)
+
+### Additions
+
+- Add option to turn off color preview in extension settings
+
+### Fixes
+
+- Linter doesn't highlight conflicting classes with colors and spacing
+- Legacy ASP.NET Razor editor performance improvements and bug fixes ([#72](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/72))
+- Color preview should work for classes with variants (`hover:`, `focus:`, etc.) ([#74](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/74))
+
+## 1.5.6 (1.6.0) (October 9th, 2024)
 
 ### Additions
 

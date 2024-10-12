@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Options;
+using Microsoft.VisualStudio.Shell;
 
 namespace TailwindCSSIntellisense.Adornments.Taggers;
 
@@ -19,6 +21,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     private readonly ITextView _view;
     private readonly CompletionUtilities _completionUtilities;
     private bool _isProcessing;
+    private General _generalOptions;
 
     protected ColorTaggerBase(ITextBuffer buffer, ITextView view, CompletionUtilities completionUtilities)
     {
@@ -26,6 +29,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
         _view = view;
         _completionUtilities = completionUtilities;
         _buffer.Changed += OnBufferChanged;
+        General.Saved += GeneralSettingsChanged;
     }
 
     private void OnBufferChanged(object sender, TextContentChangedEventArgs e)
@@ -58,6 +62,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     public void Dispose()
     {
         _buffer.Changed -= OnBufferChanged;
+        General.Saved -= GeneralSettingsChanged;
     }
 
     /// <summary>
@@ -65,11 +70,24 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     /// </summary>
     protected abstract IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot);
 
+    private void GeneralSettingsChanged(General general)
+    {
+        _generalOptions = general;
+        TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length)));
+    }
+
+    private bool Enabled()
+    {
+        _generalOptions ??= ThreadHelper.JoinableTaskFactory.Run(General.GetLiveInstanceAsync);
+
+        return _generalOptions.ShowColorPreviews && _generalOptions.UseTailwindCss;
+    }
+
     public IEnumerable<ITagSpan<IntraTextAdornmentTag>> GetTags(NormalizedSnapshotSpanCollection spans)
     {
         var tags = new List<ITagSpan<IntraTextAdornmentTag>>();
 
-        if (!spans.Any())
+        if (!spans.Any() || !Enabled())
         {
             return tags;
         }
@@ -100,6 +118,20 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 
     private byte[] GetRgbaFromClass(string text)
     {
+        text = text.Split(':').Last();
+
+        if (string.IsNullOrWhiteSpace(_completionUtilities.Prefix) == false)
+        {
+            if (text.StartsWith(_completionUtilities.Prefix))
+            {
+                text = text.Substring(_completionUtilities.Prefix.Length);
+            }
+            else if (text.StartsWith($"-{_completionUtilities.Prefix}"))
+            {
+                text = $"-{text.Substring(_completionUtilities.Prefix.Length + 1)}";
+            }
+        }
+
         var endsWithArbitrary = text.LastIndexOf('[');
         var segmentText = text;
 

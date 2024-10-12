@@ -109,6 +109,7 @@
     <Compile Include="Helpers\ColorHelpers.cs" />
     <Compile Include="Helpers\ColorIconGenerator.cs" />
     <Compile Include="Helpers\DescriptionGenerator.cs" />
+    <Compile Include="Helpers\LegacyRazorEditorHelper.cs" />
     <Compile Include="Helpers\PathHelpers.cs" />
     <Compile Include="Helpers\RazorClassScopeHelper.cs" />
     <Compile Include="Linting\Error.cs" />

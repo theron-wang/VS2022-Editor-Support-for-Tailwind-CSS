@@ -27,9 +27,14 @@ namespace TailwindCSSIntellisense.Options
         public bool TailwindCompletionsComeFirst { get; set; } = true;
         [Category("General")]
         [DisplayName("Automatically apply library updates")]
-        [Description("True if the Tailwind CSS should update on project load; false if not")]
+        [Description("True if the Tailwind CSS library should update on project load; false if not")]
         [DefaultValue(true)]
         public bool AutomaticallyUpdateLibrary { get; set; } = true;
+        [Category("General")]
+        [DisplayName("Show color previews")]
+        [Description("True if color previews should be shown for color classes; false if not")]
+        [DefaultValue(true)]
+        public bool ShowColorPreviews { get; set; } = true;
         [Category("Build")]
         [DisplayName("Minify builds")]
         [Description("Determines whether or not the Tailwind build process minifies by default")]
