@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.2 (October 21st, 2024)
+
+### Additions
+
+- Support for `!` modifier ([#76](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/76))
+
+### Fixes
+
+- Fix inaccurate color preview locations in `.css` files
+- `content.transform` causes a crash ([#77](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/77))
+
 ## 1.6.1 (October 11th, 2024)
 
 ### Additions

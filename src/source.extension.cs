@@ -11,7 +11,7 @@ namespace TailwindCSSIntellisense
         public const string Name = "Tailwind CSS VS2022 Editor Support";
         public const string Description = @"Unofficial VS2022 Tailwind CSS extension for IntelliSense, linting, sorting, and more.";
         public const string Language = "en-US";
-        public const string Version = "1.6.1";
+        public const string Version = "1.6.2";
         public const string Author = "Theron Wang";
         public const string Tags = "tailwind, tailwind css, css, html, cshtml, razor, blazor, intellisense, auto-completion";
     }
