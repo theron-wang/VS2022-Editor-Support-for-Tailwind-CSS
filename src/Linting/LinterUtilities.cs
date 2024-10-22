@@ -51,10 +51,16 @@ internal sealed class LinterUtilities : IDisposable
         }
 
         var cssAttributes = new Dictionary<string, string>();
-
         foreach (var c in classes)
         {
             var classTrimmed = c.Split(':').Last().Trim();
+
+            if (ImportantModiferHelper.IsImportantModifier(classTrimmed))
+            {
+                classTrimmed = classTrimmed.TrimStart('!');
+            }
+
+            // Do not handle prefix here; DescriptionGenerator.GetDescription already does
 
             if (_cacheCssAttributes.ContainsKey(classTrimmed) == false)
             {

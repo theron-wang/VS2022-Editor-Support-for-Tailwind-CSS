@@ -41,11 +41,30 @@ internal abstract class ClassCompletionGenerator : IDisposable
         var modifiers = classRaw.Split(':').ToList();
 
         var currentClass = modifiers.Last();
+
+        var isImportant = false;
+        // Handle important modifier
+        // Handle !px-0, but not !!px-0
+        if (currentClass.StartsWith("!"))
+        {
+            if (currentClass.Length >= 2 && currentClass[1] == '!')
+            {
+                return [];
+            }
+            currentClass = currentClass.Substring(1);
+            isImportant = true;
+        }
+
         var prefix = _completionUtils.Prefix;
 
         if (string.IsNullOrWhiteSpace(prefix))
         {
-            prefix = null;
+            prefix = "";
+        }
+        
+        if (isImportant)
+        {
+            prefix = $"!{prefix}";
         }
 
         modifiers.RemoveAt(modifiers.Count - 1);
@@ -59,17 +78,27 @@ internal abstract class ClassCompletionGenerator : IDisposable
         }
         var segments = currentClass.Split('-');
 
-        if (string.IsNullOrWhiteSpace(currentClass) == false)
+        if (string.IsNullOrWhiteSpace(currentClass) == false || isImportant)
         {
-            var currentClassStem = currentClass.Split('-')[0];
-            var searchClass = $"-{currentClass.TrimStart('-')}";
-            var startsWith = currentClass[0].ToString();
-            if (currentClass.Length > 1)
+            IEnumerable<TailwindClass> scope;
+            string currentClassStem = "!";
+            if (isImportant && string.IsNullOrWhiteSpace(currentClass))
             {
-                startsWith += currentClass[1];
+                scope = _completionUtils.Classes;
             }
-            var scope = _completionUtils.Classes.Where(
-                c => c.Name.Contains(searchClass) || (prefix + c.Name).StartsWith(startsWith) || c.UseColors);
+            else
+            {
+                currentClassStem = currentClass.Split('-')[0];
+                var searchClass = $"-{currentClass.TrimStart('-')}";
+                var startsWith = currentClass[0].ToString();
+                if (currentClass.Length > 1)
+                {
+                    startsWith += currentClass[1];
+                }
+                scope = _completionUtils.Classes.Where(
+                    c => c.Name.Contains(searchClass) || (prefix + c.Name).StartsWith(startsWith) || c.UseColors);
+
+            }
 
             if (currentClass.StartsWith("-") == false)
             {

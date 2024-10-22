@@ -119,17 +119,28 @@ internal abstract class Sorter
             })
             .ThenBy(className =>
             {
+                if (ImportantModiferHelper.IsImportantModifier(className))
+                {
+                    className = className.TrimStart('!');
+                }
+
                 var classToSearch = className;
 
                 if (string.IsNullOrWhiteSpace(config?.Prefix) == false)
                 {
                     classToSearch = classToSearch
-                        .TrimPrefix(config?.Prefix + "-", StringComparison.InvariantCultureIgnoreCase)
-                        .TrimPrefix("-" + config?.Prefix + "-", StringComparison.InvariantCultureIgnoreCase);
+                        .TrimPrefix(config?.Prefix, StringComparison.InvariantCultureIgnoreCase)
+                        .TrimPrefix("-" + config?.Prefix, StringComparison.InvariantCultureIgnoreCase);
 
                     if (className.StartsWith("-"))
                     {
                         classToSearch = $"-{classToSearch}";
+                    }
+
+                    // Prefix not used, don't sort
+                    if (classToSearch == className)
+                    {
+                        return -1;
                     }
                 }
 

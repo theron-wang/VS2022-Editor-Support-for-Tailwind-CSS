@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
@@ -45,6 +46,13 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
             var fullText = classSpan.Value.GetText();
             var classText = fullText.Split(':').Last();
 
+            var isImportant = ImportantModiferHelper.IsImportantModifier(classText);
+
+            if (isImportant)
+            {
+                classText = classText.TrimStart('!');
+            }
+
             if (!_completionUtilities.IsClassAllowed(classText))
             {
                 return Task.FromResult<QuickInfoItem>(null);
@@ -74,9 +82,9 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                     descriptionLines.Add(
                         new ClassifiedTextElement(
                             new ClassifiedTextRun(PredefinedClassificationTypeNames.WhiteSpace, "  ", ClassifiedTextRunStyle.UseClassificationFont),
-                            new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttribute, keyword, ClassifiedTextRunStyle.UseClassificationFont),
+                                new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttribute, keyword, ClassifiedTextRunStyle.UseClassificationFont),
                                 new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ": ", ClassifiedTextRunStyle.UseClassificationFont),
-                                new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttributeValue, value, ClassifiedTextRunStyle.UseClassificationFont),
+                                new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttributeValue, value + (isImportant ? " !important" : ""), ClassifiedTextRunStyle.UseClassificationFont),
                                 new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ";", ClassifiedTextRunStyle.UseClassificationFont)
                         )
                     );

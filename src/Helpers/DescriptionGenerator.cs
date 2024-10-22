@@ -69,6 +69,15 @@ internal sealed class DescriptionGenerator : IDisposable
             {
                 text = $"-{text.Substring(_completionUtilities.Prefix.Length + 1)}";
             }
+            else
+            {
+                return "";
+            }
+        }
+
+        if (ImportantModiferHelper.IsImportantModifier(text))
+        {
+            text = text.TrimStart('!');
         }
 
         var description = GetDescriptionForClassOnly(text, shouldFormat: shouldFormat);

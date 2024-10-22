@@ -120,6 +120,11 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     {
         text = text.Split(':').Last();
 
+        if (ImportantModiferHelper.IsImportantModifier(text))
+        {
+            text = text.TrimStart('!');
+        }
+
         if (string.IsNullOrWhiteSpace(_completionUtilities.Prefix) == false)
         {
             if (text.StartsWith(_completionUtilities.Prefix))
@@ -128,7 +133,11 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             }
             else if (text.StartsWith($"-{_completionUtilities.Prefix}"))
             {
-                text = $"-{text.Substring(_completionUtilities.Prefix.Length + 1)}";
+                text = text.Substring(_completionUtilities.Prefix.Length + 1);
+            }
+            else
+            {
+                return null;
             }
         }
 
