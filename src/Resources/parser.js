@@ -55,6 +55,13 @@
         if (configuration.default) {
             configuration = configuration.default;
         }
+
+        // transform function in content may cause exceptions
+        // remove `content` since we don't use it for anything
+        if (configuration.content) {
+            delete configuration.content;
+        }
+
         function getValueByKeyBracket(object, key) {
             const keys = key.split('.');
 
