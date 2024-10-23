@@ -155,7 +155,7 @@ namespace TailwindCSSIntellisense.Build
 
         internal void OnBuild(Project project = null)
         {
-            if (_settings.BuildType != BuildProcessOptions.Manual)
+            if (_settings.BuildType != BuildProcessOptions.Manual && _settings.BuildType != BuildProcessOptions.ManualJIT)
             {
                 StartProcess(_settings.AutomaticallyMinify);
             }
@@ -284,7 +284,7 @@ namespace TailwindCSSIntellisense.Build
                             var outputFile = pair.Value;
 
                             var process = CreateAndStartProcess(GetProcessStartInfo(dir));
-                            process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                            process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
                             PostSetupProcess(process);
 
                             _outputFileToProcesses[outputFile] = process;
@@ -550,7 +550,6 @@ namespace TailwindCSSIntellisense.Build
             {
                 var proc = (Process)s;
 
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build stopped ({_outputFileToProcesses.Count} processes left)"));
                 proc?.Dispose();
                 string keyToRemove = null;
                 foreach (var kvp in _outputFileToProcesses)
@@ -566,7 +565,9 @@ namespace TailwindCSSIntellisense.Build
                 {
                     _outputFileToProcesses.Remove(keyToRemove);
                 }
+
                 proc = null;
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build stopped ({_outputFileToProcesses.Count} processes left)"));
             };
 
             return process;

@@ -30,6 +30,7 @@ namespace TailwindCSSIntellisense
             switch (settings.BuildType)
             {
                 case BuildProcessOptions.Default:
+                case BuildProcessOptions.ManualJIT:
                     Command.Text = "Stop Tailwind CSS JIT build process";
                     break;
                 case BuildProcessOptions.OnBuild:

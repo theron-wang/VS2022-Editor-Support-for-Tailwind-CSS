@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.3 (October 23rd, 2024)
+
+### Fixes
+
+- Clarify build type descriptions and add `ManualJIT` build option ([#78](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/78))
+
 ## 1.6.2 (October 21st, 2024)
 
 ### Additions
