@@ -67,6 +67,18 @@ internal abstract class ClassCompletionGenerator : IDisposable
             prefix = $"!{prefix}";
         }
 
+        if (!string.IsNullOrWhiteSpace(currentClass) && !string.IsNullOrWhiteSpace(prefix))
+        {
+            if (currentClass.StartsWith(prefix))
+            {
+                currentClass = currentClass.Substring(prefix.Length);
+            }
+            else if (currentClass.StartsWith($"-{prefix}"))
+            {
+                currentClass = $"-{currentClass.Substring(prefix.Length + 1)}";
+            }
+        }
+
         modifiers.RemoveAt(modifiers.Count - 1);
 
         var completions = new List<Completion>();
@@ -88,15 +100,25 @@ internal abstract class ClassCompletionGenerator : IDisposable
             }
             else
             {
-                currentClassStem = currentClass.Split('-')[0];
-                var searchClass = $"-{currentClass.TrimStart('-')}";
+                string searchClass;
+                if (currentClass.Length > 0 && currentClass[0] == '-')
+                {
+                    currentClassStem = $"-{currentClass.Split('-')[1]}";
+                    searchClass = $"-{currentClass.TrimStart('-')}";
+                }
+                else
+                {
+                    currentClassStem = currentClass.Split('-')[0];
+                    searchClass = currentClass;
+                }
+
                 var startsWith = currentClass[0].ToString();
                 if (currentClass.Length > 1)
                 {
                     startsWith += currentClass[1];
                 }
                 scope = _completionUtils.Classes.Where(
-                    c => c.Name.Contains(searchClass) || (prefix + c.Name).StartsWith(startsWith) || c.UseColors);
+                    c => c.Name.Contains(searchClass) || c.Name.StartsWith(startsWith) || c.UseColors);
 
             }
 
@@ -348,7 +370,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
             }
         }
 
-        // this is to keep a decent order within the completion list
+        // keep non-peer, non-group, non-max modifiers at the end
         completions.AddRange(completionsToAddToEnd);
         return completions;
     }
