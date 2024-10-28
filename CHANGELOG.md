@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.6.4 (October 27th, 2024)
+
+### Additions
+
+- Add verbose build option ([#82](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/82))
+
+### Fixes
+
+- Colors would not show up in IntelliSense when using a prefix ([#80](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/80))
+- Use relative pathing when building Tailwind CSS ([#82](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/82))
+
 ## 1.6.3 (October 23rd, 2024)
 
 ### Fixes

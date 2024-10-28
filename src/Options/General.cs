@@ -60,6 +60,11 @@ namespace TailwindCSSIntellisense.Options
         [TypeConverter(typeof(EnumConverter))]
         [DefaultValue(BuildProcessOptions.Default)]
         public BuildProcessOptions BuildProcessType { get; set; } = BuildProcessOptions.Default;
+        [Category("Build")]
+        [DisplayName("Verbose builds")]
+        [Description("True for a verbose build log, false to only show errors and successful builds")]
+        [DefaultValue(false)]
+        public bool VerboseBuild { get; set; }
         [Category("Class Sort")]
         [DisplayName("Class sort type")]
         [Description("Classes can be sorted manually (with 'Tools' options), on file save (only sorts open file), on build (entire solution), or never.")]
