@@ -14,9 +14,9 @@ internal class CssValidator : Validator
 
     }
 
-    public override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot)
+    public override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span)
     {
-        return CssParser.GetScopes(span, snapshot);
+        return CssParser.GetScopes(span, span.Snapshot);
     }
 
     public override IEnumerable<Error> GetErrors(SnapshotSpan span, bool force = false)

@@ -106,6 +106,7 @@
     <Compile Include="Configuration\Descriptions\FontFamilyDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\FontSizeDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\GeneratorAggregator.cs" />
+    <Compile Include="Helpers\ClassRegexHelper.cs" />
     <Compile Include="Helpers\ColorHelpers.cs" />
     <Compile Include="Helpers\ColorIconGenerator.cs" />
     <Compile Include="Helpers\DescriptionGenerator.cs" />
@@ -122,6 +123,7 @@
     <Compile Include="Linting\ErrorList\CssErrorListListener.cs" />
     <Compile Include="Linting\Taggers\JSErrorTagger.cs" />
     <Compile Include="Linting\Taggers\RazorErrorTagger.cs" />
+    <Compile Include="Linting\Validators\HtmlLikeValidator.cs" />
     <Compile Include="Linting\Validators\JSValidator.cs" />
     <Compile Include="Linting\Validators\RazorValidator.cs" />
     <Compile Include="Linting\Validators\Validator.cs" />
@@ -162,10 +164,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>VSPackage.vsct</DependentUpon>
     </Compile>
-    <Content Include="Microsoft.Bcl.AsyncInterfaces.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="Resources\icon.png">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
@@ -194,30 +192,6 @@
     <Compile Include="TailwindCSSIntellisensePackage.cs" />
     <Compile Include="Completions\CompletionUtilities.cs" />
     <Compile Include="Completions\Variant.cs" />
-    <Content Include="System.Buffers.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="System.Memory.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="System.Runtime.CompilerServices.Unsafe.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="System.Text.Encodings.Web.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="System.Threading.Tasks.Extensions.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="System.ValueTuple.dll">
-      <IncludeInVSIX>true</IncludeInVSIX>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\tailwindmodifiers.json">
@@ -272,6 +246,9 @@
   <ItemGroup>
     <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.527" ExcludeAssets="Runtime">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="MessagePack">
+      <Version>2.5.192</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces">
       <Version>8.0.0</Version>

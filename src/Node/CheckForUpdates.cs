@@ -108,6 +108,16 @@ namespace TailwindCSSIntellisense.Node
                         return;
                     }
 
+                    // Avoid updating major versions: 3.x --> 4.x, for example
+                    var currentMajor = currentVersion.Split('.')[0];
+                    var newMajor = newVersion.Split('.')[0];
+
+                    if (currentMajor != newMajor)
+                    {
+                        await VS.StatusBar.ShowMessageAsync($"A major Tailwind update is available: {newVersion}. If you would like to update, please manually run npm update --save tailwindcss.");
+                        return;
+                    }
+
                     await VS.StatusBar.ShowMessageAsync($"Updating Tailwind CSS ({currentVersion} -> {newVersion})");
                 }
 

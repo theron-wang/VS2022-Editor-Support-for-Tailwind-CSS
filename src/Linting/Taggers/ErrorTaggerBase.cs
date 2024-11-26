@@ -60,7 +60,7 @@ internal abstract class ErrorTaggerBase : ITagger<IErrorTag>
     {
         if (_errorChecker.Errors.Any() && _errorChecker.Errors.First().Span.Snapshot != span.Snapshot)
         {
-            foreach (var scope in _errorChecker.GetScopes(span, span.Snapshot))
+            foreach (var scope in _errorChecker.GetScopes(span))
             {
                 var errors = _errorChecker.GetErrors(scope, true);
                 foreach (var error in errors)

@@ -11,6 +11,7 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using TailwindCSSIntellisense.Parsers;
 
 namespace TailwindCSSIntellisense.Completions.Controllers;
 
@@ -67,7 +68,15 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         ThreadHelper.ThrowIfNotOnUIThread();
 
         // Is the caret in a class="" scope?
-        if (IsInClassScope(out string classText) == false || (string.IsNullOrWhiteSpace(classText) == false && classText.Split(' ').Last().StartsWith("@")))
+        if (RazorParser.IsCursorInClassScope(TextView, out var classSpan) == false || classSpan is null)
+        {
+            return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
+
+        var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, TextView.Caret.Position.BufferPosition);
+        var classText = truncatedClassSpan.GetText();
+
+        if (string.IsNullOrWhiteSpace(classText) == false && classText.Split(' ').Last().StartsWith("@"))
         {
             return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
@@ -165,94 +174,6 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         }
 
         return hresult;
-    }
-
-    private bool IsInClassScope(out string classText)
-    {
-        var startPos = new SnapshotPoint(TextView.TextSnapshot, 0);
-        var caretPos = TextView.Caret.Position.BufferPosition;
-
-        var searchSnapshot = new SnapshotSpan(startPos, caretPos);
-        var text = searchSnapshot.GetText();
-
-        var indexOfCurrentClassAttribute = RazorClassScopeHelper.GetLastClassIndex(text);
-        if (indexOfCurrentClassAttribute == -1)
-        {
-            classText = null;
-            return false;
-        }
-        var quotationMarkAfterLastClassAttribute = text.IndexOf('\"', indexOfCurrentClassAttribute);
-        var lastQuotationMark = text.LastIndexOf('\"');
-
-        if (lastQuotationMark == quotationMarkAfterLastClassAttribute)
-        {
-            classText = text.Substring(lastQuotationMark + 1);
-            return true;
-        }
-        else
-        {
-            var segments = text.Substring(quotationMarkAfterLastClassAttribute + 1).Split([' '], StringSplitOptions.RemoveEmptyEntries);
-
-            bool isInRazor = false;
-            int depth = 0;
-            // Number of quotes (excluding \")
-            // Odd if in string context, even if not
-            int numberOfQuotes = 0;
-
-            foreach (var segment in segments)
-            {
-                if (segment.StartsWith("@") || isInRazor)
-                {
-                    bool isEscaping = false;
-
-                    foreach (var character in segment)
-                    {
-                        bool escape = isEscaping;
-                        isEscaping = false;
-
-                        if (numberOfQuotes % 2 == 1)
-                        {
-                            if (character == '\\')
-                            {
-                                isEscaping = true;
-                            }
-                        }
-                        else
-                        {
-                            if (character == '(')
-                            {
-                                depth++;
-                            }
-                            else if (character == ')')
-                            {
-                                depth--;
-                            }
-                        }
-
-                        if (character == '"' && !escape)
-                        {
-                            numberOfQuotes++;
-                        }
-                    }
-
-                    isInRazor = depth != 0 || numberOfQuotes % 2 == 1;
-                }
-                else if (segment.Contains('"'))
-                {
-                    classText = null;
-                    return false;
-                }
-            }
-
-            if (depth != 0 || numberOfQuotes % 2 == 1)
-            {
-                classText = null;
-                return false;
-            }
-
-            classText = text.Substring(quotationMarkAfterLastClassAttribute + 1);
-            return true;
-        }
     }
 
     private int CharsAfterSignificantPoint(string classText)

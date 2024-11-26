@@ -9,6 +9,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Parsers;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Sources.JS;
@@ -21,7 +22,7 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
 
     public CompletionStartData InitializeCompletion(CompletionTrigger trigger, SnapshotPoint triggerLocation, CancellationToken token)
     {
-        if (IsInClassScope(triggerLocation.Snapshot, triggerLocation, out _) == false)
+        if (JSParser.IsInClassScope(triggerLocation.Snapshot, triggerLocation, out _) == false)
         {
             return CompletionStartData.DoesNotParticipateInCompletion;
         }
@@ -62,10 +63,13 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
             }
         }
 
-        if (IsInClassScope(session.TextView.TextSnapshot, session.TextView.Caret.Position.BufferPosition, out var classText) == false)
+        if (JSParser.IsCursorInClassScope(session.TextView, out var classSpan) == false || classSpan is null)
         {
             return new CompletionContext(ImmutableArray<CompletionItem>.Empty, null);
         }
+
+        var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, session.TextView.Caret.Position.BufferPosition);
+        string classText = truncatedClassSpan.GetText();
 
         applicableToSpan = GetApplicableTo(triggerLocation, session.TextView.TextSnapshot);
 

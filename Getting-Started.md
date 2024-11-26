@@ -60,3 +60,9 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 ![Build process](art/Build-Demo-1.png)
 
 6. **Settings for this extension can be updated in Tools > Options > Tailwind CSS IntelliSense.**
+
+7. Custom regexes can be defined in settings. **Please note that:**
+- There can only be one, valid C# regex.
+- Your class content must be located in the `content` capture group. For example, the regex `class="(?<content>.*)"` successfully captures `content`.
+- Custom regexes take precedence over default functionality; that is, if a context is matched in both your custom regex and the original regex, the custom regex will be used.
+- It's recommended to thoroughly test your regexes before adding it into your options. Unintended behavior may occur if the regex is too general or if it overlaps with existing functionality.

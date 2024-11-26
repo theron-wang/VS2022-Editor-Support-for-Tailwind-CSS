@@ -12,112 +12,25 @@ internal class RazorSorter : Sorter
 
     protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
     {
-        (int indexOfClass, char terminator) = GetNextIndexOfClass(file, 0);
-
         int lastIndex = 0;
+        int indexOfClass;
 
-        while (indexOfClass != -1)
+        foreach (var match in ClassRegexHelper.GetClassesRazorEnumerator(file))
         {
+            indexOfClass = match.Index;
+
             // Verify that we are in an HTML tag
             var closeAngleBracket = file.LastIndexOf('>', indexOfClass);
             var openAngleBracket = file.LastIndexOf('<', indexOfClass);
 
             if (openAngleBracket == -1 || closeAngleBracket > openAngleBracket)
             {
-                (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
                 continue;
             }
 
             yield return file.Substring(lastIndex, indexOfClass - lastIndex);
 
-            lastIndex = file.IndexOf(terminator, indexOfClass) + 1;
-
-            bool isInRazor = false;
-            int depth = 0;
-            // Number of quotes (excluding \")
-            // Odd if in string context, even if not
-            int numberOfQuotes = 0;
-            bool isEscaping = false;
-
-            List<Token> tokens = [];
-            string totalText = "";
-            // A list of numbers that represent where a new line should be inserted;
-            // each number represents a text token in tokens
-            var newLines = new HashSet<int>();
-
-            while (lastIndex < file.Length && (depth != 0 || numberOfQuotes % 2 == 1 || terminator != file[lastIndex]))
-            {
-                var character = file[lastIndex];
-
-                totalText += character;
-
-                if (!isInRazor)
-                {
-                    if (char.IsWhiteSpace(character))
-                    {
-                        if (character == '\n')
-                        {
-                            // Insert directly after the current token
-                            // If the current token count is 1, then it should
-                            // apply after index 0
-                            newLines.Add(tokens.Count - 1);
-                        }
-                        if (string.IsNullOrWhiteSpace(totalText) == false)
-                        {
-                            tokens.Add(new Token(totalText.Trim(), isInRazor));
-                        }
-                        totalText = "";
-                    }
-                }
-
-                if (character == '@')
-                {
-                    isInRazor = true;
-                }
-                else if (isInRazor)
-                {
-                    bool escape = isEscaping;
-                    isEscaping = false;
-
-                    if (numberOfQuotes % 2 == 1)
-                    {
-                        if (character == '\\')
-                        {
-                            isEscaping = true;
-                        }
-                    }
-                    else
-                    {
-                        if (character == '(')
-                        {
-                            depth++;
-                        }
-                        else if (character == ')')
-                        {
-                            depth--;
-                        }
-                    }
-
-                    if (character == '"' && !escape)
-                    {
-                        numberOfQuotes++;
-                    }
-
-                    if (depth == 0 && numberOfQuotes % 2 == 0 && char.IsWhiteSpace(character))
-                    {
-                        tokens.Add(new Token(totalText.Trim(), isInRazor));
-                        isInRazor = false;
-                        totalText = "";
-                    }
-                }
-
-                lastIndex++;
-            }
-
-            if (string.IsNullOrWhiteSpace(totalText) == false)
-            {
-                tokens.Add(new Token(totalText.Trim(), isInRazor));
-            }
+            lastIndex = match.Index + match.Length - 1;
 
             if (lastIndex >= file.Length)
             {
@@ -126,129 +39,52 @@ internal class RazorSorter : Sorter
             }
 
             // return class=" or class='
-            yield return file.Substring(indexOfClass, 7);
+            // match.Groups[0] is the whole class: class="..."
+            // match.Groups[1] is the quote type: " or '
+            var total = match.Groups[0].Value;
+            yield return total.Substring(0, total.IndexOf(match.Groups[1].Value) + match.Groups[1].Length);
 
-            bool inside = false;
-            bool sortedYet = false;
-
-            char lookFor = file[indexOfClass + 6] == '"' ? '\'' : '"';
-            int token = 0;
-
-            var textTokens = new List<string>();
+            var tokens = new List<string>();
             var razorIndices = new HashSet<int>();
+            
+            // A list of numbers that represent where a new line should be inserted;
+            // each number represents a text token in tokens
+            var newLines = new HashSet<int>();
 
-            int startToken = -1;
-
-            while (token < tokens.Count)
+            foreach ((var token, var index) in ClassRegexHelper.SplitRazorClasses(ClassRegexHelper.GetClassTextGroup(match).Value).Select((m, i) => (m, i)))
             {
-                int index = tokens[token].Text.IndexOf(lookFor);
-                if (index == -1 || tokens[token].IsInRazor)
+                tokens.Add(token.Value);
+                if (token.Value.StartsWith("@"))
                 {
-                    textTokens.Add(tokens[token].Text);
-
-                    if (tokens[token].IsInRazor)
-                    {
-                        razorIndices.Add(textTokens.Count - 1);
-                    }
-
-                    token++;
-                    continue;
+                    razorIndices.Add(index);
                 }
-
-                var from = 0;
-                while (index != -1)
+                if ((token.Index + token.Length < match.Value.Length && match.Value[token.Index + token.Length] == '\n') ||
+                    // first case handles \n, second case handles \r\n
+                    token.Index + token.Length + 1 < match.Value.Length && match.Value[token.Index + token.Length + 1] == '\n')
                 {
-                    if (index == 0 || tokens[token].Text[index - 1] != '\\')
-                    {
-                        if (inside)
-                        {
-                            if (index == 0)
-                            {
-                                yield return lookFor + string.Join(" ", SortRazorSegment(textTokens, razorIndices, config));
-                            }
-                            else
-                            {
-                                var f = (from == 0 && startToken != token) ? 0 : from + 1;
-                                textTokens.Add(tokens[token].Text.Substring(f, index - f));
-                                yield return lookFor + string.Join(" ", SortRazorSegment(textTokens, razorIndices, config));
-                            }
-                            sortedYet = true;
-                            inside = false;
-                            startToken = -1;
-                            textTokens.Clear();
-                            razorIndices.Clear();
-                        }
-                        else
-                        {
-                            textTokens.Add(tokens[token].Text.Substring(from, index - from));
-                            yield return string.Join(" ", textTokens);
-                            inside = true;
-                            startToken = token;
-                            textTokens.Clear();
-                            razorIndices.Clear();
-                        }
-                        from = index;
-                    }
-
-                    index = tokens[token].Text.IndexOf(lookFor, index + 1);
-
-                    if (index == -1)
-                    {
-                        if (inside)
-                        {
-                            textTokens.Add(tokens[token].Text.Substring(from + 1));
-                        }
-                        else
-                        {
-                            textTokens.Add(tokens[token].Text.Substring(from));
-                        }
-                    }
+                    // This means that after this current token, there should be a newline
+                    newLines.Add(index);
                 }
-
-                token++;
             }
 
-            if (sortedYet)
+            var sorted = SortRazorSegment(tokens, razorIndices, config);
+
+            var text = new StringBuilder();
+
+            foreach ((var i, var token) in sorted.Select((v, i) => (i, v)))
             {
-                var text = new StringBuilder();
-
-                for (int i = 0; i < textTokens.Count; i++)
+                text.Append(token);
+                if (newLines.Contains(i))
                 {
-                    text.Append(textTokens[i]);
-                    if (newLines.Contains(i))
-                    {
-                        text.AppendLine();
-                    }
-                    else
-                    {
-                        text.Append(' ');
-                    }
+                    text.AppendLine();
                 }
-
-                yield return text.ToString().Trim();
-            }
-            else
-            {
-                var sorted = SortRazorSegment(textTokens, razorIndices, config).ToList();
-                var text = new StringBuilder();
-
-                for (int i = 0; i < sorted.Count; i++)
+                else
                 {
-                    text.Append(sorted[i]);
-                    if (newLines.Contains(i))
-                    {
-                        text.AppendLine();
-                    }
-                    else
-                    {
-                        text.Append(' ');
-                    }
+                    text.Append(' ');
                 }
-
-                yield return text.ToString().Trim();
             }
 
-            (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
+            yield return text.ToString().Trim();
         }
 
         yield return file.Substring(lastIndex);

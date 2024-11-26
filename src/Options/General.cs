@@ -21,11 +21,6 @@ namespace TailwindCSSIntellisense.Options
         [DefaultValue(true)]
         public bool UseTailwindCss { get; set; } = true;
         [Category("General")]
-        [DisplayName("Tailwind CSS completions before all")]
-        [Description("True if Tailwind CSS completions come before all others; false if after")]
-        [DefaultValue(true)]
-        public bool TailwindCompletionsComeFirst { get; set; } = true;
-        [Category("General")]
         [DisplayName("Automatically apply library updates")]
         [Description("True if the Tailwind CSS library should update on project load; false if not")]
         [DefaultValue(true)]
@@ -65,6 +60,15 @@ namespace TailwindCSSIntellisense.Options
         [Description("True for a verbose build log, false to only show errors and successful builds")]
         [DefaultValue(false)]
         public bool VerboseBuild { get; set; }
+        [Category("Completions")]
+        [DisplayName("Tailwind CSS completions before all")]
+        [Description("True if Tailwind CSS completions come before all others; false if after")]
+        [DefaultValue(true)]
+        public bool TailwindCompletionsComeFirst { get; set; } = true;
+        [Category("Completions")]
+        [DisplayName("Custom class regex")]
+        [Description("Specify an additional regex to identify class contexts. Important: ensure the class content is contained in a capture group called `content`; i.e., the ... in class=\"...\".")]
+        public string CustomClassRegex { get; set; }
         [Category("Class Sort")]
         [DisplayName("Class sort type")]
         [Description("Classes can be sorted manually (with 'Tools' options), on file save (only sorts open file), on build (entire solution), or never.")]

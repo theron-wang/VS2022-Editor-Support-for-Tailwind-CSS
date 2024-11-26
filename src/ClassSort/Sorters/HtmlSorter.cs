@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
@@ -10,84 +11,52 @@ internal class HtmlSorter : Sorter
 
     protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
     {
-        (int indexOfClass, char terminator) = GetNextIndexOfClass(file, 0);
-
         int lastIndex = 0;
+        int indexOfClass;
 
-        while (indexOfClass != -1)
+        foreach (var match in ClassRegexHelper.GetClassesNormalEnumerator(file))
         {
+            indexOfClass = match.Index;
+
             // Verify that we are in an HTML tag
             var closeAngleBracket = file.LastIndexOf('>', indexOfClass);
             var openAngleBracket = file.LastIndexOf('<', indexOfClass);
 
             if (openAngleBracket == -1 || closeAngleBracket > openAngleBracket)
             {
-                (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
                 continue;
             }
 
             yield return file.Substring(lastIndex, indexOfClass - lastIndex);
 
-            lastIndex = file.IndexOf(terminator, file.IndexOf(terminator, indexOfClass) + 1);
+            lastIndex = match.Index + match.Length - 1;
 
-            if (lastIndex == -1)
+            if (lastIndex >= file.Length)
             {
                 yield return file.Substring(indexOfClass);
                 yield break;
             }
 
             // return class=" or class='
-            yield return file.Substring(indexOfClass, 7);
+            // match.Groups[0] is the whole class: class="..."
+            // match.Groups[1] is the quote type: " or '
+            var total = match.Groups[0].Value;
+            yield return total.Substring(0, total.IndexOf(match.Groups[1].Value) + match.Groups[1].Length);
 
-            // Handle edge cases: Alpine JS, Vue, etc.
-            // <div x-bind:class="! open ? 'hidden' : ''">
-            var classText = file.Substring(indexOfClass + 7, lastIndex - (indexOfClass + 7));
-
-            bool inside = false;
-            int index = 0;
-
-            char lookFor = file[indexOfClass + 6] == '"' ? '\'' : '"';
-
-            var from = 0;
-
-            while (index != -1)
+            var classContent = ClassRegexHelper.GetClassTextGroup(match).Value;
+            if (classContent.Contains('\'') || classContent.Contains('\"'))
             {
-                index = classText.IndexOf(lookFor, index + 1);
-                if (index == -1)
-                {
-                    if (from == 0)
-                    {
-                        yield return SortSegment(classText, config);
-                    }
-                    else if (inside)
-                    {
-                        yield return lookFor + SortSegment(classText.Substring(from + 1), config);
-                    }
-                    else
-                    {
-                        yield return classText.Substring(from);
-                    }
-
-                    break;
-                }
-
-                if (index == 0 || classText[index - 1] != '\\')
-                {
-                    if (inside)
-                    {
-                        yield return lookFor + SortSegment(classText.Substring(from + 1, index - from - 1), config);
-                        inside = false;
-                    }
-                    else
-                    {
-                        yield return classText.Substring(from, index - from);
-                        inside = true;
-                    }
-                    from = index;
-                }
+                // TODO: handle special cases like Alpine JS, Angular, etc.
+                // <div x-bind:class="open ? '' : 'hidden'">
+                // A potential solution is to use another regex to split based on quotation pairs, and 
+                // sort each pair.
+                // At the moment, we will just leave these cases unsorted.
+                yield return classContent;
             }
-
-            (indexOfClass, terminator) = GetNextIndexOfClass(file, indexOfClass + 1);
+            else
+            {
+                yield return SortSegment(classContent, config);
+            }
         }
 
         yield return file.Substring(lastIndex);

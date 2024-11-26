@@ -30,6 +30,8 @@ namespace TailwindCSSIntellisense.Settings
                 VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
                 VS.Events.DocumentEvents.Saved += OnFileSaved;
             });
+
+            ClassRegexHelper.SetCustomRegex(General.Instance.CustomClassRegex);
         }
 
         [Import]
@@ -227,6 +229,7 @@ namespace TailwindCSSIntellisense.Settings
             }
 
             var projectRoot = await GetTailwindProjectDirectoryAsync();
+            var desiredProjectRoot = await GetDesiredConfigurationDirectoryAsync(settings.TailwindConfigurationFile);
             var copyBuildFilePair = new List<BuildPair>();
 
             foreach (var buildFilePair in settings.BuildFiles)
@@ -259,6 +262,27 @@ namespace TailwindCSSIntellisense.Settings
             }
             else
             {
+                // If the configuration file is not located in the same project as the configuration file,
+                // move it there. If the configuration file has not been changed, however, respect the user's
+                // decision to keep it where it is.
+                if (desiredProjectRoot != null && desiredProjectRoot != projectRoot &&
+                    (_cachedSettings is null || _cachedSettings.TailwindConfigurationFile != settings.TailwindConfigurationFile))
+                {
+                    if (File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
+                    {
+                        try
+                        {
+                            File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
+                        }
+                        catch (Exception ex)
+                        {
+                            await ex.LogAsync($"Tailwind CSS: Failed to delete old configuration file at ");
+                        }
+                    }
+
+                    projectRoot = desiredProjectRoot;
+                }
+
                 using var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
                 _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings, options: new()
                 {
@@ -286,6 +310,41 @@ namespace TailwindCSSIntellisense.Settings
         public async Task<string> GetFilePathAsync()
         {
             return Path.Combine(await GetTailwindProjectDirectoryAsync(), ExtensionConfigFileName);
+        }
+
+        private async Task<string> GetDesiredConfigurationDirectoryAsync(string configPath)
+        {
+            var projects = await VS.Solutions.GetAllProjectsAsync();
+
+            if (projects.Any() == false)
+            {
+                return null;
+            }
+
+            // Try to find the project that contains the config file, and return
+            // its path
+            string bestMatch = null;
+            var numberOfSlashes = configPath.Replace(Path.DirectorySeparatorChar, '/').Count(c => c == '/');
+
+            foreach (var p in projects)
+            {
+                var projectRoot = Path.GetDirectoryName(p.FullPath);
+
+                var relativePath = PathHelpers.GetRelativePath(configPath, projectRoot);
+
+                if (!configPath.StartsWith(".."))
+                {
+                    var numSlashes = relativePath.Count(c => c == Path.DirectorySeparatorChar);
+
+                    if (numSlashes < numberOfSlashes)
+                    {
+                        bestMatch = projectRoot;
+                        numberOfSlashes = numSlashes;
+                    }
+                }
+            }
+
+            return bestMatch;
         }
 
         private async Task<string> GetTailwindProjectDirectoryAsync()
@@ -349,6 +408,11 @@ namespace TailwindCSSIntellisense.Settings
                 origSettings.SortClassesType = settings.ClassSortType;
 
                 ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
+            }
+
+            if (settings.CustomClassRegex != null)
+            {
+                ClassRegexHelper.SetCustomRegex(settings.CustomClassRegex);
             }
 
             _cachedSettings = origSettings;

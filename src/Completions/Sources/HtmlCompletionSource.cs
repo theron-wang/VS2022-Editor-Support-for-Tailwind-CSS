@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Options;
+using TailwindCSSIntellisense.Parsers;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Sources
@@ -24,7 +25,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
         /// </summary>
         /// <param name="session">Provided by Visual Studio</param>
         /// <param name="completionSets">Provided by Visual Studio</param>
-
         void ICompletionSource.AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
         {
             if (_showAutocomplete == null)
@@ -47,10 +47,13 @@ namespace TailwindCSSIntellisense.Completions.Sources
                 }
             }
 
-            if (IsInClassScope(session, out string classAttributeValueUpToPosition) == false)
+            if (HtmlParser.IsCursorInClassScope(session.TextView, out var classSpan) == false || classSpan is null)
             {
                 return;
             }
+
+            var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, session.TextView.Caret.Position.BufferPosition);
+            string classAttributeValueUpToPosition = truncatedClassSpan.GetText();
 
             var position = session.TextView.Caret.Position.BufferPosition.Position;
             var snapshot = _textBuffer.CurrentSnapshot;
@@ -113,53 +116,11 @@ namespace TailwindCSSIntellisense.Completions.Sources
             }
         }
 
-        private bool IsInClassScope(ICompletionSession session, out string classText)
-        {
-            var startPos = new SnapshotPoint(session.TextView.TextSnapshot, 0);
-            var caretPos = session.TextView.Caret.Position.BufferPosition;
-
-            var searchSnapshot = new SnapshotSpan(startPos, caretPos);
-            var text = searchSnapshot.GetText();
-
-            var indexOfCurrentClassAttribute = text.LastIndexOf("class=\"", StringComparison.InvariantCultureIgnoreCase);
-            if (indexOfCurrentClassAttribute == -1)
-            {
-                classText = null;
-                return false;
-            }
-            var quotationMarkAfterLastClassAttribute = text.IndexOf('\"', indexOfCurrentClassAttribute);
-            var lastQuotationMark = text.LastIndexOf('\"');
-
-            if (lastQuotationMark == quotationMarkAfterLastClassAttribute)
-            {
-                classText = text.Substring(lastQuotationMark + 1);
-                return true;
-            }
-            else
-            {
-                classText = null;
-                return false;
-            }
-        }
-
         private ITrackingSpan GetApplicableTo(SnapshotPoint triggerPoint, ITextSnapshot snapshot)
         {
-            SnapshotPoint end = triggerPoint;
-            SnapshotPoint start = triggerPoint - 1;
-
-            while (start.GetChar() != '"' && start.GetChar() != ' ')
-            {
-                start -= 1;
-            }
-
-            while (end.Position < snapshot.Length && end.GetChar() != '"' && end.GetChar() != '\'' && !char.IsWhiteSpace(end.GetChar()))
-            {
-                end += 1;
-            }
-
-            start += 1;
-
-            return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end), SpanTrackingMode.EdgeInclusive);
+            var span = HtmlParser.GetClassAttributeValue(triggerPoint);
+            // span should not be null since this is called after we verify the cursor is in a class context
+            return snapshot.CreateTrackingSpan(span.Value, SpanTrackingMode.EdgeInclusive);
         }
     }
 }

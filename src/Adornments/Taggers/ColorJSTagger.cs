@@ -32,36 +32,13 @@ internal sealed class ColorJSTaggerProvider : IViewTaggerProvider
     {
         protected override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot)
         {
-            foreach (var scope in JSParser.GetScopes(span, snapshot))
+            foreach (var classAttributeSpan in JSParser.GetClassAttributeValues(span))
             {
-                // Find offset (i.e. space to first quotation mark)
+                var text = classAttributeSpan.GetText();
 
-                var text = scope.GetText();
-
-                int singleQuote = text.IndexOf('\'');
-                int doubleQuote = text.IndexOf('\"');
-
-                // GetScopes guarantees we will find at least one quote
-                int offset = doubleQuote + 1;
-
-                if (doubleQuote == -1 || (singleQuote != -1 && singleQuote < doubleQuote))
+                foreach (var split in ClassRegexHelper.SplitNonRazorClasses(text))
                 {
-                    offset = singleQuote + 1;
-                }
-
-                text = text.Substring(offset);
-
-                // Now text contains a list of classes (separated by whitespace)
-
-                var classes = text.Split((char[])[], StringSplitOptions.RemoveEmptyEntries);
-                var index = -1;
-
-                foreach (var @class in classes)
-                {
-                    // Keep track of index to account for duplicate classes
-                    index = text.IndexOf(@class, index + 1);
-
-                    yield return new SnapshotSpan(snapshot, scope.Start + offset + index, @class.Length);
+                    yield return new SnapshotSpan(snapshot, classAttributeSpan.Start + split.Index, split.Value.Length);
                 }
             }
         }

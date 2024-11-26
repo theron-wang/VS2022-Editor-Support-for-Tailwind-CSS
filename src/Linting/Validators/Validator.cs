@@ -66,7 +66,7 @@ internal abstract class Validator : IDisposable
         Errors.Clear();
         _checkedSpans.Clear();
 
-        var scopes = GetScopes(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length), _buffer.CurrentSnapshot);
+        var scopes = GetScopes(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length));
         foreach (var scope in scopes)
         {
             Errors.AddRange(GetErrors(scope));
@@ -108,7 +108,7 @@ internal abstract class Validator : IDisposable
             List<Span> update = [];
             foreach (var change in e.Changes)
             {
-                foreach (var scope in GetScopes(new SnapshotSpan(e.After, change.NewSpan), e.After))
+                foreach (var scope in GetScopes(new SnapshotSpan(e.After, change.NewSpan)))
                 {
                     Errors.RemoveAll(err =>
                         err.Span.IntersectsWith(scope) ||
@@ -146,7 +146,7 @@ internal abstract class Validator : IDisposable
         StartUpdate();
     }
 
-    public abstract IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot);
+    public abstract IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span);
 
     public abstract IEnumerable<Error> GetErrors(SnapshotSpan span, bool force = false);
 }

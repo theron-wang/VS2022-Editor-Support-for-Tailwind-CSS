@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0 (November 24th, 2024)
+
+### Fixes
+
+- Move `tailwind.extension.json` to the root of the project containing the Tailwind configuration file ([#81](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/81))
+
+### Additions
+
+- Rewrite class context logic to use regexes to parse files
+- Add custom class name completion contexts with custom regexes ([#79](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/79))
+
 ## 1.6.4 (October 27th, 2024)
 
 ### Additions

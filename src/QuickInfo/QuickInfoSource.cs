@@ -8,7 +8,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 

@@ -12,6 +12,7 @@ using System;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Runtime.InteropServices;
+using TailwindCSSIntellisense.Parsers;
 
 namespace TailwindCSSIntellisense.Completions.Controllers
 {
@@ -67,10 +68,13 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             ThreadHelper.ThrowIfNotOnUIThread();
 
             // Is the caret in a className="" scope?
-            if (IsInClassScope(out string classText) == false)
+            if (JSParser.IsCursorInClassScope(TextView, out var classSpan) == false || classSpan is null)
             {
                 return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
+
+            var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, TextView.Caret.Position.BufferPosition);
+            var classText = truncatedClassSpan.GetText();
 
             bool handled = false;
             bool retrigger = false;
@@ -163,36 +167,6 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
 
             return hresult;
-        }
-
-        private bool IsInClassScope(out string classText)
-        {
-            var startPos = new SnapshotPoint(TextView.TextSnapshot, 0);
-            var caretPos = TextView.Caret.Position.BufferPosition;
-
-            var searchSnapshot = new SnapshotSpan(startPos, caretPos);
-            var text = searchSnapshot.GetText();
-
-            var indexOfCurrentClassAttribute = text.LastIndexOf("className=\"", StringComparison.InvariantCultureIgnoreCase);
-            if (indexOfCurrentClassAttribute == -1)
-            {
-                classText = null;
-                return false;
-            }
-
-            var quotationMarkAfterLastClassAttribute = text.IndexOf('\"', indexOfCurrentClassAttribute);
-            var lastQuotationMark = text.LastIndexOf('\"');
-
-            if (lastQuotationMark == quotationMarkAfterLastClassAttribute)
-            {
-                classText = text.Substring(lastQuotationMark + 1);
-                return true;
-            }
-            else
-            {
-                classText = null;
-                return false;
-            }
         }
 
         private int CharsAfterSignificantPoint(string classText)
