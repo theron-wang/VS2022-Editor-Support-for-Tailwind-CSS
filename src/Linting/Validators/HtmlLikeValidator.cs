@@ -91,22 +91,19 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
 
         foreach (var match in ClassMatchGetter(text, text))
         {
-            if (span.Start.Position >= match.Index && span.Start.Position <= match.Index + match.Length)
-            {
-                var group = ClassRegexHelper.GetClassTextGroup(match);
-                return (match.Value, group.Value);
-            }
+            var group = ClassRegexHelper.GetClassTextGroup(match);
+            return (match.Value, group.Value);
         }
 
         var start = Math.Max(0, (int)span.Start - 2000);
 
-        span = new SnapshotSpan(span.Snapshot, start, Math.Min(span.Snapshot.Length, (int)span.End + 2000) - start);
+        var newSpan = new SnapshotSpan(span.Snapshot, start, Math.Min(span.Snapshot.Length, (int)span.End + 2000) - start);
 
-        text = span.GetText();
+        text = newSpan.GetText();
 
         foreach (var match in ClassMatchGetter(text, text))
         {
-            if (span.Start.Position >= match.Index && span.Start.Position <= match.Index + match.Length)
+            if (span.Start.Position >= newSpan.Start.Position + match.Index && span.Start.Position <= newSpan.Start.Position + match.Index + match.Length)
             {
                 var group = ClassRegexHelper.GetClassTextGroup(match);
                 return (match.Value, group.Value);

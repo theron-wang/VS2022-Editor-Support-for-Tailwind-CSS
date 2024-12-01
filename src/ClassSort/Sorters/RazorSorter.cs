@@ -19,6 +19,12 @@ internal class RazorSorter : Sorter
         {
             indexOfClass = match.Index;
 
+            // If we've already crossed over this part, don't sort again
+            if (indexOfClass < lastIndex)
+            {
+                continue;
+            }
+
             // Verify that we are in an HTML tag
             var closeAngleBracket = file.LastIndexOf('>', indexOfClass);
             var openAngleBracket = file.LastIndexOf('<', indexOfClass);
@@ -30,7 +36,7 @@ internal class RazorSorter : Sorter
 
             yield return file.Substring(lastIndex, indexOfClass - lastIndex);
 
-            lastIndex = match.Index + match.Length - 1;
+            lastIndex = match.Index + match.Length;
 
             if (lastIndex >= file.Length)
             {
@@ -38,11 +44,10 @@ internal class RazorSorter : Sorter
                 yield break;
             }
 
-            // return class=" or class='
-            // match.Groups[0] is the whole class: class="..."
-            // match.Groups[1] is the quote type: " or '
-            var total = match.Groups[0].Value;
-            yield return total.Substring(0, total.IndexOf(match.Groups[1].Value) + match.Groups[1].Length);
+            // returns the text up to the content capture group (such as class=" or class=')
+            var total = match.Value;
+            var classContent = ClassRegexHelper.GetClassTextGroup(match).Value;
+            yield return total.Substring(0, total.IndexOf(classContent));
 
             var tokens = new List<string>();
             var razorIndices = new HashSet<int>();
@@ -51,7 +56,7 @@ internal class RazorSorter : Sorter
             // each number represents a text token in tokens
             var newLines = new HashSet<int>();
 
-            foreach ((var token, var index) in ClassRegexHelper.SplitRazorClasses(ClassRegexHelper.GetClassTextGroup(match).Value).Select((m, i) => (m, i)))
+            foreach ((var token, var index) in ClassRegexHelper.SplitRazorClasses(classContent).Select((m, i) => (m, i)))
             {
                 tokens.Add(token.Value);
                 if (token.Value.StartsWith("@"))
@@ -85,6 +90,7 @@ internal class RazorSorter : Sorter
             }
 
             yield return text.ToString().Trim();
+            yield return total.Substring(total.IndexOf(classContent) + classContent.Length);
         }
 
         yield return file.Substring(lastIndex);

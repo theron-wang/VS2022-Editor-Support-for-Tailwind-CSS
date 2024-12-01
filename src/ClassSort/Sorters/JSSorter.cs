@@ -17,6 +17,12 @@ internal class JSSorter : Sorter
         foreach (var match in ClassRegexHelper.GetClassesJavaScriptEnumerator(file))
         {
             indexOfClass = match.Index;
+            
+            // If we've already crossed over this part, don't sort again
+            if (indexOfClass < lastIndex)
+            {
+                continue;
+            }
 
             // Verify that we are in an HTML tag
             var closeAngleBracket = file.LastIndexOf('>', indexOfClass);
@@ -29,7 +35,7 @@ internal class JSSorter : Sorter
 
             yield return file.Substring(lastIndex, indexOfClass - lastIndex);
 
-            lastIndex = match.Index + match.Length - 1;
+            lastIndex = match.Index + match.Length;
 
             if (lastIndex >= file.Length)
             {
@@ -37,26 +43,13 @@ internal class JSSorter : Sorter
                 yield break;
             }
 
-            // return className=" or className='
-            // match.Groups[0] is the whole class: className="..."
-            // match.Groups[1] is the quote type: " or '
-            var total = match.Groups[0].Value;
-            yield return total.Substring(0, total.IndexOf(match.Groups[1].Value) + match.Groups[1].Length);
-
+            // returns the text up to the content capture group (such as class=" or class=')
+            var total = match.Value;
             var classContent = ClassRegexHelper.GetClassTextGroup(match).Value;
-            if (classContent.Contains('\'') || classContent.Contains('\"'))
-            {
-                // TODO: handle special cases like Alpine JS, Angular, etc.
-                // <div x-bind:class="open ? '' : 'hidden'">
-                // A potential solution is to use another regex to split based on quotation pairs, and 
-                // sort each pair.
-                // At the moment, we will just leave these cases unsorted.
-                yield return classContent;
-            }
-            else
-            {
-                yield return SortSegment(classContent, config);
-            }
+            yield return total.Substring(0, total.IndexOf(classContent));
+
+            yield return SortSegment(classContent, config);
+            yield return total.Substring(total.IndexOf(classContent) + classContent.Length);
         }
 
         yield return file.Substring(lastIndex);

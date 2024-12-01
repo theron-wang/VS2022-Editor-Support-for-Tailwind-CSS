@@ -61,8 +61,56 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 
 6. **Settings for this extension can be updated in Tools > Options > Tailwind CSS IntelliSense.**
 
-7. Custom regexes can be defined in settings. **Please note that:**
-- There can only be one, valid C# regex.
-- Your class content must be located in the `content` capture group. For example, the regex `class="(?<content>.*)"` successfully captures `content`.
-- Custom regexes take precedence over default functionality; that is, if a context is matched in both your custom regex and the original regex, the custom regex will be used.
-- It's recommended to thoroughly test your regexes before adding it into your options. Unintended behavior may occur if the regex is too general or if it overlaps with existing functionality.
+## Customizing Your `tailwind.extension.json` File
+
+- `ConfigurationFile`: The relative path to your configuration file (i.e. `tailwind.config.js`). This will be parsed for IntelliSense purposes.
+- `BuildFiles`: A list of files (relative paths) to build when the project is built. This is useful if you have multiple CSS files that need to be built.
+    - `Input`: The input css file. Each input file may only have one output file.
+	- `Output`: The output css file.
+- `PackageConfigurationFile`: The relative path to your `package.json` file. This is used to determine if a custom build should be used, if you defined an npm script to run in the extension's settings.
+- `UseCli`: Whether to use the Tailwind CLI or `npx tailwindcss` for building. If you have the Tailwind CLI installed and you have defined its location in the extension's settings, you can set this to `true` to use it instead.
+- `CustomRegexes`: Extra regexes to use for completion contexts, sorting, linting, etc., allowing separate options for Razor, HTML, and JS contexts.
+	- `Override`: Whether to override the default regexes. If set to `true`, the extension's default regexes will be ignored.
+	- `Values`: A list of regexes, in order of priority, to use for each context.
+	- **Important notes**:
+		- Regexes may use any valid C# engine regex syntax.
+		- Your class content must be located in the `content` capture group. For example, the regex `class="(?<content>.*)"` successfully captures `content`.
+		- Custom regexes take precedence over default functionality; that is, if a context is matched in both your custom regex and the original regex, the custom regex will be used.
+		- It's recommended to thoroughly test your regexes before adding it into your options. Unintended behavior may occur if the regex is too general or if it overlaps with existing functionality.
+
+Sample file:
+```json
+{
+	"ConfigurationFile": "tailwind.config.js",
+	"BuildFiles": [
+		{
+			"Input": "site.css",
+			"Output": "wwwroot/css/site.output.css"
+		},
+		{
+			"Input": "Components/App.razor.tailwind.css",
+			"Output": "Components/App.razor.css"
+		}
+	],
+	"PackageConfigurationFile": "package.json",
+	"UseCli": false,
+	"CustomRegexes": {
+		"Razor": {
+			"Override": false,
+			"Values": [
+				"your regex"
+			]
+		},
+		"HTML": {
+			"Override": false,
+			"Values": []
+		},
+		"JavaScript": {
+			"Override": true,
+			"Values": [
+				"your regex"
+			]
+		}
+	}
+}
+```

@@ -29,4 +29,5 @@ public class TailwindSettings
     public string BuildScript { get; set; }
     public bool OverrideBuild { get; set; }
     public bool AutomaticallyMinify { get; set; }
+    public CustomRegexes CustomRegexes { get; set; }
 }

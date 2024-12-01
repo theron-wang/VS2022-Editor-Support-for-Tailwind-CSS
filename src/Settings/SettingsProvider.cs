@@ -29,9 +29,8 @@ namespace TailwindCSSIntellisense.Settings
                 VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCacheAndSettingsChanged;
                 VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
                 VS.Events.DocumentEvents.Saved += OnFileSaved;
+                ClassRegexHelper.GetTailwindSettings = GetSettingsAsync;
             });
-
-            ClassRegexHelper.SetCustomRegex(General.Instance.CustomClassRegex);
         }
 
         [Import]
@@ -188,7 +187,8 @@ namespace TailwindCSSIntellisense.Settings
                     AutomaticallyMinify = general.AutomaticallyMinify,
                     TailwindCliPath = general.TailwindCliPath,
                     UseCli = projectSettings.UseCli,
-                    SortClassesType = general.ClassSortType
+                    SortClassesType = general.ClassSortType,
+                    CustomRegexes = projectSettings.CustomRegexes
                 };
 
                 _cachedSettings = returnSettings;
@@ -408,11 +408,6 @@ namespace TailwindCSSIntellisense.Settings
                 origSettings.SortClassesType = settings.ClassSortType;
 
                 ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
-            }
-
-            if (settings.CustomClassRegex != null)
-            {
-                ClassRegexHelper.SetCustomRegex(settings.CustomClassRegex);
             }
 
             _cachedSettings = origSettings;

@@ -18,5 +18,6 @@ internal class TailwindSettingsProjectOnly
     public string OutputCssFile { get; set; }
     public List<BuildPair> BuildFiles { get; set; } = [];
     public string PackageConfigurationFile { get; set; }
+    public CustomRegexes CustomRegexes { get; set; }
     public bool UseCli { get; set; }
 }

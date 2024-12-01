@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.1 (December 1st, 2024)
+
+### Fixes
+
+- Fix a crash which could occur when typing a `\` in a class context
+- Fix corrupt syntax when using libraries like Alpine JS ([#86](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/86))
+- Fix exceptions which could occur when using custom regexes
+
+### Additions
+
+- Project-based custom regexes (via `tailwind.extension.json`), instead of a global definition; check `Getting-Started.md` for more details
+
 ## 1.7.0 (November 24th, 2024)
 
 ### Fixes

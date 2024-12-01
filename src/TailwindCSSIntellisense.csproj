@@ -153,6 +153,7 @@
     <Compile Include="QuickInfo\HtmlQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\QuickInfoSource.cs" />
     <Compile Include="Settings\BuildPair.cs" />
+    <Compile Include="Settings\CustomRegexes.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

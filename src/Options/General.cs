@@ -65,10 +65,6 @@ namespace TailwindCSSIntellisense.Options
         [Description("True if Tailwind CSS completions come before all others; false if after")]
         [DefaultValue(true)]
         public bool TailwindCompletionsComeFirst { get; set; } = true;
-        [Category("Completions")]
-        [DisplayName("Custom class regex")]
-        [Description("Specify an additional regex to identify class contexts. Important: ensure the class content is contained in a capture group called `content`; i.e., the ... in class=\"...\".")]
-        public string CustomClassRegex { get; set; }
         [Category("Class Sort")]
         [DisplayName("Class sort type")]
         [Description("Classes can be sorted manually (with 'Tools' options), on file save (only sorts open file), on build (entire solution), or never.")]
