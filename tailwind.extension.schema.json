@@ -1,0 +1,80 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+	"title": "TailwindSettingsProjectOnly",
+	"properties": {
+		"ConfigurationFile": {
+			"type": "string",
+			"description": "The path to the configuration file."
+		},
+		"InputCssFile": {
+			"type": "string",
+			"description": "Deprecated: use BuildFiles instead."
+		},
+		"OutputCssFile": {
+			"type": "string",
+			"description": "Deprecated: use BuildFiles instead."
+		},
+		"BuildFiles": {
+			"type": "array",
+			"description": "List of input/output build file pairs.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Input": {
+						"type": "string",
+						"description": "The input file for the build."
+					},
+					"Output": {
+						"type": "string",
+						"description": "The output file for the build."
+					}
+				},
+				"required": [ "Input", "Output" ]
+			}
+		},
+		"PackageConfigurationFile": {
+			"type": "string",
+			"description": "The path to the package configuration file."
+		},
+		"CustomRegexes": {
+			"type": "object",
+			"description": "Custom regex configurations for various file types.",
+			"properties": {
+				"Razor": {
+					"$ref": "#/definitions/CustomRegex"
+				},
+				"HTML": {
+					"$ref": "#/definitions/CustomRegex"
+				},
+				"JavaScript": {
+					"$ref": "#/definitions/CustomRegex"
+				}
+			}
+		},
+		"UseCli": {
+			"type": "boolean",
+			"description": "Whether to use the CLI."
+		}
+	},
+	"required": [ "ConfigurationFile", "BuildFiles", "PackageConfigurationFile", "CustomRegexes", "UseCli" ],
+	"definitions": {
+		"CustomRegex": {
+			"type": "object",
+			"properties": {
+				"Override": {
+					"type": "boolean",
+					"description": "Indicates if the default regex is overridden."
+				},
+				"Values": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					},
+					"description": "The list of regex string values."
+				}
+			},
+			"required": [ "Override", "Values" ]
+		}
+	}
+}
