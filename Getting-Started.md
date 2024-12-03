@@ -81,6 +81,7 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 Sample file:
 ```json
 {
+  	"$schema": "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json",
 	"ConfigurationFile": "tailwind.config.js",
 	"BuildFiles": [
 		{
