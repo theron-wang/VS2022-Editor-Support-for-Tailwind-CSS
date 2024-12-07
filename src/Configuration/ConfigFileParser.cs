@@ -47,10 +47,28 @@ namespace TailwindCSSIntellisense.Configuration
 
             var nodePath = processInfo.WorkingDirectory;
 
+            var globalPath = await GetGlobalPackageLocationAsync();
+
+            if (!string.IsNullOrWhiteSpace(processInfo.EnvironmentVariables["NODE_PATH"]))
+            {
+                processInfo.EnvironmentVariables["NODE_PATH"] += ";";
+            }
+
             if (Directory.Exists(Path.Combine(nodePath, "node_modules")))
             {
-                processInfo.EnvironmentVariables.Add("NODE_PATH", Path.Combine(nodePath, "node_modules"));
+                processInfo.EnvironmentVariables["NODE_PATH"] += Path.Combine(nodePath, "node_modules") + ";";
             }
+
+            if (!string.IsNullOrWhiteSpace(globalPath))
+            {
+                processInfo.EnvironmentVariables["NODE_PATH"] += globalPath + ";";
+            }
+
+            if (!string.IsNullOrWhiteSpace(processInfo.EnvironmentVariables["NODE_PATH"]))
+            {
+                processInfo.EnvironmentVariables["NODE_PATH"] = processInfo.EnvironmentVariables["NODE_PATH"].TrimEnd(';');
+            }
+
             using var process = Process.Start(processInfo);
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
@@ -84,6 +102,26 @@ namespace TailwindCSSIntellisense.Configuration
             var fileText = file.ToString().Trim();
 
             return JsonSerializer.Deserialize<JsonObject>(fileText);
+        }
+
+        private async Task<string> GetGlobalPackageLocationAsync()
+        {
+            ProcessStartInfo processStartInfo = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/C npm root -g",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+
+            using Process process = Process.Start(processStartInfo);
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+
+            await process.WaitForExitAsync();
+
+            return output.Trim();
         }
 
         /// <summary>

@@ -237,7 +237,7 @@ namespace TailwindCSSIntellisense.Settings
                 copyBuildFilePair.Add(new()
                 {
                     Input = PathHelpers.GetRelativePath(buildFilePair.Input, projectRoot),
-                    Output = PathHelpers.GetRelativePath(buildFilePair.Output, projectRoot)
+                    Output = string.IsNullOrWhiteSpace(buildFilePair.Output) ? "" : PathHelpers.GetRelativePath(buildFilePair.Output, projectRoot)
                 });
             }
 
@@ -286,7 +286,7 @@ namespace TailwindCSSIntellisense.Settings
                 using var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
                 _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings, options: new()
                 {
-                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                    WriteIndented = true
                 });
                 await _fileWritingTask;
             }
@@ -316,7 +316,7 @@ namespace TailwindCSSIntellisense.Settings
         {
             var projects = await VS.Solutions.GetAllProjectsAsync();
 
-            if (projects.Any() == false)
+            if (projects.Any() == false || string.IsNullOrWhiteSpace(configPath))
             {
                 return null;
             }

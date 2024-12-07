@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.2 (December 1st, 2024)
+
+### Fixes
+
+- Fix an error when parsing configuration files with global packages ([#87](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/87), [#89](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/89))
+- Change `tailwind.extension.json` to serialize to a human-readable format with default values for all properties
+- Fixes an error which occurs when removing a configuration file
+
+### Additions
+
+- Add JSON `$schema` to `tailwind.extension.json` ([#88](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/pull/88))
+
 ## 1.7.1 (December 1st, 2024)
 
 ### Fixes

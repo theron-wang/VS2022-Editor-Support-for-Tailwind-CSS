@@ -37,7 +37,7 @@ namespace TailwindCSSIntellisense
             {
                 if (file.Output.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
                 {
-                    file.Output = null;
+                    file.Output = "";
                 }
             }
 
