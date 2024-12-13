@@ -4,13 +4,10 @@ using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Options;
 using Microsoft.VisualStudio.Shell;
-using EnvDTE;
-using System.Drawing;
 
 namespace TailwindCSSIntellisense.Adornments.Taggers;
 
@@ -188,7 +185,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 var c = color.Substring(1, color.Length - 2);
                 if (ColorHelpers.IsHex(c, out var hex))
                 {
-                    var fromHex = ColorTranslator.FromHtml($"#{hex}");
+                    var fromHex = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
                     return [fromHex.R, fromHex.G, fromHex.B, fromHex.A];
                 }
                 else if (c.StartsWith("rgb"))
