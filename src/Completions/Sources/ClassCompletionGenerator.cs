@@ -372,6 +372,12 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
         // keep non-peer, non-group, non-max modifiers at the end
         completions.AddRange(completionsToAddToEnd);
+
+        foreach (var completion in completions)
+        {
+            completion.Properties.AddProperty("tailwind", true);
+        }
+
         return completions;
     }
 

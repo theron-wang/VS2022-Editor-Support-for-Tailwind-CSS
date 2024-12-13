@@ -458,12 +458,13 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (stem != null)
         {
-            if (_colorDescriptionMapper.TryGetValue($"{hex}/{color}", out value))
-            {
-                return value;
-            }
             if (_completionUtilities.CustomColorMappers != null && _completionUtilities.CustomColorMappers.TryGetValue(stem, out dict) == false)
             {
+                if (_colorDescriptionMapper.TryGetValue($"{hex}/{color}", out value))
+                {
+                    return value;
+                }
+
                 if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
                 {
                     return null;
@@ -484,7 +485,8 @@ internal sealed class DescriptionGenerator : IDisposable
                     }
                 }
             }
-            else if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
+            // Has override, but current color is not included
+            else
             {
                 return null;
             }

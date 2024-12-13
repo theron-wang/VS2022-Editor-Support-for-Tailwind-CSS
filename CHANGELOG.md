@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.7.3 (December 12th, 2024)
+
+### Fixes
+
+- Fixed a NRE which could occur when no configuration file is set
+- Fixed a false error when linting CSS patterns similar to `@media screen and (max-width: 768px) {`
+- Classes with overriden colors (i.e. `backgroundColor`) should not have color adornments or be considered in linting
+
+### Additions
+
+- Improved description tooltip for completions
+
 ## 1.7.2 (December 1st, 2024)
 
 ### Fixes

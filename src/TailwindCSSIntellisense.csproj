@@ -86,6 +86,7 @@
     <Compile Include="Commands\SetAsInputFile.cs" />
     <Compile Include="Commands\SetAsConfigFile.cs" />
     <Compile Include="Completions\BulkInsertObservableCollection.cs" />
+    <Compile Include="Completions\CompletionTooltipProvider.cs" />
     <Compile Include="Completions\Controllers\JavaScriptCompletionController.cs" />
     <Compile Include="Completions\Providers\JS\JavaScriptAsyncCompletionSourceProvider.cs" />
     <Compile Include="Completions\Sources\JS\JavaScriptAsyncCompletionSource.cs" />
@@ -110,6 +111,7 @@
     <Compile Include="Helpers\ColorHelpers.cs" />
     <Compile Include="Helpers\ColorIconGenerator.cs" />
     <Compile Include="Helpers\DescriptionGenerator.cs" />
+    <Compile Include="Helpers\DescriptionUIHelper.cs" />
     <Compile Include="Helpers\ImportantModiferHelper.cs" />
     <Compile Include="Helpers\LegacyRazorEditorHelper.cs" />
     <Compile Include="Helpers\PathHelpers.cs" />
