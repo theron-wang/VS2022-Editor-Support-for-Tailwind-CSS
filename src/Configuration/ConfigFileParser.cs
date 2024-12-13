@@ -133,6 +133,15 @@ namespace TailwindCSSIntellisense.Configuration
         {
             var obj = await GetConfigJsonNodeAsync();
 
+            if (obj is null)
+            {
+                return new TailwindConfiguration
+                {
+                    OverridenValues = [],
+                    ExtendedValues = []
+                };
+            }
+
             if (obj.Count == 1 && obj.ContainsKey("default"))
             {
                 obj = obj["default"].AsObject();

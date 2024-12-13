@@ -9,6 +9,8 @@ using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Options;
 using Microsoft.VisualStudio.Shell;
+using EnvDTE;
+using System.Drawing;
 
 namespace TailwindCSSIntellisense.Adornments.Taggers;
 
@@ -149,7 +151,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             segmentText = text.Substring(0, endsWithArbitrary);
         }
 
-        var segments = segmentText.Split(new char[] { '-' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        var segments = segmentText.Split([ '-' ], StringSplitOptions.RemoveEmptyEntries).ToList();
 
         if (endsWithArbitrary != -1)
         {
@@ -186,7 +188,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 var c = color.Substring(1, color.Length - 2);
                 if (ColorHelpers.IsHex(c, out var hex))
                 {
-                    var fromHex = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
+                    var fromHex = ColorTranslator.FromHtml($"#{hex}");
                     return [fromHex.R, fromHex.G, fromHex.B, fromHex.A];
                 }
                 else if (c.StartsWith("rgb"))
@@ -216,7 +218,15 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 return null;
             }
 
-            if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out var value) == false)
+            string value;
+            if (_completionUtilities.CustomColorMappers != null && _completionUtilities.CustomColorMappers.ContainsKey(stem))
+            {
+                if (_completionUtilities.CustomColorMappers[stem].TryGetValue(color, out value) == false)
+                {
+                    return null;
+                }
+            }
+            else if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
             {
                 return null;
             }

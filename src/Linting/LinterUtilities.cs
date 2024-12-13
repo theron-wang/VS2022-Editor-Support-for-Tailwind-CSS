@@ -71,7 +71,7 @@ internal sealed class LinterUtilities : IDisposable
                     continue;
                 }
 
-                _cacheCssAttributes[classTrimmed] = string.Join(",", desc.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
+                _cacheCssAttributes[classTrimmed] = string.Join(",", desc.Split([ ';' ], StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
             }
 
             cssAttributes[c] = _cacheCssAttributes[classTrimmed];

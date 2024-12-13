@@ -99,7 +99,7 @@ internal class CssValidator : Validator
 
             var query = text.Replace("@media", "").Trim().TrimEnd('{').TrimEnd();
 
-            if (query.StartsWith("screen"))
+            if (query.StartsWith("screen") && query.Contains('(') && string.IsNullOrWhiteSpace(query.Substring(0, query.IndexOf('('))))
             {
                 string screen;
                 try
