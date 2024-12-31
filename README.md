@@ -106,8 +106,8 @@ If you notice that your build file is not being updated, check the Build output 
 
 If something doesn't work as expected or you see an exception message, you can check the detailed log in the Extensions output window.
 
-Please report any errors that you encounter!
-
 ## Support
 
 To report issues or share feature suggestions, feel free to create an issue [on GitHub](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/new).
+
+If this extension has helped you, consider [leaving a small donation](https://github.com/sponsors/theron-wang) to support development!
