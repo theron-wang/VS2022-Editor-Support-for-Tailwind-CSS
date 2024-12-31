@@ -52,7 +52,7 @@ namespace TailwindCSSIntellisense.Configuration
             var jsFiles = await FileFinder.GetJavascriptFilesAsync();
 
             // Best case scenario: user names file tailwind.config.js
-            _configFilePath = jsFiles.FirstOrDefault(f => Path.GetFileName(f).Equals("tailwind.config.js"));
+            _configFilePath = jsFiles.FirstOrDefault(f => DefaultConfigurationFileNames.Names.Contains(Path.GetFileName(f).ToLower()));
 
             if (_configFilePath != null)
             {

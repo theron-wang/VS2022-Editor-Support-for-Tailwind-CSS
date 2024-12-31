@@ -18,7 +18,7 @@ namespace TailwindCSSIntellisense.Configuration
         /// Finds all Javascript files (.js) within the solution
         /// </summary>
         /// <returns>The absolute paths to all Javascript files</returns>
-        internal Task<List<string>> GetJavascriptFilesAsync() => FindAllFilesAsync(".js", ".ts");
+        internal Task<List<string>> GetJavascriptFilesAsync() => FindAllFilesAsync(DefaultConfigurationFileNames.Extensions);
         /// <summary>
         /// Finds all CSS files (.css) within the solution
         /// </summary>

@@ -154,6 +154,148 @@ internal sealed class DescriptionGenerator : IDisposable
         return null;
     }
 
+    internal string GetModifierDescriptions(string modifier)
+    {
+        if (modifier.StartsWith("peer-"))
+        {
+            return $"{GetModifierDescriptions(modifier.Substring(5)).Replace("&", ".peer")} ~ &";
+        }
+        else if (modifier.StartsWith("group-"))
+        {
+            return $".group:{GetModifierDescriptions(modifier.Substring(6)).Replace("&", ".group")} &";
+        }
+        else if (modifier.StartsWith("[") && modifier.EndsWith("]"))
+        {
+            return modifier;
+        }
+        // Special cases
+        else if (modifier == "*")
+        {
+            return "& > *";
+        }
+        else if (modifier == "first-letter" || modifier == "first-line" || modifier == "placeholder" || modifier == "backdrop" || modifier == "before" ||
+                 modifier == "after" || modifier == "marker" || modifier == "selection")
+        {
+            modifier = $":{modifier}";
+        }
+        else if (modifier == "file")
+        {
+            modifier = ":file-selector-button";
+        }
+        else if (modifier == "even" || modifier == "odd")
+        {
+            modifier = $":nth-child({modifier})";
+        }
+        else if (modifier == "open")
+        {
+            return "&[open]";
+        }
+        else if (modifier.StartsWith("aria") || modifier.StartsWith("data"))
+        {
+            if (modifier.Contains('[') || modifier.Contains(']'))
+            {
+                if (!modifier.EndsWith("]"))
+                {
+                    return "";
+                }
+                // arbitrary; return as is without brackets
+                return $"&[{modifier.Replace("[", "").Replace("]", "")}=\"true\"]";
+            }
+            else
+            {
+                return $"&[{modifier}=\"true\"]";
+            }
+        }
+        else if (modifier == "rtl" || modifier == "ltr")
+        {
+            return $"&:where([dir=\"{modifier}\"], [dir=\"{modifier}\"] *)";
+        }
+        else if (modifier.StartsWith("has"))
+        {
+            if (modifier.Contains('[') && modifier.EndsWith("]"))
+            {
+                // has-[ length is 5, remove one extra ] at the end
+                var inner = modifier.Substring(5, modifier.Length - 6);
+
+                return $"&:has({inner})";
+            }
+
+            return "";
+        }
+        // @ media queries
+        else if (modifier.StartsWith("supports"))
+        {
+            if (modifier.Contains('[') && modifier.EndsWith("]"))
+            {
+                // supports-[ length is 10, remove one extra ] at the end
+                var inner = modifier.Substring(10, modifier.Length - 11);
+
+                if (inner.Contains(':'))
+                {
+                    return $"@supports ({inner})";
+                }
+                else
+                {
+                    return $"@supports ({inner}: var(--tw))";
+                }
+            }
+
+            return "";
+        }
+        else if (modifier == "motion-safe")
+        {
+            return "@media (prefers-reduced-motion: no-preference)";
+        }
+        else if (modifier == "motion-reduce")
+        {
+            return "@media (prefers-reduced-motion: reduce)";
+        }
+        else if (modifier == "contrast-more")
+        {
+            return "@media (prefers-contrast: more)";
+        }
+        else if (modifier == "contrast-less")
+        {
+            return "@media (prefers-contrast: less)";
+        }
+        else if (modifier == "portrait" || modifier == "landscape")
+        {
+            return  $"@media (orientation: {modifier})";
+        }
+        else if (modifier == "dark")
+        {
+            return "@media (prefers-color-scheme: dark)";
+        }
+        else if (modifier == "forced-colors")
+        {
+            return "@media (forced-colors: active)";
+        }
+        else if (modifier == "print")
+        {
+            return "@media print";
+        }
+        else if (modifier.StartsWith("min-"))
+        {
+            return $"@media (min-width: {modifier.Substring(5).TrimEnd(']')})";
+        }
+        else if (modifier.StartsWith("max-["))
+        {
+            if (modifier.EndsWith("]"))
+            {
+                return $"@media (min-width: {modifier.Substring(5).TrimEnd(']')})";
+            }
+
+            return "";
+        }
+        else if (_completionUtilities.Screen.Contains(modifier) || _completionUtilities.Screen.Contains($"max-{modifier}"))
+        {
+            // TODO: handle screens
+            return "";
+        }
+
+        return $"&:{modifier}";
+    }
+
     private string GetDescriptionForClassOnly(string tailwindClass, bool shouldFormat = true)
     {
         string description = null;

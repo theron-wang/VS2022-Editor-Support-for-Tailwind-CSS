@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.4 (December 30th, 2024)
+
+### Additions
+
+- Expanded configuration file support to `tailwind.config.{js,cjs,mjs,ts,cts,mts}` ([#35](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/35))
+- Better modifier descriptions for completion tooltips, excluding screen sizes
+
 ## 1.7.3 (December 12th, 2024)
 
 ### Fixes

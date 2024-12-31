@@ -32,7 +32,7 @@ If you do not have `npm` installed, follow [this tutorial](https://docs.npmjs.co
 
 ## Setup
 
-The extension will start in any solution with a `tailwind.config.js` file in any project.
+The extension will start in any solution with a `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file in any project.
 
 If your configuration file is named differently/not found by the extension, you can set the file by right-clicking on it (must be a `.js` or `.ts` file).
 

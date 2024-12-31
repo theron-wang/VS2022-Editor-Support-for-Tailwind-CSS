@@ -16,7 +16,7 @@ If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJ
 
 ## Existing Projects
 
-2. The extension will automatically try to find a `tailwind.config.js` in your solution. If it is not found, however, you can manually set it by **right-clicking your file and selecting 'Set as Tailwind CSS configuration file'**.
+2. The extension will automatically try to find a `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your solution. If it is not found, however, you can manually set it by **right-clicking your file and selecting 'Set as Tailwind CSS configuration file'**.
 
 	**Extension features will only be enabled if a configuration file is found.**
 
@@ -28,7 +28,7 @@ If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJ
 
 ![Set up TailwindCSS](art/NPM-Shortcuts-1.png)
 
-This will import the Tailwind CSS node modules and configure your `tailwind.config.js`.
+This will import the Tailwind CSS node modules and configure your `tailwind.config.{js,cjs,mjs,ts,cts,mts}`.
 
 **Using the standalone Tailwind CSS CLI:**
 - If you have the Tailwind CSS CLI installed, you can click 'Set up Tailwind CSS (use CLI)' instead once you have specified the CLI path in Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path.
@@ -43,7 +43,7 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 @tailwind components;
 @tailwind utilities;
 ```
-- Ensure your `tailwind.config.js` has a valid `content` value (e.g. `["./**/*.{html,cshtml,razor,js}"]`)
+- Ensure your configuration file has a valid `content` value (e.g. `["./**/*.{html,cshtml,razor,js}"]`)
 
 ## Setting Up the Extension
 
@@ -51,7 +51,7 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 
 ![Input and output CSS files](art/Customizability-Build-2.png)
 
-4. IntelliSense will display once you type in any HTML or CSS files, including `.html`, `.css`, `.cshtml`, `.razor` files and more, **as long as there is either a `tailwind.config.js` file or another configuration file specified**.
+4. IntelliSense will display once you type in any HTML or CSS files, including `.html`, `.css`, `.cshtml`, `.razor` files and more, **as long as there is either a `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file or another configuration file specified**.
 
 ![IntelliSense](art/IntelliSense-Demo-1.gif)
 

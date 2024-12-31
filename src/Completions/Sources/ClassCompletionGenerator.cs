@@ -1,5 +1,6 @@
 ﻿using EnvDTE;
 using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
@@ -308,28 +309,37 @@ internal abstract class ClassCompletionGenerator : IDisposable
         var completionsToAddToEnd = new List<Completion>();
         foreach (var modifier in _completionUtils.Modifiers)
         {
+            var description = _descriptionGenerator.GetModifierDescriptions(modifier);
+
             if (modifiers.Contains(modifier) == false)
             {
-                completions.Add(
-                    new Completion(modifier + ":",
-                                        modifiersAsString + modifier + ":",
-                                        modifier,
-                                        _completionUtils.TailwindLogo,
-                                        null));
+                var completion = new Completion(modifier + ":",
+                    modifiersAsString + modifier + ":",
+                    description,
+                    _completionUtils.TailwindLogo,
+                    null);
 
-                completionsToAddToEnd.Add(
-                    new Completion("group-" + modifier + ":",
-                                        modifiersAsString + "group-" + modifier + ":",
-                                        "group-" + modifier,
-                                        _completionUtils.TailwindLogo,
-                                        null));
+                completion.Properties.AddProperty("modifier", true);
+                completions.Add(completion);
 
-                completionsToAddToEnd.Add(
-                    new Completion("peer-" + modifier + ":",
-                                        modifiersAsString + "peer-" + modifier + ":",
-                                        "peer-" + modifier,
-                                        _completionUtils.TailwindLogo,
-                                        null));
+                if (description.StartsWith("&:") && description.Substring(2) == modifier)
+                {
+                    completion = new Completion("group-" + modifier + ":",
+                        modifiersAsString + "group-" + modifier + ":",
+                        _descriptionGenerator.GetModifierDescriptions("group-" + modifier),
+                        _completionUtils.TailwindLogo,
+                        null);
+                    completion.Properties.AddProperty("modifier", true);
+                    completionsToAddToEnd.Add(completion);
+
+                    completion = new Completion("peer-" + modifier + ":",
+                        modifiersAsString + "peer-" + modifier + ":",
+                        _descriptionGenerator.GetModifierDescriptions("peer-" + modifier),
+                        _completionUtils.TailwindLogo,
+                        null);
+                    completion.Properties.AddProperty("modifier", true);
+                    completionsToAddToEnd.Add(completion);
+                }
             }
         }
 
@@ -339,12 +349,14 @@ internal abstract class ClassCompletionGenerator : IDisposable
             {
                 if (modifiers.Contains(modifier) == false)
                 {
-                    completions.Add(
-                        new Completion(modifier,
+                    var completion = new Completion(modifier,
                                             modifiersAsString + modifier + ":",
                                             modifier,
                                             _completionUtils.TailwindLogo,
-                                            null));
+                                            null);
+
+                    completion.Properties.AddProperty("modifier", true);
+                    completions.Add(completion);
                 }
             }
         }
@@ -353,20 +365,22 @@ internal abstract class ClassCompletionGenerator : IDisposable
         {
             if (modifiers.Contains(screen) == false)
             {
-                completions.Add(
-                    new Completion(screen + ":",
+                var completion = new Completion(screen + ":",
                                         modifiersAsString + screen + ":",
                                         screen,
                                         _completionUtils.TailwindLogo,
-                                        null));
+                                        null);
 
-                completionsToAddToEnd.Add(
-                    new Completion("max-" + screen + ":",
+                completion.Properties.AddProperty("modifier", true);
+                completions.Add(completion);
+
+                completion = new Completion("max-" + screen + ":",
                                         modifiersAsString + "max-" + screen + ":",
                                         screen,
                                         _completionUtils.TailwindLogo,
-                                        null));
-
+                                        null);
+                completion.Properties.AddProperty("modifier", true);
+                completions.Add(completion);
             }
         }
 

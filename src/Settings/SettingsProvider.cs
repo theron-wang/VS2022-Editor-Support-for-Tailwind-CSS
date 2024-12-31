@@ -367,9 +367,11 @@ namespace TailwindCSSIntellisense.Settings
 
                 return Path.GetDirectoryName(
                     projects.FirstOrDefault(p =>
-                        File.Exists(
-                            Path.Combine(
-                                Path.GetDirectoryName(p.FullPath), "tailwind.config.js")
+                        DefaultConfigurationFileNames.Names.Any(n => 
+                            File.Exists(
+                                Path.Combine(
+                                    Path.GetDirectoryName(p.FullPath), n)
+                                )
                             )
                         )?.FullPath ??
                     projects.First().FullPath);
@@ -380,7 +382,7 @@ namespace TailwindCSSIntellisense.Settings
         {
             var paths = await FileFinder.GetJavascriptFilesAsync();
 
-            return paths.FirstOrDefault(p => Path.GetFileName(p).Equals("tailwind.config.js", StringComparison.InvariantCultureIgnoreCase));
+            return paths.FirstOrDefault(p => DefaultConfigurationFileNames.Names.Contains(Path.GetFileName(p).ToLower()));
         }
 
         private void GeneralSettingsChanged(General settings)

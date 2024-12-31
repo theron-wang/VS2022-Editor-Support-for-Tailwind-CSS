@@ -110,6 +110,7 @@
     <Compile Include="Helpers\ClassRegexHelper.cs" />
     <Compile Include="Helpers\ColorHelpers.cs" />
     <Compile Include="Helpers\ColorIconGenerator.cs" />
+    <Compile Include="Helpers\DefaultConfigurationFileNames.cs" />
     <Compile Include="Helpers\DescriptionGenerator.cs" />
     <Compile Include="Helpers\DescriptionUIHelper.cs" />
     <Compile Include="Helpers\ImportantModifierHelper.cs" />

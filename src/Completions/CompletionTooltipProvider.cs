@@ -21,7 +21,7 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
 {
     public UIElement GetUIElement(Completion itemToRender, ICompletionSession context, UIElementType elementType)
     {
-        if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind"))
+        if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind") && !itemToRender.Properties.ContainsProperty("modifier"))
         {
             var fullText = itemToRender.DisplayText;
             var classText = fullText.Split(':').Last();
