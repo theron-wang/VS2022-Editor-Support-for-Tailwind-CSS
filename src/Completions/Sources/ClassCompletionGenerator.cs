@@ -309,7 +309,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
         var completionsToAddToEnd = new List<Completion>();
         foreach (var modifier in _completionUtils.Modifiers)
         {
-            var description = _descriptionGenerator.GetModifierDescriptions(modifier);
+            var description = _descriptionGenerator.GetModifierDescription(modifier);
 
             if (modifiers.Contains(modifier) == false)
             {
@@ -326,7 +326,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 {
                     completion = new Completion("group-" + modifier + ":",
                         modifiersAsString + "group-" + modifier + ":",
-                        _descriptionGenerator.GetModifierDescriptions("group-" + modifier),
+                        _descriptionGenerator.GetModifierDescription("group-" + modifier),
                         _completionUtils.TailwindLogo,
                         null);
                     completion.Properties.AddProperty("modifier", true);
@@ -334,7 +334,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                     completion = new Completion("peer-" + modifier + ":",
                         modifiersAsString + "peer-" + modifier + ":",
-                        _descriptionGenerator.GetModifierDescriptions("peer-" + modifier),
+                        _descriptionGenerator.GetModifierDescription("peer-" + modifier),
                         _completionUtils.TailwindLogo,
                         null);
                     completion.Properties.AddProperty("modifier", true);

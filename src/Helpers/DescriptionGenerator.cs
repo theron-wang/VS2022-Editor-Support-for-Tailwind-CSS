@@ -154,15 +154,15 @@ internal sealed class DescriptionGenerator : IDisposable
         return null;
     }
 
-    internal string GetModifierDescriptions(string modifier)
+    internal string GetModifierDescription(string modifier)
     {
         if (modifier.StartsWith("peer-"))
         {
-            return $"{GetModifierDescriptions(modifier.Substring(5)).Replace("&", ".peer")} ~ &";
+            return $"{GetModifierDescription(modifier.Substring(5)).Replace("&", ".peer")} ~ &";
         }
         else if (modifier.StartsWith("group-"))
         {
-            return $".group:{GetModifierDescriptions(modifier.Substring(6)).Replace("&", ".group")} &";
+            return $".group:{GetModifierDescription(modifier.Substring(6)).Replace("&", ".group")} &";
         }
         else if (modifier.StartsWith("[") && modifier.EndsWith("]"))
         {
