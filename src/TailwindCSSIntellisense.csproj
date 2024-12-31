@@ -112,7 +112,7 @@
     <Compile Include="Helpers\ColorIconGenerator.cs" />
     <Compile Include="Helpers\DescriptionGenerator.cs" />
     <Compile Include="Helpers\DescriptionUIHelper.cs" />
-    <Compile Include="Helpers\ImportantModiferHelper.cs" />
+    <Compile Include="Helpers\ImportantModifierHelper.cs" />
     <Compile Include="Helpers\LegacyRazorEditorHelper.cs" />
     <Compile Include="Helpers\PathHelpers.cs" />
     <Compile Include="Helpers\RazorClassScopeHelper.cs" />

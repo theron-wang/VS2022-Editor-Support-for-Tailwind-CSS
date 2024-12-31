@@ -26,7 +26,7 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
             var fullText = itemToRender.DisplayText;
             var classText = fullText.Split(':').Last();
 
-            var isImportant = ImportantModiferHelper.IsImportantModifier(classText);
+            var isImportant = ImportantModifierHelper.IsImportantModifier(classText);
 
             var desc = itemToRender.Description;
 

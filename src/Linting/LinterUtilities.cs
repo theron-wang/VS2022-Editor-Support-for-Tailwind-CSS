@@ -55,7 +55,7 @@ internal sealed class LinterUtilities : IDisposable
         {
             var classTrimmed = c.Split(':').Last().Trim();
 
-            if (ImportantModiferHelper.IsImportantModifier(classTrimmed))
+            if (ImportantModifierHelper.IsImportantModifier(classTrimmed))
             {
                 classTrimmed = classTrimmed.TrimStart('!');
             }

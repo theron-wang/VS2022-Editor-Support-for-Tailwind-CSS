@@ -75,7 +75,7 @@ internal sealed class DescriptionGenerator : IDisposable
             }
         }
 
-        if (ImportantModiferHelper.IsImportantModifier(text))
+        if (ImportantModifierHelper.IsImportantModifier(text))
         {
             text = text.TrimStart('!');
         }

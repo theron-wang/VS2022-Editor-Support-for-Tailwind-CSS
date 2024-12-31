@@ -1,5 +1,5 @@
 ﻿namespace TailwindCSSIntellisense.Helpers;
-internal class ImportantModiferHelper
+internal class ImportantModifierHelper
 {
     public static bool IsImportantModifier(string classText)
     {

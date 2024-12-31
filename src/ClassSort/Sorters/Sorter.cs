@@ -119,7 +119,7 @@ internal abstract class Sorter
             })
             .ThenBy(className =>
             {
-                if (ImportantModiferHelper.IsImportantModifier(className))
+                if (ImportantModifierHelper.IsImportantModifier(className))
                 {
                     className = className.TrimStart('!');
                 }

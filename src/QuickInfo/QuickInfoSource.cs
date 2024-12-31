@@ -41,7 +41,7 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
             var fullText = classSpan.Value.GetText();
             var classText = fullText.Split(':').Last();
 
-            var isImportant = ImportantModiferHelper.IsImportantModifier(classText);
+            var isImportant = ImportantModifierHelper.IsImportantModifier(classText);
 
             if (isImportant)
             {

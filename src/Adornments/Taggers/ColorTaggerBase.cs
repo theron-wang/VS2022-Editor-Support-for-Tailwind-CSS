@@ -119,7 +119,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     {
         text = text.Split(':').Last();
 
-        if (ImportantModiferHelper.IsImportantModifier(text))
+        if (ImportantModifierHelper.IsImportantModifier(text))
         {
             text = text.TrimStart('!');
         }
