@@ -136,7 +136,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                 {
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
                         var character = GetTypeChar(pvaIn);
-                        if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 1 || character == ' ' || character == ':' || character == '/')
+                        if (_currentSession == null || character == ' ' || character == '/')
                         {
                             _currentSession?.Dismiss();
                             StartSession();
@@ -156,9 +156,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                         {
                             break;
                         }
-                        // backspace is applied after this function is called, so this is actually
-                        // equivalent to <= 1 (like above)
-                        if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
+                        if (_currentSession == null || classText.EndsWith("/"))
                         {
                             _currentSession?.Dismiss();
                             StartSession();
@@ -174,13 +172,6 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         }
 
         return hresult;
-    }
-
-    private int CharsAfterSignificantPoint(string classText)
-    {
-        var textAfterSignificantPoint = classText.Split(' ', ':').Last();
-
-        return textAfterSignificantPoint.Length;
     }
 
     private bool RetriggerIntellisense(string classText)
@@ -288,14 +279,29 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         if (completionActive)
         {
             _currentSession = Broker.GetSessions(TextView).FirstOrDefault(s => s.SelectedCompletionSet?.DisplayName?.Contains("Shim") == false);
+            _currentSession.Dismissed += (sender, args) => _currentSession = null;
+
+            if (_currentSession.SelectedCompletionSet is TailwindCssCompletionSet)
+            {
+                // Not handled correctly; sometimes these sessions do not get dismissed so we should dismiss them here
+                // This can be easily reproduced when typing bg-green-50/ and then backspacing /
+                // We expect transparency options to disappear, but they are still there
+
+                _currentSession.Dismiss();
+                _currentSession = null;
+            }
+            else
+            {
+                return true;
+            }
         }
         if (!completionActive || _currentSession is null)
         {
             DismissOtherSessions();
             _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
+            _currentSession.Dismissed += (sender, args) => _currentSession = null;
             _currentSession.Start();
         }
-        _currentSession.Dismissed += (sender, args) => _currentSession = null;
 
         return true;
     }

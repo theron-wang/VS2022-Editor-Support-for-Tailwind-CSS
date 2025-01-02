@@ -131,7 +131,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     {
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             var character = GetTypeChar(pvaIn);
-                            if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 1 || character == ':' || character == '/')
+                            if (_currentSession == null || character == ' ' || character == '/')
                             {
                                 _currentSession?.Dismiss();
                                 StartSession();
@@ -151,7 +151,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             {
                                 break;
                             }
-                            if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
+                            if (_currentSession == null || classText.EndsWith("/"))
                             {
                                 _currentSession?.Dismiss();
                                 StartSession();
@@ -167,13 +167,6 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
 
             return hresult;
-        }
-
-        private int CharsAfterSignificantPoint(string classText)
-        {
-            var textAfterSignificantPoint = classText.Split(' ', ':').Last();
-
-            return textAfterSignificantPoint.Length;
         }
 
         private bool RetriggerIntellisense(string classText)

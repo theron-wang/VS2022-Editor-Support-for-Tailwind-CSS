@@ -110,4 +110,4 @@ If something doesn't work as expected or you see an exception message, you can c
 
 To report issues or share feature suggestions, feel free to create an issue [on GitHub](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/new).
 
-If this extension has helped you, consider [leaving a small donation](https://github.com/sponsors/theron-wang) to support development!
+If this extension has helped you, please consider [leaving a small donation](https://github.com/sponsors/theron-wang) to support development!

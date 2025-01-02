@@ -47,8 +47,6 @@ namespace TailwindCSSIntellisense
         public const int SetUpAndInstallTailwindCmdId = 0x0109;
         public const int SetUpTailwindCliCmdId = 0x0110;
         public const int SetUpTailwindWsCmdId = 0x0111;
-        public const int StartBuildProcessWsCmdId = 0x0112;
-        public const int StopBuildProcessWsCmdId = 0x0113;
         public const int SortInOpenFileCmdId = 0x0114;
         public const int SortEntireSolutionCmdId = 0x0115;
         public const int SetAsPackageConfigFileCmdId = 0x0116;

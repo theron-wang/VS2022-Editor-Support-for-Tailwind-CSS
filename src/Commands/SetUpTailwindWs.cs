@@ -40,52 +40,69 @@ namespace TailwindCSSIntellisense
                     path.TrimEnd(Path.DirectorySeparatorChar).Equals(selected.TrimEnd(Path.DirectorySeparatorChar), StringComparison.InvariantCultureIgnoreCase) &&
                     (string.IsNullOrEmpty(settings.TailwindConfigurationFile) || File.Exists(settings.TailwindConfigurationFile) == false);
             }
+            else
+            {
+                Command.Visible = false;
+            }
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
         {
-            var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
-            await TailwindSetUpProcess.RunAsync(directory);
-
-            var configFile = Path.Combine(directory, "tailwind.config.js");
-
-            var settings = await SettingsProvider.GetSettingsAsync();
-            settings.TailwindConfigurationFile = configFile;
-            await SettingsProvider.OverrideSettingsAsync(settings);
-
-            var fileNames = new string[]
+            if (!TailwindSetUpProcess.IsSettingUp)
             {
-                Path.Combine(directory, "package.json"),
-                Path.Combine(directory, "package-lock.json"),
-                configFile
-            };
+                var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
 
-            try
-            {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                // Check again to see if there were any changes since the last settings cache
+                // User may have manually run the setup command, for example
+                SettingsProvider.RefreshSettings();
+                var settings = await SettingsProvider.GetSettingsAsync();
 
-                var projects = await VS.Solutions.GetAllProjectHierarchiesAsync();
-
-                foreach (IVsHierarchy hierarchy in projects)
+                if (!string.IsNullOrEmpty(settings.TailwindConfigurationFile) && File.Exists(settings.TailwindConfigurationFile))
                 {
-                    // Get itemId of the hierarchy so we can use it to get the SolutionItem
-                    hierarchy.ParseCanonicalName(directory, out var itemId);
+                    return;
+                }
 
-                    var folder = await SolutionItem.FromHierarchyAsync(hierarchy, itemId);
+                await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory));
 
-                    // Include the created file if the current iterated folder/project is the same as the one that is selected
-                    if (Path.GetDirectoryName(folder.FullPath) == directory)
+                var configFile = Path.Combine(directory, "tailwind.config.js");
+
+                settings.TailwindConfigurationFile = configFile;
+                await SettingsProvider.OverrideSettingsAsync(settings);
+
+                var fileNames = new string[]
+                {
+                    Path.Combine(directory, "package.json"),
+                    Path.Combine(directory, "package-lock.json"),
+                    configFile
+                };
+
+                try
+                {
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                    var projects = await VS.Solutions.GetAllProjectHierarchiesAsync();
+
+                    foreach (IVsHierarchy hierarchy in projects)
                     {
-                        var project = (Project)folder;
-                        await project.AddExistingFilesAsync(fileNames);
+                        // Get itemId of the hierarchy so we can use it to get the SolutionItem
+                        hierarchy.ParseCanonicalName(directory, out var itemId);
+
+                        var folder = await SolutionItem.FromHierarchyAsync(hierarchy, itemId);
+
+                        // Include the created file if the current iterated folder/project is the same as the one that is selected
+                        if (Path.GetDirectoryName(folder.FullPath) == directory)
+                        {
+                            var project = (Project)folder;
+                            await project.AddExistingFilesAsync(fileNames);
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                await ex.LogAsync();
-                await VS.StatusBar.ShowMessageAsync("One or more TailwindCSS items could not be included in the project. Click the 'Show All Files' button to see them.");
-            }
+                catch (Exception ex)
+                {
+                    await ex.LogAsync();
+                    await VS.StatusBar.ShowMessageAsync("One or more Tailwind CSS items could not be shown in the Solution Explorer.");
+                }
+            }            
         }
     }
 }

@@ -131,7 +131,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     {
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             var character = GetTypeChar(pvaIn);
-                            if (character == ' ' || (isInApply && (_currentSession == null || CharsAfterSignificantPoint(classText) <= 1 || character == ':' || character == '/')))
+                            if (character == ' ' || (isInApply && (_currentSession == null || character == '/')))
                             {
                                 _currentSession?.Dismiss();
                                 StartSession(true);
@@ -152,9 +152,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             {
                                 break;
                             }
-                            // backspace is applied after this function is called, so this is actually
-                            // equivalent to <= 1 (like above)
-                            if (isInApply && (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/")))
+                            if (isInApply && (_currentSession == null || classText.EndsWith("/")))
                             {
                                 _currentSession?.Dismiss();
                                 StartSession(true);
@@ -171,13 +169,6 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
 
             return hresult;
-        }
-
-        private int CharsAfterSignificantPoint(string classText)
-        {
-            var textAfterSignificantPoint = classText.Split(' ', ':').Last();
-
-            return textAfterSignificantPoint.Length;
         }
 
         private bool RetriggerIntellisense(string classText)

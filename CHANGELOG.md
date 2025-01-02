@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0 (January 1st, 2025)
+
+- Added modifier descriptions for quick info tooltips
+- Fixed missing support in open folder contexts ([#35](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/35))
+- Show all classes in an empty context (i.e. `class="bg-green-900 |"`, where `|` represents the cursor) for a smoother IntelliSense experience
+- 'Set up and install Tailwind CSS' context menu command now searches for an existing Tailwind configuration file before downloading Tailwind
+
 ## 1.7.4 (December 30th, 2024)
 
 ### Additions

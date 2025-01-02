@@ -24,6 +24,12 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
         if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind") && !itemToRender.Properties.ContainsProperty("modifier"))
         {
             var fullText = itemToRender.DisplayText;
+            
+            if (fullText.EndsWith("[]"))
+            {
+                return null;
+            }
+
             var classText = fullText.Split(':').Last();
 
             var isImportant = ImportantModifierHelper.IsImportantModifier(classText);

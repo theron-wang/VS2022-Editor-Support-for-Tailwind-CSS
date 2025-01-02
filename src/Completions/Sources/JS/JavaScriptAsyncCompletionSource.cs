@@ -71,12 +71,10 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
         var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, session.TextView.Caret.Position.BufferPosition);
         string classText = truncatedClassSpan.GetText();
 
-        applicableToSpan = GetApplicableTo(triggerLocation, session.TextView.TextSnapshot);
-
-        var items = GetCompletions(classText.Split().Last())
+        var items = GetCompletions(applicableToSpan.GetText())
             .Select(c =>
             {
-                var item = new CompletionItem(c.DisplayText, this, _icon, ImmutableArray<CompletionFilter>.Empty, null, c.InsertionText, c.DisplayText, c.DisplayText, null, ImmutableArray<ImageElement>.Empty, ImmutableArray<char>.Empty, applicableToSpan, false, false);
+                var item = new CompletionItem(c.DisplayText, this, _icon, ImmutableArray<CompletionFilter>.Empty, null, c.InsertionText, c.InsertionText, c.InsertionText, null, ImmutableArray<ImageElement>.Empty, ImmutableArray<char>.Empty, applicableToSpan, false, false);
                 item.Properties.AddProperty("description", c.Description);
 
                 return item;
@@ -96,42 +94,6 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
         }
         return Task.FromResult<object>("");
     }
-
-
-    private bool IsInClassScope(ITextSnapshot snapshot, SnapshotPoint trigger, out string classText)
-    {
-        if (snapshot != trigger.Snapshot)
-        {
-            classText = null;
-            return false;
-        }
-
-        var startPos = new SnapshotPoint(snapshot, 0);
-
-        var searchSnapshot = new SnapshotSpan(startPos, trigger);
-        var text = searchSnapshot.GetText();
-
-        var indexOfCurrentClassAttribute = text.LastIndexOf("className=\"", StringComparison.InvariantCultureIgnoreCase);
-        if (indexOfCurrentClassAttribute == -1)
-        {
-            classText = null;
-            return false;
-        }
-        var quotationMarkAfterLastClassAttribute = text.IndexOf('\"', indexOfCurrentClassAttribute);
-        var lastQuotationMark = text.LastIndexOf('\"');
-
-        if (lastQuotationMark == quotationMarkAfterLastClassAttribute)
-        {
-            classText = text.Substring(lastQuotationMark + 1);
-            return true;
-        }
-        else
-        {
-            classText = null;
-            return false;
-        }
-    }
-
     private SnapshotSpan GetApplicableTo(SnapshotPoint triggerPoint, ITextSnapshot snapshot)
     {
         SnapshotPoint end = triggerPoint;
@@ -142,12 +104,13 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
             start -= 1;
         }
 
-        while (end.Position < snapshot.Length && end.GetChar() != '"' && end.GetChar() != '\'' && !char.IsWhiteSpace(end.GetChar()))
+        start += 1;
+
+        // SnapshotSpan is not inclusive of end
+        if (end.Position + 1 < snapshot.Length)
         {
             end += 1;
         }
-
-        start += 1;
 
         return new SnapshotSpan(start, end);
     }

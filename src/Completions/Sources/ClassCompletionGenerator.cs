@@ -62,7 +62,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
         {
             prefix = "";
         }
-        
+
         if (isImportant)
         {
             prefix = $"!{prefix}";
@@ -91,179 +91,50 @@ internal abstract class ClassCompletionGenerator : IDisposable
         }
         var segments = currentClass.Split('-');
 
-        if (string.IsNullOrWhiteSpace(currentClass) == false || isImportant)
+        IEnumerable<TailwindClass> scope = _completionUtils.Classes;
+        string currentClassStem = "!";
+        if (string.IsNullOrWhiteSpace(currentClass))
         {
-            IEnumerable<TailwindClass> scope;
-            string currentClassStem = "!";
-            if (isImportant && string.IsNullOrWhiteSpace(currentClass))
+            if (!isImportant)
             {
-                scope = _completionUtils.Classes;
+                currentClassStem = "";
+            }
+        }
+        else
+        {
+            if (currentClass.Length > 0 && currentClass[0] == '-')
+            {
+                currentClassStem = $"-{currentClass.Split('-')[1]}";
             }
             else
             {
-                string searchClass;
-                if (currentClass.Length > 0 && currentClass[0] == '-')
+                currentClassStem = currentClass.Split('-')[0];
+            }
+        }
+
+        if (currentClass.StartsWith("-") == false)
+        {
+            scope = scope.OrderBy(c => c.Name.StartsWith("-"));
+        }
+
+        foreach (var twClass in scope)
+        {
+            if (twClass.UseColors)
+            {
+                IEnumerable<string> colors;
+
+                if (_completionUtils.CustomColorMappers != null && _completionUtils.CustomColorMappers.ContainsKey(twClass.Name))
                 {
-                    currentClassStem = $"-{currentClass.Split('-')[1]}";
-                    searchClass = $"-{currentClass.TrimStart('-')}";
+                    colors = _completionUtils.CustomColorMappers[twClass.Name].Keys;
                 }
                 else
                 {
-                    currentClassStem = currentClass.Split('-')[0];
-                    searchClass = currentClass;
+                    colors = _completionUtils.ColorToRgbMapper.Keys;
                 }
 
-                var startsWith = currentClass[0].ToString();
-                if (currentClass.Length > 1)
+                foreach (var color in colors)
                 {
-                    startsWith += currentClass[1];
-                }
-                scope = _completionUtils.Classes.Where(
-                    c => c.Name.Contains(searchClass) || c.Name.StartsWith(startsWith) || c.UseColors);
-
-            }
-
-            if (currentClass.StartsWith("-") == false)
-            {
-                scope = scope.OrderBy(c => c.Name.StartsWith("-"));
-            }
-
-            foreach (var twClass in scope)
-            {
-                if (twClass.UseColors)
-                {
-                    IEnumerable<string> colors;
-
-                    if (_completionUtils.CustomColorMappers != null && _completionUtils.CustomColorMappers.ContainsKey(twClass.Name))
-                    {
-                        colors = _completionUtils.CustomColorMappers[twClass.Name].Keys;
-                    }
-                    else
-                    {
-                        colors = _completionUtils.ColorToRgbMapper.Keys;
-                    }
-
-                    if (twClass.Name.StartsWith(currentClassStem) == false)
-                    {
-                        // If you're typing in 'tra' to get transform, you don't need a bunch of
-                        // completions saying bg-neutral
-                        colors = colors.Where(c => c.StartsWith(currentClassStem));
-                    }
-
-                    foreach (var color in colors)
-                    {
-                        var className = string.Format(twClass.Name, color);
-
-                        if (className.StartsWith("-"))
-                        {
-                            className = $"-{prefix}{className.TrimStart('-')}";
-                        }
-                        else
-                        {
-                            className = $"{prefix}{className}";
-                        }
-
-                        if (!_completionUtils.IsClassAllowed(className))
-                        {
-                            continue;
-                        }
-
-                        completions.Add(
-                                    new Completion(className,
-                                                        modifiersAsString + className,
-                                                        _descriptionGenerator.GetDescription(className),
-                                                        _colorIconGenerator.GetImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
-                                                        null));
-
-                        if (twClass.UseOpacity && currentClass.Contains(color) && currentClass.Contains('/'))
-                        {
-                            foreach (var opacity in _completionUtils.Opacity)
-                            {
-                                if (!_completionUtils.IsClassAllowed($"{className}/{opacity}"))
-                                {
-                                    continue;
-                                }
-
-                                completions.Add(
-                                        new Completion($"{className}/{opacity}",
-                                                            $"{modifiersAsString}{className}/{opacity}",
-                                                            _descriptionGenerator.GetDescription($"{className}/{opacity}"),
-                                                            _colorIconGenerator.GetImageFromColor(twClass.Name, color, opacity),
-                                                            null));
-                            }
-                            completions.Add(
-                                        new Completion(className + "/[]",
-                                                            modifiersAsString + className + "/[]",
-                                                            className + "/[]",
-                                                            _completionUtils.TailwindLogo,
-                                                            null));
-                        }
-
-
-                    }
-                }
-                else if (twClass.UseSpacing)
-                {
-                    IEnumerable<string> spacings;
-
-                    if (_completionUtils.CustomSpacingMappers != null && _completionUtils.CustomSpacingMappers.TryGetValue(twClass.Name, out var value))
-                    {
-                        spacings = value.Keys;
-                    }
-                    else
-                    {
-                        spacings = _completionUtils.SpacingMapper.Keys;
-                    }
-
-                    foreach (var spacing in spacings)
-                    {
-                        var className = string.IsNullOrWhiteSpace(spacing) ? twClass.Name.Replace("-{0}", "") : string.Format(twClass.Name, spacing);
-
-                        if (className.StartsWith("-"))
-                        {
-                            className = $"-{prefix}{className.TrimStart('-')}";
-                        }
-                        else
-                        {
-                            className = $"{prefix}{className}";
-                        }
-
-                        if (!_completionUtils.IsClassAllowed(className))
-                        {
-                            continue;
-                        }
-
-                        completions.Add(
-                            new Completion(className,
-                                                modifiersAsString + className,
-                                                _descriptionGenerator.GetDescription(className),
-                                                _completionUtils.TailwindLogo,
-                                                null));
-                    }
-                }
-                else if (twClass.SupportsBrackets)
-                {
-                    var className = twClass.Name;
-
-                    if (className.StartsWith("-"))
-                    {
-                        className = $"-{prefix}{className.TrimStart('-')}";
-                    }
-                    else
-                    {
-                        className = $"{prefix}{className}";
-                    }
-
-                    completions.Add(
-                    new Completion(className + "[]",
-                                        modifiersAsString + className + "[]",
-                                        twClass.Name + "[]",
-                                        _completionUtils.TailwindLogo,
-                                        null));
-                }
-                else
-                {
-                    var className = twClass.Name;
+                    var className = string.Format(twClass.Name, color);
 
                     if (className.StartsWith("-"))
                     {
@@ -280,33 +151,146 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     }
 
                     completions.Add(
-                    new Completion(className,
-                                        modifiersAsString + className,
-                                        _descriptionGenerator.GetDescription(twClass.Name),
-                                        _completionUtils.TailwindLogo,
-                                        null));
+                                new Completion(className,
+                                                    modifiersAsString + className,
+                                                    _descriptionGenerator.GetDescription(className),
+                                                    _colorIconGenerator.GetImageFromColor(twClass.Name, color, color == "transparent" ? 0 : 100),
+                                                    null));
+
+                    if (twClass.UseOpacity && currentClass.Contains(color) && currentClass.Contains('/') && currentClass.StartsWith(className))
+                    {
+                        foreach (var opacity in _completionUtils.Opacity)
+                        {
+                            if (!_completionUtils.IsClassAllowed($"{className}/{opacity}"))
+                            {
+                                continue;
+                            }
+
+                            completions.Add(
+                                    new Completion($"{className}/{opacity}",
+                                                        $"{modifiersAsString}{className}/{opacity}",
+                                                        _descriptionGenerator.GetDescription($"{className}/{opacity}"),
+                                                        _colorIconGenerator.GetImageFromColor(twClass.Name, color, opacity),
+                                                        null));
+                        }
+                        completions.Add(
+                                    new Completion(className + "/[]",
+                                                        modifiersAsString + className + "/[]",
+                                                        className + "/[]",
+                                                        _completionUtils.TailwindLogo,
+                                                        null));
+                    }
+
+
                 }
             }
-
-            if (_completionUtils.PluginClasses != null)
+            else if (twClass.UseSpacing)
             {
-                foreach (var pluginClass in _completionUtils.PluginClasses)
+                IEnumerable<string> spacings;
+
+                if (_completionUtils.CustomSpacingMappers != null && _completionUtils.CustomSpacingMappers.TryGetValue(twClass.Name, out var value))
                 {
-                    if (!_completionUtils.IsClassAllowed(pluginClass))
+                    spacings = value.Keys;
+                }
+                else
+                {
+                    spacings = _completionUtils.SpacingMapper.Keys;
+                }
+
+                foreach (var spacing in spacings)
+                {
+                    var className = string.IsNullOrWhiteSpace(spacing) ? twClass.Name.Replace("-{0}", "") : string.Format(twClass.Name, spacing);
+
+                    if (className.StartsWith("-"))
+                    {
+                        className = $"-{prefix}{className.TrimStart('-')}";
+                    }
+                    else
+                    {
+                        className = $"{prefix}{className}";
+                    }
+
+                    if (!_completionUtils.IsClassAllowed(className))
                     {
                         continue;
                     }
 
                     completions.Add(
-                        new Completion(pluginClass.TrimStart('.'),
-                                            modifiersAsString + prefix + pluginClass.TrimStart('.'),
-                                            _descriptionGenerator.GetDescription(pluginClass.TrimStart('.')),
+                        new Completion(className,
+                                            modifiersAsString + className,
+                                            _descriptionGenerator.GetDescription(className),
                                             _completionUtils.TailwindLogo,
                                             null));
                 }
             }
+            else if (twClass.SupportsBrackets)
+            {
+                var className = twClass.Name;
+
+                if (className.StartsWith("-"))
+                {
+                    className = $"-{prefix}{className.TrimStart('-')}";
+                }
+                else
+                {
+                    className = $"{prefix}{className}";
+                }
+
+                completions.Add(
+                new Completion(className + "[]",
+                                    modifiersAsString + className + "[]",
+                                    twClass.Name + "[]",
+                                    _completionUtils.TailwindLogo,
+                                    null));
+            }
+            else
+            {
+                var className = twClass.Name;
+
+                if (className.StartsWith("-"))
+                {
+                    className = $"-{prefix}{className.TrimStart('-')}";
+                }
+                else
+                {
+                    className = $"{prefix}{className}";
+                }
+
+                if (!_completionUtils.IsClassAllowed(className))
+                {
+                    continue;
+                }
+
+                completions.Add(
+                new Completion(className,
+                                    modifiersAsString + className,
+                                    _descriptionGenerator.GetDescription(twClass.Name),
+                                    _completionUtils.TailwindLogo,
+                                    null));
+            }
         }
-        var completionsToAddToEnd = new List<Completion>();
+
+        if (_completionUtils.PluginClasses != null)
+        {
+            foreach (var pluginClass in _completionUtils.PluginClasses)
+            {
+                if (!_completionUtils.IsClassAllowed(pluginClass))
+                {
+                    continue;
+                }
+
+                completions.Add(
+                    new Completion(pluginClass.TrimStart('.'),
+                                        modifiersAsString + prefix + pluginClass.TrimStart('.'),
+                                        _descriptionGenerator.GetDescription(pluginClass.TrimStart('.')),
+                                        _completionUtils.TailwindLogo,
+                                        null));
+            }
+        }
+
+        var modifierCompletions = new List<Completion>();
+        var modifierCompletionsToAddToEnd = new List<Completion>();
+
         foreach (var modifier in _completionUtils.Modifiers)
         {
             var description = _descriptionGenerator.GetModifierDescription(modifier);
@@ -320,7 +304,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     null);
 
                 completion.Properties.AddProperty("modifier", true);
-                completions.Add(completion);
+                modifierCompletions.Add(completion);
 
                 if (description.StartsWith("&:") && description.Substring(2) == modifier)
                 {
@@ -330,7 +314,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         _completionUtils.TailwindLogo,
                         null);
                     completion.Properties.AddProperty("modifier", true);
-                    completionsToAddToEnd.Add(completion);
+                    modifierCompletionsToAddToEnd.Add(completion);
 
                     completion = new Completion("peer-" + modifier + ":",
                         modifiersAsString + "peer-" + modifier + ":",
@@ -338,7 +322,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         _completionUtils.TailwindLogo,
                         null);
                     completion.Properties.AddProperty("modifier", true);
-                    completionsToAddToEnd.Add(completion);
+                    modifierCompletionsToAddToEnd.Add(completion);
                 }
             }
         }
@@ -356,7 +340,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                             null);
 
                     completion.Properties.AddProperty("modifier", true);
-                    completions.Add(completion);
+                    modifierCompletions.Add(completion);
                 }
             }
         }
@@ -372,7 +356,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                         null);
 
                 completion.Properties.AddProperty("modifier", true);
-                completions.Add(completion);
+                modifierCompletions.Add(completion);
 
                 completion = new Completion("max-" + screen + ":",
                                         modifiersAsString + "max-" + screen + ":",
@@ -380,12 +364,21 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                         _completionUtils.TailwindLogo,
                                         null);
                 completion.Properties.AddProperty("modifier", true);
-                completions.Add(completion);
+                modifierCompletionsToAddToEnd.Add(completion);
             }
         }
 
-        // keep non-peer, non-group, non-max modifiers at the end
-        completions.AddRange(completionsToAddToEnd);
+        // keep peer, group, max modifiers at the end
+        modifierCompletions.AddRange(modifierCompletionsToAddToEnd);
+
+        if (string.IsNullOrWhiteSpace(currentClass))
+        {
+            completions.InsertRange(0, modifierCompletions);
+        }
+        else
+        {
+            completions.AddRange(modifierCompletions);
+        }
 
         foreach (var completion in completions)
         {

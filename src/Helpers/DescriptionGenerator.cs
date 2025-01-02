@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Settings;
@@ -154,6 +155,40 @@ internal sealed class DescriptionGenerator : IDisposable
         return null;
     }
 
+    internal string[] GetTotalModifierDescription(string modifiersAsString)
+    {
+        var modifiers = Regex.Split(modifiersAsString, ":(?![^\\[]*\\])");
+
+        var modifierDescriptions = modifiers.Select(GetModifierDescription);
+
+        var nonMediaModifiers = modifierDescriptions
+            .Where(d => !string.IsNullOrWhiteSpace(d) && !d.StartsWith("@"));
+
+        var mediaModifiers = modifierDescriptions
+            .Where(d => !string.IsNullOrWhiteSpace(d) && d.StartsWith("@"));
+
+        var strippedSelectors = nonMediaModifiers.Select(s => s.TrimStart('&')).ToList();
+
+        var selectors = nonMediaModifiers.Where(s => !s.StartsWith("@") && s.Contains(' ')).ToList();
+        var attributes = strippedSelectors.Where(s => s.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
+        var pseudoClasses = strippedSelectors.Where(s => s.Contains(':') && !s.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
+
+        var modifierTemplate = "&" + string.Join("", attributes) + string.Join("", pseudoClasses);
+
+        string totalModifier;
+
+        if (selectors.Count > 0)
+        {
+            totalModifier = string.Join(", ", selectors).Replace("&", modifierTemplate);
+        }
+        else
+        {
+            totalModifier = modifierTemplate;
+        }
+
+        return [..mediaModifiers, totalModifier];
+    }
+
     internal string GetModifierDescription(string modifier)
     {
         if (modifier.StartsWith("peer-"))
@@ -162,7 +197,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
         else if (modifier.StartsWith("group-"))
         {
-            return $".group:{GetModifierDescription(modifier.Substring(6)).Replace("&", ".group")} &";
+            return $"{GetModifierDescription(modifier.Substring(6)).Replace("&", ".group")} &";
         }
         else if (modifier.StartsWith("[") && modifier.EndsWith("]"))
         {
@@ -331,6 +366,36 @@ internal sealed class DescriptionGenerator : IDisposable
                 description = description.Replace(replace, $"{number}rem /*{(tailwindClass.StartsWith("-") ? -1 : 1) * number * 16}px*/;");
                 index = description.IndexOf("*/", remIndex);
             }
+
+            index = 0;
+            while (description.IndexOf("rgb", index) != -1)
+            {
+                var rgbIndex = description.IndexOf("rgb(", index);
+
+                var insert = description.IndexOf(';', rgbIndex);
+
+                index = rgbIndex + 1;
+
+                if (insert == -1)
+                {
+                    continue;
+                }
+
+                var values = description.Substring(rgbIndex, insert - rgbIndex).Split();
+
+                if (values.Length < 3 || values.Take(3).Any(v => !int.TryParse(v, out _)))
+                {
+                    continue;
+                }
+
+                var rgbValues = values.Take(3).Select(int.Parse).ToArray();
+
+                var hex = $"#{rgbValues[0]:X}{rgbValues[1]:X}{rgbValues[2]:X}";
+
+                description = description.Insert(insert + 1, $" /*{hex}*/");
+
+                index = description.IndexOf(';', insert);
+            }
         }
         catch
         {
@@ -407,6 +472,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
         string hex;
 
+        // TODO: add hex equivalent for rgb values in description
         if (color[0] == '[' && color[color.Length - 1] == ']')
         {
             var c = color.Substring(1, color.Length - 2);

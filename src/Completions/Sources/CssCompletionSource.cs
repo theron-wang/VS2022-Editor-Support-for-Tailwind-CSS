@@ -140,13 +140,13 @@ namespace TailwindCSSIntellisense.Completions.Sources
                         // Return new Completion3 so session commit will actually commit the text
                         completions.AddRange(defaultCompletionSet.Completions
                             .Cast<Completion3>()
-                            .Select(c => new Completion3(c.DisplayText, c.InsertionText, c.DisplayText, new ImageMoniker() { Guid = c.IconMoniker.Guid, Id = c.IconMoniker.Id }, c.IconAutomationText)));
+                            .Select(c => new Completion3(c.DisplayText, c.InsertionText, c.Description, new ImageMoniker() { Guid = c.IconMoniker.Guid, Id = c.IconMoniker.Id }, c.IconAutomationText)));
                     }
                     else
                     {
                         completions.InsertRange(0, defaultCompletionSet.Completions
                             .Cast<Completion3>()
-                            .Select(c => new Completion3(c.DisplayText, c.InsertionText, c.DisplayText, new ImageMoniker() { Guid = c.IconMoniker.Guid, Id = c.IconMoniker.Id }, c.IconAutomationText)));
+                            .Select(c => new Completion3(c.DisplayText, c.InsertionText, c.Description, new ImageMoniker() { Guid = c.IconMoniker.Guid, Id = c.IconMoniker.Id }, c.IconAutomationText)));
                     }
                 }
 
@@ -188,11 +188,6 @@ namespace TailwindCSSIntellisense.Completions.Sources
             while (start.Position > 0 && start.GetChar() != '"' && !char.IsWhiteSpace(start.GetChar()))
             {
                 start -= 1;
-            }
-
-            while (end.Position < snapshot.Length && !"\"';".Contains(end.GetChar()) && !char.IsWhiteSpace(end.GetChar()))
-            {
-                end += 1;
             }
 
             if (start.Position != 0)

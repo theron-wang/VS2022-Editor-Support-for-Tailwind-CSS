@@ -47,6 +47,11 @@ namespace TailwindCSSIntellisense.Settings
         /// </summary>
         public Func<TailwindSettings, Task> OnSettingsChanged;
 
+        public void RefreshSettings()
+        {
+            _cacheValid = false;
+        }
+
         /// <summary>
         /// Retrieves the TailwindCSSIntellisense settings asynchronously.
         /// </summary>

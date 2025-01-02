@@ -6,131 +6,130 @@ using System.Collections.Generic;
 using System.Linq;
 using TailwindCSSIntellisense.Options;
 
-namespace TailwindCSSIntellisense.Completions
+namespace TailwindCSSIntellisense.Completions;
+
+/// <summary>
+/// Represents a set of TailwindCSS completions
+/// </summary>
+internal class TailwindCssCompletionSet : CompletionSet
 {
-    /// <summary>
-    /// Represents a set of TailwindCSS completions
-    /// </summary>
-    internal class TailwindCssCompletionSet : CompletionSet
+    private BulkInsertObservableCollection<Completion> _completions = new BulkInsertObservableCollection<Completion>();
+    private FilteredObservableCollection<Completion> _filteredCompletions;
+    private int _filterBufferTextVersionNumber;
+    private string _filterBufferText;
+
+    private string FilterBufferText
     {
-        private BulkInsertObservableCollection<Completion> _completions = new BulkInsertObservableCollection<Completion>();
-        private FilteredObservableCollection<Completion> _filteredCompletions;
-        private int _filterBufferTextVersionNumber;
-        private string _filterBufferText;
-
-        private string FilterBufferText
+        get
         {
-            get
+            if (ApplicableTo != null)
             {
-                if (ApplicableTo != null)
+                ITextSnapshot currentSnapshot = ApplicableTo.TextBuffer.CurrentSnapshot;
+                if (_filterBufferText == null || _filterBufferTextVersionNumber != currentSnapshot.Version.VersionNumber)
                 {
-                    ITextSnapshot currentSnapshot = ApplicableTo.TextBuffer.CurrentSnapshot;
-                    if (_filterBufferText == null || _filterBufferTextVersionNumber != currentSnapshot.Version.VersionNumber)
-                    {
-                        _filterBufferText = ApplicableTo.GetText(currentSnapshot);
-                        _filterBufferTextVersionNumber = currentSnapshot.Version.VersionNumber;
-                    }
+                    _filterBufferText = ApplicableTo.GetText(currentSnapshot);
+                    _filterBufferTextVersionNumber = currentSnapshot.Version.VersionNumber;
                 }
-
-                return _filterBufferText;
             }
+
+            return _filterBufferText;
+        }
+    }
+
+    /// <inheritdoc />
+    public TailwindCssCompletionSet(string moniker, string displayName, ITrackingSpan applicableTo, IEnumerable<Completion> completions, IEnumerable<Completion> completionBuilders) : base(moniker, displayName, applicableTo, completions, completionBuilders)
+    {
+        _completions.AddRange(completions);
+        Initialize();
+    }
+
+    /// <summary>
+    /// Adds completions to the existing completion set (used to combine Tailwind completions with shim completions)
+    /// </summary>
+    /// <param name="completions">The list of completions to add</param>
+    public void AddCompletions(IEnumerable<Completion> completions)
+    {
+        var addToEnd = ThreadHelper.JoinableTaskFactory.Run(General.GetLiveInstanceAsync).TailwindCompletionsComeFirst;
+
+        if (addToEnd)
+        {
+            _completions.AddRange(completions
+                .Where(c => _completions.Any(c2 => c2.DisplayText == c.DisplayText) == false));
+        }
+        else
+        {
+            _completions.AddRangeToBeginning(completions
+                .Where(c => _completions.Any(c2 => c2.DisplayText == c.DisplayText) == false));
+        }
+    }
+
+    private void Initialize()
+    {
+        _filteredCompletions = new FilteredObservableCollection<Completion>(_completions);
+    }
+
+    /// <inheritdoc />
+    public override IList<Completion> Completions => _filteredCompletions;
+
+    /// <inheritdoc />
+    public override void Filter()
+    {
+        if (string.IsNullOrEmpty(FilterBufferText))
+        {
+            _filteredCompletions.StopFiltering();
+            return;
         }
 
-        /// <inheritdoc />
-        public TailwindCssCompletionSet(string moniker, string displayName, ITrackingSpan applicableTo, IEnumerable<Completion> completions, IEnumerable<Completion> completionBuilders) : base(moniker, displayName, applicableTo, completions, completionBuilders)
+        _filteredCompletions.Filter(c =>
         {
-            _completions.AddRange(completions);
-            Initialize();
-        }
-
-        /// <summary>
-        /// Adds completions to the existing completion set (used to combine Tailwind completions with shim completions)
-        /// </summary>
-        /// <param name="completions">The list of completions to add</param>
-        public void AddCompletions(IEnumerable<Completion> completions)
-        {
-            var addToEnd = ThreadHelper.JoinableTaskFactory.Run(General.GetLiveInstanceAsync).TailwindCompletionsComeFirst;
-
-            if (addToEnd)
+            if (string.IsNullOrWhiteSpace(c.DisplayText))
             {
-                _completions.AddRange(completions
-                    .Where(c => _completions.Any(c2 => c2.DisplayText == c.DisplayText) == false));
+                return c.DisplayText.EndsWith(":");
             }
             else
             {
-                _completions.AddRangeToBeginning(completions
-                    .Where(c => _completions.Any(c2 => c2.DisplayText == c.DisplayText) == false));
+                var segments = c.DisplayText.Split([':'], StringSplitOptions.RemoveEmptyEntries).Last().Split('-');
+                var filterSegments = FilterBufferText.Split(':').Last().Split(['-'], StringSplitOptions.RemoveEmptyEntries);
+                return filterSegments.Length == 0 || filterSegments.All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
             }
-        }
+        });
+    }
 
-        private void Initialize()
+    /// <inheritdoc />
+    public override void SelectBestMatch()
+    {
+        Completion completionSelection = null;
+
+        if (_filteredCompletions.Count == 1)
         {
-            _filteredCompletions = new FilteredObservableCollection<Completion>(_completions);
+            SelectionStatus = new CompletionSelectionStatus(_filteredCompletions[0], true, true);
         }
-
-        /// <inheritdoc />
-        public override IList<Completion> Completions => _filteredCompletions;
-
-        /// <inheritdoc />
-        public override void Filter()
+        else if (string.IsNullOrWhiteSpace(FilterBufferText) == false && string.IsNullOrWhiteSpace(FilterBufferText.Split(':').Last()) == false)
         {
-            if (string.IsNullOrEmpty(FilterBufferText))
+            foreach (var completion in Completions)
             {
-                _filteredCompletions.StopFiltering();
-                return;
-            }
-
-            _filteredCompletions.Filter(c =>
-            {
-                if (string.IsNullOrWhiteSpace(c.DisplayText))
+                if (completion.InsertionText == FilterBufferText)
                 {
-                    return c.DisplayText.EndsWith(":");
+                    SelectionStatus = new CompletionSelectionStatus(completion, true, true);
+                    return;
                 }
-                else
+                else if (completion.InsertionText.StartsWith(FilterBufferText))
                 {
-                    var segments = c.DisplayText.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries).Last().Split('-');
-                    var filterSegments = FilterBufferText.Split(':').Last().Split(new char[] { '-' }, System.StringSplitOptions.RemoveEmptyEntries);
-                    return filterSegments.Length == 0 || filterSegments.All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
-                }
-            });
-        }
-
-        /// <inheritdoc />
-        public override void SelectBestMatch()
-        {
-            Completion completionSelection = null;
-
-            if (_filteredCompletions.Count == 1)
-            {
-                SelectionStatus = new CompletionSelectionStatus(_filteredCompletions[0], true, true);
-            }
-            else if (string.IsNullOrWhiteSpace(FilterBufferText) == false && string.IsNullOrWhiteSpace(FilterBufferText.Split(':').Last()) == false)
-            {
-                foreach (var completion in Completions)
-                {
-                    if (completion.InsertionText == FilterBufferText)
+                    if (completionSelection == null || completion.InsertionText.Length < completionSelection.InsertionText.Length)
                     {
-                        SelectionStatus = new CompletionSelectionStatus(completion, true, true);
-                        return;
-                    }
-                    else if (completion.InsertionText.StartsWith(FilterBufferText))
-                    {
-                        if (completionSelection == null || completion.InsertionText.Length < completionSelection.InsertionText.Length)
-                        {
-                            completionSelection = completion;
-                        }
+                        completionSelection = completion;
                     }
                 }
             }
+        }
 
-            if (completionSelection != null)
-            {
-                SelectionStatus = new CompletionSelectionStatus(completionSelection, false, true);
-            }
-            else
-            {
-                SelectBestMatch(CompletionMatchType.MatchInsertionText, false);
-            }
+        if (completionSelection != null)
+        {
+            SelectionStatus = new CompletionSelectionStatus(completionSelection, false, true);
+        }
+        else
+        {
+            SelectBestMatch(CompletionMatchType.MatchInsertionText, false);
         }
     }
 }

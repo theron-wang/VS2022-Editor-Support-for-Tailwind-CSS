@@ -5,7 +5,6 @@ using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Parsers;
 using TailwindCSSIntellisense.Settings;
@@ -120,7 +119,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
         {
             var span = HtmlParser.GetClassAttributeValue(triggerPoint);
             // span should not be null since this is called after we verify the cursor is in a class context
-            return snapshot.CreateTrackingSpan(span.Value, SpanTrackingMode.EdgeInclusive);
+            return snapshot.CreateTrackingSpan(new SnapshotSpan(span.Value.Start, triggerPoint), SpanTrackingMode.EdgeInclusive);
         }
     }
 }

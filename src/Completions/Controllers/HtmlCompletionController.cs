@@ -4,13 +4,11 @@ using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Text;
-using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
-using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using TailwindCSSIntellisense.Parsers;
@@ -138,7 +136,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                     {
                         case VSConstants.VSStd2KCmdID.TYPECHAR:
                             var character = GetTypeChar(pvaIn);
-                            if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 1 || character == ':' || character == '/')
+                            if (_currentSession == null || character == ' ' || character == '/')
                             {
                                 _currentSession?.Dismiss();
                                 StartSession();
@@ -159,7 +157,7 @@ namespace TailwindCSSIntellisense.Completions.Controllers
                             {
                                 break;
                             }
-                            if (_currentSession == null || CharsAfterSignificantPoint(classText) <= 2 || classText.EndsWith("/"))
+                            if (_currentSession == null || classText.EndsWith("/"))
                             {
                                 _currentSession?.Dismiss();
                                 StartSession();
@@ -176,13 +174,6 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             }
 
             return hresult;
-        }
-
-        private int CharsAfterSignificantPoint(string classText)
-        {
-            var textAfterSignificantPoint = classText.Split(' ', ':').Last();
-
-            return textAfterSignificantPoint.Length;
         }
 
         private bool RetriggerIntellisense(string classText)
@@ -291,17 +282,28 @@ namespace TailwindCSSIntellisense.Completions.Controllers
             {
                 _currentSession = Broker.GetSessions(TextView)[0];
                 _currentSession.Dismissed += OnSessionDismissed;
-            }
-            else
-            {
-                DismissOtherSessions();
-                _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret.Value.Position, PointTrackingMode.Positive), true);
-                _currentSession.Dismissed += OnSessionDismissed;
-                _currentSession.Start();
 
-                // Sometimes, creating another session will have irrelevant completions, so we need to filter
-                Filter();
+                if (_currentSession.SelectedCompletionSet is TailwindCssCompletionSet)
+                {
+                    // Not handled correctly; sometimes these sessions do not get dismissed so we should dismiss them here
+                    // This can be easily reproduced when typing bg-green-50/ and then backspacing /
+                    // We expect transparency options to disappear, but they are still there
+
+                    _currentSession.Dismiss();
+                }
+                else
+                {
+                    return true;
+                }
             }
+
+            DismissOtherSessions();
+            _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret.Value.Position, PointTrackingMode.Positive), true);
+            _currentSession.Dismissed += OnSessionDismissed;
+            _currentSession.Start();
+
+            // Sometimes, creating another session will have irrelevant completions, so we need to filter
+            Filter();
 
             return true;
         }

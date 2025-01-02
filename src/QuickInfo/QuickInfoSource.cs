@@ -61,8 +61,16 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
             {
                 session.Properties.AddProperty(PropertyKey, true);
 
+                var totalModifier = fullText.Contains(':') ?
+                    _descriptionGenerator.GetTotalModifierDescription(fullText.Substring(0, fullText.Length - classText.Length - 1)) :
+                    [];
+
                 return Task.FromResult(
-                    new QuickInfoItem(span, DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText, desc, isImportant)));
+                    new QuickInfoItem(span, 
+                        DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText,
+                            totalModifier.LastOrDefault(),
+                            totalModifier.Length > 1 ? totalModifier.Take(totalModifier.Length - 1).ToArray() : [],
+                            desc, isImportant)));
             }
         }
 

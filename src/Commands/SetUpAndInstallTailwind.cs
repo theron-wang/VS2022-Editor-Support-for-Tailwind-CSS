@@ -35,11 +35,21 @@ namespace TailwindCSSIntellisense
             if (!TailwindSetUpProcess.IsSettingUp)
             {
                 var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
+
+                // Check again to see if there were any changes since the last settings cache
+                // User may have manually run the setup command, for example
+                SettingsProvider.RefreshSettings();
+                var settings = await SettingsProvider.GetSettingsAsync();
+
+                if (!string.IsNullOrEmpty(settings.TailwindConfigurationFile) && File.Exists(settings.TailwindConfigurationFile))
+                {
+                    return;
+                }
+
                 await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory));
 
                 var configFile = Path.Combine(directory, "tailwind.config.js");
 
-                var settings = await SettingsProvider.GetSettingsAsync();
                 settings.TailwindConfigurationFile = configFile;
                 await SettingsProvider.OverrideSettingsAsync(settings);
 
