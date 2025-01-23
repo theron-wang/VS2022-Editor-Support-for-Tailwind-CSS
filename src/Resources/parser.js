@@ -203,7 +203,7 @@
                                             for (const u of Object.entries(utilities)) {
                                                 var input = `${u[0]}-${v[0]}`.replace('-DEFAULT', '');
                                                 classes.push(input);
-                                                customDescripts[input] = u[1](v[1]);
+                                                customDescripts[input] = u[1](v[1], {});
                                                 if (supportsNegativeValues === true) {
                                                     classes.push(`-${input}`);
                                                     let negated = { ...u[1](v[1]) };
@@ -355,7 +355,7 @@
                                     typeof value === 'string'
                                         ? value
                                         : Object.entries(value)
-                                            .filter(([_, v]) => Object.keys(v).length !== 0)
+                                            .filter(([_, v]) => v && Object.keys(v).length !== 0)
                                             .map(([k, v]) => `${k}: ${v}`)
                                             .join('; ') + ";"
                                 ]
