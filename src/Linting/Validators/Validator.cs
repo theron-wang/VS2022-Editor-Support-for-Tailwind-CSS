@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 
 namespace TailwindCSSIntellisense.Linting.Validators;
@@ -13,6 +12,7 @@ internal abstract class Validator : IDisposable
     protected readonly ITextBuffer _buffer;
     protected readonly LinterUtilities _linterUtils;
     protected readonly CompletionUtilities _completionUtilities;
+    protected readonly ProjectCompletionValues _projectCompletionValues;
 
     protected readonly HashSet<SnapshotSpan> _checkedSpans = [];
 
@@ -34,6 +34,7 @@ internal abstract class Validator : IDisposable
         _buffer = buffer;
         _linterUtils = linterUtils;
         _completionUtilities = completionUtilities;
+        _projectCompletionValues = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         _buffer.ChangedHighPriority += OnBufferChange;
         Linter.Saved += LinterOptionsChanged;
         _completionUtilities.Configuration.ConfigurationUpdated += ConfigurationUpdated;
@@ -141,7 +142,7 @@ internal abstract class Validator : IDisposable
         StartUpdate();
     }
 
-    private void ConfigurationUpdated(TailwindConfiguration config)
+    private void ConfigurationUpdated()
     {
         StartUpdate();
     }

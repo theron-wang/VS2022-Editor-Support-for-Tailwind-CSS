@@ -31,7 +31,6 @@ internal sealed class ClassSorter : IDisposable
     public bool Sorting { get; private set; }
 
     private TailwindSettings _tailwindSettings;
-    private TailwindConfiguration _config;
 
     private readonly HashSet<string> _sorted = [];
 
@@ -134,9 +133,9 @@ internal sealed class ClassSorter : IDisposable
                 using var reader = new StreamReader(file);
                 encoding = reader.CurrentEncoding;
                 fileContent = await reader.ReadToEndAsync();
-            }
+            } 
 
-            var sorted = Sorter.Sort(path, fileContent, _config);
+            var sorted = Sorter.Sort(path, fileContent);
 
             if (sorted != fileContent)
             {
@@ -164,10 +163,9 @@ internal sealed class ClassSorter : IDisposable
         return _tailwindSettings;
     }
 
-    private void ConfigurationChanged(TailwindConfiguration config)
+    private void ConfigurationChanged()
     {
         _sorted.Clear();
-        _config = config;
     }
 
     private Task OnSettingsChangedAsync(TailwindSettings settings)

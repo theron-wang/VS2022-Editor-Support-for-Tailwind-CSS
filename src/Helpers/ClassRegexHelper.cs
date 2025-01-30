@@ -291,7 +291,7 @@ internal class ClassRegexHelper
                 if (_razorQuotePairRegex.IsMatch(classText))
                 {
                     var lastQuoteMatchIndex = match.Index;
-                    while (_razorQuotePairRegex.Match(text, lastQuoteMatchIndex, match.Length) is Match quoteMatch && quoteMatch.Success)
+                    while (_razorQuotePairRegex.Match(text, lastQuoteMatchIndex, Math.Min(text.Length - lastQuoteMatchIndex, match.Length)) is Match quoteMatch && quoteMatch.Success)
                     {
                         lastQuoteMatchIndex = quoteMatch.Index + quoteMatch.Length;
                         yield return quoteMatch;
@@ -316,7 +316,7 @@ internal class ClassRegexHelper
                 {
                     var lastQuoteMatchIndex = match.Index;
 
-                    while (_razorQuotePairRegex.Match(text, lastQuoteMatchIndex, match.Length) is Match quoteMatch && quoteMatch.Success)
+                    while (_razorQuotePairRegex.Match(text, lastQuoteMatchIndex, Math.Min(text.Length - lastQuoteMatchIndex, match.Length)) is Match quoteMatch && quoteMatch.Success)
                     {
                         lastQuoteMatchIndex = quoteMatch.Index + quoteMatch.Length;
                         yield return quoteMatch;
@@ -356,7 +356,7 @@ internal class ClassRegexHelper
                 {
                     var lastQuoteMatchIndex = match.Index;
 
-                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, match.Length) is Match quoteMatch && quoteMatch.Success)
+                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, Math.Min(text.Length - lastQuoteMatchIndex, match.Length)) is Match quoteMatch && quoteMatch.Success)
                     {
                         lastQuoteMatchIndex = quoteMatch.Index + quoteMatch.Length;
                         yield return quoteMatch;
@@ -378,7 +378,7 @@ internal class ClassRegexHelper
                 if (_normalQuotePairRegex.IsMatch(classText))
                 {
                     var lastQuoteMatchIndex = match.Index;
-                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, match.Length) is Match quoteMatch && quoteMatch.Success)
+                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, Math.Min(text.Length - lastQuoteMatchIndex, match.Length)) is Match quoteMatch && quoteMatch.Success)
                     {
                         lastQuoteMatchIndex = quoteMatch.Index + quoteMatch.Length;
                         yield return quoteMatch;
@@ -417,7 +417,7 @@ internal class ClassRegexHelper
                 {
                     var lastQuoteMatchIndex = match.Index;
 
-                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, match.Length) is Match quoteMatch && quoteMatch.Success)
+                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, Math.Min(text.Length - lastQuoteMatchIndex, match.Length)) is Match quoteMatch && quoteMatch.Success)
                     {
                         lastQuoteMatchIndex = quoteMatch.Index + quoteMatch.Length;
                         yield return quoteMatch;
@@ -439,7 +439,7 @@ internal class ClassRegexHelper
                 if (_normalQuotePairRegex.IsMatch(classText))
                 {
                     var lastQuoteMatchIndex = match.Index;
-                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, match.Length) is Match quoteMatch && quoteMatch.Success)
+                    while (_normalQuotePairRegex.Match(text, lastQuoteMatchIndex, Math.Min(text.Length - lastQuoteMatchIndex, match.Length)) is Match quoteMatch && quoteMatch.Success)
                     {
                         lastQuoteMatchIndex = quoteMatch.Index + quoteMatch.Length;
                         yield return quoteMatch;

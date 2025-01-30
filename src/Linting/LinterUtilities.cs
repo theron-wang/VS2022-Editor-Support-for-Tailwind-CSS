@@ -17,12 +17,13 @@ using TailwindCSSIntellisense.Options;
 namespace TailwindCSSIntellisense.Linting;
 
 [Export]
+[PartCreationPolicy(CreationPolicy.Shared)]
 internal sealed class LinterUtilities : IDisposable
 {
     private readonly CompletionUtilities _completionUtilities;
     private readonly DescriptionGenerator _descriptionGenerator;
     private readonly ClassSortUtilities _classSortUtilities;
-    private readonly Dictionary<string, string> _cacheCssAttributes = [];
+    private readonly Dictionary<ProjectCompletionValues, Dictionary<string, string>> _cacheCssAttributes = [];
 
     private Linter _linterOptions;
     private General _generalOptions;
@@ -43,7 +44,7 @@ internal sealed class LinterUtilities : IDisposable
     /// </summary>
     /// <param name="classes">The list of classes to check</param>
     /// <returns>A list of Tuples containing the class name and error message</returns>
-    public IEnumerable<Tuple<string, string>> CheckForClassDuplicates(IEnumerable<string> classes)
+    public IEnumerable<Tuple<string, string>> CheckForClassDuplicates(IEnumerable<string> classes, ProjectCompletionValues projectCompletionValues)
     {
         if (_classSortUtilities.ClassOrder is null)
         {
@@ -62,19 +63,24 @@ internal sealed class LinterUtilities : IDisposable
 
             // Do not handle prefix here; DescriptionGenerator.GetDescription already does
 
-            if (_cacheCssAttributes.ContainsKey(classTrimmed) == false)
+            if (_cacheCssAttributes.TryGetValue(projectCompletionValues, out var dict) == false || !dict.ContainsKey(classTrimmed))
             {
-                var desc = _descriptionGenerator.GetDescription(classTrimmed, shouldFormat: false);
+                var desc = _descriptionGenerator.GetDescription(classTrimmed, projectCompletionValues, shouldFormat: false);
 
                 if (string.IsNullOrWhiteSpace(desc))
                 {
                     continue;
                 }
 
-                _cacheCssAttributes[classTrimmed] = string.Join(",", desc.Split([ ';' ], StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
+                if (dict is null)
+                {
+                    _cacheCssAttributes[projectCompletionValues] = [];
+                }
+
+                _cacheCssAttributes[projectCompletionValues][classTrimmed] = string.Join(",", desc.Split([ ';' ], StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
             }
 
-            cssAttributes[c] = _cacheCssAttributes[classTrimmed];
+            cssAttributes[c] = _cacheCssAttributes[projectCompletionValues][classTrimmed];
         }
 
         foreach (var group in cssAttributes.GroupBy(x => x.Value, x => x.Key))
@@ -147,7 +153,7 @@ internal sealed class LinterUtilities : IDisposable
         _generalOptions = general;
     }
 
-    private void ConfigurationUpdated(TailwindConfiguration config)
+    private void ConfigurationUpdated()
     {
         _cacheCssAttributes.Clear();
     }

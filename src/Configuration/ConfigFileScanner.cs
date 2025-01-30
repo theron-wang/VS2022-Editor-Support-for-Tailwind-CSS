@@ -3,162 +3,141 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense.Configuration
+namespace TailwindCSSIntellisense.Configuration;
+
+/// <summary>
+/// MEF Component Class which provides a method to search for the Tailwind configuration file
+/// </summary>
+[Export]
+public sealed class ConfigFileScanner
 {
+    private string _configFilePath;
+
+    [Import]
+    internal FileFinder FileFinder { get; set; }
+
     /// <summary>
-    /// MEF Component Class which provides a method to search for the Tailwind configuration file
+    /// Searches through the solution to find a Tailwind CSS configuration file.
     /// </summary>
-    [Export]
-    internal sealed class ConfigFileScanner
+    /// <returns>A <see cref="Task"/> of type <see cref="string" />, which represents the absolute path to an existing configuration file, or null if one cannot be found</returns>
+    internal async Task<string> TryFindConfigurationFileAsync()
     {
-        private string _configFilePath;
+        var jsFiles = await FileFinder.GetJavascriptFilesAsync();
 
-        [Import]
-        internal FileFinder FileFinder { get; set; }
+        // Best case scenario: user names file tailwind.config.js
+        _configFilePath = jsFiles.FirstOrDefault(f => DefaultConfigurationFileNames.Names.Contains(Path.GetFileName(f).ToLower()));
 
-        [Import]
-        internal SettingsProvider SettingsProvider { get; set; }
-
-        internal bool HasConfigurationFile { get; set; }
-
-        /// <summary>
-        /// Searches through the solution to find a TailwindCSS configuration file.
-        /// </summary>
-        /// <returns>A <see cref="Task"/> of type <see cref="string" />, which represents the absolute path to an existing configuration file, or null if one cannot be found</returns>
-        internal async Task<string> FindConfigurationFilePathAsync(bool overrideCurrent = false)
+        if (_configFilePath != null)
         {
-            if (_configFilePath != null && !overrideCurrent)
-            {
-                if (File.Exists(_configFilePath))
-                {
-                    return _configFilePath;
-                }
-            }
-
-            HasConfigurationFile = false;
-
-            // Must override default if settings is specified:
-
-            var settings = await SettingsProvider.GetSettingsAsync();
-            if (string.IsNullOrEmpty(settings.TailwindConfigurationFile) == false)
-            {
-                _configFilePath = settings.TailwindConfigurationFile;
-                HasConfigurationFile = true;
-                return _configFilePath;
-            }
-
-            var jsFiles = await FileFinder.GetJavascriptFilesAsync();
-
-            // Best case scenario: user names file tailwind.config.js
-            _configFilePath = jsFiles.FirstOrDefault(f => DefaultConfigurationFileNames.Names.Contains(Path.GetFileName(f).ToLower()));
-
-            if (_configFilePath != null)
-            {
-                HasConfigurationFile = true;
-                return _configFilePath;
-            }
-
-            // Next: search all css files and scrape for @config
-
-            // Check the smallest css files first since tailwind css files (should) be small
-            var cssFiles = (await FileFinder.GetCssFilesAsync()).OrderBy(f => new FileInfo(f).Length).ToList();
-
-            string cssTargetFile = null;
-
-            foreach (var file in cssFiles)
-            {
-                if (await DoesFileContainAsync(file, "@config"))
-                {
-                    cssTargetFile = file;
-                    break;
-                }
-            }
-
-            if (cssTargetFile != null)
-            {
-                HasConfigurationFile = true;
-                _configFilePath = await ExtractConfigJsPathAsync(cssTargetFile);
-            }
-
-            if (_configFilePath != null && File.Exists(_configFilePath))
-            {
-                HasConfigurationFile = true;
-                return _configFilePath;
-            }
-
-            return null;
+            return _configFilePath;
         }
 
-        private async Task<bool> DoesFileContainAsync(string filePath, string text)
+        // Next: search all css files and scrape for @config
+        var cssFiles = await FileFinder.GetCssFilesAsync();
+
+        string cssTargetFile = null;
+
+        foreach (var file in cssFiles)
         {
-            using (var fs = File.OpenRead(filePath))
+            if (await DoesFileContainAsync(file, "@config"))
             {
-                using (var reader = new StreamReader(fs))
-                {
-                    var line = await reader.ReadLineAsync();
-
-                    if (line.Contains(text))
-                    {
-                        return true;
-                    }
-                }
+                cssTargetFile = file;
+                break;
             }
+        }
 
+        if (cssTargetFile != null)
+        {
+            _configFilePath = await ExtractConfigJsPathAsync(cssTargetFile);
+        }
+
+        if (_configFilePath != null && File.Exists(_configFilePath))
+        {
+            return _configFilePath;
+        }
+
+        return null;
+    }
+
+    private async Task<bool> DoesFileContainAsync(string filePath, string text)
+    {
+        // Read up to line 15
+        var lines = 0;
+        using var fs = File.OpenRead(filePath);
+        using var reader = new StreamReader(fs);
+
+        var line = await reader.ReadLineAsync();
+        lines++;
+
+        if (line.Contains(text))
+        {
+            return true;
+        }
+
+        if (lines > 15)
+        {
             return false;
         }
 
-        private async Task<string> ExtractConfigJsPathAsync(string filePath)
+        return false;
+    }
+
+    private async Task<string> ExtractConfigJsPathAsync(string filePath)
+    {
+        string configLine = null;
+        // Read up to line 15
+        var lines = 0;
+        using (var fs = File.OpenRead(filePath))
         {
-            string configLine = null;
-            using (var fs = File.OpenRead(filePath))
-            {
-                using (var reader = new StreamReader(fs))
-                {
-                    var line = await reader.ReadLineAsync();
+            using var reader = new StreamReader(fs);
+            var line = await reader.ReadLineAsync();
+            lines++;
 
-                    if (line.Contains("@config"))
-                    {
-                        configLine = line.Trim();
-                        goto End;
-                    }
-                }
+            if (line.Contains("@config"))
+            {
+                configLine = line.Trim();
+                goto End;
             }
 
-        End:
+            if (lines > 15)
+            {
+                goto End;
+            }
+        }
 
-            if (configLine == null)
-            {
-                return null;
-            }
-            var indexOfConfig = configLine.IndexOf("@config");
-            var indexOfSemicolon = configLine.IndexOf(';', indexOfConfig);
+    End:
 
-            string scanText;
-            if (indexOfSemicolon == -1)
-            {
-                scanText = configLine.Substring(indexOfConfig);
-            }
-            else
-            {
-                scanText = configLine.Substring(indexOfConfig, indexOfSemicolon - indexOfConfig);
-            }
+        if (configLine == null)
+        {
+            return null;
+        }
+        var indexOfConfig = configLine.IndexOf("@config");
+        var indexOfSemicolon = configLine.IndexOf(';', indexOfConfig);
 
-            try
-            {
-                var relPath = scanText.Split(' ')[1].Trim('\'').Trim('\"');
+        string scanText;
+        if (indexOfSemicolon == -1)
+        {
+            scanText = configLine.Substring(indexOfConfig);
+        }
+        else
+        {
+            scanText = configLine.Substring(indexOfConfig, indexOfSemicolon - indexOfConfig);
+        }
 
-                // @config provides a relative path to configuration file
-                // To find the path of the config file, we must take the relative path in terms
-                // of the absolute path of the css file
-                return Uri.UnescapeDataString(new Uri(new Uri(filePath), relPath).AbsolutePath);
-            }
-            catch
-            {
-                // @config syntax is invalid, cannot parse path
-                return null;
-            }
+        try
+        {
+            var relPath = scanText.Split(' ')[1].Trim('\'').Trim('\"');
+
+            // @config provides a relative path to configuration file
+            // To find the path of the config file, we must take the relative path in terms
+            // of the absolute path of the css file
+            return Uri.UnescapeDataString(new Uri(new Uri(filePath), relPath).AbsolutePath);
+        }
+        catch
+        {
+            // @config syntax is invalid, cannot parse path
+            return null;
         }
     }
 }

@@ -26,14 +26,14 @@ namespace TailwindCSSIntellisense
         protected override void BeforeQueryStatus(EventArgs e)
         {
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
-            Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() == false && ConfigFileScanner.HasConfigurationFile && settings.BuildType != BuildProcessOptions.None;
+            Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() == false && settings.ConfigurationFiles.Count > 0 && settings.BuildType != BuildProcessOptions.None;
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
         {
             await BuildProcess.InitializeAsync();
 
-            BuildProcess.StartProcess(true);
+            BuildProcess.BuildAll(true);
         }
     }
 }

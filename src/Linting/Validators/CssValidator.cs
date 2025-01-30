@@ -51,7 +51,7 @@ internal class CssValidator : Validator
             {
                 // Find duplicates, since we are parsing from left to right
                 int index = -1;
-                foreach ((var errorClass, var errorMessage) in _linterUtils.CheckForClassDuplicates(grouping))
+                foreach ((var errorClass, var errorMessage) in _linterUtils.CheckForClassDuplicates(grouping, _projectCompletionValues))
                 {
                     index = text.IndexOf(errorClass, index + 1);
 
@@ -85,7 +85,7 @@ internal class CssValidator : Validator
 
             var screen = text.Replace("@screen", "").Trim().TrimEnd('{').TrimEnd();
 
-            if (_completionUtilities.Screen.Contains(screen) == false)
+            if (_projectCompletionValues.Screen.Contains(screen) == false)
             {
                 var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(screen, text.IndexOf("@screen") + 7), screen.Length);
 
@@ -111,7 +111,7 @@ internal class CssValidator : Validator
                     screen = null;
                 }
 
-                if (string.IsNullOrEmpty(screen) == false && _completionUtilities.Screen.Contains(screen) == false)
+                if (string.IsNullOrEmpty(screen) == false && _projectCompletionValues.Screen.Contains(screen) == false)
                 {
                     var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(screen, text.IndexOf("screen") + 7), screen.Length);
 
@@ -164,15 +164,15 @@ internal class CssValidator : Validator
             }
             else if (segments[0] == "colors")
             {
-                error = !_completionUtilities.ColorToRgbMapper.ContainsKey(string.Join("-", segments.Skip(1)));
+                error = !_projectCompletionValues.ColorToRgbMapper.ContainsKey(string.Join("-", segments.Skip(1)));
             }
             else if (segments[0] == "spacing")
             {
-                error = !_completionUtilities.SpacingMapper.ContainsKey(string.Join("-", segments.Skip(1)));
+                error = !_projectCompletionValues.SpacingMapper.ContainsKey(string.Join("-", segments.Skip(1)));
             }
             else if (segments[0] == "screens")
             {
-                error = !_completionUtilities.Screen.Contains(string.Join("-", segments.Skip(1)));
+                error = !_projectCompletionValues.Screen.Contains(string.Join("-", segments.Skip(1)));
             }
             else if (_completionUtilities.Configuration.LastConfig is not null)
             {
@@ -194,7 +194,7 @@ internal class CssValidator : Validator
                         foundButInvalid = true;
                     }
                 }
-                else if (_completionUtilities.ConfigurationValueToClassStems.TryGetValue(segments[0], out var classTypes))
+                else if (_projectCompletionValues.ConfigurationValueToClassStems.TryGetValue(segments[0], out var classTypes))
                 {
                     if (segments.Count == 1)
                     {
@@ -208,7 +208,7 @@ internal class CssValidator : Validator
                         var classType = classTypes[0];
                         if (classType.Contains("{s}"))
                         {
-                            if (_completionUtilities.CustomSpacingMappers.TryGetValue(classType.Replace("{s}", "{0}"), out var spacing))
+                            if (_projectCompletionValues.CustomSpacingMappers.TryGetValue(classType.Replace("{s}", "{0}"), out var spacing))
                             {
                                 foreach (var s in spacing)
                                 {
@@ -217,7 +217,7 @@ internal class CssValidator : Validator
                             }
                             else
                             {
-                                foreach (var s in _completionUtilities.SpacingMapper)
+                                foreach (var s in _projectCompletionValues.SpacingMapper)
                                 {
                                     values.Add(s.Key);
                                 }
@@ -225,7 +225,7 @@ internal class CssValidator : Validator
                         }
                         else if (classType.Contains("{c}"))
                         {
-                            if (_completionUtilities.CustomColorMappers.TryGetValue(classType.Replace("{c}", "{0}"), out var colors))
+                            if (_projectCompletionValues.CustomColorMappers.TryGetValue(classType.Replace("{c}", "{0}"), out var colors))
                             {
                                 foreach (var c in colors)
                                 {
@@ -234,7 +234,7 @@ internal class CssValidator : Validator
                             }
                             else
                             {
-                                foreach (var c in _completionUtilities.ColorToRgbMapper)
+                                foreach (var c in _projectCompletionValues.ColorToRgbMapper)
                                 {
                                     values.Add(c.Key);
                                 }
@@ -246,7 +246,7 @@ internal class CssValidator : Validator
                             {
                                 var stem = classType.Substring(0, classType.IndexOf('{'));
                                 var excluded = classType.Substring(classType.IndexOf('{') + 2, classType.IndexOf('}') - classType.IndexOf('{') - 2).Split('|');
-                                foreach (var value in _completionUtilities.Classes.Where(c => c.Name.StartsWith(stem)))
+                                foreach (var value in _projectCompletionValues.Classes.Where(c => c.Name.StartsWith(stem)))
                                 {
                                     var toAdd = value.Name.Replace(stem, "");
 
@@ -268,7 +268,7 @@ internal class CssValidator : Validator
                         {
                             var modifier = classType.Replace(':', '-');
 
-                            foreach (var value in _completionUtilities.Modifiers.Where(m => m.StartsWith(modifier)))
+                            foreach (var value in _projectCompletionValues.Modifiers.Where(m => m.StartsWith(modifier)))
                             {
                                 values.Add(value.Replace(modifier, ""));
                             }
@@ -282,11 +282,11 @@ internal class CssValidator : Validator
                                 stem += '-';
                             }
 
-                            foreach (var value in _completionUtilities.Classes.Where(c => c.Name.StartsWith(classType)))
+                            foreach (var value in _projectCompletionValues.Classes.Where(c => c.Name.StartsWith(classType)))
                             {
                                 if (value.UseSpacing)
                                 {
-                                    if (_completionUtilities.CustomSpacingMappers.TryGetValue(classType.Replace("{s}", "{0}"), out var spacing))
+                                    if (_projectCompletionValues.CustomSpacingMappers.TryGetValue(classType.Replace("{s}", "{0}"), out var spacing))
                                     {
                                         foreach (var s in spacing)
                                         {
@@ -295,7 +295,7 @@ internal class CssValidator : Validator
                                     }
                                     else
                                     {
-                                        foreach (var s in _completionUtilities.SpacingMapper)
+                                        foreach (var s in _projectCompletionValues.SpacingMapper)
                                         {
                                             values.Add(s.Key);
                                         }
@@ -303,7 +303,7 @@ internal class CssValidator : Validator
                                 }
                                 else if (value.UseColors)
                                 {
-                                    if (_completionUtilities.CustomColorMappers.TryGetValue(classType.Replace("{c}", "{0}"), out var colors))
+                                    if (_projectCompletionValues.CustomColorMappers.TryGetValue(classType.Replace("{c}", "{0}"), out var colors))
                                     {
                                         foreach (var c in colors)
                                         {
@@ -312,7 +312,7 @@ internal class CssValidator : Validator
                                     }
                                     else
                                     {
-                                        foreach (var c in _completionUtilities.ColorToRgbMapper)
+                                        foreach (var c in _projectCompletionValues.ColorToRgbMapper)
                                         {
                                             values.Add(c.Key);
                                         }

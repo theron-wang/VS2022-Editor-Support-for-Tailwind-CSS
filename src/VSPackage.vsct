@@ -48,7 +48,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as Tailwind CSS configuration file</ButtonText>
+					<ButtonText>Add Tailwind CSS configuration file</ButtonText>
 				</Strings>
 			</Button>
 
@@ -212,7 +212,7 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set as Tailwind CSS configuration file</ButtonText>
+					<ButtonText>Add Tailwind CSS configuration file</ButtonText>
 				</Strings>
 			</Button>
 

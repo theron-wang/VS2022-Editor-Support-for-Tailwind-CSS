@@ -15,6 +15,31 @@
 			"type": "string",
 			"description": "Deprecated: use BuildFiles instead."
 		},
+		"ConfigurationFiles": {
+			"type": "array",
+			"description": "List of configuration files, in order of precedence.",
+			"items": {
+				"type": "object",
+				"properties": {
+					"Path": {
+						"type": "string",
+						"description": "The configuration file for the given paths."
+					},
+					"IsDefault": {
+						"type": "boolean",
+						"description": "Indicates if the given configuration file should be used as the default, if a file is not found under ApplicableLocations. The first will be chosen as default if multiple files have this set to true."
+					},
+					"ApplicableLocations": {
+						"type": "array",
+						"items": {
+							"type": "string",
+							"description": "The base folders of the projects to apply this configuration file to."
+						}
+					}
+				},
+				"required": [ "Path", "ApplicableLocations" ]
+			}
+		},
 		"BuildFiles": {
 			"type": "array",
 			"description": "List of input/output build file pairs.",
@@ -57,7 +82,7 @@
 			"description": "Whether to use the CLI."
 		}
 	},
-	"required": [ "ConfigurationFile", "BuildFiles", "PackageConfigurationFile", "CustomRegexes", "UseCli" ],
+	"required": [ "ConfigurationFiles", "BuildFiles", "PackageConfigurationFile", "CustomRegexes", "UseCli" ],
 	"definitions": {
 		"CustomRegex": {
 			"type": "object",

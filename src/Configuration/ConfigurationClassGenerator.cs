@@ -10,14 +10,14 @@ namespace TailwindCSSIntellisense.Configuration
     {/// <summary>
      /// Reconfigures colors, spacing, and screen as well as any non-theme properties (prefix, blocklist, etc.)
      /// </summary>
-        private void LoadGlobalConfiguration(TailwindConfiguration config)
+        private void LoadGlobalConfiguration(ProjectCompletionValues project, TailwindConfiguration config)
         {
-            _completionBase.SpacingMapper = SpacingMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
-            _completionBase.Screen = ScreenOrig.ToList();
-            _completionBase.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
-            ColorIconGenerator.ClearCache();
-            _completionBase.CustomDescriptionMapper = config?.PluginDescriptions ?? [];
-            _completionBase.SetBlocklist(new HashSet<string>(config?.Blocklist ?? []));
+            project.SpacingMapper = SpacingMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
+            project.Screen = [.. ScreenOrig];
+            project.ColorToRgbMapper = ColorToRgbMapperOrig.ToDictionary(pair => pair.Key, pair => pair.Value);
+            ColorIconGenerator.ClearCache(project);
+            project.CustomDescriptionMapper = config?.PluginDescriptions ?? [];
+            project.Blocklist = new HashSet<string>(config?.Blocklist ?? []);
 
             if (config is null)
             {
@@ -29,39 +29,39 @@ namespace TailwindCSSIntellisense.Configuration
             {
                 var newColorToRgbMapper = GetColorMapper(dict);
 
-                _completionBase.ColorToRgbMapper = newColorToRgbMapper;
-                ColorIconGenerator.ClearCache();
+                project.ColorToRgbMapper = newColorToRgbMapper;
+                ColorIconGenerator.ClearCache(project);
             }
             if (config.ExtendedValues.ContainsKey("colors") && GetDictionary(config.ExtendedValues["colors"], out dict))
             {
                 foreach (var pair in GetColorMapper(dict))
                 {
-                    _completionBase.ColorToRgbMapper[pair.Key] = pair.Value;
+                    project.ColorToRgbMapper[pair.Key] = pair.Value;
                 }
             }
 
             if (config.OverridenValues.ContainsKey("screens") && GetDictionary(config.OverridenValues["screens"], out dict))
             {
-                _completionBase.Screen = dict.Keys.ToList();
+                project.Screen = dict.Keys.ToList();
             }
             if (config.ExtendedValues.ContainsKey("screens") && GetDictionary(config.ExtendedValues["screens"], out dict))
             {
-                _completionBase.Screen.AddRange(dict.Keys.Where(k => _completionBase.Screen.Contains(k) == false));
+                project.Screen.AddRange(dict.Keys.Where(k => project.Screen.Contains(k) == false));
             }
 
             if (config.OverridenValues.ContainsKey("spacing") && GetDictionary(config.OverridenValues["spacing"], out dict))
             {
-                _completionBase.SpacingMapper = dict.ToDictionary(p => p.Key, p => p.Value.ToString());
+                project.SpacingMapper = dict.ToDictionary(p => p.Key, p => p.Value.ToString());
             }
             if (config.ExtendedValues.ContainsKey("spacing") && GetDictionary(config.ExtendedValues["spacing"], out dict))
             {
                 foreach (var pair in dict)
                 {
-                    _completionBase.SpacingMapper[pair.Key] = pair.Value.ToString();
+                    project.SpacingMapper[pair.Key] = pair.Value.ToString();
                 }
             }
 
-            _completionBase.SetCorePlugins(config.EnabledCorePlugins ?? []);
+            project.AllowedCorePlugins = config.EnabledCorePlugins ?? [];
         }
 
         /// <summary>
@@ -69,16 +69,16 @@ namespace TailwindCSSIntellisense.Configuration
         /// for those in enabled core plugins. If config.DisabledCorePlugins is not null and empty,
         /// all classes will exist except for those explicitly disabled.
         /// </summary>
-        private void HandleCorePlugins(TailwindConfiguration config)
+        private void HandleCorePlugins(ProjectCompletionValues project, TailwindConfiguration config)
         {
             var enabledClasses = new List<TailwindClass>();
             if (config.EnabledCorePlugins is not null)
             {
                 foreach (var plugin in config.EnabledCorePlugins)
                 {
-                    if (_completionBase.ConfigurationValueToClassStems.ContainsKey(plugin))
+                    if (project.ConfigurationValueToClassStems.ContainsKey(plugin))
                     {
-                        var stems = _completionBase.ConfigurationValueToClassStems[plugin];
+                        var stems = project.ConfigurationValueToClassStems[plugin];
 
                         foreach (var stem in stems)
                         {
@@ -139,9 +139,9 @@ namespace TailwindCSSIntellisense.Configuration
                 {
                     foreach (var plugin in config.DisabledCorePlugins)
                     {
-                        if (_completionBase.ConfigurationValueToClassStems.ContainsKey(plugin))
+                        if (project.ConfigurationValueToClassStems.ContainsKey(plugin))
                         {
-                            var stems = _completionBase.ConfigurationValueToClassStems[plugin];
+                            var stems = project.ConfigurationValueToClassStems[plugin];
 
                             foreach (var stem in stems)
                             {
@@ -196,66 +196,66 @@ namespace TailwindCSSIntellisense.Configuration
                 }
             }
 
-            _completionBase.Classes = enabledClasses;
+            project.Classes = enabledClasses;
         }
 
         /// <summary>
         /// Reconfigures all classes based on the specified configuration (configures theme.____)
         /// </summary>
         /// <param name="config">The configuration object</param>
-        private void LoadIndividualConfigurationOverride(TailwindConfiguration config)
+        private void LoadIndividualConfigurationOverride(ProjectCompletionValues project, TailwindConfiguration config)
         {
             if (config is null)
             {
                 return;
             }
 
-            HandleCorePlugins(config);
+            HandleCorePlugins(project, config);
 
-            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
-            _completionBase.Modifiers = ModifiersOrig.ToList();
+            var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
+            project.Modifiers = ModifiersOrig.ToList();
             var classesToRemove = new List<TailwindClass>();
             var classesToAdd = new List<TailwindClass>();
 
-            _completionBase.CustomSpacingMappers = new Dictionary<string, Dictionary<string, string>>();
-            _completionBase.CustomColorMappers = new Dictionary<string, Dictionary<string, string>>();
+            project.CustomSpacingMappers = new Dictionary<string, Dictionary<string, string>>();
+            project.CustomColorMappers = new Dictionary<string, Dictionary<string, string>>();
 
             foreach (var key in applicable)
             {
-                var stems = _completionBase.ConfigurationValueToClassStems[key];
+                var stems = project.ConfigurationValueToClassStems[key];
 
                 foreach (var stem in stems)
                 {
                     if (stem.Contains(':'))
                     {
                         var s = stem.Trim(':');
-                        _completionBase.Modifiers.RemoveAll(c => c.StartsWith(s) && c.Replace($"{s}-", "").Count(ch => ch == '-') == 0 && c.Contains("[]") == false);
+                        project.Modifiers.RemoveAll(c => c.StartsWith(s) && c.Replace($"{s}-", "").Count(ch => ch == '-') == 0 && c.Contains("[]") == false);
 
                         if (GetDictionary(config.OverridenValues[key], out var dict))
                         {
-                            _completionBase.Modifiers.AddRange(dict.Keys.Select(k => k == "DEFAULT" ? s : $"{s}-{k}"));
+                            project.Modifiers.AddRange(dict.Keys.Select(k => k == "DEFAULT" ? s : $"{s}-{k}"));
                         }
                     }
                     else if (stem.Contains("{s}"))
                     {
                         if (GetDictionary(config.OverridenValues[key], out var dict))
                         {
-                            _completionBase.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = dict.ToDictionary(p => p.Key == "DEFAULT" ? "" : p.Key, p => p.Value.ToString());
+                            project.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = dict.ToDictionary(p => p.Key == "DEFAULT" ? "" : p.Key, p => p.Value.ToString());
                         }
                         else
                         {
-                            _completionBase.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = new Dictionary<string, string>();
+                            project.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = new Dictionary<string, string>();
                         }
                     }
                     else if (stem.Contains("{c}"))
                     {
                         if (GetDictionary(config.OverridenValues[key], out var dict))
                         {
-                            _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = GetColorMapper(dict);
+                            project.CustomColorMappers[stem.Replace("{c}", "{0}")] = GetColorMapper(dict);
                         }
                         else
                         {
-                            _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = new Dictionary<string, string>();
+                            project.CustomColorMappers[stem.Replace("{c}", "{0}")] = new Dictionary<string, string>();
                         }
                     }
                     else
@@ -267,7 +267,7 @@ namespace TailwindCSSIntellisense.Configuration
                         {
                             s = stem.Replace("-{*}", "");
 
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            descClasses = project.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                             classesToRemove.AddRange(descClasses);
                         }
                         else if (stem.Contains('{'))
@@ -286,17 +286,17 @@ namespace TailwindCSSIntellisense.Configuration
 
                             if (negate)
                             {
-                                descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && classes.Contains(c.Name) == false && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                                descClasses = project.Classes.Where(c => c.Name.StartsWith(s) && classes.Contains(c.Name) == false && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                             }
                             else
                             {
-                                descClasses = _completionBase.Classes.Where(c => classes.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                                descClasses = project.Classes.Where(c => classes.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                             }
                             classesToRemove.AddRange(descClasses);
                         }
                         else
                         {
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            descClasses = project.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                             classesToRemove.AddRange(descClasses);
                         }
 
@@ -309,8 +309,8 @@ namespace TailwindCSSIntellisense.Configuration
                             }
 
                             classesToAdd.AddRange(dict.Keys
-                                .Where(k => (_completionBase.CustomSpacingMappers.ContainsKey(stem + "-{0}") == false || _completionBase.CustomSpacingMappers[stem + "-{0}"].ContainsKey(k) == false) &&
-                                                  (_completionBase.CustomColorMappers.ContainsKey(stem + "-{0}") == false || _completionBase.CustomColorMappers[stem + "-{0}"].ContainsKey(k) == false))
+                                .Where(k => (project.CustomSpacingMappers.ContainsKey(stem + "-{0}") == false || project.CustomSpacingMappers[stem + "-{0}"].ContainsKey(k) == false) &&
+                                                  (project.CustomColorMappers.ContainsKey(stem + "-{0}") == false || project.CustomColorMappers[stem + "-{0}"].ContainsKey(k) == false))
                                 .Select(k =>
                                 {
                                     if (k == "DEFAULT")
@@ -336,8 +336,8 @@ namespace TailwindCSSIntellisense.Configuration
                                     }
                                 }));
 
-                            var texts = descClasses.Where(c => _completionBase.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
-                                _completionBase.DescriptionMapper[c.Name]);
+                            var texts = descClasses.Where(c => project.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
+                                project.DescriptionMapper[c.Name]);
 
                             string format;
 
@@ -378,15 +378,15 @@ namespace TailwindCSSIntellisense.Configuration
                             {
                                 if (DescriptionGenerator.Handled(key))
                                 {
-                                    _completionBase.CustomDescriptionMapper[s] = DescriptionGenerator.GenerateDescription(key, pair.Value);
+                                    project.CustomDescriptionMapper[s] = DescriptionGenerator.GenerateDescription(key, pair.Value);
                                 }
                                 else if (pair.Key == "DEFAULT")
                                 {
-                                    _completionBase.CustomDescriptionMapper[s] = string.Format(format, pair.Value.ToString());
+                                    project.CustomDescriptionMapper[s] = string.Format(format, pair.Value.ToString());
                                 }
                                 else
                                 {
-                                    _completionBase.CustomDescriptionMapper[$"{s}-{pair.Key}"] = string.Format(format, pair.Value.ToString());
+                                    project.CustomDescriptionMapper[$"{s}-{pair.Key}"] = string.Format(format, pair.Value.ToString());
                                 }
                             }
                         }
@@ -394,8 +394,8 @@ namespace TailwindCSSIntellisense.Configuration
                 }
             }
 
-            _completionBase.Classes.RemoveAll(classesToRemove.Contains);
-            _completionBase.Classes.AddRange(classesToAdd);
+            project.Classes.RemoveAll(classesToRemove.Contains);
+            project.Classes.AddRange(classesToAdd);
         }
 
         /// <summary>
@@ -405,20 +405,20 @@ namespace TailwindCSSIntellisense.Configuration
         /// Should be called after <see cref="LoadIndividualConfigurationOverride(TailwindConfiguration)"/>.
         /// </remarks>
         /// <param name="config">The configuration object</param>
-        private void LoadIndividualConfigurationExtend(TailwindConfiguration config)
+        private void LoadIndividualConfigurationExtend(ProjectCompletionValues project, TailwindConfiguration config)
         {
             if (config is null)
             {
                 return;
             }
 
-            var applicable = _completionBase.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
+            var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
 
             var classesToAdd = new List<TailwindClass>();
 
             foreach (var key in applicable)
             {
-                var stems = _completionBase.ConfigurationValueToClassStems[key];
+                var stems = project.ConfigurationValueToClassStems[key];
 
                 foreach (var stem in stems)
                 {
@@ -432,9 +432,9 @@ namespace TailwindCSSIntellisense.Configuration
                             {
                                 var insert = k == "DEFAULT" ? s : $"{s}-{k}";
 
-                                if (_completionBase.Modifiers.Contains(insert) == false)
+                                if (project.Modifiers.Contains(insert) == false)
                                 {
-                                    _completionBase.Modifiers.Add(insert);
+                                    project.Modifiers.Add(insert);
                                 }
                             };
                         }
@@ -443,25 +443,25 @@ namespace TailwindCSSIntellisense.Configuration
                     {
                         if (GetDictionary(config.ExtendedValues[key], out var dict))
                         {
-                            var newSpacing = _completionBase.SpacingMapper.ToDictionary(p => p.Key, p => p.Value);
+                            var newSpacing = project.SpacingMapper.ToDictionary(p => p.Key, p => p.Value);
                             foreach (var pair in dict)
                             {
                                 newSpacing[pair.Key == "DEFAULT" ? "" : pair.Key] = pair.Value.ToString();
                             }
-                            _completionBase.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = newSpacing;
+                            project.CustomSpacingMappers[stem.Replace("{s}", "{0}")] = newSpacing;
                         }
                     }
                     else if (stem.Contains("{c}"))
                     {
                         if (GetDictionary(config.ExtendedValues[key], out var dict))
                         {
-                            var newMapper = _completionBase.ColorToRgbMapper.ToDictionary(p => p.Key, p => p.Value);
+                            var newMapper = project.ColorToRgbMapper.ToDictionary(p => p.Key, p => p.Value);
                             foreach (var pair in GetColorMapper(dict))
                             {
                                 newMapper[pair.Key] = pair.Value;
                             }
 
-                            _completionBase.CustomColorMappers[stem.Replace("{c}", "{0}")] = newMapper;
+                            project.CustomColorMappers[stem.Replace("{c}", "{0}")] = newMapper;
                         }
                     }
                     else
@@ -472,18 +472,18 @@ namespace TailwindCSSIntellisense.Configuration
                         {
                             s = stem.Replace("-{*}", "");
 
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            descClasses = project.Classes.Where(c => c.Name.StartsWith(s) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                         }
                         else if (stem.Contains('{'))
                         {
                             s = stem.Replace($"-{stem.Split('-').Last()}", "");
                             var values = stem.Split('-').Last().Trim('{', '}').Split('|').Select(v => $"{s}-{v}");
 
-                            descClasses = _completionBase.Classes.Where(c => values.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            descClasses = project.Classes.Where(c => values.Contains(c.Name) && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                         }
                         else
                         {
-                            descClasses = _completionBase.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
+                            descClasses = project.Classes.Where(c => c.Name.StartsWith(stem) && c.Name.Replace($"{stem}-", "").Count(ch => ch == '-') == 0 && c.SupportsBrackets == false && c.UseColors == false && c.UseSpacing == false);
                         }
 
                         var insertStem = s;
@@ -511,7 +511,7 @@ namespace TailwindCSSIntellisense.Configuration
                                         return $"{insertStem}-{k}";
                                     }
                                 })
-                                .Where(k => _completionBase.Classes.Any(c => c.Name == k) == false)
+                                .Where(k => project.Classes.Any(c => c.Name == k) == false)
                                 .Select(k =>
                                 {
                                     return new TailwindClass()
@@ -520,8 +520,8 @@ namespace TailwindCSSIntellisense.Configuration
                                     };
                                 }));
 
-                            var texts = descClasses.Where(c => _completionBase.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
-                                _completionBase.DescriptionMapper[c.Name]);
+                            var texts = descClasses.Where(c => project.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
+                                project.DescriptionMapper[c.Name]);
 
                             string format;
 
@@ -574,25 +574,25 @@ namespace TailwindCSSIntellisense.Configuration
 
                                 if (pair.Key == "DEFAULT")
                                 {
-                                    _completionBase.CustomDescriptionMapper[insertStem] = description;
+                                    project.CustomDescriptionMapper[insertStem] = description;
                                 }
                                 else
                                 {
-                                    _completionBase.CustomDescriptionMapper[$"{insertStem}-{pair.Key}"] = description;
+                                    project.CustomDescriptionMapper[$"{insertStem}-{pair.Key}"] = description;
                                 }
                             }
                         }
                     }
                 }
             }
-            _completionBase.Classes.AddRange(classesToAdd);
+            project.Classes.AddRange(classesToAdd);
 
             // fix order
 
             // Order by ending number, if applicable, then any text after
             // i.e. inherit, 10, 20, 30, 40, 5, 50 -> 5, 10, 20, 30, 40, 50, inherit
 
-            _completionBase.Classes.Sort((x, y) =>
+            project.Classes.Sort((x, y) =>
             {
                 if (!x.Name.Contains('-') || !y.Name.Contains('-'))
                 {
@@ -641,10 +641,10 @@ namespace TailwindCSSIntellisense.Configuration
         /// Loads IntelliSense for plugins
         /// </summary>
         /// <param name="config">The configuration object</param>
-        private void LoadPlugins(TailwindConfiguration config)
+        private void LoadPlugins(ProjectCompletionValues project, TailwindConfiguration config)
         {
-            _completionBase.PluginClasses = config.PluginClasses;
-            _completionBase.PluginModifiers = config.PluginModifiers;
+            project.PluginClasses = config.PluginClasses;
+            project.PluginModifiers = config.PluginModifiers;
         }
 
         private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors, string prev = "")

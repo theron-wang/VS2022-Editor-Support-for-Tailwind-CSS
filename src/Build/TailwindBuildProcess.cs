@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Options;
@@ -28,17 +29,19 @@ internal sealed class TailwindBuildProcess : IDisposable
     internal SettingsProvider SettingsProvider { get; set; }
     [Import]
     internal PackageJsonReader PackageJsonReader { get; set; }
+    [Import]
+    internal CompletionUtilities CompletionUtilities { get; set; }
 
     private Dictionary<string, string> _inputToOutputFile = [];
-    private string _configPath;
-
-    private bool? _hasScript = null;
-
-    private string _packageJsonPath;
 
     private bool _initialized;
     private bool _subscribed;
     private bool _minify;
+
+    private bool _startingBuilds;
+
+    private readonly Dictionary<string, string> _configsToPackageJsons = [];
+
     private readonly Dictionary<string, Process> _outputFileToProcesses = [];
     private Process _secondaryProcess;
 
@@ -131,7 +134,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         // Restart process since SetFilePathsAsync stops the process
         if (processActive)
         {
-            StartProcess(_minify);
+            BuildAll(_minify);
         }
     }
 
@@ -145,13 +148,19 @@ internal sealed class TailwindBuildProcess : IDisposable
     /// </summary>
     private void OnFileSave(string filePath)
     {
-        if (filePath.Equals(_packageJsonPath, StringComparison.InvariantCultureIgnoreCase) && !string.IsNullOrWhiteSpace(_settings.BuildScript))
+        if (Path.GetFileName(filePath).Equals("package.json", StringComparison.InvariantCultureIgnoreCase) && !string.IsNullOrWhiteSpace(_settings.BuildScript))
         {
-            _hasScript = null;
+            var keys = _configsToPackageJsons.Keys.Where(f => f.Equals(filePath, StringComparison.InvariantCultureIgnoreCase)).ToList();
+
+            foreach (var key in keys)
+            {
+                _configsToPackageJsons.Remove(key);
+            }
+
             if (AreProcessesActive())
             {
                 EndProcess();
-                StartProcess(_settings.AutomaticallyMinify);
+                BuildAll(_settings.AutomaticallyMinify);
             }
         }
 
@@ -159,7 +168,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         if (_settings.BuildType == BuildProcessOptions.OnSave && _settings.OnSaveTriggerFileExtensions.Contains(extension))
         {
             ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Building..."));
-            StartProcess(_settings.AutomaticallyMinify);
+            BuildAll(_settings.AutomaticallyMinify);
         }
     }
 
@@ -167,33 +176,59 @@ internal sealed class TailwindBuildProcess : IDisposable
     {
         if (_settings.BuildType != BuildProcessOptions.Manual && _settings.BuildType != BuildProcessOptions.ManualJIT)
         {
-            StartProcess(_settings.AutomaticallyMinify);
+            BuildAll(_settings.AutomaticallyMinify);
         }
     }
 
     /// <summary>
     /// Starts the build process
     /// </summary>
-    internal void StartProcess(bool minify = false)
+    internal void BuildAll(bool minify = false)
     {
-        if (Scanner.HasConfigurationFile == false || _inputToOutputFile == null || _inputToOutputFile.Count == 0 || _settings.BuildType == BuildProcessOptions.None)
+        if (_settings.ConfigurationFiles.Count == 0 || _inputToOutputFile == null || _inputToOutputFile.Count == 0 || _settings.BuildType == BuildProcessOptions.None)
         {
             return;
         }
 
+        _startingBuilds = true;
+
+        try
+        {
+            foreach (var pair in _inputToOutputFile)
+            {
+                BuildOne(pair, minify);
+            }
+        }
+        finally
+        {
+            _startingBuilds = false;
+        }
+    }
+
+    private void BuildOne(KeyValuePair<string, string> pair, bool minify = false)
+    {
+        var config = CompletionUtilities.GetCompletionConfigurationByFilePath(pair.Key);
+
         _minify = minify;
 
-        if (_hasScript == null)
-        {
-            (var exists, var fileName) = ThreadHelper.JoinableTaskFactory.Run(() => PackageJsonReader.ScriptExistsAsync(_settings.BuildScript));
+        var hasScript = false;
+        var packageJsonPath = "";
 
-            _packageJsonPath = fileName;
-            _hasScript = exists;
+        // Since file path 
+        if (!_configsToPackageJsons.ContainsKey(config.FilePath))
+        {
+            (hasScript, packageJsonPath) = ThreadHelper.JoinableTaskFactory.Run(() => PackageJsonReader.ScriptExistsAsync(config.FilePath, _settings.BuildScript));
+            _configsToPackageJsons[config.FilePath] = packageJsonPath;
+        }
+        else
+        {
+            packageJsonPath = _configsToPackageJsons[config.FilePath];
+            hasScript = packageJsonPath is not null;
         }
 
-        var needOtherProcess = _settings.OverrideBuild == false && _hasScript.Value && string.IsNullOrWhiteSpace(_settings.BuildScript) == false;
-        var dir = Path.GetDirectoryName(_configPath);
-        var configFile = Path.GetFileName(_configPath);
+        var needOtherProcess = _settings.OverrideBuild == false && hasScript && string.IsNullOrWhiteSpace(_settings.BuildScript) == false;
+        var dir = Path.GetDirectoryName(config.FilePath);
+        var configFile = Path.GetFileName(config.FilePath);
 
         if (_settings.BuildType == BuildProcessOptions.OnSave)
         {
@@ -201,29 +236,26 @@ internal sealed class TailwindBuildProcess : IDisposable
             #region Default process
             if (_outputFileToProcesses.Count > 0 && _outputFileToProcesses.Values.All(IsProcessActive))
             {
-                if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    foreach (var pair in _inputToOutputFile)
-                    {
-                        var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
-                        var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
+                    var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
+                    var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
 
-                        if (_outputFileToProcesses.TryGetValue(outputFile, out var process))
-                        {
-                            process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
-                        }
-                        else
-                        {
-                            // Realistically, this shouldn't happen since all processes are stopped when
-                            // the configuration is changed
-                            EndProcess();
-                            throw new InvalidOperationException("Attempted to access a process that wasn't there. Try restarting the build process.");
-                        }
+                    if (_outputFileToProcesses.TryGetValue(outputFile, out var process))
+                    {
+                        process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                    }
+                    else
+                    {
+                        // Realistically, this shouldn't happen since all processes are stopped when
+                        // the configuration is changed
+                        EndProcess();
+                        throw new InvalidOperationException("Attempted to access a process that wasn't there. Try restarting the build process.");
                     }
                 }
                 else if (_settings.OverrideBuild)
                 {
-                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
+                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(packageJsonPath)} & npm run {_settings.BuildScript}");
                 }
             }
             else
@@ -231,27 +263,27 @@ internal sealed class TailwindBuildProcess : IDisposable
                 // If one of them has terminated, stop and restart
                 EndProcess();
 
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
-
-                if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                if (_outputFileToProcesses.Count == 0)
                 {
-                    foreach (var pair in _inputToOutputFile)
-                    {
-                        var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
-                        var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
+                }
 
-                        var process = CreateAndStartProcess(GetProcessStartInfo(dir));
-                        process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
-                        PostSetupProcess(process);
+                if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                {
+                    var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
+                    var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
 
-                        _outputFileToProcesses[outputFile] = process;
-                    }
+                    var process = CreateAndStartProcess(GetProcessStartInfo(dir));
+                    process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                    PostSetupProcess(process);
+
+                    _outputFileToProcesses[outputFile] = process;
                 }
                 else if (_settings.OverrideBuild)
                 {
                     CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(dir));
 
-                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
+                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(packageJsonPath)} & npm run {_settings.BuildScript}");
 
                     PostSetupProcess(_secondaryProcess);
                 }
@@ -268,7 +300,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                 {
                     ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
 
-                    var processInfo = GetProcessStartInfo(Path.GetDirectoryName(_packageJsonPath));
+                    var processInfo = GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath));
                     CreateAndSetAndStartSecondaryProcess(processInfo);
 
                     _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
@@ -282,29 +314,29 @@ internal sealed class TailwindBuildProcess : IDisposable
         {
             #region Default process
 
-            if (_outputFileToProcesses.Count == 0 || !_outputFileToProcesses.Values.All(IsProcessActive))
+            if (_outputFileToProcesses.Count == 0 || _startingBuilds || !_outputFileToProcesses.Values.All(IsProcessActive))
             {
-                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
-
-                if (_settings.OverrideBuild == false || _hasScript == false || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                if (_outputFileToProcesses.Count == 0)
                 {
-                    foreach (var pair in _inputToOutputFile)
-                    {
-                        var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
-                        var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
+                    ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
+                }
 
-                        var process = CreateAndStartProcess(GetProcessStartInfo(dir));
-                        process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
-                        PostSetupProcess(process);
+                if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
+                {
+                    var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
+                    var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
 
-                        _outputFileToProcesses[outputFile] = process;
-                    }
+                    var process = CreateAndStartProcess(GetProcessStartInfo(dir));
+                    process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                    PostSetupProcess(process);
+
+                    _outputFileToProcesses[outputFile] = process;
                 }
                 else if (_settings.OverrideBuild)
                 {
                     CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(dir));
 
-                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(_packageJsonPath)} & npm run {_settings.BuildScript}");
+                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(packageJsonPath)} & npm run {_settings.BuildScript}");
 
                     PostSetupProcess(_secondaryProcess);
                     _secondaryProcess.StandardInput.Flush();
@@ -319,7 +351,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
 
-                CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(Path.GetDirectoryName(_packageJsonPath)));
+                CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath)));
 
                 _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
                 PostSetupProcess(_secondaryProcess);
@@ -379,7 +411,7 @@ internal sealed class TailwindBuildProcess : IDisposable
     private async Task SetFilePathsAsync(TailwindSettings settings)
     {
         _settings = settings;
-        _hasScript = null;
+        _configsToPackageJsons.Clear();
 
         var buildFiles = settings.BuildFiles;
 
@@ -420,8 +452,6 @@ internal sealed class TailwindBuildProcess : IDisposable
             _inputToOutputFile[pair.Input] = pair.Output;
         }
 
-        _configPath = await Scanner.FindConfigurationFilePathAsync();
-
         EndProcess();
     }
 
@@ -432,7 +462,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             return;
         }
 
-        if (_hasScript == true)
+        if (_settings.OverrideBuild || sender == _secondaryProcess)
         {
             if (sender is Process process && e.Data.TrimEnd(' ', '>', '\\') == process.StartInfo.WorkingDirectory.TrimEnd('\\'))
             {

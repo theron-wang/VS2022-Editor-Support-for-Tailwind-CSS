@@ -5,7 +5,6 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
 internal abstract class Sorter
@@ -17,11 +16,11 @@ internal abstract class Sorter
 
     public abstract string[] Handled { get; }
 
-    public string Sort(string input, TailwindConfiguration config)
+    public string Sort(string filePath, string input)
     {
         var output = new StringBuilder();
 
-        foreach (var segment in GetSegments(input, config))
+        foreach (var segment in GetSegments(filePath, input))
         {
             output.Append(segment);
         }
@@ -29,15 +28,15 @@ internal abstract class Sorter
         return output.ToString();
     }
 
-    protected abstract IEnumerable<string> GetSegments(string input, TailwindConfiguration config);
+    protected abstract IEnumerable<string> GetSegments(string filePath, string input);
 
-    protected string SortSegment(string classText, TailwindConfiguration config)
+    protected string SortSegment(string classText, string filePath)
     {
         var classes = classText.Split(new char[0], StringSplitOptions.RemoveEmptyEntries);
 
-        var sorted = Sort(classes, config);
+        var sorted = Sort(classes, filePath);
 
-        bool shouldMoveImportant = Handled.Contains(".css") && sorted.Contains("!important");
+        bool shouldMoveImportant = this is CssSorter && sorted.Contains("!important");
 
         var newlines = classText.Select((c, i) => (c, i))
             .Where(p => p.c == '\n')
@@ -81,8 +80,10 @@ internal abstract class Sorter
         return sortedSegment.ToString().Trim();
     }
 
-    protected IEnumerable<string> Sort(IEnumerable<string> classes, TailwindConfiguration config)
+    protected IEnumerable<string> Sort(IEnumerable<string> classes, string filePath)
     {
+        var projectCompletionValues = CompletionUtilities.GetCompletionConfigurationByFilePath(filePath);
+
         var result = classes
             .OrderBy(className =>
             {
@@ -105,9 +106,9 @@ internal abstract class Sorter
                     {
                         return 0;
                     }
-                    else if (CompletionUtilities.Screen.Contains(modifier))
+                    else if (projectCompletionValues.Screen.Contains(modifier) == true)
                     {
-                        return ClassSortUtilities.ModifierOrder.Count + CompletionUtilities.Screen.IndexOf(modifier);
+                        return ClassSortUtilities.ModifierOrder.Count + projectCompletionValues.Screen.IndexOf(modifier);
                     }
                     else if (ClassSortUtilities.ModifierOrder.TryGetValue(modifier, out int index))
                     {
@@ -126,11 +127,11 @@ internal abstract class Sorter
 
                 var classToSearch = className;
 
-                if (string.IsNullOrWhiteSpace(config?.Prefix) == false)
+                if (string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
                 {
                     classToSearch = classToSearch
-                        .TrimPrefix(config?.Prefix, StringComparison.InvariantCultureIgnoreCase)
-                        .TrimPrefix("-" + config?.Prefix, StringComparison.InvariantCultureIgnoreCase);
+                        .TrimPrefix(projectCompletionValues.Prefix, StringComparison.InvariantCultureIgnoreCase)
+                        .TrimPrefix("-" + projectCompletionValues.Prefix, StringComparison.InvariantCultureIgnoreCase);
 
                     if (className.StartsWith("-"))
                     {
@@ -149,25 +150,43 @@ internal abstract class Sorter
                     var ending = classToSearch.Split('-').Last();
                     var stem = classToSearch.Substring(0, classToSearch.LastIndexOf('-'));
 
-                    if (CompletionUtilities.SpacingMapper.ContainsKey(ending) ||
+                    if (projectCompletionValues.CustomSpacingMappers.TryGetValue($"{stem}-{{0}}", out var mapper))
+                    {
+                        if (mapper.ContainsKey(ending))
+                        {
+                            classToSearch = $"{stem}-{{s}}";
+                        }
+
+                        // While it may not necessarily be inside the custom color mapper, the class could still be valid
+                        // For example: bg-inherit; any unfound classes will be handled in the final conditional return
+                    }
+                    else if (projectCompletionValues.SpacingMapper.ContainsKey(ending) ||
                         (
                             ending.Length > 2 &&
                             ending[0] == '[' &&
                             ending[ending.Length - 1] == ']' &&
                             ClassSortUtilities.ClassOrder.ContainsKey($"{stem}-{{s}}")
-                        ) ||
-                        CompletionUtilities.CustomSpacingMappers.ContainsKey($"{stem}-{{0}}"))
+                        ))
                     {
                         classToSearch = $"{stem}-{{s}}";
                     }
-                    else if (CompletionUtilities.ColorToRgbMapper.ContainsKey(ending) ||
+                    else if (projectCompletionValues.CustomColorMappers.TryGetValue($"{stem}-{{0}}", out mapper))
+                    {
+                        if (mapper.ContainsKey(ending))
+                        {
+                            classToSearch = $"{stem}-{{c}}";
+                        }
+
+                        // While it may not necessarily be inside the custom color mapper, the class could still be valid
+                        // For example: bg-inherit; any unfound classes will be handled in the final conditional return
+                    }
+                    else if (projectCompletionValues.ColorToRgbMapper.ContainsKey(ending) ||
                             (
                                 ending.Length > 2 &&
                                 ending[0] == '[' &&
                                 ending[ending.Length - 1] == ']' &&
                                 ClassSortUtilities.ClassOrder.ContainsKey($"{stem}-{{c}}")
-                            ) ||
-                            CompletionUtilities.CustomColorMappers.ContainsKey($"{stem}-{{0}}"))
+                            ))
                     {
                         classToSearch = $"{stem}-{{c}}";
                     }
@@ -185,8 +204,17 @@ internal abstract class Sorter
                             stem = classToSearch.Substring(0, splitIndex);
                             ending = classToSearch.Substring(splitIndex + 1);
 
-                            if (CompletionUtilities.ColorToRgbMapper.ContainsKey(ending) ||
-                                CompletionUtilities.CustomColorMappers.ContainsKey($"{stem}-{{0}}"))
+                            if (projectCompletionValues.CustomColorMappers.TryGetValue($"{stem}-{{0}}", out mapper))
+                            {
+                                if (mapper.ContainsKey(ending))
+                                {
+                                    classToSearch = $"{stem}-{{c}}";
+                                }
+
+                                // While it may not necessarily be inside the custom color mapper, the class could still be valid
+                                // For example: bg-inherit; any unfound classes will be handled in the final conditional return
+                            }
+                            else if (projectCompletionValues.ColorToRgbMapper.ContainsKey(ending))
                             {
                                 classToSearch = $"{stem}-{{c}}";
                             }
@@ -194,7 +222,7 @@ internal abstract class Sorter
                     }
                 }
 
-                if (!CompletionUtilities.IsClassAllowed(className))
+                if (!projectCompletionValues.IsClassAllowed(className))
                 {
                     return -1;
                 }

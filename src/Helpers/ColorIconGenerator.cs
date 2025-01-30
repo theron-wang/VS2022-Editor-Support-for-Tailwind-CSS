@@ -14,37 +14,46 @@ internal class ColorIconGenerator
     [Import]
     internal CompletionUtilities CompletionUtilities { get; set; }
 
-    private readonly Dictionary<string, ImageSource> _colorToRgbMapperCache = [];
+    private readonly Dictionary<ProjectCompletionValues, Dictionary<string, ImageSource>> _colorToRgbMapperCaches = [];
 
-    internal void ClearCache()
+    internal void ClearCache(ProjectCompletionValues project)
     {
-        _colorToRgbMapperCache.Clear();
+        if (_colorToRgbMapperCaches.TryGetValue(project, out var value))
+        {
+            value.Clear();
+        }
     }
 
-    internal ImageSource GetImageFromColor(string stem, string color, int opacity = 100)
+    internal ImageSource GetImageFromColor(ProjectCompletionValues projectCompletionValues, string stem, string color, int opacity = 100)
     {
-        if (_colorToRgbMapperCache.TryGetValue($"{stem}/{color}/{opacity}", out var result) || _colorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out result))
+        if (_colorToRgbMapperCaches.TryGetValue(projectCompletionValues, out var cache) == false)
+        {
+            cache = [];
+            _colorToRgbMapperCaches[projectCompletionValues] = cache;
+        }
+
+        if (cache.TryGetValue($"{stem}/{color}/{opacity}", out var result) || cache.TryGetValue($"{color}/{opacity}", out result))
         {
             return result;
         }
 
         string value;
-        if (CompletionUtilities.CustomColorMappers != null)
+        if (projectCompletionValues.CustomColorMappers != null)
         {
-            if (CompletionUtilities.CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out value) && CompletionUtilities.ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2))
+            if (projectCompletionValues.CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out value) && projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2))
             {
-                if (_colorToRgbMapperCache.TryGetValue($"{color}/{opacity}", out result))
+                if (cache.TryGetValue($"{color}/{opacity}", out result))
                 {
                     return result;
                 }
 
-                if (CompletionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
+                if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out value) == false)
                 {
                     return CompletionUtilities.TailwindLogo;
                 }
             }
         }
-        else if (CompletionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
+        else if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out value) == false)
         {
             return CompletionUtilities.TailwindLogo;
         }
@@ -88,7 +97,7 @@ internal class ColorIconGenerator
             key = $"{stem}/{key}";
         }
 
-        _colorToRgbMapperCache[key] = result;
+        cache[key] = result;
 
         return result;
     }

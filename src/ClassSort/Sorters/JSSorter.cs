@@ -9,12 +9,12 @@ internal class JSSorter : Sorter
 {
     public override string[] Handled { get; } = [".jsx", ".tsx"];
 
-    protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
+    protected override IEnumerable<string> GetSegments(string filePath, string content)
     {
         int lastIndex = 0;
         int indexOfClass;
 
-        foreach (var match in ClassRegexHelper.GetClassesJavaScriptEnumerator(file))
+        foreach (var match in ClassRegexHelper.GetClassesJavaScriptEnumerator(content))
         {
             indexOfClass = match.Index;
             
@@ -25,21 +25,21 @@ internal class JSSorter : Sorter
             }
 
             // Verify that we are in an HTML tag
-            var closeAngleBracket = file.LastIndexOf('>', indexOfClass);
-            var openAngleBracket = file.LastIndexOf('<', indexOfClass);
+            var closeAngleBracket = content.LastIndexOf('>', indexOfClass);
+            var openAngleBracket = content.LastIndexOf('<', indexOfClass);
 
             if (openAngleBracket == -1 || closeAngleBracket > openAngleBracket)
             {
                 continue;
             }
 
-            yield return file.Substring(lastIndex, indexOfClass - lastIndex);
+            yield return content.Substring(lastIndex, indexOfClass - lastIndex);
 
             lastIndex = match.Index + match.Length;
 
-            if (lastIndex >= file.Length)
+            if (lastIndex >= content.Length)
             {
-                yield return file.Substring(indexOfClass);
+                yield return content.Substring(indexOfClass);
                 yield break;
             }
 
@@ -48,10 +48,10 @@ internal class JSSorter : Sorter
             var classContent = ClassRegexHelper.GetClassTextGroup(match).Value;
             yield return total.Substring(0, total.IndexOf(classContent));
 
-            yield return SortSegment(classContent, config);
+            yield return SortSegment(classContent, filePath);
             yield return total.Substring(total.IndexOf(classContent) + classContent.Length);
         }
 
-        yield return file.Substring(lastIndex);
+        yield return content.Substring(lastIndex);
     }
 }

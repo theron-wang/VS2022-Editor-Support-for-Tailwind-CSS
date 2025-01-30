@@ -63,7 +63,9 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 
 ## Customizing Your `tailwind.extension.json` File
 
-- `ConfigurationFile`: The relative path to your configuration file (i.e. `tailwind.config.js`). This will be parsed for IntelliSense purposes.
+- `ConfigurationFiles`: The relative path to your configuration files (i.e. `tailwind.config.js`). This will be parsed for IntelliSense purposes.
+	- `IsDefault`: The first configuration file with this set to `true` will be configured as the default. If no default is defined, the first configuration file (regardless of its value) will be set as default.
+	- `ApplicableLocations`: The base **directories** in which the configuration file takes effect. This will be used for both IntelliSense and builds, so ensure that your input css file is located in the correct directory.
 - `BuildFiles`: A list of files (relative paths) to build when the project is built. This is useful if you have multiple CSS files that need to be built.
     - `Input`: The input css file. Each input file may only have one output file.
 	- `Output`: The output css file.
@@ -82,7 +84,20 @@ Sample file:
 ```json
 {
   	"$schema": "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json",
-	"ConfigurationFile": "tailwind.config.js",
+	"ConfigurationFiles": [
+		{
+		    "Path": "..\\Client\\tailwind.config.js",
+		    "IsDefault": false,
+		    "ApplicableLocations": [
+			    "..\\Client\\Pages\\"
+		    ]
+		},
+		{
+		    "Path": "tailwind.config.js",
+		    "IsDefault": true,
+		    "ApplicableLocations": []
+		}
+	],
 	"BuildFiles": [
 		{
 			"Input": "site.css",

@@ -19,8 +19,8 @@ internal class SorterAggregator([ImportMany] IEnumerable<Sorter> sorters)
         return _sorters.Any(g => g.Handled.Contains(Path.GetExtension(file)));
     }
 
-    public string Sort(string file, string fileContent, TailwindConfiguration config)
+    public string Sort(string filePath, string fileContent)
     {
-        return _sorters.First(g => g.Handled.Contains(Path.GetExtension(file))).Sort(fileContent, config);
+        return _sorters.First(g => g.Handled.Contains(Path.GetExtension(filePath))).Sort(filePath, fileContent);
     }
 }

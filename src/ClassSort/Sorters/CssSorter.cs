@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
 [Export(typeof(Sorter))]
@@ -8,9 +7,9 @@ internal class CssSorter : Sorter
 {
     public override string[] Handled { get; } = [".css", ".tcss"];
 
-    protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
+    protected override IEnumerable<string> GetSegments(string filePath, string content)
     {
-        int indexOfApply = file.IndexOf("@apply");
+        int indexOfApply = content.IndexOf("@apply");
 
         int lastIndex = 0;
 
@@ -18,30 +17,30 @@ internal class CssSorter : Sorter
         {
             // Verify that we are in the right context
             // Check to see if it is whitespace between here and { or ;, whichever comes first
-            var context = file.LastIndexOfAny([';', '{'], indexOfApply) + 1;
+            var context = content.LastIndexOfAny([';', '{'], indexOfApply) + 1;
 
-            if (context == -1 || !string.IsNullOrWhiteSpace(file.Substring(context, indexOfApply - context)))
+            if (context == -1 || !string.IsNullOrWhiteSpace(content.Substring(context, indexOfApply - context)))
             {
-                indexOfApply = file.IndexOf("@apply", indexOfApply + 1);
+                indexOfApply = content.IndexOf("@apply", indexOfApply + 1);
                 continue;
             }
 
-            yield return file.Substring(lastIndex, indexOfApply - lastIndex);
+            yield return content.Substring(lastIndex, indexOfApply - lastIndex);
 
-            lastIndex = file.IndexOfAny([';', '}'], indexOfApply);
+            lastIndex = content.IndexOfAny([';', '}'], indexOfApply);
 
             if (lastIndex == -1)
             {
-                yield return file.Substring(indexOfApply);
+                yield return content.Substring(indexOfApply);
                 yield break;
             }
 
             // return @apply
             yield return "@apply ";
-            yield return SortSegment(file.Substring(indexOfApply + 6, lastIndex - (indexOfApply + 6)), config);
-            indexOfApply = file.IndexOf("@apply", indexOfApply + 1);
+            yield return SortSegment(content.Substring(indexOfApply + 6, lastIndex - (indexOfApply + 6)), filePath);
+            indexOfApply = content.IndexOf("@apply", indexOfApply + 1);
         }
 
-        yield return file.Substring(lastIndex);
+        yield return content.Substring(lastIndex);
     }
 }

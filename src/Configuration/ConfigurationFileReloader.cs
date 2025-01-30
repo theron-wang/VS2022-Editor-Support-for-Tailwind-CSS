@@ -2,72 +2,74 @@
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.ComponentModel.Composition;
+using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense.Configuration
+namespace TailwindCSSIntellisense.Configuration;
+
+/// <summary>
+/// Reloads Intellisense when the Tailwind CSS configuration file is modified
+/// </summary>
+[Export]
+public sealed class ConfigurationFileReloader : IDisposable
 {
+    [Import]
+    internal ConfigFileScanner Scanner { get; set; }
+    [Import]
+    internal SettingsProvider SettingsProvider { get; set; }
+
+    private bool _subscribed;
+
+    private CompletionConfiguration _config;
+    private TailwindSettings _settings;
+
     /// <summary>
-    /// Reloads Intellisense when the TailwindCSS configuration file is modified
+    /// Initializes the class to subscribe to relevant events
     /// </summary>
-    [Export]
-    public sealed class ConfigurationFileReloader : IDisposable
+    /// <param name="config">The <see cref="CompletionConfiguration"/> object calling the initialization</param>
+    /// <param name="fromNewProject">Should only be called from <see cref="TailwindCSSIntellisensePackage"/> to reset the configuration file path</param>
+    public async Task InitializeAsync(CompletionConfiguration config, bool fromNewProject = false)
     {
-        [Import]
-        internal ConfigFileScanner Scanner { get; set; }
-        [Import]
-        internal SettingsProvider SettingsProvider { get; set; }
+        _config = config;
 
-        private string _fileName;
-        private bool _subscribed;
-
-        private CompletionConfiguration _config;
-
-        /// <summary>
-        /// Initializes the class to subscribe to relevant events
-        /// </summary>
-        /// <param name="config">The <see cref="CompletionConfiguration"/> object calling the initialization</param>
-        /// <param name="fromNewProject">Should only be called from <see cref="TailwindCSSIntellisensePackage"/> to reset the configuration file path</param>
-        public async Task InitializeAsync(CompletionConfiguration config, bool fromNewProject = false)
+        if (_subscribed == false)
         {
-            _config = config;
-            _fileName = await Scanner.FindConfigurationFilePathAsync(fromNewProject);
+            VS.Events.DocumentEvents.Saved += OnFileSave;
+            SettingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
 
-            if (_subscribed == false)
-            {
-                VS.Events.DocumentEvents.Saved += OnFileSave;
-                SettingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
-
-                _subscribed = true;
-            }
-
-            if (fromNewProject)
-            {
-                await _config.ReloadCustomAttributesAsync();
-            }
+            _subscribed = true;
         }
 
-        private void OnFileSave(string file)
+        if (fromNewProject)
         {
-            if (file.Equals(_fileName, StringComparison.InvariantCultureIgnoreCase))
-            {
-                ThreadHelper.JoinableTaskFactory.RunAsync(_config.ReloadCustomAttributesAsync).FireAndForget();
-            }
+            _settings = await SettingsProvider.GetSettingsAsync();
+            await _config.ReloadCustomAttributesAsync(_settings);
         }
+    }
 
-        private async Task OnSettingsChangedAsync(TailwindSettings settings)
+    private void OnFileSave(string file)
+    {
+        var configFile = _settings.ConfigurationFiles.FirstOrDefault(c => c.Path.Equals(file, StringComparison.InvariantCultureIgnoreCase));
+        if (configFile is not null)
         {
-            if (settings.TailwindConfigurationFile != await Scanner.FindConfigurationFilePathAsync() || _fileName != settings.TailwindConfigurationFile)
-            {
-                _fileName = await Scanner.FindConfigurationFilePathAsync(true);
-                await _config.ReloadCustomAttributesAsync();
-            }
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => _config.ReloadCustomAttributesAsync(configFile)).FireAndForget();
         }
+    }
 
-        public void Dispose()
+    private async Task OnSettingsChangedAsync(TailwindSettings settings)
+    {
+        var added = settings.ConfigurationFiles.Except(_settings.ConfigurationFiles).ToList();
+
+        if (added.Count > 0)
         {
-            VS.Events.DocumentEvents.Saved -= OnFileSave;
-            SettingsProvider.OnSettingsChanged -= OnSettingsChangedAsync;
+            await _config.ReloadCustomAttributesAsync(settings);
         }
+    }
+
+    public void Dispose()
+    {
+        VS.Events.DocumentEvents.Saved -= OnFileSave;
+        SettingsProvider.OnSettingsChanged -= OnSettingsChangedAsync;
     }
 }

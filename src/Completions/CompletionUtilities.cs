@@ -1,4 +1,6 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.Shell;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -11,6 +13,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions;
 
@@ -19,37 +22,25 @@ namespace TailwindCSSIntellisense.Completions;
 /// </summary>
 [Export]
 [PartCreationPolicy(CreationPolicy.Shared)]
-public sealed class CompletionUtilities
+public sealed class CompletionUtilities : IDisposable
 {
     [Import]
-    internal ConfigFileScanner Scanner { get; set; }
-    [Import]
     internal CompletionConfiguration Configuration { get; set; }
+    [Import]
+    internal SettingsProvider SettingsProvider { get; set; }
 
     internal ImageSource TailwindLogo { get; private set; } = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindlogo.png"), UriKind.Relative));
     internal bool Initialized { get; private set; }
-    internal List<TailwindClass> Classes { get; set; }
-    internal List<string> Modifiers { get; set; }
-    internal List<string> Screen { get; set; } = new List<string>() { "sm", "md", "lg", "xl", "2xl" };
+    internal bool Initializing { get; private set; }
+    
     internal List<int> Opacity { get; set; }
 
-    internal string Prefix { get; set; }
-
-    internal Dictionary<string, string> ColorToRgbMapper { get; set; } = new Dictionary<string, string>();
-    internal Dictionary<string, string> SpacingMapper { get; set; } = new Dictionary<string, string>();
-    internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; private set; } = new Dictionary<string, List<string>>();
-
-    internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
-    internal Dictionary<string, Dictionary<string, string>> CustomSpacingMappers { get; set; } = new Dictionary<string, Dictionary<string, string>>();
-
-    internal Dictionary<string, string> DescriptionMapper { get; set; } = new Dictionary<string, string>();
-    internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = new Dictionary<string, string>();
-
-    internal List<string> PluginClasses { get; set; }
-    internal List<string> PluginModifiers { get; set; }
-
-    private HashSet<string> _blocklist = [];
-    private List<string> _allowedCorePlugins = [];
+    /// <summary>
+    /// Completion settings for each project, keyed by configuration file paths.
+    /// </summary>
+    private Dictionary<string, ProjectCompletionValues> _projectCompletionConfiguration = [];
+    private ProjectCompletionValues _defaultProjectCompletionConfiguration;
+    private ProjectCompletionValues _unsetProjectCompletionConfiguration = new();
 
     /// <summary>
     /// Initializes the necessary utilities to provide completion
@@ -57,7 +48,7 @@ public sealed class CompletionUtilities
     /// <returns>An awaitable <see cref="Task{bool}"/> of type <see cref="bool"/> which returns true if completion should be provided and false if not.</returns>
     public async Task<bool> InitializeAsync()
     {
-        if (Initialized)
+        if (Initialized || Initializing)
         {
             return true;
         }
@@ -70,6 +61,8 @@ public sealed class CompletionUtilities
                 return false;
             }
 
+            Initializing = true;
+
             await VS.StatusBar.ShowMessageAsync("Loading Tailwind CSS classes");
             await LoadClassesAsync();
             await VS.StatusBar.ShowMessageAsync("Loading Tailwind CSS configuration");
@@ -77,6 +70,12 @@ public sealed class CompletionUtilities
             await Configuration.InitializeAsync(this);
             await VS.StatusBar.ShowMessageAsync("Tailwind CSS IntelliSense initialized");
 
+            var settings = await SettingsProvider.GetSettingsAsync();
+            await OnSettingsChangedAsync(settings);
+
+            SettingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
+
+            Initializing = false;
             Initialized = true;
             return true;
         }
@@ -91,49 +90,118 @@ public sealed class CompletionUtilities
         }
     }
 
-    public void SetBlocklist(HashSet<string> blocklist)
+    public ProjectCompletionValues GetUnsetCompletionConfiguration()
     {
-        _blocklist = blocklist;
-    }
-    
-    public void SetCorePlugins(List<string> corePlugins)
-    {
-        _allowedCorePlugins = corePlugins;
+        ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
+
+        return _unsetProjectCompletionConfiguration;
     }
 
     /// <summary>
-    /// Is the class in the blocklist?
+    /// Returns the ProjectCompletionValues for the given configuration file path.
     /// </summary>
-    /// <param name="className">The class to check</param>
-    public bool IsClassAllowed(string className)
+    public ProjectCompletionValues GetCompletionConfigurationByConfigFilePath(string configFile)
     {
-        return !_blocklist.Contains(className);
+        ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
+
+        return _projectCompletionConfiguration[configFile.ToLower()];
+    }
+
+    /// <summary>
+    /// For IntelliSense; detect which configuration file this file belongs to and return the completion configuration for it.
+    /// </summary>
+    public ProjectCompletionValues GetCompletionConfigurationByFilePath(string filePath)
+    {
+        ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
+
+        if (filePath is null)
+        {
+            return _defaultProjectCompletionConfiguration ?? _unsetProjectCompletionConfiguration;
+        }
+
+        foreach (var k in _projectCompletionConfiguration.Values)
+        {
+            if (k.ApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                return k;
+            }
+        }
+
+        return _defaultProjectCompletionConfiguration ?? _unsetProjectCompletionConfiguration;
+    }
+
+    private async Task OnSettingsChangedAsync(TailwindSettings settings)
+    {
+        _defaultProjectCompletionConfiguration = null;
+
+        foreach (var file in settings.ConfigurationFiles)
+        {
+            if (!_projectCompletionConfiguration.TryGetValue(file.Path.ToLower(), out var projectConfig))
+            {
+                projectConfig = _unsetProjectCompletionConfiguration.Copy();
+                _projectCompletionConfiguration.Add(file.Path.ToLower(), projectConfig);
+            }
+
+            projectConfig.ApplicablePaths = file.ApplicableLocations;
+            projectConfig.FilePath = file.Path.ToLower();
+
+            if (file.IsDefault && _defaultProjectCompletionConfiguration is null)
+            {
+                _defaultProjectCompletionConfiguration = projectConfig;
+            }
+        }
+
+        var toRemove = _projectCompletionConfiguration.Keys.Except(settings.ConfigurationFiles.Select(f => f.Path.ToLower())).ToList();
+
+        foreach (var file in toRemove)
+        {
+            _projectCompletionConfiguration.Remove(file);
+        }
+
+        if (settings.ConfigurationFiles.Count > 0)
+        {
+            _defaultProjectCompletionConfiguration ??= _projectCompletionConfiguration[settings.ConfigurationFiles.First().Path.ToLower()];
+        }
+
+        await Configuration.ReloadCustomAttributesAsync(settings);
     }
 
     private async Task<bool> ShouldInitializeAsync()
     {
-        return (await Scanner.FindConfigurationFilePathAsync()) != null;
+        return (await SettingsProvider.GetSettingsAsync()).ConfigurationFiles.Count > 0;
     }
 
     private async Task LoadClassesAsync()
     {
+        if (_unsetProjectCompletionConfiguration.Classes.Count > 0)
+        {
+            return;
+        }
+
         var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
         List<Variant> variants = [];
 
         var loadTasks = new List<Task>
         {
             LoadJsonAsync<List<Variant>>(Path.Combine(baseFolder, "tailwindclasses.json"), v => variants = v),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindmodifiers.json"), m => Modifiers = m),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwindrgbmapper.json"), c => ColorToRgbMapper = c),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), s => ProcessSpacing(s)),
+            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindmodifiers.json"), m => _unsetProjectCompletionConfiguration.Modifiers = m),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwindrgbmapper.json"), c => _unsetProjectCompletionConfiguration.ColorToRgbMapper = c),
+            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), spacing =>
+            {
+                _unsetProjectCompletionConfiguration.SpacingMapper = [];
+                foreach (var s in spacing)
+                {
+                    _unsetProjectCompletionConfiguration.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
+                }
+            }),
             LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "tailwindopacity.json"), o => Opacity = o),
-            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => ConfigurationValueToClassStems = c),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwinddesc.json"), d => DescriptionMapper = d)
+            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => _unsetProjectCompletionConfiguration.ConfigurationValueToClassStems = c),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwinddesc.json"), d => _unsetProjectCompletionConfiguration.DescriptionMapper = d)
         };
 
         await Task.WhenAll(loadTasks);
 
-        Classes = new List<TailwindClass>();
+        _unsetProjectCompletionConfiguration.Classes = new List<TailwindClass>();
 
         foreach (var variant in variants)
         {
@@ -249,7 +317,7 @@ public sealed class CompletionUtilities
                 classes.Add(newClass);
             }
 
-            Classes.AddRange(classes);
+            _unsetProjectCompletionConfiguration.Classes.AddRange(classes);
 
             if (variant.HasNegative == true)
             {
@@ -263,10 +331,10 @@ public sealed class CompletionUtilities
                     };
                 }).ToList();
 
-                Classes.AddRange(negativeClasses);
+                _unsetProjectCompletionConfiguration.Classes.AddRange(negativeClasses);
             }
         }
-        foreach (var stems in ConfigurationValueToClassStems.Values)
+        foreach (var stems in _unsetProjectCompletionConfiguration.ConfigurationValueToClassStems.Values)
         {
             foreach (var stem in stems)
             {
@@ -283,13 +351,13 @@ public sealed class CompletionUtilities
 
                 if (stem.Contains(":"))
                 {
-                    Modifiers.Add($"{name.Replace(":-", "")}-[]");
+                    _unsetProjectCompletionConfiguration.Modifiers.Add($"{name.Replace(":-", "")}-[]");
                 }
                 else
                 {
-                    if (Classes.All(c => (c.Name == name && c.SupportsBrackets == false) || c.Name != name))
+                    if (_unsetProjectCompletionConfiguration.Classes.All(c => (c.Name == name && c.SupportsBrackets == false) || c.Name != name))
                     {
-                        Classes.Add(new TailwindClass()
+                        _unsetProjectCompletionConfiguration.Classes.Add(new TailwindClass()
                         {
                             Name = name,
                             SupportsBrackets = true
@@ -300,19 +368,15 @@ public sealed class CompletionUtilities
         }
     }
 
-    private void ProcessSpacing(List<string> spacing)
-    {
-        SpacingMapper = new Dictionary<string, string>();
-        foreach (var s in spacing)
-        {
-            SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
-        }
-    }
-
     private async Task LoadJsonAsync<T>(string path, Action<T> process)
     {
         using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         var data = await JsonSerializer.DeserializeAsync<T>(fs);
         process(data);
+    }
+
+    public void Dispose()
+    {
+        SettingsProvider.OnSettingsChanged -= OnSettingsChangedAsync;
     }
 }

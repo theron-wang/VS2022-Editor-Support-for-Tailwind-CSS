@@ -14,7 +14,7 @@ namespace TailwindCSSIntellisense.Configuration;
 /// MEF Component class to provide methods to find files of a certain type in the open solution
 /// </summary>
 [Export]
-internal sealed class FileFinder
+public sealed class FileFinder
 {
     /// <summary>
     /// Finds all Javascript files (.js) within the solution

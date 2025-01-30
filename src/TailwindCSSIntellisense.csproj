@@ -86,6 +86,7 @@
     <Compile Include="Completions\BulkInsertObservableCollection.cs" />
     <Compile Include="Completions\CompletionTooltipProvider.cs" />
     <Compile Include="Completions\Controllers\JavaScriptCompletionController.cs" />
+    <Compile Include="Completions\ProjectCompletionValues.cs" />
     <Compile Include="Completions\Providers\JS\JavaScriptAsyncCompletionSourceProvider.cs" />
     <Compile Include="Completions\Sources\JS\JavaScriptAsyncCompletionSource.cs" />
     <Compile Include="Completions\TCss\TCssFileAndContentTypeDeclaration.cs" />
@@ -113,6 +114,7 @@
     <Compile Include="Helpers\DescriptionUIHelper.cs" />
     <Compile Include="Helpers\ImportantModifierHelper.cs" />
     <Compile Include="Helpers\LegacyRazorEditorHelper.cs" />
+    <Compile Include="Helpers\MutableKeyValuePair.cs" />
     <Compile Include="Helpers\PathHelpers.cs" />
     <Compile Include="Helpers\RazorClassScopeHelper.cs" />
     <Compile Include="Linting\Error.cs" />
@@ -154,6 +156,7 @@
     <Compile Include="QuickInfo\HtmlQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\QuickInfoSource.cs" />
     <Compile Include="Settings\BuildPair.cs" />
+    <Compile Include="Settings\ConfigurationFile.cs" />
     <Compile Include="Settings\CustomRegexes.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>

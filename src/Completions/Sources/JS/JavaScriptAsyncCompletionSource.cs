@@ -43,12 +43,11 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
 
     public async Task<CompletionContext> GetCompletionContextAsync(IAsyncCompletionSession session, CompletionTrigger trigger, SnapshotPoint triggerLocation, SnapshotSpan applicableToSpan, CancellationToken token)
     {
-        if (_showAutocomplete == null)
-        {
-            _showAutocomplete = (await _settingsProvider.GetSettingsAsync()).EnableTailwindCss;
-        }
+        var settings = await _settingsProvider.GetSettingsAsync();
 
-        if (_showAutocomplete == false || _completionUtils.Scanner.HasConfigurationFile == false)
+        _showAutocomplete ??= settings.EnableTailwindCss;
+
+        if (_showAutocomplete == false || settings.ConfigurationFiles.Count > 0)
         {
             return new CompletionContext(ImmutableArray<CompletionItem>.Empty, null);
         }

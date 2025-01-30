@@ -6,179 +6,83 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 
-namespace TailwindCSSIntellisense.Settings
+namespace TailwindCSSIntellisense.Settings;
+
+/// <summary>
+/// A singleton class to provide settings and provides an event which is raised when settings are changed
+/// </summary>
+[Export]
+[PartCreationPolicy(CreationPolicy.Shared)]
+public sealed class SettingsProvider : IDisposable
 {
-    /// <summary>
-    /// A singleton class to provide settings and provides an event which is raised when settings are changed
-    /// </summary>
-    [Export]
-    [PartCreationPolicy(CreationPolicy.Shared)]
-    internal sealed class SettingsProvider : IDisposable
+    public SettingsProvider()
     {
-        public SettingsProvider()
+        ThreadHelper.JoinableTaskFactory.Run(async () =>
         {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
-            {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                General.Saved += GeneralSettingsChanged;
-                VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCacheAndSettingsChanged;
-                VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
-                VS.Events.DocumentEvents.Saved += OnFileSaved;
-                ClassRegexHelper.GetTailwindSettings = GetSettingsAsync;
-            });
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+            General.Saved += GeneralSettingsChanged;
+            VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCacheAndSettingsChanged;
+            VS.Events.SolutionEvents.OnAfterOpenProject += InvalidateCacheAndSettingsChanged;
+            VS.Events.DocumentEvents.Saved += OnFileSaved;
+            ClassRegexHelper.GetTailwindSettings = GetSettingsAsync;
+        });
+    }
+
+    [Import]
+    public FileFinder FileFinder { get; set; }
+
+    [Import]
+    public ConfigFileScanner ConfigFileScanner { get; set; }
+
+    private const string ExtensionConfigFileName = "tailwind.extension.json";
+
+    private Task _fileWritingTask;
+    private TailwindSettings _cachedSettings;
+    private bool _cacheValid;
+
+    /// <summary>
+    /// Event that is raised when the settings are changed.
+    /// </summary>
+    public Func<TailwindSettings, Task> OnSettingsChanged;
+
+    public void RefreshSettings()
+    {
+        _cacheValid = false;
+    }
+
+    /// <summary>
+    /// Not recommended to use this method. Use <see cref="GetSettingsAsync"/> instead.
+    /// </summary>
+    public TailwindSettings GetSettings()
+    {
+        return ThreadHelper.JoinableTaskFactory.Run(GetSettingsAsync);
+    }
+
+    /// <summary>
+    /// Retrieves the TailwindCSSIntellisense settings asynchronously.
+    /// </summary>
+    /// <returns>The extension and project settings.</returns>
+    public async Task<TailwindSettings> GetSettingsAsync()
+    {
+        TailwindSettings returnSettings;
+        var changed = false;
+        if (_cacheValid)
+        {
+            returnSettings = _cachedSettings;
         }
-
-        [Import]
-        public FileFinder FileFinder { get; set; }
-
-        private const string ExtensionConfigFileName = "tailwind.extension.json";
-
-        private Task _fileWritingTask;
-        private TailwindSettings _cachedSettings;
-        private bool _cacheValid;
-
-        /// <summary>
-        /// Event that is raised when the settings are changed.
-        /// </summary>
-        public Func<TailwindSettings, Task> OnSettingsChanged;
-
-        public void RefreshSettings()
+        else
         {
-            _cacheValid = false;
-        }
+            var general = await General.GetLiveInstanceAsync();
 
-        /// <summary>
-        /// Retrieves the TailwindCSSIntellisense settings asynchronously.
-        /// </summary>
-        /// <returns>The extension and project settings.</returns>
-        public async Task<TailwindSettings> GetSettingsAsync()
-        {
-            TailwindSettings returnSettings;
-            var changed = false;
-            if (_cacheValid)
+            var activeProjectPath = await GetTailwindProjectDirectoryAsync();
+
+            if (activeProjectPath == null)
             {
-                returnSettings = _cachedSettings;
-            }
-            else
-            {
-                var general = await General.GetLiveInstanceAsync();
-
-                var activeProjectPath = await GetTailwindProjectDirectoryAsync();
-
-                if (activeProjectPath == null)
-                {
-                    return new TailwindSettings()
-                    {
-                        EnableTailwindCss = general.UseTailwindCss,
-                        DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
-                        OnSaveTriggerFileExtensions = general.TailwindOnSaveTriggerFileExtensions.Split(';'),
-                        BuildType = general.BuildProcessType,
-                        BuildScript = general.BuildScript,
-                        OverrideBuild = general.OverrideBuild,
-                        AutomaticallyMinify = general.AutomaticallyMinify,
-                        TailwindCliPath = general.TailwindCliPath,
-                        SortClassesType = general.ClassSortType
-                    };
-                }
-
-                TailwindSettingsProjectOnly projectSettings = null;
-
-                var path = Path.Combine(activeProjectPath, ExtensionConfigFileName);
-
-                if (File.Exists(path))
-                {
-                    if (_fileWritingTask != null)
-                    {
-                        if (_fileWritingTask.IsCompleted)
-                        {
-                            _fileWritingTask = null;
-                        }
-                        else
-                        {
-                            await _fileWritingTask;
-                        }
-                    }
-                    try
-                    {
-                        using var fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-                        projectSettings = await JsonSerializer.DeserializeAsync<TailwindSettingsProjectOnly>(fs);
-                    }
-                    catch (Exception ex)
-                    {
-                        // Json file is malformed/empty
-
-                        await VS.StatusBar.ShowMessageAsync("Tailwind CSS extension configuration file failed to load properly (check 'Extensions' output window for more details)");
-                        await ex.LogAsync();
-
-                        projectSettings = new TailwindSettingsProjectOnly()
-                        {
-                            ConfigurationFile = await FindExistingConfigurationFileAsync()
-                        };
-
-                        if (projectSettings.ConfigurationFile != null)
-                        {
-                            changed = true;
-                        }
-                    }
-                }
-                else
-                {
-                    projectSettings = new TailwindSettingsProjectOnly()
-                    {
-                        ConfigurationFile = await FindExistingConfigurationFileAsync()
-                    };
-
-                    if (projectSettings.ConfigurationFile != null)
-                    {
-                        changed = true;
-                    }
-                }
-
-#pragma warning disable CS0612 // Type or member is obsolete
-                // Backwards compatibility
-                if (projectSettings.InputCssFile != null)
-                {
-                    projectSettings.BuildFiles = [
-                        new BuildPair()
-                        {
-                            Input = projectSettings.InputCssFile,
-                            Output = projectSettings.OutputCssFile
-                        }
-                    ];
-                    projectSettings.InputCssFile = null;
-                    projectSettings.OutputCssFile = null;
-                    changed = true;
-                }
-#pragma warning restore CS0612 // Type or member is obsolete
-
-                var inputFiles = new HashSet<string>();
-
-                if (projectSettings.BuildFiles is not null)
-                {
-                    for (int i = 0; i < projectSettings.BuildFiles.Count; i++)
-                    {
-                        var buildPair = projectSettings.BuildFiles[i];
-
-                        buildPair.Input = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Input?.Trim());
-                        buildPair.Output = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Output?.Trim());
-                        if (buildPair.Input == null || File.Exists(buildPair.Input) == false || inputFiles.Contains(buildPair.Input))
-                        {
-                            projectSettings.BuildFiles.Remove(buildPair);
-                            i--;
-                            changed = true;
-                            continue;
-                        }
-
-                        inputFiles.Add(buildPair.Input);
-                    }
-                }
-
-                returnSettings = new TailwindSettings()
+                return new TailwindSettings()
                 {
                     EnableTailwindCss = general.UseTailwindCss,
                     DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
@@ -186,274 +90,412 @@ namespace TailwindCSSIntellisense.Settings
                     BuildType = general.BuildProcessType,
                     BuildScript = general.BuildScript,
                     OverrideBuild = general.OverrideBuild,
-                    TailwindConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.ConfigurationFile?.Trim()),
-                    BuildFiles = projectSettings.BuildFiles ?? [],
-                    PackageConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.PackageConfigurationFile?.Trim()),
                     AutomaticallyMinify = general.AutomaticallyMinify,
                     TailwindCliPath = general.TailwindCliPath,
-                    UseCli = projectSettings.UseCli,
-                    SortClassesType = general.ClassSortType,
-                    CustomRegexes = projectSettings.CustomRegexes
+                    SortClassesType = general.ClassSortType
                 };
-
-                _cachedSettings = returnSettings;
-                _cacheValid = true;
             }
 
-            if (returnSettings.TailwindConfigurationFile != null && File.Exists(returnSettings.TailwindConfigurationFile) == false)
+            TailwindSettingsProjectOnly projectSettings = null;
+
+            var path = Path.Combine(activeProjectPath, ExtensionConfigFileName);
+
+            if (File.Exists(path))
             {
-                returnSettings.TailwindConfigurationFile = null;
+                if (_fileWritingTask != null)
+                {
+                    if (_fileWritingTask.IsCompleted)
+                    {
+                        _fileWritingTask = null;
+                    }
+                    else
+                    {
+                        await _fileWritingTask;
+                    }
+                }
+                try
+                {
+                    using var fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
+                    projectSettings = await JsonSerializer.DeserializeAsync<TailwindSettingsProjectOnly>(fs);
+                }
+                catch (Exception ex)
+                {
+                    // Json file is malformed/empty
+
+                    await VS.StatusBar.ShowMessageAsync("Tailwind CSS extension configuration file failed to load properly (check 'Extensions' output window for more details)");
+                    await ex.LogAsync();
+
+                    var file = await ConfigFileScanner.TryFindConfigurationFileAsync();
+
+                    projectSettings = new TailwindSettingsProjectOnly()
+                    {
+                        ConfigurationFiles = [new() { ApplicableLocations = [], IsDefault = true, Path = file }]
+                    };
+
+                    if (file != null)
+                    {
+                        changed = true;
+                    }
+                }
+            }
+            else
+            {
+                var file = await ConfigFileScanner.TryFindConfigurationFileAsync();
+
+                projectSettings = new TailwindSettingsProjectOnly()
+                {
+                    ConfigurationFiles = [new() { ApplicableLocations = [], IsDefault = true, Path = file }]
+                };
+
+                if (file != null)
+                {
+                    changed = true;
+                }
+            }
+
+#pragma warning disable CS0612 // Type or member is obsolete
+            // Backwards compatibility
+            if (projectSettings.InputCssFile != null)
+            {
+                projectSettings.BuildFiles = [
+                    new BuildPair()
+                    {
+                        Input = projectSettings.InputCssFile,
+                        Output = projectSettings.OutputCssFile
+                    }
+                ];
+                projectSettings.InputCssFile = null;
+                projectSettings.OutputCssFile = null;
                 changed = true;
             }
 
-            if (changed)
+            if (projectSettings.ConfigurationFile != null)
             {
-                await OverrideSettingsAsync(returnSettings);
+                projectSettings.ConfigurationFiles = [new() { Path = projectSettings.ConfigurationFile, ApplicableLocations = [], IsDefault = true }];
+                projectSettings.ConfigurationFile = null;
+                changed = true;
             }
+#pragma warning restore CS0612 // Type or member is obsolete
 
-            return returnSettings;
-        }
+            var inputFiles = new HashSet<string>();
 
-        /// <summary>
-        /// Overrides the TailwindCSSIntellisense settings asynchronously.
-        /// </summary>
-        /// <param name="settings">The settings to override with.</param>
-        public async Task OverrideSettingsAsync(TailwindSettings settings)
-        {
-            // Prevents two tasks from writing to the same file at the same time
-            if (_fileWritingTask != null)
+            if (projectSettings.BuildFiles is not null)
             {
-                if (_fileWritingTask.IsCompleted)
+                for (int i = 0; i < projectSettings.BuildFiles.Count; i++)
                 {
-                    _fileWritingTask = null;
+                    var buildPair = projectSettings.BuildFiles[i];
+
+                    buildPair.Input = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Input?.Trim());
+                    buildPair.Output = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Output?.Trim());
+                    if (buildPair.Input == null || File.Exists(buildPair.Input) == false || inputFiles.Contains(buildPair.Input))
+                    {
+                        projectSettings.BuildFiles.Remove(buildPair);
+                        i--;
+                        changed = true;
+                        continue;
+                    }
+
+                    inputFiles.Add(buildPair.Input);
                 }
-                else
+            }
+
+            if (projectSettings.ConfigurationFiles is not null)
+            {
+                for (int i = 0; i < projectSettings.ConfigurationFiles.Count; i++)
                 {
-                    await _fileWritingTask;
+                    var config = projectSettings.ConfigurationFiles[i];
+                    config.Path = PathHelpers.GetAbsolutePath(activeProjectPath, config.Path?.Trim());
+                    config.ApplicableLocations = config.ApplicableLocations.Select(l => PathHelpers.GetAbsolutePath(activeProjectPath, l.Trim())).ToList();
+
+                    if (string.IsNullOrWhiteSpace(config.Path) || File.Exists(config.Path) == false)
+                    {
+                        projectSettings.ConfigurationFiles.Remove(config);
+                        i--;
+                        changed = true;
+                    }
                 }
             }
 
-            var projectRoot = await GetTailwindProjectDirectoryAsync();
-            var desiredProjectRoot = await GetDesiredConfigurationDirectoryAsync(settings.TailwindConfigurationFile);
-            var copyBuildFilePair = new List<BuildPair>();
-
-            foreach (var buildFilePair in settings.BuildFiles)
+            returnSettings = new TailwindSettings()
             {
-                copyBuildFilePair.Add(new()
-                {
-                    Input = PathHelpers.GetRelativePath(buildFilePair.Input, projectRoot),
-                    Output = string.IsNullOrWhiteSpace(buildFilePair.Output) ? "" : PathHelpers.GetRelativePath(buildFilePair.Output, projectRoot)
-                });
-            }
-
-            var projectSettings = new TailwindSettingsProjectOnly()
-            {
-                ConfigurationFile = PathHelpers.GetRelativePath(settings.TailwindConfigurationFile, projectRoot),
-                BuildFiles = copyBuildFilePair,
-                PackageConfigurationFile = PathHelpers.GetRelativePath(settings.PackageConfigurationFile, projectRoot),
-                UseCli = settings.UseCli
+                EnableTailwindCss = general.UseTailwindCss,
+                DefaultOutputCssName = general.TailwindOutputFileName.Trim(),
+                OnSaveTriggerFileExtensions = general.TailwindOnSaveTriggerFileExtensions.Split(';'),
+                BuildType = general.BuildProcessType,
+                BuildScript = general.BuildScript,
+                OverrideBuild = general.OverrideBuild,
+                ConfigurationFiles = projectSettings.ConfigurationFiles,
+                BuildFiles = projectSettings.BuildFiles ?? [],
+                PackageConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.PackageConfigurationFile?.Trim()),
+                AutomaticallyMinify = general.AutomaticallyMinify,
+                TailwindCliPath = general.TailwindCliPath,
+                UseCli = projectSettings.UseCli,
+                SortClassesType = general.ClassSortType,
+                CustomRegexes = projectSettings.CustomRegexes
             };
 
-            if (projectSettings.ConfigurationFile == null && (projectSettings.BuildFiles == null || projectSettings.BuildFiles.Count == 0) && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
-            {
-                try
-                {
-                    File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
-                }
-                catch
-                {
+            _cachedSettings = returnSettings;
+            _cacheValid = true;
+        }
 
-                }
+        if (changed)
+        {
+            await OverrideSettingsAsync(returnSettings);
+        }
+
+        return returnSettings;
+    }
+
+    /// <summary>
+    /// Overrides the TailwindCSSIntellisense settings asynchronously.
+    /// </summary>
+    /// <param name="settings">The settings to override with.</param>
+    public async Task OverrideSettingsAsync(TailwindSettings settings)
+    {
+        // Prevents two tasks from writing to the same file at the same time
+        if (_fileWritingTask != null)
+        {
+            if (_fileWritingTask.IsCompleted)
+            {
+                _fileWritingTask = null;
             }
             else
             {
-                // If the configuration file is not located in the same project as the configuration file,
-                // move it there. If the configuration file has not been changed, however, respect the user's
-                // decision to keep it where it is.
-                if (desiredProjectRoot != null && desiredProjectRoot != projectRoot &&
-                    (_cachedSettings is null || _cachedSettings.TailwindConfigurationFile != settings.TailwindConfigurationFile))
-                {
-                    if (File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
-                    {
-                        try
-                        {
-                            File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
-                        }
-                        catch (Exception ex)
-                        {
-                            await ex.LogAsync($"Tailwind CSS: Failed to delete old configuration file at ");
-                        }
-                    }
-
-                    projectRoot = desiredProjectRoot;
-                }
-
-                using var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-                _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings, options: new()
-                {
-                    WriteIndented = true
-                });
                 await _fileWritingTask;
             }
+        }
 
-            _cachedSettings = settings;
+        var defaultConfigFile = settings.ConfigurationFiles.FirstOrDefault(c => c.IsDefault)?.Path ??
+            settings.ConfigurationFiles.FirstOrDefault()?.Path;
 
-            if (OnSettingsChanged != null)
+        string oldDefaultConfigFile = null;
+        if (_cachedSettings is not null)
+        {
+            oldDefaultConfigFile = _cachedSettings.ConfigurationFiles.FirstOrDefault(c => c.IsDefault)?.Path ??
+            _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path;
+        }
+
+        var projectRoot = await GetTailwindProjectDirectoryAsync();
+        var desiredProjectRoot = await GetDesiredConfigurationDirectoryAsync(defaultConfigFile);
+        var copyBuildFilePair = new List<BuildPair>();
+
+        foreach (var buildFilePair in settings.BuildFiles)
+        {
+            copyBuildFilePair.Add(new()
             {
-                await OnSettingsChanged(settings);
+                Input = PathHelpers.GetRelativePath(buildFilePair.Input, projectRoot),
+                Output = string.IsNullOrWhiteSpace(buildFilePair.Output) ? "" : PathHelpers.GetRelativePath(buildFilePair.Output, projectRoot)
+            });
+        }
+
+        var projectSettings = new TailwindSettingsProjectOnly()
+        {
+            ConfigurationFiles = settings.ConfigurationFiles.Select(cf =>
+            {
+                return new ConfigurationFile()
+                {
+                    Path = PathHelpers.GetRelativePath(cf.Path?.Trim(), projectRoot),
+                    ApplicableLocations = cf.ApplicableLocations.Select(l => PathHelpers.GetRelativePath(l.Trim(), projectRoot)).ToList(),
+                    IsDefault = cf.IsDefault
+                };
+            }).ToList(),
+            BuildFiles = copyBuildFilePair,
+            PackageConfigurationFile = PathHelpers.GetRelativePath(settings.PackageConfigurationFile, projectRoot),
+            UseCli = settings.UseCli
+        };
+
+        if (projectSettings.ConfigurationFiles.Count == 0 && (projectSettings.BuildFiles == null || projectSettings.BuildFiles.Count == 0) && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
+        {
+            try
+            {
+                File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
+            }
+            catch
+            {
+
+            }
+        }
+        else
+        {
+            // If the configuration file is not located in the same project as the configuration file,
+            // move it there. If the configuration file has not been changed, however, respect the user's
+            // decision to keep it where it is.
+            if (desiredProjectRoot != null && desiredProjectRoot != projectRoot &&
+                (_cachedSettings is null || (defaultConfigFile is not null && defaultConfigFile != oldDefaultConfigFile)))
+            {
+                if (File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
+                {
+                    try
+                    {
+                        File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
+                    }
+                    catch (Exception ex)
+                    {
+                        await ex.LogAsync($"Tailwind CSS: Failed to delete old configuration file at ${Path.Combine(projectRoot, ExtensionConfigFileName)}");
+                    }
+                }
+
+                projectRoot = desiredProjectRoot;
+            }
+
+            using var fs = File.Open(Path.Combine(projectRoot, ExtensionConfigFileName), FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
+            _fileWritingTask = JsonSerializer.SerializeAsync(fs, projectSettings, options: new()
+            {
+                WriteIndented = true
+            });
+            await _fileWritingTask;
+        }
+
+        _cachedSettings = settings;
+
+        if (OnSettingsChanged != null)
+        {
+            await OnSettingsChanged(settings);
+        }
+    }
+
+    public void Dispose()
+    {
+        General.Saved -= GeneralSettingsChanged;
+        VS.Events.SolutionEvents.OnAfterOpenFolder -= InvalidateCacheAndSettingsChanged;
+        VS.Events.SolutionEvents.OnAfterOpenProject -= InvalidateCacheAndSettingsChanged;
+        VS.Events.DocumentEvents.Saved -= OnFileSaved;
+    }
+
+    public async Task<string> GetFilePathAsync()
+    {
+        return Path.Combine(await GetTailwindProjectDirectoryAsync(), ExtensionConfigFileName);
+    }
+
+    private async Task<string> GetDesiredConfigurationDirectoryAsync(string configPath)
+    {
+        var projects = await VS.Solutions.GetAllProjectsAsync();
+
+        if (projects.Any() == false || string.IsNullOrWhiteSpace(configPath))
+        {
+            return null;
+        }
+
+        // Try to find the project that contains the config file, and return
+        // its path
+        string bestMatch = null;
+        var numberOfSlashes = configPath.Replace(Path.DirectorySeparatorChar, '/').Count(c => c == '/');
+
+        foreach (var p in projects)
+        {
+            var projectRoot = Path.GetDirectoryName(p.FullPath);
+
+            var relativePath = PathHelpers.GetRelativePath(configPath, projectRoot);
+
+            if (!configPath.StartsWith(".."))
+            {
+                var numSlashes = relativePath.Count(c => c == Path.DirectorySeparatorChar);
+
+                if (numSlashes < numberOfSlashes)
+                {
+                    bestMatch = projectRoot;
+                    numberOfSlashes = numSlashes;
+                }
             }
         }
 
-        public void Dispose()
+        return bestMatch;
+    }
+
+    private async Task<string> GetTailwindProjectDirectoryAsync()
+    {
+        var projects = await VS.Solutions.GetAllProjectsAsync();
+
+        if (projects == null || projects.Any() == false)
         {
-            General.Saved -= GeneralSettingsChanged;
-            VS.Events.SolutionEvents.OnAfterOpenFolder -= InvalidateCacheAndSettingsChanged;
-            VS.Events.SolutionEvents.OnAfterOpenProject -= InvalidateCacheAndSettingsChanged;
-            VS.Events.DocumentEvents.Saved -= OnFileSaved;
+            return await FileFinder.GetCurrentMiscellaneousProjectPathAsync();
         }
-
-        public async Task<string> GetFilePathAsync()
+        else
         {
-            return Path.Combine(await GetTailwindProjectDirectoryAsync(), ExtensionConfigFileName);
-        }
-
-        private async Task<string> GetDesiredConfigurationDirectoryAsync(string configPath)
-        {
-            var projects = await VS.Solutions.GetAllProjectsAsync();
-
-            if (projects.Any() == false || string.IsNullOrWhiteSpace(configPath))
-            {
-                return null;
-            }
-
-            // Try to find the project that contains the config file, and return
-            // its path
-            string bestMatch = null;
-            var numberOfSlashes = configPath.Replace(Path.DirectorySeparatorChar, '/').Count(c => c == '/');
-
             foreach (var p in projects)
             {
-                var projectRoot = Path.GetDirectoryName(p.FullPath);
-
-                var relativePath = PathHelpers.GetRelativePath(configPath, projectRoot);
-
-                if (!configPath.StartsWith(".."))
+                if (File.Exists(Path.Combine(Path.GetDirectoryName(p.FullPath), ExtensionConfigFileName)))
                 {
-                    var numSlashes = relativePath.Count(c => c == Path.DirectorySeparatorChar);
-
-                    if (numSlashes < numberOfSlashes)
-                    {
-                        bestMatch = projectRoot;
-                        numberOfSlashes = numSlashes;
-                    }
+                    return Path.GetDirectoryName(p.FullPath);
                 }
             }
 
-            return bestMatch;
-        }
-
-        private async Task<string> GetTailwindProjectDirectoryAsync()
-        {
-            var projects = await VS.Solutions.GetAllProjectsAsync();
-
-            if (projects == null || projects.Any() == false)
-            {
-                return await FileFinder.GetCurrentMiscellaneousProjectPathAsync();
-            }
-            else
-            {
-                foreach (var p in projects)
-                {
-                    if (File.Exists(Path.Combine(Path.GetDirectoryName(p.FullPath), ExtensionConfigFileName)))
-                    {
-                        return Path.GetDirectoryName(p.FullPath);
-                    }
-                }
-
-                return Path.GetDirectoryName(
-                    projects.FirstOrDefault(p =>
-                        DefaultConfigurationFileNames.Names.Any(n => 
-                            File.Exists(
-                                Path.Combine(
-                                    Path.GetDirectoryName(p.FullPath), n)
-                                )
+            return Path.GetDirectoryName(
+                projects.FirstOrDefault(p =>
+                    DefaultConfigurationFileNames.Names.Any(n =>
+                        File.Exists(
+                            Path.Combine(
+                                Path.GetDirectoryName(p.FullPath), n)
                             )
-                        )?.FullPath ??
-                    projects.First().FullPath);
-            }
+                        )
+                    )?.FullPath ??
+                projects.First().FullPath);
+        }
+    }
+
+    private void GeneralSettingsChanged(General settings)
+    {
+        var origSettings = ThreadHelper.JoinableTaskFactory.Run(GetSettingsAsync);
+
+        if (settings.UseTailwindCss != origSettings.EnableTailwindCss ||
+            settings.TailwindOutputFileName != origSettings.DefaultOutputCssName ||
+            !settings.TailwindOnSaveTriggerFileExtensions.Equals(origSettings.OnSaveTriggerFileExtensions) ||
+            settings.BuildProcessType != origSettings.BuildType ||
+            settings.BuildScript != origSettings.BuildScript ||
+            settings.OverrideBuild != origSettings.OverrideBuild ||
+            settings.AutomaticallyMinify != origSettings.AutomaticallyMinify ||
+            settings.TailwindCliPath != origSettings.TailwindCliPath ||
+            settings.ClassSortType != origSettings.SortClassesType)
+        {
+            origSettings.EnableTailwindCss = settings.UseTailwindCss;
+            origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
+            origSettings.OnSaveTriggerFileExtensions = settings.TailwindOnSaveTriggerFileExtensions.Split(';');
+            origSettings.BuildType = settings.BuildProcessType;
+            origSettings.BuildScript = settings.BuildScript;
+            origSettings.OverrideBuild = settings.OverrideBuild;
+            origSettings.AutomaticallyMinify = settings.AutomaticallyMinify;
+            origSettings.TailwindCliPath = settings.TailwindCliPath;
+            origSettings.SortClassesType = settings.ClassSortType;
+
+            ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
         }
 
-        private async Task<string> FindExistingConfigurationFileAsync()
+        _cachedSettings = origSettings;
+    }
+
+    private void InvalidateCacheAndSettingsChanged(string file)
+    {
+        _cacheValid = false;
+        _cachedSettings = null;
+        if (OnSettingsChanged != null)
         {
-            var paths = await FileFinder.GetJavascriptFilesAsync();
-
-            return paths.FirstOrDefault(p => DefaultConfigurationFileNames.Names.Contains(Path.GetFileName(p).ToLower()));
-        }
-
-        private void GeneralSettingsChanged(General settings)
-        {
-            var origSettings = ThreadHelper.JoinableTaskFactory.Run(GetSettingsAsync);
-
-            if (settings.UseTailwindCss != origSettings.EnableTailwindCss ||
-                settings.TailwindOutputFileName != origSettings.DefaultOutputCssName ||
-                !settings.TailwindOnSaveTriggerFileExtensions.Equals(origSettings.OnSaveTriggerFileExtensions) ||
-                settings.BuildProcessType != origSettings.BuildType ||
-                settings.BuildScript != origSettings.BuildScript ||
-                settings.OverrideBuild != origSettings.OverrideBuild ||
-                settings.AutomaticallyMinify != origSettings.AutomaticallyMinify ||
-                settings.TailwindCliPath != origSettings.TailwindCliPath ||
-                settings.ClassSortType != origSettings.SortClassesType)
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
             {
-                origSettings.EnableTailwindCss = settings.UseTailwindCss;
-                origSettings.DefaultOutputCssName = settings.TailwindOutputFileName;
-                origSettings.OnSaveTriggerFileExtensions = settings.TailwindOnSaveTriggerFileExtensions.Split(';');
-                origSettings.BuildType = settings.BuildProcessType;
-                origSettings.BuildScript = settings.BuildScript;
-                origSettings.OverrideBuild = settings.OverrideBuild;
-                origSettings.AutomaticallyMinify = settings.AutomaticallyMinify;
-                origSettings.TailwindCliPath = settings.TailwindCliPath;
-                origSettings.SortClassesType = settings.ClassSortType;
-
-                ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
-            }
-
-            _cachedSettings = origSettings;
+                var settings = await GetSettingsAsync();
+                await OnSettingsChanged(settings);
+            });
         }
+    }
 
-        private void InvalidateCacheAndSettingsChanged(string file)
+    private void InvalidateCacheAndSettingsChanged(Project project)
+    {
+        _cacheValid = false;
+        _cachedSettings = null;
+        if (OnSettingsChanged != null)
         {
-            _cacheValid = false;
-            _cachedSettings = null;
-            if (OnSettingsChanged != null)
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
             {
-                ThreadHelper.JoinableTaskFactory.Run(async () =>
-                {
-                    var settings = await GetSettingsAsync();
-                    await OnSettingsChanged(settings);
-                });
-            }
+                var settings = await GetSettingsAsync();
+                await OnSettingsChanged(settings);
+            });
         }
+    }
 
-        private void InvalidateCacheAndSettingsChanged(Project project)
+    private void OnFileSaved(string file)
+    {
+        if (Path.GetFileName(file) == ExtensionConfigFileName)
         {
-            _cacheValid = false;
-            _cachedSettings = null;
-            if (OnSettingsChanged != null)
-            {
-                ThreadHelper.JoinableTaskFactory.Run(async () =>
-                {
-                    var settings = await GetSettingsAsync();
-                    await OnSettingsChanged(settings);
-                });
-            }
-        }
-
-        private void OnFileSaved(string file)
-        {
-            if (Path.GetFileName(file) == ExtensionConfigFileName)
-            {
-                InvalidateCacheAndSettingsChanged(file);
-            }
+            InvalidateCacheAndSettingsChanged(file);
         }
     }
 }

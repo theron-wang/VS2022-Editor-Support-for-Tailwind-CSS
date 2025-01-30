@@ -11,7 +11,7 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
 {
     protected ITextBuffer _textBuffer;
     protected DescriptionGenerator _descriptionGenerator;
-    private readonly CompletionUtilities _completionUtilities;
+    private readonly ProjectCompletionValues _completionUtilities;
 
     private const string PropertyKey = "tailwindintellisensequickinfoadded";
 
@@ -19,7 +19,7 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
     {
         _textBuffer = textBuffer;
         _descriptionGenerator = descriptionGenerator;
-        _completionUtilities = completionUtilities;
+        _completionUtilities = completionUtilities.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
     }
 
     public void Dispose()
@@ -53,7 +53,7 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 return Task.FromResult<QuickInfoItem>(null);
             }
 
-            var desc = _descriptionGenerator.GetDescription(classText);
+            var desc = _descriptionGenerator.GetDescription(classText, _completionUtilities);
 
             var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
 
@@ -62,7 +62,7 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 session.Properties.AddProperty(PropertyKey, true);
 
                 var totalModifier = fullText.Contains(':') ?
-                    _descriptionGenerator.GetTotalModifierDescription(fullText.Substring(0, fullText.Length - classText.Length - 1)) :
+                    _descriptionGenerator.GetTotalModifierDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _completionUtilities) :
                     [];
 
                 return Task.FromResult(

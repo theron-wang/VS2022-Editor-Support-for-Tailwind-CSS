@@ -18,7 +18,7 @@ namespace TailwindCSSIntellisense.Node
         [Import]
         internal SettingsProvider SettingsProvider { get; set; }
 
-        internal async Task<(bool exists, string fileName)> ScriptExistsAsync(string scriptName)
+        internal async Task<(bool exists, string fileName)> ScriptExistsAsync(string configFileName, string scriptName)
         {
             if (scriptName == null)
             {
@@ -34,8 +34,6 @@ namespace TailwindCSSIntellisense.Node
             }
             else
             {
-                var configFileName = await ConfigFileScanner.FindConfigurationFilePathAsync();
-
                 if (configFileName == null)
                 {
                     return (exists: false, fileName: null);

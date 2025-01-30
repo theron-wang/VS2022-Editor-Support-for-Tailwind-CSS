@@ -56,19 +56,19 @@ internal sealed class DescriptionGenerator : IDisposable
     /// <param name="text">The unprocessed text: <c>hover:bg-green-800/90</c>, <c>min-w-[10px]</c></param>
     /// <param name="shouldFormat">true iff the description should be formatted</param>
     /// <returns>The description for the given class</returns>
-    internal string GetDescription(string text, bool shouldFormat = true)
+    internal string GetDescription(string text, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         text = text.Split(':').Last();
 
-        if (string.IsNullOrWhiteSpace(_completionUtilities.Prefix) == false)
+        if (string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
         {
-            if (text.StartsWith(_completionUtilities.Prefix))
+            if (text.StartsWith(projectCompletionValues.Prefix))
             {
-                text = text.Substring(_completionUtilities.Prefix.Length);
+                text = text.Substring(projectCompletionValues.Prefix.Length);
             }
-            else if (text.StartsWith($"-{_completionUtilities.Prefix}"))
+            else if (text.StartsWith($"-{projectCompletionValues.Prefix}"))
             {
-                text = $"-{text.Substring(_completionUtilities.Prefix.Length + 1)}";
+                text = $"-{text.Substring(projectCompletionValues.Prefix.Length + 1)}";
             }
             else
             {
@@ -81,7 +81,7 @@ internal sealed class DescriptionGenerator : IDisposable
             text = text.TrimStart('!');
         }
 
-        var description = GetDescriptionForClassOnly(text, shouldFormat: shouldFormat);
+        var description = GetDescriptionForClassOnly(text, projectCompletionValues, shouldFormat: shouldFormat);
         if (string.IsNullOrEmpty(description) == false)
         {
             return description;
@@ -127,7 +127,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 }
             }
 
-            description = GetDescriptionForColorClass(stem, color, opacity: opacity != null, shouldFormat: shouldFormat);
+            description = GetDescriptionForColorClass(stem, color, opacity: opacity != null, projectCompletionValues, shouldFormat: shouldFormat);
 
             if (string.IsNullOrEmpty(description) == false)
             {
@@ -142,24 +142,24 @@ internal sealed class DescriptionGenerator : IDisposable
             var last = segments.Last();
             stem = text.Replace(last, "{0}");
 
-            description = GetDescriptionForSpacingClass(stem, last, shouldFormat: shouldFormat);
+            description = GetDescriptionForSpacingClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
 
             if (string.IsNullOrEmpty(description) == false)
             {
                 return description;
             }
 
-            return GetDescriptionForArbitraryClass(stem.Replace("-{0}", ""), last, shouldFormat: shouldFormat);
+            return GetDescriptionForArbitraryClass(stem.Replace("-{0}", ""), last, projectCompletionValues, shouldFormat: shouldFormat);
         }
 
         return null;
     }
 
-    internal string[] GetTotalModifierDescription(string modifiersAsString)
+    internal string[] GetTotalModifierDescription(string modifiersAsString, ProjectCompletionValues projectCompletionValues)
     {
         var modifiers = Regex.Split(modifiersAsString, ":(?![^\\[]*\\])");
 
-        var modifierDescriptions = modifiers.Select(GetModifierDescription);
+        var modifierDescriptions = modifiers.Select(m => GetModifierDescription(m, projectCompletionValues));
 
         var nonMediaModifiers = modifierDescriptions
             .Where(d => !string.IsNullOrWhiteSpace(d) && !d.StartsWith("@"));
@@ -189,15 +189,15 @@ internal sealed class DescriptionGenerator : IDisposable
         return [..mediaModifiers, totalModifier];
     }
 
-    internal string GetModifierDescription(string modifier)
+    internal string GetModifierDescription(string modifier, ProjectCompletionValues projectCompletionValues)
     {
         if (modifier.StartsWith("peer-"))
         {
-            return $"{GetModifierDescription(modifier.Substring(5)).Replace("&", ".peer")} ~ &";
+            return $"{GetModifierDescription(modifier.Substring(5), projectCompletionValues).Replace("&", ".peer")} ~ &";
         }
         else if (modifier.StartsWith("group-"))
         {
-            return $"{GetModifierDescription(modifier.Substring(6)).Replace("&", ".group")} &";
+            return $"{GetModifierDescription(modifier.Substring(6), projectCompletionValues).Replace("&", ".group")} &";
         }
         else if (modifier.StartsWith("[") && modifier.EndsWith("]"))
         {
@@ -322,7 +322,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
             return "";
         }
-        else if (_completionUtilities.Screen.Contains(modifier) || _completionUtilities.Screen.Contains($"max-{modifier}"))
+        else if (projectCompletionValues.Screen.Contains(modifier) || projectCompletionValues.Screen.Contains($"max-{modifier}"))
         {
             // TODO: handle screens
             return "";
@@ -331,16 +331,16 @@ internal sealed class DescriptionGenerator : IDisposable
         return $"&:{modifier}";
     }
 
-    private string GetDescriptionForClassOnly(string tailwindClass, bool shouldFormat = true)
+    private string GetDescriptionForClassOnly(string tailwindClass, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         string description = null;
-        if (_completionUtilities.CustomDescriptionMapper.ContainsKey(tailwindClass))
+        if (projectCompletionValues.CustomDescriptionMapper.ContainsKey(tailwindClass))
         {
-            description = _completionUtilities.CustomDescriptionMapper[tailwindClass];
+            description = projectCompletionValues.CustomDescriptionMapper[tailwindClass];
         }
-        else if (_completionUtilities.DescriptionMapper.ContainsKey(tailwindClass))
+        else if (projectCompletionValues.DescriptionMapper.ContainsKey(tailwindClass))
         {
-            description = _completionUtilities.DescriptionMapper[tailwindClass];
+            description = projectCompletionValues.DescriptionMapper[tailwindClass];
         }
 
         if (description == null)
@@ -409,7 +409,7 @@ internal sealed class DescriptionGenerator : IDisposable
         return description;
     }
 
-    private string GetDescriptionForSpacingClass(string tailwindClass, string spacing, bool shouldFormat = true)
+    private string GetDescriptionForSpacingClass(string tailwindClass, string spacing, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         var negative = tailwindClass.StartsWith("-");
         string spacingValue;
@@ -428,7 +428,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 return null;
             }
         }
-        else if (_completionUtilities.CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
+        else if (projectCompletionValues.CustomSpacingMappers.TryGetValue(tailwindClass, out var dict))
         {
             if (dict.TryGetValue(spacing, out var val))
             {
@@ -439,7 +439,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 return null;
             }
         }
-        else if (_completionUtilities.SpacingMapper.TryGetValue(spacing, out spacingValue) == false)
+        else if (projectCompletionValues.SpacingMapper.TryGetValue(spacing, out spacingValue) == false)
         {
             return null;
         }
@@ -451,9 +451,9 @@ internal sealed class DescriptionGenerator : IDisposable
 
         var key = tailwindClass.Replace("{0}", "{s}");
 
-        if (_completionUtilities.DescriptionMapper.ContainsKey(key))
+        if (projectCompletionValues.DescriptionMapper.ContainsKey(key))
         {
-            var format = string.Format(_completionUtilities.DescriptionMapper[key], (negative ? "-" : "") + spacingValue);
+            var format = string.Format(projectCompletionValues.DescriptionMapper[key], (negative ? "-" : "") + spacingValue);
             if (shouldFormat)
             {
                 return FormatDescription(format);
@@ -466,7 +466,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
     }
 
-    private string GetDescriptionForColorClass(string tailwindClass, string color, bool opacity, bool shouldFormat = true)
+    private string GetDescriptionForColorClass(string tailwindClass, string color, bool opacity, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         var rgbValue = new StringBuilder();
 
@@ -484,7 +484,7 @@ internal sealed class DescriptionGenerator : IDisposable
             else if (c.StartsWith("rgb"))
             {
                 rgbValue.Append(c.TrimEnd(')'));
-                hex = GetColorDescription(color, tailwindClass, true);
+                hex = GetColorDescription(color, tailwindClass, projectCompletionValues, true);
             }
             else if (c.StartsWith("--"))
             {
@@ -494,16 +494,16 @@ internal sealed class DescriptionGenerator : IDisposable
         }
         else
         {
-            rgbValue.Append(GetColorDescription(color, tailwindClass));
-            hex = GetColorDescription(color, tailwindClass, true);
+            rgbValue.Append(GetColorDescription(color, tailwindClass, projectCompletionValues));
+            hex = GetColorDescription(color, tailwindClass, projectCompletionValues, true);
         }
 
-        if (string.IsNullOrEmpty(rgbValue.ToString()) || _completionUtilities.DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
+        if (string.IsNullOrEmpty(rgbValue.ToString()) || projectCompletionValues.DescriptionMapper.ContainsKey(tailwindClass.Replace("{0}", "{c}")) == false)
         {
             return null;
         }
 
-        var format = new StringBuilder(_completionUtilities.DescriptionMapper[tailwindClass.Replace("{0}", "{c}")]);
+        var format = new StringBuilder(projectCompletionValues.DescriptionMapper[tailwindClass.Replace("{0}", "{c}")]);
         var formatAsString = format.ToString();
 
         if (formatAsString.Contains("{0};"))
@@ -565,7 +565,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
     }
 
-    private string GetDescriptionForArbitraryClass(string stem, string arbitrary, bool shouldFormat = true)
+    private string GetDescriptionForArbitraryClass(string stem, string arbitrary, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         if (arbitrary[0] == '[' && arbitrary[arbitrary.Length - 1] == ']')
         {
@@ -610,8 +610,8 @@ internal sealed class DescriptionGenerator : IDisposable
             return string.Format(description, arbitrary);
         }
 
-        var existingDescriptions = _completionUtilities.DescriptionMapper
-            .Concat(_completionUtilities.CustomDescriptionMapper)
+        var existingDescriptions = projectCompletionValues.DescriptionMapper
+            .Concat(projectCompletionValues.CustomDescriptionMapper)
             .Where(kv => kv.Key.StartsWith(stem) && kv.Key.Replace(stem, "").Contains('-'))
             .Take(2)
             .Select(kv => kv.Value.Split([';'], StringSplitOptions.RemoveEmptyEntries))
@@ -659,21 +659,21 @@ internal sealed class DescriptionGenerator : IDisposable
         return string.Format(description, arbitrary);
     }
 
-    private string GetColorDescription(string color, string stem, bool hex = false)
+    private string GetColorDescription(string color, string stem, ProjectCompletionValues projectCompletionValues, bool hex = false)
     {
         string value;
         Dictionary<string, string> dict = null;
 
         if (stem != null)
         {
-            if (_completionUtilities.CustomColorMappers != null && _completionUtilities.CustomColorMappers.TryGetValue(stem, out dict) == false)
+            if (projectCompletionValues.CustomColorMappers != null && projectCompletionValues.CustomColorMappers.TryGetValue(stem, out dict) == false)
             {
                 if (_colorDescriptionMapper.TryGetValue($"{hex}/{color}", out value))
                 {
                     return value;
                 }
 
-                if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
+                if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out value) == false)
                 {
                     return null;
                 }
@@ -685,9 +685,9 @@ internal sealed class DescriptionGenerator : IDisposable
             }
             else if (dict != null && dict.TryGetValue(color, out value))
             {
-                if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
+                if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2)
                 {
-                    if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
+                    if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out value) == false)
                     {
                         return null;
                     }
@@ -705,7 +705,7 @@ internal sealed class DescriptionGenerator : IDisposable
             {
                 return value;
             }
-            if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
+            if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out value) == false)
             {
                 return null;
             }
@@ -738,7 +738,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
 
         var key = $"{hex}/{color}";
-        if (_completionUtilities.CustomColorMappers.ContainsKey(stem))
+        if (projectCompletionValues.CustomColorMappers.ContainsKey(stem))
         {
             key = $"{hex}/{stem}/{key}";
         }

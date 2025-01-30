@@ -18,7 +18,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 {
     private readonly ITextBuffer _buffer;
     private readonly ITextView _view;
-    private readonly CompletionUtilities _completionUtilities;
+    private readonly ProjectCompletionValues _completionUtilities;
     private bool _isProcessing;
     private General _generalOptions;
 
@@ -26,7 +26,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     {
         _buffer = buffer;
         _view = view;
-        _completionUtilities = completionUtilities;
+        _completionUtilities = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         _buffer.Changed += OnBufferChanged;
         General.Saved += GeneralSettingsChanged;
     }

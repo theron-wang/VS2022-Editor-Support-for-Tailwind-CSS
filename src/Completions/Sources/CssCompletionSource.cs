@@ -26,19 +26,18 @@ namespace TailwindCSSIntellisense.Completions.Sources
         /// <param name="completionSets">VS provided</param>
         void ICompletionSource.AugmentCompletionSession(ICompletionSession session, IList<CompletionSet> completionSets)
         {
-            if (_showAutocomplete == null)
-            {
-                _showAutocomplete = ThreadHelper.JoinableTaskFactory.Run(_settingsProvider.GetSettingsAsync).EnableTailwindCss;
-            }
+            var settings = _settingsProvider.GetSettings();
 
-            if (_showAutocomplete == false || _completionUtils.Scanner.HasConfigurationFile == false)
+            _showAutocomplete ??= settings.EnableTailwindCss;
+
+            if (_showAutocomplete == false || settings.ConfigurationFiles.Count == 0)
             {
                 return;
             }
 
             if (!_completionUtils.Initialized || _initializeSuccess == false)
             {
-                _initializeSuccess = ThreadHelper.JoinableTaskFactory.Run(() => _completionUtils.InitializeAsync());
+                _initializeSuccess = ThreadHelper.JoinableTaskFactory.Run(_completionUtils.InitializeAsync);
 
                 if (_initializeSuccess == false)
                 {
@@ -85,7 +84,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                             break;
                         case "@media":
                             completions = [];
-                            foreach (var screen in _completionUtils.Screen)
+                            foreach (var screen in _projectCompletionValues.Screen)
                             {
                                 completions.Add(new($"screen({screen})", $"screen({screen})", $"screen({screen})", _completionUtils.TailwindLogo, null));
                             }

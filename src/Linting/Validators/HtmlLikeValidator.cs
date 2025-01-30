@@ -46,7 +46,7 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
             {
                 // Find duplicates, since we are parsing from left to right
                 int index = -1;
-                foreach ((var className, var errorMessage) in _linterUtils.CheckForClassDuplicates(grouping))
+                foreach ((var className, var errorMessage) in _linterUtils.CheckForClassDuplicates(grouping, _projectCompletionValues))
                 {
                     index = scope.IndexOf(className, index + 1);
 

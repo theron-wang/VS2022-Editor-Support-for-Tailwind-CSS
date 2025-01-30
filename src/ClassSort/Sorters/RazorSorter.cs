@@ -2,7 +2,6 @@
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Text;
-using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
 [Export(typeof(Sorter))]
@@ -10,12 +9,12 @@ internal class RazorSorter : Sorter
 {
     public override string[] Handled { get; } = [".razor", ".cshtml"];
 
-    protected override IEnumerable<string> GetSegments(string file, TailwindConfiguration config)
+    protected override IEnumerable<string> GetSegments(string filePath, string content)
     {
         int lastIndex = 0;
         int indexOfClass;
 
-        foreach (var match in ClassRegexHelper.GetClassesRazorEnumerator(file))
+        foreach (var match in ClassRegexHelper.GetClassesRazorEnumerator(content))
         {
             indexOfClass = match.Index;
 
@@ -26,21 +25,21 @@ internal class RazorSorter : Sorter
             }
 
             // Verify that we are in an HTML tag
-            var closeAngleBracket = file.LastIndexOf('>', indexOfClass);
-            var openAngleBracket = file.LastIndexOf('<', indexOfClass);
+            var closeAngleBracket = content.LastIndexOf('>', indexOfClass);
+            var openAngleBracket = content.LastIndexOf('<', indexOfClass);
 
             if (openAngleBracket == -1 || closeAngleBracket > openAngleBracket)
             {
                 continue;
             }
 
-            yield return file.Substring(lastIndex, indexOfClass - lastIndex);
+            yield return content.Substring(lastIndex, indexOfClass - lastIndex);
 
             lastIndex = match.Index + match.Length;
 
-            if (lastIndex >= file.Length)
+            if (lastIndex >= content.Length)
             {
-                yield return file.Substring(indexOfClass);
+                yield return content.Substring(indexOfClass);
                 yield break;
             }
 
@@ -72,7 +71,7 @@ internal class RazorSorter : Sorter
                 }
             }
 
-            var sorted = SortRazorSegment(tokens, razorIndices, config);
+            var sorted = SortRazorSegment(tokens, razorIndices, filePath);
 
             var text = new StringBuilder();
 
@@ -93,14 +92,15 @@ internal class RazorSorter : Sorter
             yield return total.Substring(total.IndexOf(classContent) + classContent.Length);
         }
 
-        yield return file.Substring(lastIndex);
+        yield return content.Substring(lastIndex);
     }
-    private IEnumerable<string> SortRazorSegment(List<string> classes, HashSet<int> razorIndices, TailwindConfiguration config)
+
+    private IEnumerable<string> SortRazorSegment(List<string> classes, HashSet<int> razorIndices, string file)
     {
         var sorted = Sort(classes
             .Select((v, i) => (v, i))
             .Where(v => !razorIndices.Contains(v.i))
-            .Select(v => v.v), config);
+            .Select(v => v.v), file);
 
         int lastIndex = -1;
         int start = 0;

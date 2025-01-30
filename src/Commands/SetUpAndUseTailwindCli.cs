@@ -2,6 +2,7 @@
 using Microsoft.VisualStudio.Shell;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Settings;
@@ -26,7 +27,9 @@ namespace TailwindCSSIntellisense
         {
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
-            Command.Visible = settings.EnableTailwindCss && File.Exists(settings.TailwindCliPath) && (string.IsNullOrEmpty(settings.TailwindConfigurationFile) || File.Exists(settings.TailwindConfigurationFile) == false);
+            Command.Visible = settings.EnableTailwindCss && File.Exists(settings.TailwindCliPath) &&
+                (settings.ConfigurationFiles.Count == 0 || settings.ConfigurationFiles.All(c =>
+                    string.IsNullOrWhiteSpace(c.Path) || File.Exists(c.Path) == false));
             Command.Enabled = !TailwindSetUpProcess.IsSettingUp;
         }
 
@@ -35,13 +38,22 @@ namespace TailwindCSSIntellisense
             if (!TailwindSetUpProcess.IsSettingUp)
             {
                 var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
+                // Check again to see if there were any changes since the last settings cache
+                // User may have manually run the setup command, for example
+                SettingsProvider.RefreshSettings();
                 var settings = await SettingsProvider.GetSettingsAsync();
+
+                if (settings.ConfigurationFiles.Count > 0 && settings.ConfigurationFiles.Any(c =>
+                    !string.IsNullOrWhiteSpace(c.Path) && File.Exists(c.Path)))
+                {
+                    return;
+                }
 
                 await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, settings.TailwindCliPath));
 
                 var configFile = Path.Combine(directory, "tailwind.config.js");
 
-                settings.TailwindConfigurationFile = configFile;
+                settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
                 settings.UseCli = true;
                 await SettingsProvider.OverrideSettingsAsync(settings);
 

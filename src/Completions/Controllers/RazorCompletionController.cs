@@ -67,6 +67,35 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
     {
         ThreadHelper.ThrowIfNotOnUIThread();
 
+        if (pguidCmdGroup == VSConstants.VSStd2K)
+        {
+            switch ((VSConstants.VSStd2KCmdID)nCmdID)
+            {
+                case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
+                case VSConstants.VSStd2KCmdID.COMPLETEWORD:
+                case VSConstants.VSStd2KCmdID.RETURN:
+                case VSConstants.VSStd2KCmdID.TAB:
+                case VSConstants.VSStd2KCmdID.CANCEL:
+                case VSConstants.VSStd2KCmdID.TYPECHAR:
+                case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
+                case VSConstants.VSStd2KCmdID.BACKSPACE:
+                    break;
+                default:
+                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            }
+        }
+        else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
+        {
+            switch ((VSConstants.VSStd97CmdID)nCmdID)
+            {
+                case VSConstants.VSStd97CmdID.Paste:
+                case VSConstants.VSStd97CmdID.Undo:
+                    break;
+                default:
+                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            }
+        }
+
         // Is the caret in a class="" scope?
         if (RazorParser.IsCursorInClassScope(TextView, out var classSpan) == false || classSpan is null)
         {

@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Node;
@@ -38,7 +39,8 @@ namespace TailwindCSSIntellisense
 
                 Command.Visible = settings.EnableTailwindCss && string.IsNullOrEmpty(path) == false &&
                     path.TrimEnd(Path.DirectorySeparatorChar).Equals(selected.TrimEnd(Path.DirectorySeparatorChar), StringComparison.InvariantCultureIgnoreCase) &&
-                    (string.IsNullOrEmpty(settings.TailwindConfigurationFile) || File.Exists(settings.TailwindConfigurationFile) == false);
+                        (settings.ConfigurationFiles.Count == 0 || settings.ConfigurationFiles.All(c =>
+                        string.IsNullOrEmpty(c.Path) || File.Exists(c.Path) == false));
             }
             else
             {
@@ -57,7 +59,8 @@ namespace TailwindCSSIntellisense
                 SettingsProvider.RefreshSettings();
                 var settings = await SettingsProvider.GetSettingsAsync();
 
-                if (!string.IsNullOrEmpty(settings.TailwindConfigurationFile) && File.Exists(settings.TailwindConfigurationFile))
+                if (settings.ConfigurationFiles.Count > 0 && settings.ConfigurationFiles.Any(c =>
+                    !string.IsNullOrWhiteSpace(c.Path) && File.Exists(c.Path)))
                 {
                     return;
                 }
@@ -66,7 +69,7 @@ namespace TailwindCSSIntellisense
 
                 var configFile = Path.Combine(directory, "tailwind.config.js");
 
-                settings.TailwindConfigurationFile = configFile;
+                settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
                 await SettingsProvider.OverrideSettingsAsync(settings);
 
                 var fileNames = new string[]

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.0 (January 29th, 2025)
+
+- Added multiple project support ([#84](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/84))
+- Fixed a bug which could occur when class contexts are near the end of the file
+- Fixed an error which could occur when using `@tailwindcss/container-queries` ([#90](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/90))
+- Properly apply custom color definitions (i.e. `backgroundColor`) when sorting classes
+
 ## 1.8.0 (January 1st, 2025)
 
 - Added modifier descriptions for quick info tooltips

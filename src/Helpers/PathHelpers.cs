@@ -12,11 +12,11 @@ public static class PathHelpers
     /// <param name="folder">The full path of the folder.</param>
     /// <returns>
     /// A string representing the relative path of the file with respect to the folder.
-    /// If the file parameter is null, the method returns null.
+    /// If the file parameter is null/empty, the method returns null.
     /// </returns>
     public static string GetRelativePath(string file, string folder)
     {
-        if (file is null)
+        if (string.IsNullOrEmpty(file))
         {
             return null;
         }
@@ -38,11 +38,11 @@ public static class PathHelpers
     /// <param name="rel">The relative path to be combined with the base directory.</param>
     /// <returns>
     /// A string representing the absolute path obtained by combining the base directory
-    /// and the relative path. If the relative path parameter is null, the method returns null.
+    /// and the relative path. If the relative path parameter is null/empty, the method returns null.
     /// </returns>
     public static string GetAbsolutePath(string dir, string rel)
     {
-        if (rel is null)
+        if (string.IsNullOrEmpty(rel))
         {
             return null;
         }
