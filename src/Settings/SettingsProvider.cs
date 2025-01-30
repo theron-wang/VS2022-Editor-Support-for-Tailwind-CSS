@@ -265,6 +265,20 @@ public sealed class SettingsProvider : IDisposable
             }
         }
 
+        if (settings.ConfigurationFiles is not null)
+        {
+            for (int i = 0; i < settings.ConfigurationFiles.Count; i++)
+            {
+                var config = settings.ConfigurationFiles[i];
+
+                if (string.IsNullOrWhiteSpace(config.Path) || File.Exists(config.Path) == false)
+                {
+                    settings.ConfigurationFiles.Remove(config);
+                    i--;
+                }
+            }
+        }
+
         var defaultConfigFile = settings.ConfigurationFiles.FirstOrDefault(c => c.IsDefault)?.Path ??
             settings.ConfigurationFiles.FirstOrDefault()?.Path;
 

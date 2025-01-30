@@ -34,29 +34,32 @@ internal static class ConfigFileParser
             WorkingDirectory = Path.GetDirectoryName(path)
         };
 
-        var nodePath = processInfo.WorkingDirectory;
-
+        var nodePath = Path.Combine(processInfo.WorkingDirectory, "node_modules");
         var globalPath = await GetGlobalPackageLocationAsync();
 
-        if (!string.IsNullOrWhiteSpace(processInfo.EnvironmentVariables["NODE_PATH"]))
+        var nodePathEnvironmentVariable = processInfo.EnvironmentVariables["NODE_PATH"];
+
+        if (!string.IsNullOrWhiteSpace(nodePathEnvironmentVariable))
         {
-            processInfo.EnvironmentVariables["NODE_PATH"] += ";";
+            nodePathEnvironmentVariable += ";";
         }
 
-        if (Directory.Exists(Path.Combine(nodePath, "node_modules")))
+        if (Directory.Exists(nodePath))
         {
-            processInfo.EnvironmentVariables["NODE_PATH"] += Path.Combine(nodePath, "node_modules") + ";";
+            nodePathEnvironmentVariable += nodePath + ";";
         }
 
         if (!string.IsNullOrWhiteSpace(globalPath))
         {
-            processInfo.EnvironmentVariables["NODE_PATH"] += globalPath + ";";
+            nodePathEnvironmentVariable += globalPath + ";";
         }
 
-        if (!string.IsNullOrWhiteSpace(processInfo.EnvironmentVariables["NODE_PATH"]))
+        if (!string.IsNullOrWhiteSpace(nodePathEnvironmentVariable))
         {
-            processInfo.EnvironmentVariables["NODE_PATH"] = processInfo.EnvironmentVariables["NODE_PATH"].TrimEnd(';');
+            nodePathEnvironmentVariable = nodePathEnvironmentVariable.TrimEnd(';');
         }
+
+        processInfo.EnvironmentVariables["NODE_PATH"] = nodePathEnvironmentVariable;
 
         using var process = Process.Start(processInfo);
         process.BeginOutputReadLine();

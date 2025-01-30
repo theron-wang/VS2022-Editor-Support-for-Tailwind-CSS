@@ -1,9 +1,9 @@
 (function () {
     (async function () {
-        var Module = require('module');
-        var path = require('path');
+        const Module = require('module');
+        const path = require('path');
         const { pathToFileURL } = require('url');
-        var originalRequire = Module.prototype.require;
+        const originalRequire = Module.prototype.require;
 
         Module.prototype.require = function () {
             if (arguments[0] === 'tailwindcss/plugin') {
