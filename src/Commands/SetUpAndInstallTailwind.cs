@@ -59,7 +59,7 @@ namespace TailwindCSSIntellisense
 
                 var file = await PhysicalFile.FromFileAsync(configFile);
 
-                if (file.ContainingProject is not null)
+            if (file is not null && file.ContainingProject is not null)
                 {
                     // tailwind.extension.json is placed in the same directory as tailwind.config.js
                     var tailwindExtensionJson = await SettingsProvider.GetFilePathAsync();
