@@ -20,7 +20,7 @@ namespace TailwindCSSIntellisense.Node
         /// Starts a process to install Tailwind in the specified directory (uses npm)
         /// </summary>
         /// <param name="directory">The directory to install in</param>
-        public async Task RunAsync(string directory, string cliPath = null)
+        public async Task RunAsync(string directory, bool needInstall, string cliPath = null)
         {
             IsSettingUp = true;
             var processInfo = new ProcessStartInfo()
@@ -45,13 +45,17 @@ namespace TailwindCSSIntellisense.Node
 
                 await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
 
-                if (string.IsNullOrWhiteSpace(cliPath))
+                if (needInstall)
                 {
                     await process.StandardInput.WriteLineAsync("npm install -D tailwindcss && npx tailwindcss init & exit");
                 }
-                else
+                else if (string.IsNullOrWhiteSpace(cliPath))
                 {
                     await process.StandardInput.WriteLineAsync($"{cliPath} init & exit");
+                }
+                else
+                {
+                    await process.StandardInput.WriteLineAsync("npx tailwindcss init & exit");
                 }
 
                 await process.WaitForExitAsync();

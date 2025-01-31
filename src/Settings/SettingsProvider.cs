@@ -224,7 +224,7 @@ public sealed class SettingsProvider : IDisposable
                 BuildType = general.BuildProcessType,
                 BuildScript = general.BuildScript,
                 OverrideBuild = general.OverrideBuild,
-                ConfigurationFiles = projectSettings.ConfigurationFiles,
+                ConfigurationFiles = projectSettings.ConfigurationFiles ?? [],
                 BuildFiles = projectSettings.BuildFiles ?? [],
                 PackageConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.PackageConfigurationFile?.Trim()),
                 AutomaticallyMinify = general.AutomaticallyMinify,

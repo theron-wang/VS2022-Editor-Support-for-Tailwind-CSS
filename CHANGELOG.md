@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.9.1 (January 30th, 2025)
+
+- Fixed a NRE when setting up Tailwind ([#93](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/93))
+- Adds an option to set up Tailwind using a global installation
+
 ## 1.9.0 (January 29th, 2025)
 
 - Added multiple project support ([#84](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/84))

@@ -230,28 +230,18 @@ internal sealed class TailwindBuildProcess : IDisposable
         var dir = Path.GetDirectoryName(config.FilePath);
         var configFile = Path.GetFileName(config.FilePath);
 
+        var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
+        var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
+
         if (_settings.BuildType == BuildProcessOptions.OnSave)
         {
             // Are all default processes active?
             #region Default process
-            if (_outputFileToProcesses.Count > 0 && _outputFileToProcesses.Values.All(IsProcessActive))
+            if (_outputFileToProcesses.TryGetValue(outputFile, out var process) && IsProcessActive(process))
             {
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
-                    var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
-
-                    if (_outputFileToProcesses.TryGetValue(outputFile, out var process))
-                    {
-                        process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
-                    }
-                    else
-                    {
-                        // Realistically, this shouldn't happen since all processes are stopped when
-                        // the configuration is changed
-                        EndProcess();
-                        throw new InvalidOperationException("Attempted to access a process that wasn't there. Try restarting the build process.");
-                    }
+                    process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
                 }
                 else if (_settings.OverrideBuild)
                 {
@@ -260,20 +250,18 @@ internal sealed class TailwindBuildProcess : IDisposable
             }
             else
             {
-                // If one of them has terminated, stop and restart
-                EndProcess();
-
                 if (_outputFileToProcesses.Count == 0)
                 {
                     ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build started..."));
                 }
+                else if (process is not null && !IsProcessActive(process))
+                {
+                    _outputFileToProcesses.Remove(outputFile);
+                }
 
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
-                    var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
-
-                    var process = CreateAndStartProcess(GetProcessStartInfo(dir));
+                    process = CreateAndStartProcess(GetProcessStartInfo(dir));
                     process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
                     PostSetupProcess(process);
 
@@ -323,9 +311,6 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
-                    var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
-
                     var process = CreateAndStartProcess(GetProcessStartInfo(dir));
                     process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
                     PostSetupProcess(process);

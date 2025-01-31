@@ -70,8 +70,10 @@
     <Compile Include="Commands\RemoveAsOutputFile.cs" />
     <Compile Include="Commands\RemoveAsInputFile.cs" />
     <Compile Include="Commands\RemoveAsConfigFile.cs" />
+    <Compile Include="Commands\SetUpFileMenu.cs" />
     <Compile Include="Commands\SetAsOutputFileMenu.cs" />
     <Compile Include="Commands\SetAsPackageConfigFile.cs" />
+    <Compile Include="Commands\SetUpAndUseTailwindGlobal.cs" />
     <Compile Include="Commands\SortClassesInSolution.cs" />
     <Compile Include="Commands\SortClassesInOpenFile.cs" />
     <Compile Include="Commands\SetUpAndUseTailwindCli.cs" />

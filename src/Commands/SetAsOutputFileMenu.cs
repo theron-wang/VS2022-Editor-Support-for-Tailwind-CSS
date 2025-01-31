@@ -5,34 +5,33 @@ using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense
+namespace TailwindCSSIntellisense;
+
+[Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetAsOutputCssFileMenu)]
+internal sealed class SetAsOutputFileMenu : BaseCommand<SetAsOutputFileMenu>
 {
-    [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetAsOutputCssFileMenu)]
-    internal sealed class SetAsOutputFileMenu : BaseCommand<SetAsOutputFileMenu>
+    protected override async Task InitializeCompletedAsync()
     {
-        protected override async Task InitializeCompletedAsync()
-        {
-            SolutionExplorerSelection = await VS.GetMefServiceAsync<SolutionExplorerSelectionService>();
-            SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
-        }
+        SolutionExplorerSelection = await VS.GetMefServiceAsync<SolutionExplorerSelectionService>();
+        SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
+    }
 
-        internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
-        internal SettingsProvider SettingsProvider { get; set; }
+    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
+    internal SettingsProvider SettingsProvider { get; set; }
 
-        protected override void BeforeQueryStatus(EventArgs e)
-        {
-            var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
+    protected override void BeforeQueryStatus(EventArgs e)
+    {
+        var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
 
-            var settings = Package.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
+        var settings = Package.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
-            Command.Visible = settings.EnableTailwindCss &&
-                Path.GetExtension(filePath) == ".css" &&
-                settings.BuildFiles is not null &&
-                settings.BuildFiles.Count > 0 &&
-                settings.BuildFiles.All(f =>
-                    !f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase) &&
-                    (f.Output is null ||
-                    !f.Output.Equals(filePath, StringComparison.InvariantCultureIgnoreCase)));
-        }
+        Command.Visible = settings.EnableTailwindCss &&
+            Path.GetExtension(filePath) == ".css" &&
+            settings.BuildFiles is not null &&
+            settings.BuildFiles.Count > 0 &&
+            settings.BuildFiles.All(f =>
+                !f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase) &&
+                (f.Output is null ||
+                !f.Output.Equals(filePath, StringComparison.InvariantCultureIgnoreCase)));
     }
 }

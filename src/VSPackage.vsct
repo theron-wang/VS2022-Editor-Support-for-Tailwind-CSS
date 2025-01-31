@@ -22,6 +22,9 @@
 			<Group guid="guidVSPackageCmdSet" id="OutputMenuGroup" priority="0x0200">
 				<Parent guid="guidVSPackageCmdSet" id="SetAsOutputCssFileMenu"/>
 			</Group>
+			<Group guid="guidVSPackageCmdSet" id="SetupMenuGroup" priority="0x0100">
+				<Parent guid="guidVSPackageCmdSet" id="SetUpTailwindMenu"/>
+			</Group>
 
 			<Group guid="guidVSPackageCmdSet" id="WorkspaceMenuGroup" priority="0x0500">
 				<Parent guid="guidWorkspaceExplorerToolWindowCmdSet" id="idmWSE_ContextMenu"/>
@@ -36,6 +39,15 @@
 				<CommandFlag>DontCache</CommandFlag>
 				<Strings>
 					<ButtonText>Set as Tailwind CSS output file</ButtonText>
+				</Strings>
+			</Menu>
+			<Menu guid="guidVSPackageCmdSet" id="SetUpTailwindMenu" priority="0x0102" type="Menu">
+				<Parent guid="guidVSPackageCmdSet" id="ProjMenuGroup"/>
+				<CommandFlag>DynamicVisibility</CommandFlag>
+				<CommandFlag>DefaultInvisible</CommandFlag>
+				<CommandFlag>DontCache</CommandFlag>
+				<Strings>
+					<ButtonText>Set up Tailwind CSS</ButtonText>
 				</Strings>
 			</Menu>
 		</Menus>
@@ -144,21 +156,26 @@
 			</Button>
 
 			<Button guid="guidVSPackageCmdSet" id="SetUpAndInstallTailwindCmdId" priority="0x0100" type="Button">
-				<Parent guid="guidVSPackageCmdSet" id="ProjMenuGroup"/>
+				<Parent guid="guidVSPackageCmdSet" id="SetupMenuGroup"/>
 				<Icon guid="guidImages" id="tailwindLogo" />
-				<CommandFlag>DynamicVisibility</CommandFlag>
-				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set up and install Tailwind CSS</ButtonText>
+					<ButtonText>Set up and install in project</ButtonText>
 				</Strings>
 			</Button>
 			
 			<Button guid="guidVSPackageCmdSet" id="SetUpTailwindCliCmdId" priority="0x0101" type="Button">
-				<Parent guid="guidVSPackageCmdSet" id="ProjMenuGroup"/>
+				<Parent guid="guidVSPackageCmdSet" id="SetupMenuGroup"/>
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Set up Tailwind CSS (use CLI)</ButtonText>
+					<ButtonText>Set up using CLI</ButtonText>
+				</Strings>
+			</Button>
+			
+			<Button guid="guidVSPackageCmdSet" id="SetUpTailwindGlobalCmdId" priority="0x0102" type="Button">
+				<Parent guid="guidVSPackageCmdSet" id="SetupMenuGroup"/>
+				<Strings>
+					<ButtonText>Set up using global NPM installation</ButtonText>
 				</Strings>
 			</Button>
 			
@@ -262,6 +279,7 @@
 			<IDSymbol name="ProjMenuGroup" value="0x1040" />
 			<IDSymbol name="ToolsMenuGroup" value="0x1050" />
 			<IDSymbol name="OutputMenuGroup" value="0x01060" />
+			<IDSymbol name="SetupMenuGroup" value="0x01070" />
 			<IDSymbol name="SetAsConfigFileCmdId" value="0x0100" />
 			<IDSymbol name="SetAsCssFileCmdId" value="0x0101" />
 			<IDSymbol name="RemoveAsConfigFileCmdId" value="0x0103" />
@@ -270,9 +288,13 @@
 			<IDSymbol name="StartBuildProcessCmdId" value="0x0106" />
 			<IDSymbol name="StartMinifyBuildProcessCmdId" value="0x0107" />
 			<IDSymbol name="StopBuildProcessCmdId" value="0x0108" />
-			<IDSymbol name="SetUpAndInstallTailwindCmdId" value="0x0109" />
-			<IDSymbol name="SetUpTailwindCliCmdId" value="0x0110" />
-			<IDSymbol name="SetUpTailwindWsCmdId" value="0x0111" />
+			
+			<IDSymbol name="SetUpTailwindMenu" value="0x0109" />
+			<IDSymbol name="SetUpAndInstallTailwindCmdId" value="0x0110" />
+			<IDSymbol name="SetUpTailwindCliCmdId" value="0x0111" />
+			<IDSymbol name="SetUpTailwindWsCmdId" value="0x0112" />
+			<IDSymbol name="SetUpTailwindGlobalCmdId" value="0x0113" />
+			
 			<IDSymbol name="SortInOpenFileCmdId" value="0x0114" />
 			<IDSymbol name="SortEntireSolutionCmdId" value="0x0115" />
 			<IDSymbol name="SetAsPackageConfigFileCmdId" value="0x0116" />

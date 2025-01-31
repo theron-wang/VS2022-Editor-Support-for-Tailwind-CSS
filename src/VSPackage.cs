@@ -36,6 +36,7 @@ namespace TailwindCSSIntellisense
         public const int ProjMenuGroup = 0x1040;
         public const int ToolsMenuGroup = 0x1050;
         public const int OutputMenuGroup = 0x1060;
+        public const int SetupMenuGroup = 0x1070;
         public const int SetAsConfigFileCmdId = 0x0100;
         public const int SetAsCssFileCmdId = 0x0101;
         public const int RemoveAsConfigFileCmdId = 0x0103;
@@ -44,9 +45,11 @@ namespace TailwindCSSIntellisense
         public const int StartBuildProcessCmdId = 0x0106;
         public const int StartMinifyBuildProcessCmdId = 0x0107;
         public const int StopBuildProcessCmdId = 0x0108;
-        public const int SetUpAndInstallTailwindCmdId = 0x0109;
-        public const int SetUpTailwindCliCmdId = 0x0110;
-        public const int SetUpTailwindWsCmdId = 0x0111;
+        public const int SetUpTailwindMenu = 0x0109;
+        public const int SetUpAndInstallTailwindCmdId = 0x0110;
+        public const int SetUpTailwindCliCmdId = 0x0111;
+        public const int SetUpTailwindWsCmdId = 0x0112;
+        public const int SetUpTailwindGlobalCmdId = 0x0113;
         public const int SortInOpenFileCmdId = 0x0114;
         public const int SortEntireSolutionCmdId = 0x0115;
         public const int SetAsPackageConfigFileCmdId = 0x0116;

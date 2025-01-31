@@ -9,8 +9,8 @@ using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense;
 
-[Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetUpAndInstallTailwindCmdId)]
-internal sealed class SetUpAndInstallTailwind : BaseCommand<SetUpAndInstallTailwind>
+[Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetUpTailwindGlobalCmdId)]
+internal sealed class SetUpAndUseTailwindGlobal : BaseCommand<SetUpAndUseTailwindGlobal>
 {
     protected override async Task InitializeCompletedAsync()
     {
@@ -33,7 +33,6 @@ internal sealed class SetUpAndInstallTailwind : BaseCommand<SetUpAndInstallTailw
         if (!TailwindSetUpProcess.IsSettingUp)
         {
             var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
-
             // Check again to see if there were any changes since the last settings cache
             // User may have manually run the setup command, for example
             SettingsProvider.RefreshSettings();
@@ -45,11 +44,12 @@ internal sealed class SetUpAndInstallTailwind : BaseCommand<SetUpAndInstallTailw
                 return;
             }
 
-            await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, true));
+            await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, false));
 
             var configFile = Path.Combine(directory, "tailwind.config.js");
 
             settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
+            settings.UseCli = true;
             await SettingsProvider.OverrideSettingsAsync(settings);
 
             var file = await PhysicalFile.FromFileAsync(configFile);
