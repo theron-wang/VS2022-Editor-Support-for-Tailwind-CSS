@@ -65,7 +65,7 @@ namespace TailwindCSSIntellisense
                     return;
                 }
 
-                await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory));
+                await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, true));
 
                 var configFile = Path.Combine(directory, "tailwind.config.js");
 
