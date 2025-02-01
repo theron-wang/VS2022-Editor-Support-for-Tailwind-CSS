@@ -157,10 +157,14 @@ internal sealed class CheckForUpdates
             if (currentMajor != newMajor)
             {
                 await VS.StatusBar.ShowMessageAsync($"A major Tailwind update is available: {relevantPackage.Current}. If you would like to update, please manually run npm install tailwindcss@latest.");
+            }
+
+            if (relevantPackage.Current == relevantPackage.Wanted)
+            {
                 return;
             }
 
-            await VS.StatusBar.ShowMessageAsync($"Updating Tailwind CSS ({relevantPackage.Current} -> {relevantPackage.Latest})");
+            await VS.StatusBar.ShowMessageAsync($"Updating Tailwind CSS ({relevantPackage.Current} -> {relevantPackage.Wanted})");
 
             processInfo = new ProcessStartInfo()
             {
@@ -168,7 +172,7 @@ internal sealed class CheckForUpdates
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 FileName = "cmd",
-                Arguments = "/C npm install tailwindcss@latest",
+                Arguments = $"/C npm install tailwindcss@{relevantPackage.Wanted}",
                 WorkingDirectory = Path.GetDirectoryName(folder)
             };
 
@@ -189,7 +193,7 @@ internal sealed class CheckForUpdates
                 return;
             }
 
-            await VS.StatusBar.ShowMessageAsync($"Tailwind CSS update successful (updated to version {relevantPackage.Latest})");
+            await VS.StatusBar.ShowMessageAsync($"Tailwind CSS update successful (updated to version {relevantPackage.Wanted})");
 
             _configFilesChecked.AddRange(settings.ConfigurationFiles.Select(f => f.Path));
         }
