@@ -82,7 +82,7 @@
 			"description": "Whether to use the CLI."
 		}
 	},
-	"required": [ "ConfigurationFiles", "BuildFiles", "PackageConfigurationFile", "CustomRegexes", "UseCli" ],
+	"required": [ "ConfigurationFiles", "BuildFiles", "CustomRegexes", "UseCli" ],
 	"definitions": {
 		"CustomRegex": {
 			"type": "object",

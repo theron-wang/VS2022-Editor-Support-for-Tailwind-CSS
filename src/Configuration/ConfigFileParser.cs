@@ -1,7 +1,7 @@
-﻿using Microsoft.VisualStudio.Threading;
+﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -34,7 +34,8 @@ internal static class ConfigFileParser
             WorkingDirectory = Path.GetDirectoryName(path)
         };
 
-        var nodePath = Path.Combine(processInfo.WorkingDirectory, "node_modules");
+        var nodePath = await GetNodeModulesFromConfigFilePathAsync(path);
+
         var globalPath = await GetGlobalPackageLocationAsync();
 
         var nodePathEnvironmentVariable = processInfo.EnvironmentVariables["NODE_PATH"];
@@ -44,7 +45,7 @@ internal static class ConfigFileParser
             nodePathEnvironmentVariable += ";";
         }
 
-        if (Directory.Exists(nodePath))
+        if (nodePath is not null && Directory.Exists(nodePath))
         {
             nodePathEnvironmentVariable += nodePath + ";";
         }
@@ -247,6 +248,39 @@ internal static class ConfigFileParser
         }
 
         return config;
+    }
+
+    private static async Task<string> GetNodeModulesFromConfigFilePathAsync(string configPath)
+    {
+        var file = await PhysicalFile.FromFileAsync(configPath);
+
+        if (file?.ContainingProject is null)
+        {
+            return null;
+        }
+
+        var project = file.ContainingProject;
+
+        // Search for the node_modules folder in the project; start from the configuration file and
+        // go up the directory tree (stopping at the project root) until the node_modules folder is found.
+
+        var currentDirectory = Path.GetDirectoryName(configPath).ToLower();
+
+        var endDirectory = Path.GetDirectoryName(project.FullPath).ToLower();
+
+        while (currentDirectory.StartsWith(endDirectory))
+        {
+            var nodeModulesPath = Path.Combine(currentDirectory, "node_modules");
+
+            if (Directory.Exists(nodeModulesPath))
+            {
+                return nodeModulesPath;
+            }
+
+            currentDirectory = Path.GetDirectoryName(currentDirectory).ToLower();
+        }
+
+        return null;
     }
 
     private static Dictionary<string, object> GetTotalValue(JsonNode node, string ignoreKey = null)

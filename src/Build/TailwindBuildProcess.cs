@@ -311,7 +311,12 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    var process = CreateAndStartProcess(GetProcessStartInfo(dir));
+                    if (_outputFileToProcesses.TryGetValue(outputFile, out var process) && IsProcessActive(process))
+                    {
+                        return;
+                    }
+
+                    process = CreateAndStartProcess(GetProcessStartInfo(dir));
                     process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
                     PostSetupProcess(process);
 
@@ -365,8 +370,16 @@ internal sealed class TailwindBuildProcess : IDisposable
                 process.Kill();
             }
         }
+
+        var any = _outputFileToProcesses.Any();
+
         _outputFileToProcesses.Clear();
-        ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build stopped"));
+
+        if (any)
+        {
+            ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
+        }
+
         if (IsProcessActive(_secondaryProcess))
         {
             ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build script '{_settings.BuildScript}' stopped"));

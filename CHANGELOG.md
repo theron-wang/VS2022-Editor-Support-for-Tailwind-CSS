@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.2 (February 1st, 2025)
+
+- Use existing build processes when running in JIT mode to prevent 100% RAM usage ([#84](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/84#issuecomment-2624939075))
+- Search through project to find `node_modules` for `NODE_PATH` when parsing configuration files ([#87](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/87))
+- Prevent empty configuration files from being generated ([#95](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/95))
+- Automatic updates should consider project `tailwindcss` version, not dependency versions
+
 ## 1.9.1 (January 30th, 2025)
 
 - Fixed a NRE when setting up Tailwind ([#93](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/93))

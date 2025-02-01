@@ -318,15 +318,21 @@ public sealed class SettingsProvider : IDisposable
             UseCli = settings.UseCli
         };
 
-        if (projectSettings.ConfigurationFiles.Count == 0 && (projectSettings.BuildFiles == null || projectSettings.BuildFiles.Count == 0) && File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
+        if ((projectSettings.ConfigurationFiles is null || projectSettings.ConfigurationFiles.Count == 0)
+            && (projectSettings.BuildFiles is null || projectSettings.BuildFiles.Count == 0))
         {
-            try
-            {
-                File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
-            }
-            catch
-            {
+            // Delete if empty, do not save if it doesn't exist yet
 
+            if (File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))
+            {
+                try
+                {
+                    File.Delete(Path.Combine(projectRoot, ExtensionConfigFileName));
+                }
+                catch
+                {
+
+                }
             }
         }
         else

@@ -94,7 +94,7 @@ public sealed partial class CompletionConfiguration
             ConfigurationUpdated();
         }
 
-        if (!failed)
+        if (!failed && configurationFiles.Count > 0)
         {
             await VS.StatusBar.ShowMessageAsync("Successfully reloaded Tailwind CSS configuration");
         }
