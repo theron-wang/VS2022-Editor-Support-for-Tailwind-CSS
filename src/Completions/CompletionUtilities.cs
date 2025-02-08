@@ -63,20 +63,20 @@ public sealed class CompletionUtilities : IDisposable
 
             Initializing = true;
 
-            await VS.StatusBar.ShowMessageAsync("Loading Tailwind CSS classes");
             await LoadClassesAsync();
-            await VS.StatusBar.ShowMessageAsync("Loading Tailwind CSS configuration");
-
-            await Configuration.InitializeAsync(this);
-            await VS.StatusBar.ShowMessageAsync("Tailwind CSS IntelliSense initialized");
 
             var settings = await SettingsProvider.GetSettingsAsync();
             await OnSettingsChangedAsync(settings);
+
+            await Configuration.InitializeAsync(this);
 
             SettingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
 
             Initializing = false;
             Initialized = true;
+
+            await VS.StatusBar.ShowMessageAsync("Tailwind CSS IntelliSense initialized");
+
             return true;
         }
         catch (Exception ex)
@@ -163,7 +163,10 @@ public sealed class CompletionUtilities : IDisposable
             _defaultProjectCompletionConfiguration ??= _projectCompletionConfiguration[settings.ConfigurationFiles.First().Path.ToLower()];
         }
 
-        await Configuration.ReloadCustomAttributesAsync(settings);
+        if (Initialized)
+        {
+            await Configuration.ReloadCustomAttributesAsync(settings);
+        }
     }
 
     private async Task<bool> ShouldInitializeAsync()
