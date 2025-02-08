@@ -92,9 +92,8 @@ internal static class JSParser
     {
         var start = Math.Max(0, (int)point - 2000);
 
-        // We check the point before the trigger. In the case of a caret, the character after is what is selected.
-        // For GetApplicableTo, we want what is before.
-        var checkPoint = point == 0 ? point : point - 1;
+        // For future reference: note that checkPoint is not necessary in JS because point already refers to the character before
+        // the caret, not after
 
         foreach (var scope in ClassRegexHelper.GetClassesJavaScriptEnumerator(point.Snapshot.GetText(start, Math.Min(point.Snapshot.Length, (int)point + 2000) - start)))
         {
@@ -111,7 +110,7 @@ internal static class JSParser
             {
                 var potentialReturn = new SnapshotSpan(point.Snapshot, start + text.Index + token.Index, token.Length);
 
-                if (!potentialReturn.Contains(checkPoint))
+                if (!potentialReturn.Contains(point))
                 {
                     continue;
                 }

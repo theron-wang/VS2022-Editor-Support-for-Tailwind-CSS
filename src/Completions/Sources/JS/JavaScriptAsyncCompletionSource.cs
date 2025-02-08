@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio.Core.Imaging;
 using Microsoft.VisualStudio.Imaging;
+using Microsoft.VisualStudio.Language.CodeCleanUp;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text;
@@ -47,7 +48,7 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
 
         _showAutocomplete ??= settings.EnableTailwindCss;
 
-        if (_showAutocomplete == false || settings.ConfigurationFiles.Count > 0)
+        if (_showAutocomplete == false || settings.ConfigurationFiles.Count == 0)
         {
             return new CompletionContext(ImmutableArray<CompletionItem>.Empty, null);
         }
@@ -95,22 +96,16 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
     }
     private SnapshotSpan GetApplicableTo(SnapshotPoint triggerPoint, ITextSnapshot snapshot)
     {
-        SnapshotPoint end = triggerPoint;
-        SnapshotPoint start = triggerPoint - 1;
+        var span = JSParser.GetClassAttributeValue(triggerPoint);
 
-        while (start.GetChar() != '"' && start.GetChar() != ' ')
-        {
-            start -= 1;
-        }
+        var end = triggerPoint;
 
-        start += 1;
-
-        // SnapshotSpan is not inclusive of end
-        if (end.Position + 1 < snapshot.Length)
+        if ((int)end + 1 < snapshot.Length && span.Value.Contains(end))
         {
             end += 1;
         }
 
-        return new SnapshotSpan(start, end);
+        // Trigger point should be included
+        return new SnapshotSpan(span.Value.Start, end);
     }
 }

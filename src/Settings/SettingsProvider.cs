@@ -63,7 +63,7 @@ public sealed class SettingsProvider : IDisposable
     }
 
     /// <summary>
-    /// Retrieves the TailwindCSSIntellisense settings asynchronously.
+    /// Retrieves extension settings asynchronously.
     /// </summary>
     /// <returns>The extension and project settings.</returns>
     public async Task<TailwindSettings> GetSettingsAsync()

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.9.3 (February 8th, 2025)
+
+- Use wanted version instead of latest version when checking for updates
+- `.jsx` and `.tsx` support now works again ([#98](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/98))
+- Configuration loading should be initialized after project settings have loaded ([#97](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/97))
+- Fix incorrect `.jsx` and `.tsx` completion suggestions
+
 ## 1.9.2 (February 1st, 2025)
 
 - Use existing build processes when running in JIT mode to prevent 100% RAM usage ([#84](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/84#issuecomment-2624939075))
