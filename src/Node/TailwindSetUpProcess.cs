@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Threading;
 using System;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Node
@@ -20,7 +21,7 @@ namespace TailwindCSSIntellisense.Node
         /// Starts a process to install Tailwind in the specified directory (uses npm)
         /// </summary>
         /// <param name="directory">The directory to install in</param>
-        public async Task RunAsync(string directory, bool needInstall, string cliPath = null)
+        public async Task<string> RunAsync(string directory, bool needInstall, string cliPath = null)
         {
             IsSettingUp = true;
             var processInfo = new ProcessStartInfo()
@@ -31,34 +32,44 @@ namespace TailwindCSSIntellisense.Node
                 RedirectStandardError = true,
                 CreateNoWindow = true,
                 FileName = "cmd",
-                WorkingDirectory = directory
+                WorkingDirectory = directory,
+                Arguments = "/C npm install tailwindcss @tailwindcss/cli",
             };
 
             try
             {
                 await VS.StatusBar.ShowMessageAsync("Setting up Tailwind CSS");
-                using var process = Process.Start(processInfo);
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-
-                process.ErrorDataReceived += ErrorDataReceived;
-
-                await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
 
                 if (needInstall)
                 {
-                    await process.StandardInput.WriteLineAsync("npm install -D tailwindcss && npx tailwindcss init & exit");
+                    await VS.StatusBar.StartAnimationAsync(StatusAnimation.General);
+                    using var process = Process.Start(processInfo);
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
+                    process.ErrorDataReceived += ErrorDataReceived;
+
+                    await process.WaitForExitAsync();
                 }
-                else if (string.IsNullOrWhiteSpace(cliPath))
+
+                string fileName;
+
+                if (File.Exists(Path.Combine(directory, "tailwind.css")))
                 {
-                    await process.StandardInput.WriteLineAsync($"{cliPath} init & exit");
+                    fileName = $"tailwind-{Guid.NewGuid().ToString().Substring(0, 8)}.css";
                 }
                 else
                 {
-                    await process.StandardInput.WriteLineAsync("npx tailwindcss init & exit");
+                    fileName = "tailwind.css";
                 }
 
-                await process.WaitForExitAsync();
+                using (var fileStream = new FileStream(Path.Combine(directory, fileName), FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite))
+                {
+                    using var streamWriter = new StreamWriter(fileStream);
+                    await streamWriter.WriteLineAsync("@import \"tailwindcss\";");
+                }
+
+                return Path.Combine(directory, fileName);
             }
             catch (Exception ex)
             {
@@ -69,6 +80,8 @@ namespace TailwindCSSIntellisense.Node
                 IsSettingUp = false;
                 await VS.StatusBar.EndAnimationAsync(StatusAnimation.General);
             }
+
+            return null;
         }
 
         private void ErrorDataReceived(object sender, DataReceivedEventArgs e)

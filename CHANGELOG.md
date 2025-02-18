@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.10.0 (February 17th, 2025)
+
+- Added Tailwind v4 support ([#85](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/85))
+- Updated IntelliSense
+    - New utilities and variants
+    - Support for new () syntax (i.e. `bg-green-(--variable)`))
+- Updated build (i.e. use `@tailwindcss/cli` instead)
+- Updated tooltips for spacing classes and other number/percentage classes
+- Parsing support for css files (partial)
+- Legacy JS configuration files
+- Fixed incorrect sorting for non-spacing numeric classes, color classes with modifiers (i.e. `bg-green-50/50`), and for `group-` and `peer-` variants
+
+Upcoming --> 1.10.x:
+- Plugin / `@import` support
+- CSS tailwind directive and theme variable IntelliSense and linting support
+- Modifier classes: (/oklch, /srgb for bg-linear, font-size/<number> for line height)
+
 ## 1.9.3 (February 8th, 2025)
 
 - Use wanted version instead of latest version when checking for updates

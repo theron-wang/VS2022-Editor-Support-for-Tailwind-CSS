@@ -8,7 +8,7 @@
 
 IntelliSense, linting, build shortcuts, and more for Tailwind CSS to enhance the development experience in Visual Studio 2022.
 
-**NOTE**: this extension is designed to be used with the latest version of Tailwind; there may be unintended effects when using earlier versions.
+**NOTE**: this extension is designed to be used with Tailwind 3/4; there may be unintended effects when using earlier versions.
 
 Download from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=TheronWang.TailwindCSSIntellisense).
 
@@ -32,9 +32,11 @@ If you do not have `npm` installed, follow [this tutorial](https://docs.npmjs.co
 
 ## Setup
 
-The extension will start in any solution with a `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file in any project.
+The extension will start in any v3 solution with a `tailwind.config.{js,cjs,mjs,ts,cts,mts}` file in any project.
 
 If your configuration file is named differently/not found by the extension, you can set the file by right-clicking on it (must be a `.js` or `.ts` file).
+
+In v4 projects, you must manually set your CSS configuration file in your `tailwind.extension.json` file, which can be updated by right-clicking on the desired file.
 
 ## Features
 

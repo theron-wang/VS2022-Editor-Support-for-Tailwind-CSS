@@ -21,25 +21,13 @@ public sealed partial class CompletionConfiguration
     [Import]
     internal ConfigurationFileReloader Reloader { get; set; }
 
-    [Import]
-    internal ConfigFileScanner Scanner { get; set; }
-
     [Import(typeof(GeneratorAggregator))]
     internal GeneratorAggregator DescriptionGenerator { get; set; }
 
     [Import]
     internal ColorIconGenerator ColorIconGenerator { get; set; }
 
-    [Import]
-    internal SettingsProvider SettingsProvider { get; set; }
-
     private CompletionUtilities _completionBase;
-
-    private List<string> ModifiersOrig { get; set; }
-    private List<string> ScreenOrig { get; set; }
-    private List<TailwindClass> ClassesOrig { get; set; }
-    private Dictionary<string, string> ColorToRgbMapperOrig { get; set; }
-    private Dictionary<string, string> SpacingMapperOrig { get; set; }
 
     internal TailwindConfiguration LastConfig { get; private set; }
 
@@ -50,16 +38,6 @@ public sealed partial class CompletionConfiguration
     public async Task InitializeAsync(CompletionUtilities completionBase)
     {
         _completionBase = completionBase;
-
-        var defaultCompletionConfiguration = _completionBase.GetUnsetCompletionConfiguration();
-
-        ModifiersOrig = [.. defaultCompletionConfiguration.Modifiers];
-        SpacingMapperOrig = defaultCompletionConfiguration.SpacingMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
-        ClassesOrig = [.. defaultCompletionConfiguration.Classes];
-        ScreenOrig = [.. defaultCompletionConfiguration.Screen];
-        ColorToRgbMapperOrig = defaultCompletionConfiguration.ColorToRgbMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
-
-        await ReloadCustomAttributesAsync(await SettingsProvider.GetSettingsAsync());
 
         await Reloader.InitializeAsync(this);
     }

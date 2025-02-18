@@ -13,26 +13,47 @@ public class ProjectCompletionValues
     internal bool Initialized { get; set; }
     internal List<TailwindClass> Classes { get; set; } = [];
     internal List<string> Modifiers { get; set; } = [];
+    /// <summary>
+    /// V4 and above
+    /// </summary>
+    internal Dictionary<string, string> VariantsToDescriptions { get; set; } = [];
     internal List<string> Screen { get; set; } = ["sm", "md", "lg", "xl", "2xl"];
 
     internal string Prefix { get; set; }
 
-    internal Dictionary<string, string> ColorToRgbMapper { get; set; } = [];
+    internal Dictionary<string, string> ColorMapper { get; set; } = [];
     internal Dictionary<string, string> SpacingMapper { get; set; } = [];
+    /// <summary>
+    /// Removed in V4
+    /// </summary>
     internal Dictionary<string, List<string>> ConfigurationValueToClassStems { get; set; } = [];
 
+    /// <summary>
+    /// Removed in V4
+    /// </summary>
     internal Dictionary<string, Dictionary<string, string>> CustomColorMappers { get; set; } = [];
+    /// <summary>
+    /// Removed in V4
+    /// </summary>
     internal Dictionary<string, Dictionary<string, string>> CustomSpacingMappers { get; set; } = [];
 
     internal Dictionary<string, string> DescriptionMapper { get; set; } = [];
     internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = [];
+    
+    /// <summary>
+    /// V4 only
+    /// </summary>
+    internal Dictionary<string, string> CssVariables { get; set; } = [];
 
     internal List<string> PluginClasses { get; set; } = [];
     internal List<string> PluginModifiers { get; set; } = [];
 
+    /// <summary>
+    /// Removed in V4
+    /// </summary>
     internal HashSet<string> Blocklist { get; set; } = [];
-#warning test
-    internal List<string> AllowedCorePlugins { get; set; } = [];
+
+    internal TailwindVersion Version { get; set; }
 
     /// <summary>
     /// Is the class in the blocklist?
@@ -52,7 +73,7 @@ public class ProjectCompletionValues
             Modifiers = Modifiers?.ToList(),
             Screen = Screen?.ToList(),
             Prefix = Prefix,
-            ColorToRgbMapper = new Dictionary<string, string>(ColorToRgbMapper),
+            ColorMapper = new Dictionary<string, string>(ColorMapper),
             SpacingMapper = new Dictionary<string, string>(SpacingMapper),
             ConfigurationValueToClassStems = ConfigurationValueToClassStems?.ToDictionary(
                 kvp => kvp.Key, kvp => kvp.Value.ToList()
@@ -68,7 +89,13 @@ public class ProjectCompletionValues
             PluginClasses = PluginClasses?.ToList(),
             PluginModifiers = PluginModifiers?.ToList(),
             Blocklist = new HashSet<string>(Blocklist),
-            AllowedCorePlugins = AllowedCorePlugins?.ToList()
+            Version = Version,
+            CssVariables = CssVariables?.ToDictionary(
+                kvp => kvp.Key, kvp => kvp.Value
+            ),
+            VariantsToDescriptions = VariantsToDescriptions?.ToDictionary(
+                kvp => kvp.Key, kvp => kvp.Value
+            )
         };
     }
 }

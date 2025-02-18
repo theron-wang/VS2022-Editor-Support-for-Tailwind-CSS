@@ -6,6 +6,7 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
@@ -207,14 +208,22 @@ internal sealed class TailwindBuildProcess : IDisposable
 
     private void BuildOne(KeyValuePair<string, string> pair, bool minify = false)
     {
-        var config = CompletionUtilities.GetCompletionConfigurationByFilePath(pair.Key);
+        ProjectCompletionValues config;
+        try
+        {
+            // V4
+            config = CompletionUtilities.GetCompletionConfigurationByConfigFilePath(pair.Key);
+        }
+        catch
+        {
+            config = CompletionUtilities.GetCompletionConfigurationByFilePath(pair.Key);
+        }
 
         _minify = minify;
 
         var hasScript = false;
         var packageJsonPath = "";
 
-        // Since file path 
         if (!_configsToPackageJsons.ContainsKey(config.FilePath))
         {
             (hasScript, packageJsonPath) = ThreadHelper.JoinableTaskFactory.Run(() => PackageJsonReader.ScriptExistsAsync(config.FilePath, _settings.BuildScript));
@@ -241,7 +250,14 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                    if (config.Version == TailwindVersion.V3)
+                    {
+                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                    }
+                    else
+                    {
+                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                    }
                 }
                 else if (_settings.OverrideBuild)
                 {
@@ -262,7 +278,16 @@ internal sealed class TailwindBuildProcess : IDisposable
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
                     process = CreateAndStartProcess(GetProcessStartInfo(dir));
-                    process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+
+                    if (config.Version == TailwindVersion.V3)
+                    {
+                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                    }
+                    else
+                    {
+                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                    }
+
                     PostSetupProcess(process);
 
                     _outputFileToProcesses[outputFile] = process;
@@ -317,7 +342,15 @@ internal sealed class TailwindBuildProcess : IDisposable
                     }
 
                     process = CreateAndStartProcess(GetProcessStartInfo(dir));
-                    process.StandardInput.WriteLine($"{GetCommand()} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+
+                    if (config.Version == TailwindVersion.V3)
+                    {
+                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                    }
+                    else
+                    {
+                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "")} {(minify ? "--minify" : "")} & exit");
+                    }
                     PostSetupProcess(process);
 
                     _outputFileToProcesses[outputFile] = process;
@@ -393,11 +426,18 @@ internal sealed class TailwindBuildProcess : IDisposable
         }
     }
 
-    private string GetCommand()
+    private string GetCommand(ProjectCompletionValues project)
     {
         if (string.IsNullOrWhiteSpace(_settings.TailwindCliPath))
         {
-            return "npx tailwindcss";
+            if (project.Version == TailwindVersion.V3)
+            {
+                return "npx tailwindcss";
+            }
+            else
+            {
+                return "npx @tailwindcss/cli";
+            }
         }
         return _settings.TailwindCliPath;
     }
@@ -521,6 +561,9 @@ internal sealed class TailwindBuildProcess : IDisposable
 
     private async Task LogSuccessAsync(string seconds)
     {
+        // Remove ANSI color codes
+        seconds = Regex.Replace(seconds, @"\x1B\[[0-9;]*[mK]", "");
+
         await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: Build succeeded in {seconds} at {DateTime.Now.ToLongTimeString()}.");
 
         await WriteToBuildPaneAsync($"Tailwind CSS: Build succeeded in {seconds} at {DateTime.Now.ToLongTimeString()}.");
@@ -574,7 +617,9 @@ internal sealed class TailwindBuildProcess : IDisposable
             RedirectStandardError = true,
             CreateNoWindow = true,
             FileName = "cmd",
-            WorkingDirectory = dir
+            WorkingDirectory = dir,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
         };
     }
 

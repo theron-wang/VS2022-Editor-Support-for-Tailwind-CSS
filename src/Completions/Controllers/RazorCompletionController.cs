@@ -308,6 +308,12 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         if (completionActive)
         {
             _currentSession = Broker.GetSessions(TextView).FirstOrDefault(s => s.SelectedCompletionSet?.DisplayName?.Contains("Shim") == false);
+            
+            if (_currentSession is null)
+            {
+                return true;
+            }
+
             _currentSession.Dismissed += (sender, args) => _currentSession = null;
 
             if (_currentSession.SelectedCompletionSet is TailwindCssCompletionSet)

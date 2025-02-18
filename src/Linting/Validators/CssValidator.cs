@@ -164,7 +164,7 @@ internal class CssValidator : Validator
             }
             else if (segments[0] == "colors")
             {
-                error = !_projectCompletionValues.ColorToRgbMapper.ContainsKey(string.Join("-", segments.Skip(1)));
+                error = !_projectCompletionValues.ColorMapper.ContainsKey(string.Join("-", segments.Skip(1)));
             }
             else if (segments[0] == "spacing")
             {
@@ -234,7 +234,7 @@ internal class CssValidator : Validator
                             }
                             else
                             {
-                                foreach (var c in _projectCompletionValues.ColorToRgbMapper)
+                                foreach (var c in _projectCompletionValues.ColorMapper)
                                 {
                                     values.Add(c.Key);
                                 }
@@ -312,13 +312,13 @@ internal class CssValidator : Validator
                                     }
                                     else
                                     {
-                                        foreach (var c in _projectCompletionValues.ColorToRgbMapper)
+                                        foreach (var c in _projectCompletionValues.ColorMapper)
                                         {
                                             values.Add(c.Key);
                                         }
                                     }
                                 }
-                                else if (value.SupportsBrackets == false)
+                                else if (value.HasArbitrary == false)
                                 {
                                     values.Add(value.Name.Replace(stem, ""));
                                 }

@@ -56,6 +56,7 @@ namespace TailwindCSSIntellisense
         public const int RemoveAsPackageConfigFileCmdId = 0x0117;
         public const int SetAsOutputCssFileMenu = 0x0118;
         public const int SetAsOutputCssFileCmdId = 0x0200;
+        public const int UpgradeTailwindCssCmdId = 0x0119;
         public const int tailwindLogo = 0x0001;
     }
 }

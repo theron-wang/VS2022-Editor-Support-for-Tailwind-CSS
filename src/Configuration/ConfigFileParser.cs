@@ -1,4 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.PlatformUI.OleComponentSupport;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Configuration;
@@ -18,6 +20,8 @@ namespace TailwindCSSIntellisense.Configuration;
 /// </summary>
 internal static class ConfigFileParser
 {
+    private static readonly Regex _cssSemicolonSplitter = new("(?<!\\\\);(?=(?:(?:[^\"']*[\"']){2})*[^\"']*$)", RegexOptions.Compiled);
+
     internal static async Task<JsonObject> GetConfigJsonNodeAsync(string path)
     {
         var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "parser.js");
@@ -122,7 +126,371 @@ internal static class ConfigFileParser
     /// </summary>
     /// <remarks>Returns null if the configuration file cannot be found, or if the configuration file does not have a 'theme' section.</remarks>
     /// <returns>Returns a <see cref="Task{TailwindConfiguration}" /> of type <see cref="TailwindConfiguration"/> which contains the parsed configuration information</returns>
-    internal static async Task<TailwindConfiguration> GetConfigurationAsync(string path)
+    internal static Task<TailwindConfiguration> GetConfigurationAsync(string path)
+    {
+        if (Path.GetExtension(path) == ".css")
+        {
+            return GetCssConfigurationAsync(path);
+        }
+        else
+        {
+            return GetJavaScriptConfigurationAsync(path);
+        }
+    }
+
+    private static async Task<TailwindConfiguration> GetCssConfigurationAsync(string path)
+    {
+        string javascriptConfig = null;
+        StringBuilder themeBody = new();
+
+        var started = false;
+        var encounteredOpeningBraceYet = false;
+        var level = 0;
+
+        using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+        {
+            using var reader = new StreamReader(fileStream);
+
+            while (!reader.EndOfStream)
+            {
+                if (encounteredOpeningBraceYet && level == 0)
+                {
+                    break;
+                }
+
+                var line = await reader.ReadLineAsync();
+
+                if (line is null)
+                {
+                    continue;
+                }
+
+                line = line.Trim();
+
+                if (line.StartsWith("@config"))
+                {
+                    var relativePath = line.Replace("@config", "").Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
+
+                    javascriptConfig = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), relativePath);
+                    continue;
+                }
+
+                if (line.StartsWith("@theme"))
+                {
+                    if (line.Contains('{'))
+                    {
+                        level++;
+                        encounteredOpeningBraceYet = true;
+                    }
+
+                    started = true;
+                    continue;
+                }
+
+                if (!started)
+                {
+                    continue;
+                }
+
+                if (line.Contains('{'))
+                {
+                    level++;
+                    encounteredOpeningBraceYet = true;
+                    continue;
+                }
+
+                if (!encounteredOpeningBraceYet)
+                {
+                    continue;
+                }
+
+                if (line.Contains('}'))
+                {
+                    level--;
+                    continue;
+                }
+
+                themeBody.AppendLine(line);
+            }
+        }
+
+        // Remove any text inside {}, since all theme values are in the base theme block
+        // We need this because there may be multiple blocks on one line
+        var themeUntrimmed = themeBody.ToString().Trim();
+        var themeTrimmed = new StringBuilder();
+
+        level = 0;
+        var inComment = false;
+
+        for (int i = 0; i < themeUntrimmed.Length; i++)
+        {
+            var current = themeUntrimmed[i];
+
+            if (current == '/')
+            {
+                if (i + 1 < themeUntrimmed.Length && themeUntrimmed[i + 1] == '*')
+                {
+                    inComment = true;
+                }
+                else if (i > 0 && themeUntrimmed[i - 1] == '*')
+                {
+                    inComment = false;
+                    continue;
+                }
+            }
+
+            if (inComment)
+            {
+                continue;
+            }
+
+            if (current == '{')
+            {
+                level++;
+            }
+            else if (current == '}')
+            {
+                level--;
+            }
+            else if (level == 0)
+            {
+                themeTrimmed.Append(current);
+            }
+        }
+
+        var themeValuePairs = _cssSemicolonSplitter.Split(themeTrimmed.ToString())
+            .Select(s => s.Trim())
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Select(s =>
+            {
+                var split = s.IndexOf(':');
+                return new KeyValuePair<string, string>(s.Substring(0, split), s.Substring(split + 1));
+            });
+
+        TailwindConfiguration jsConfig = null;
+
+        if (javascriptConfig is not null)
+        {
+            jsConfig = await GetJavaScriptConfigurationAsync(javascriptConfig);
+        }
+
+        var config = new TailwindConfiguration
+        {
+            OverridenValues = [],
+            ExtendedValues = [],
+            ThemeVariables = []
+        };
+
+        foreach (var pair in themeValuePairs)
+        {
+            var stem = GetConfigurationClassStemFromCssVariable(pair.Key);
+            var namespaceStem = GetCssVariableNamespace(pair.Key);
+
+            if (stem is null || namespaceStem is null)
+            {
+                config.ThemeVariables[pair.Key.Trim()] = pair.Value.Trim();
+                continue;
+            }
+
+            var valueKey = pair.Key.Trim().Substring(namespaceStem.Length + 1);
+
+            if (pair.Key.EndsWith("*"))
+            {
+                config.OverridenValues[stem] = new Dictionary<string, object>();
+                config.ExtendedValues[stem] = new Dictionary<string, object>();
+                continue;
+            }
+
+            Dictionary<string, object> dict;
+
+            if (config.OverridenValues.ContainsKey(stem))
+            {
+                dict = config.OverridenValues[stem] as Dictionary<string, object>;
+            }
+            else
+            {
+                if (!config.ExtendedValues.ContainsKey(stem))
+                {
+                    config.ExtendedValues[stem] = new Dictionary<string, object>();
+                }
+                dict = config.ExtendedValues[stem] as Dictionary<string, object>;
+            }
+
+            dict[valueKey] = pair.Value.Trim();
+        }
+
+        if (jsConfig is not null)
+        {
+            DictionaryHelpers.MergeDictionaries(config.OverridenValues, jsConfig.OverridenValues);
+            DictionaryHelpers.MergeDictionaries(config.ExtendedValues, jsConfig.ExtendedValues);
+        }
+
+        return config;
+    }
+
+    private static string GetCssVariableNamespace(string variable)
+    {
+        if (variable.StartsWith("--color"))
+        {
+            return "--color";
+        }
+        else if (variable.StartsWith("--font-weight"))
+        {
+            return "--font-weight";
+        }
+        else if (variable.StartsWith("--font"))
+        {
+            return "--font";
+        }
+        else if (variable.StartsWith("--text"))
+        {
+            return "--text";
+        }
+        else if (variable.StartsWith("--tracking"))
+        {
+            return "--tracking";
+        }
+        else if (variable.StartsWith("--leading"))
+        {
+            return "--leading";
+        }
+        else if (variable.StartsWith("--breakpoint"))
+        {
+            return "--breakpoint";
+        }
+        else if (variable.StartsWith("--container"))
+        {
+            // v4
+            return "--container";
+        }
+        else if (variable.StartsWith("--spacing"))
+        {
+            return "--spacing";
+        }
+        else if (variable.StartsWith("--radius"))
+        {
+            return "--radius";
+        }
+        else if (variable.StartsWith("--shadow"))
+        {
+            return "--shadow";
+        }
+        else if (variable.StartsWith("--inset-shadow"))
+        {
+            // v4
+            return "--inset-shadow";
+        }
+        else if (variable.StartsWith("--drop-shadow"))
+        {
+            return "--drop-shadow";
+        }
+        else if (variable.StartsWith("--blur"))
+        {
+            return "--blur";
+        }
+        else if (variable.StartsWith("--perspective"))
+        {
+            // v4
+            return "--perspective";
+        }
+        else if (variable.StartsWith("--aspect"))
+        {
+            return "--aspect";
+        }
+        else if (variable.StartsWith("--ease"))
+        {
+            return "--ease";
+        }
+        else if (variable.StartsWith("--animate"))
+        {
+            return "--animate";
+        }
+
+        return null;
+    }
+
+    private static string GetConfigurationClassStemFromCssVariable(string variable)
+    {
+        if (variable.StartsWith("--color"))
+        {
+            return "colors";
+        }
+        else if (variable.StartsWith("--font-weight"))
+        {
+            return "fontWeight";
+        }
+        else if (variable.StartsWith("--font"))
+        {
+            return "fontFamily";
+        }
+        else if (variable.StartsWith("--text"))
+        {
+            return "fontSize";
+        }
+        else if (variable.StartsWith("--tracking"))
+        {
+            return "letterSpacing";
+        }
+        else if (variable.StartsWith("--leading"))
+        {
+            return "lineHeight";
+        }
+        else if (variable.StartsWith("--breakpoint"))
+        {
+            return "screens";
+        }
+        else if (variable.StartsWith("--container"))
+        {
+            // v4
+            return "v4-container";
+        }
+        else if (variable.StartsWith("--spacing"))
+        {
+            return "spacing";
+        }
+        else if (variable.StartsWith("--radius"))
+        {
+            return "borderRadius";
+        }
+        else if (variable.StartsWith("--shadow"))
+        {
+            return "boxShadow";
+        }
+        else if (variable.StartsWith("--inset-shadow"))
+        {
+            // v4
+            return "v4-insetShadow";
+        }
+        else if (variable.StartsWith("--drop-shadow"))
+        {
+            return "dropShadow";
+        }
+        else if (variable.StartsWith("--blur"))
+        {
+            return "blur";
+        }
+        else if (variable.StartsWith("--perspective"))
+        {
+            // v4
+            return "v4-perspective";
+        }
+        else if (variable.StartsWith("--aspect"))
+        {
+            return "aspectRatio";
+        }
+        else if (variable.StartsWith("--ease"))
+        {
+            return "transitionTimingFunction";
+        }
+        else if (variable.StartsWith("--animate"))
+        {
+            return "animation";
+        }
+
+        return null;
+    }
+
+    private static async Task<TailwindConfiguration> GetJavaScriptConfigurationAsync(string path)
     {
         var obj = await GetConfigJsonNodeAsync(path);
 
@@ -142,7 +510,7 @@ internal static class ConfigFileParser
 
         var theme = obj["theme"];
 
-        var plugins = GetTotalValue(obj["plugins"]) ?? [];  
+        var plugins = GetTotalValue(obj["plugins"]) ?? [];
 
         var config = new TailwindConfiguration
         {
@@ -223,7 +591,7 @@ internal static class ConfigFileParser
         {
             await ex.LogAsync();
         }
-        
+
 
         try
         {

@@ -1,6 +1,6 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
-using Newtonsoft.Json.Linq;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using TailwindCSSIntellisense.Completions.V4;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Settings;
 
@@ -28,6 +29,8 @@ public sealed class CompletionUtilities : IDisposable
     internal CompletionConfiguration Configuration { get; set; }
     [Import]
     internal SettingsProvider SettingsProvider { get; set; }
+    [Import]
+    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
 
     internal ImageSource TailwindLogo { get; private set; } = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindlogo.png"), UriKind.Relative));
     internal bool Initialized { get; private set; }
@@ -40,7 +43,8 @@ public sealed class CompletionUtilities : IDisposable
     /// </summary>
     private Dictionary<string, ProjectCompletionValues> _projectCompletionConfiguration = [];
     private ProjectCompletionValues _defaultProjectCompletionConfiguration;
-    private ProjectCompletionValues _unsetProjectCompletionConfiguration = new();
+    private readonly ProjectCompletionValues _unsetProjectCompletionConfiguration = new();
+    private readonly ProjectCompletionValues _unsetProjectCompletionConfigurationV4 = new();
 
     /// <summary>
     /// Initializes the necessary utilities to provide completion
@@ -63,7 +67,8 @@ public sealed class CompletionUtilities : IDisposable
 
             Initializing = true;
 
-            await LoadClassesAsync();
+            await LoadClassesV3Async();
+            await LoadClassesV4Async();
 
             var settings = await SettingsProvider.GetSettingsAsync();
             await OnSettingsChangedAsync(settings);
@@ -90,10 +95,14 @@ public sealed class CompletionUtilities : IDisposable
         }
     }
 
-    public ProjectCompletionValues GetUnsetCompletionConfiguration()
+    public ProjectCompletionValues GetUnsetCompletionConfiguration(TailwindVersion version)
     {
         ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
 
+        if (version == TailwindVersion.V4)
+        {
+            return _unsetProjectCompletionConfigurationV4;
+        }
         return _unsetProjectCompletionConfiguration;
     }
 
@@ -109,6 +118,7 @@ public sealed class CompletionUtilities : IDisposable
 
     /// <summary>
     /// For IntelliSense; detect which configuration file this file belongs to and return the completion configuration for it.
+    /// By default, this will return the default v3 configuration if none is found.
     /// </summary>
     public ProjectCompletionValues GetCompletionConfigurationByFilePath(string filePath)
     {
@@ -138,7 +148,20 @@ public sealed class CompletionUtilities : IDisposable
         {
             if (!_projectCompletionConfiguration.TryGetValue(file.Path.ToLower(), out var projectConfig))
             {
-                projectConfig = _unsetProjectCompletionConfiguration.Copy();
+                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(file.Path);
+
+                ProjectCompletionValues toCopy;
+
+                if (version == TailwindVersion.V3)
+                {
+                    toCopy = _unsetProjectCompletionConfiguration;
+                }
+                else
+                {
+                    toCopy = _unsetProjectCompletionConfigurationV4;
+                }
+
+                projectConfig = toCopy.Copy();
                 _projectCompletionConfiguration.Add(file.Path.ToLower(), projectConfig);
             }
 
@@ -174,12 +197,14 @@ public sealed class CompletionUtilities : IDisposable
         return (await SettingsProvider.GetSettingsAsync()).ConfigurationFiles.Count > 0;
     }
 
-    private async Task LoadClassesAsync()
+    private async Task LoadClassesV3Async()
     {
         if (_unsetProjectCompletionConfiguration.Classes.Count > 0)
         {
             return;
         }
+
+        _unsetProjectCompletionConfiguration.Version = TailwindVersion.V3;
 
         var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
         List<Variant> variants = [];
@@ -188,7 +213,7 @@ public sealed class CompletionUtilities : IDisposable
         {
             LoadJsonAsync<List<Variant>>(Path.Combine(baseFolder, "tailwindclasses.json"), v => variants = v),
             LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindmodifiers.json"), m => _unsetProjectCompletionConfiguration.Modifiers = m),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwindrgbmapper.json"), c => _unsetProjectCompletionConfiguration.ColorToRgbMapper = c),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwindrgbmapper.json"), c => _unsetProjectCompletionConfiguration.ColorMapper = c),
             LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), spacing =>
             {
                 _unsetProjectCompletionConfiguration.SpacingMapper = [];
@@ -358,15 +383,229 @@ public sealed class CompletionUtilities : IDisposable
                 }
                 else
                 {
-                    if (_unsetProjectCompletionConfiguration.Classes.All(c => (c.Name == name && c.SupportsBrackets == false) || c.Name != name))
+                    if (_unsetProjectCompletionConfiguration.Classes.All(c => (c.Name == name && c.HasArbitrary == false) || c.Name != name))
                     {
                         _unsetProjectCompletionConfiguration.Classes.Add(new TailwindClass()
                         {
                             Name = name,
-                            SupportsBrackets = true
+                            HasArbitrary = true
                         });
                     }
                 }
+            }
+        }
+    }
+
+    private async Task LoadClassesV4Async()
+    {
+        if (_unsetProjectCompletionConfigurationV4.Classes.Count > 0)
+        {
+            return;
+        }
+
+        _unsetProjectCompletionConfigurationV4.Version = TailwindVersion.V4;
+
+        var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
+        var v4Folder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "V4");
+        List<ClassType> classTypes = [];
+
+        var loadTasks = new List<Task>
+        {
+            LoadJsonAsync<List<ClassType>>(Path.Combine(v4Folder, "classes.json"), v => classTypes = v),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "colors.json"), c => _unsetProjectCompletionConfigurationV4.ColorMapper = c),
+            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), spacing =>
+            {
+                _unsetProjectCompletionConfigurationV4.SpacingMapper = [];
+                foreach (var s in spacing)
+                {
+                    _unsetProjectCompletionConfigurationV4.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
+                }
+            }),
+            LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "tailwindopacity.json"), o => Opacity = o),
+            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => _unsetProjectCompletionConfigurationV4.ConfigurationValueToClassStems = c),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "descriptions.json"), d => _unsetProjectCompletionConfigurationV4.DescriptionMapper = d),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "theme.json"), d => _unsetProjectCompletionConfigurationV4.CssVariables = d),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "variants.json"), d => _unsetProjectCompletionConfigurationV4.VariantsToDescriptions = d)
+        };
+
+        await Task.WhenAll(loadTasks);
+
+        _unsetProjectCompletionConfigurationV4.Modifiers = [.. _unsetProjectCompletionConfigurationV4.VariantsToDescriptions.Keys];
+
+        _unsetProjectCompletionConfigurationV4.Classes = [];
+
+        foreach (var classType in classTypes)
+        {
+            var classes = new List<TailwindClass>();
+
+            if (classType.DirectVariants != null && classType.DirectVariants.Count > 0)
+            {
+                foreach (var v in classType.DirectVariants)
+                {
+                    if (string.IsNullOrWhiteSpace(v))
+                    {
+                        classes.Add(new TailwindClass()
+                        {
+                            Name = classType.Stem
+                        });
+                    }
+                    else
+                    {
+                        if (v.Contains("{s}"))
+                        {
+                            classes.Add(new TailwindClass()
+                            {
+                                Name = classType.Stem + "-" + v.Replace("{s}", "{0}"),
+                                UseSpacing = true
+                            });
+                        }
+                        else if (v.Contains("{c}"))
+                        {
+                            classes.Add(new TailwindClass()
+                            {
+                                Name = classType.Stem + "-" + v.Replace("{c}", "{0}"),
+                                UseColors = true,
+                                UseOpacity = true
+                            });
+                        }
+                        else if (v.Contains("{n}"))
+                        {
+                            classes.Add(new TailwindClass()
+                            {
+                                Name = classType.Stem + "-" + v.Replace("{n}", "{0}"),
+                                UseNumbers = true
+                            });
+                        }
+                        else if (v.Contains("{%}"))
+                        {
+                            classes.Add(new TailwindClass()
+                            {
+                                Name = classType.Stem + "-" + v.Replace("{%}", "{0}"),
+                                UsePercent = true
+                            });
+                        }
+                        else if (v.Contains("{f}"))
+                        {
+                            classes.Add(new TailwindClass()
+                            {
+                                Name = classType.Stem + "-" + v.Replace("{f}", "{0}"),
+                                UseFractions = true
+                            });
+                        }
+                        else
+                        {
+                            classes.Add(new TailwindClass()
+                            {
+                                Name = classType.Stem + "-" + v
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (classType.Subvariants != null && classType.Subvariants.Count > 0)
+            {
+                // Do the same check for each of the subvariants as above
+
+                foreach (var subvariant in classType.Subvariants)
+                {
+                    if (subvariant.Variants != null)
+                    {
+                        foreach (var v in subvariant.Variants)
+                        {
+                            if (string.IsNullOrWhiteSpace(v))
+                            {
+                                classes.Add(new TailwindClass()
+                                {
+                                    Name = classType.Stem + "-" + subvariant.Stem
+                                });
+                            }
+                            else
+                            {
+                                classes.Add(new TailwindClass()
+                                {
+                                    Name = classType.Stem + "-" + subvariant.Stem + "-" + v
+                                });
+                            }
+                        }
+                    }
+
+                    if (subvariant.HasArbitrary == true)
+                    {
+                        classes.Add(new TailwindClass()
+                        {
+                            Name = classType.Stem + "-" + subvariant.Stem + "-",
+                            HasArbitrary = true
+                        });
+                    }
+                }
+            }
+
+            if ((classType.DirectVariants == null || classType.DirectVariants.Count == 0) && (classType.Subvariants == null || classType.Subvariants.Count == 0))
+            {
+                var newClass = new TailwindClass()
+                {
+                    Name = classType.Stem
+                };
+                if (classType.UseColors == true)
+                {
+                    newClass.UseColors = true;
+                    newClass.UseOpacity = true;
+                    newClass.Name = newClass.Name.Replace("{c}", "{0}");
+                }
+                else if (classType.UseSpacing == true)
+                {
+                    newClass.UseSpacing = true;
+                    newClass.Name = newClass.Name.Replace("{s}", "{0}");
+                }
+                else if (classType.UseNumbers == true)
+                {
+                    newClass.UseNumbers = true;
+                    newClass.Name = newClass.Name.Replace("{n}", "{0}");
+                }
+                else if (classType.UsePercent == true)
+                {
+                    newClass.UsePercent = true;
+                    newClass.Name = newClass.Name.Replace("{%}", "{0}");
+                }
+                else if (classType.UseFractions == true)
+                {
+                    newClass.UseFractions = true;
+                    newClass.Name = newClass.Name.Replace("{f}", "{0}");
+                }
+                classes.Add(newClass);
+            }
+
+            if (classType.HasArbitrary == true || classType.UseFractions == true || classType.UseSpacing == true || classType.UsePercent == true ||
+                classType.UseColors == true || classType.UseNumbers == true)
+            {
+                classes.Add(new TailwindClass()
+                {
+                    Name = classType.Stem + "-",
+                    HasArbitrary = true
+                });
+            }
+
+            _unsetProjectCompletionConfigurationV4.Classes.AddRange(classes);
+
+            if (classType.HasNegative == true)
+            {
+                var negativeClasses = classes.Select(c =>
+                {
+                    return new TailwindClass()
+                    {
+                        Name = $"-{c.Name}",
+                        UseColors = c.UseColors,
+                        UseSpacing = c.UseSpacing,
+                        UseNumbers = c.UseNumbers,
+                        UsePercent = c.UsePercent,
+                        UseFractions = c.UseFractions,
+                        UseOpacity = c.UseOpacity,
+                        HasArbitrary = c.HasArbitrary
+                    };
+                }).ToList();
+
+                _unsetProjectCompletionConfigurationV4.Classes.AddRange(negativeClasses);
             }
         }
     }

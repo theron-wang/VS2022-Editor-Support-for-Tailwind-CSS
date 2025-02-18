@@ -44,19 +44,17 @@ internal sealed class SetUpAndUseTailwindGlobal : BaseCommand<SetUpAndUseTailwin
                 return;
             }
 
-            await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, false));
-
-            var configFile = Path.Combine(directory, "tailwind.config.js");
+            var configFile = await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, false));
 
             settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
-            settings.UseCli = true;
+            settings.BuildFiles.Add(new() { Input = configFile });
             await SettingsProvider.OverrideSettingsAsync(settings);
 
-            var file = await PhysicalFile.FromFileAsync(configFile);
+            var file = await PhysicalFile.FromFileAsync(SolutionExplorerSelection.CurrentSelectedItemFullPath);
 
             if (file is not null && file.ContainingProject is not null)
             {
-                // tailwind.extension.json is placed in the same directory as tailwind.config.js
+                // tailwind.extension.json is placed in the same directory as tailwind.css
                 var tailwindExtensionJson = await SettingsProvider.GetFilePathAsync();
                 await file.ContainingProject.AddExistingFilesAsync(configFile, tailwindExtensionJson);
             }

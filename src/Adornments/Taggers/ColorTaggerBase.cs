@@ -223,20 +223,27 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                     return null;
                 }
             }
-            else if (_completionUtilities.ColorToRgbMapper.TryGetValue(color, out value) == false)
+            else if (_completionUtilities.ColorMapper.TryGetValue(color, out value) == false)
             {
                 return null;
             }
 
-            var rgb = value.Split(',');
-
-            if (rgb.Length != 3)
+            if (ColorHelpers.ConvertToRgb(value) is int[] converted && converted.Length == 3)
             {
-                // inherit, current, etc.
-                return null;
+                return [(byte)converted[0], (byte)converted[1], (byte)converted[2], (byte)Math.Round(opacity / 100d * 255)];
             }
+            else
+            {
+                var rgb = value.Split(',');
 
-            return [byte.Parse(rgb[0]), byte.Parse(rgb[1]), byte.Parse(rgb[2]), (byte)Math.Round(opacity / 100d * 255)];
+                if (rgb.Length != 3)
+                {
+                    // inherit, current, etc.
+                    return null;
+                }
+
+                return [byte.Parse(rgb[0]), byte.Parse(rgb[1]), byte.Parse(rgb[2]), (byte)Math.Round(opacity / 100d * 255)];
+            }
         }
         return null;
     }

@@ -11,7 +11,7 @@ namespace TailwindCSSIntellisense.Configuration
         /// The key is the class being overriden, such as color. <br></br>
         /// The value is a <see cref="Dictionary{TKey, TValue}"/>, which holds the specific key/value pairs of the overriden values.
         /// </remarks>
-        public Dictionary<string, object> OverridenValues { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> OverridenValues { get; set; } = [];
 
         /// <summary>
         /// Corresponds to theme.extend.____. This value will NEVER be null.
@@ -20,7 +20,12 @@ namespace TailwindCSSIntellisense.Configuration
         /// The key is the class being extended, such as color. <br></br>
         /// The value is a <see cref="Dictionary{TKey, TValue}"/>, which holds the specific key/value pairs of the extended values.
         /// </remarks>
-        public Dictionary<string, object> ExtendedValues { get; set; } = new Dictionary<string, object>();
+        public Dictionary<string, object> ExtendedValues { get; set; } = [];
+
+        /// <summary>
+        /// V4 only
+        /// </summary>
+        public Dictionary<string, string> ThemeVariables { get; set; } = [];
 
         public string Prefix { get; set; }
 

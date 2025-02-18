@@ -14,7 +14,7 @@ namespace TailwindCSSIntellisense.Completions.Sources;
 internal abstract class ClassCompletionGenerator : IDisposable
 {
     protected readonly CompletionUtilities _completionUtils;
-    protected readonly ProjectCompletionValues _projectCompletionValues;
+    protected ProjectCompletionValues _projectCompletionValues;
     protected readonly ColorIconGenerator _colorIconGenerator;
     private readonly DescriptionGenerator _descriptionGenerator;
     protected readonly SettingsProvider _settingsProvider;
@@ -131,7 +131,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 }
                 else
                 {
-                    colors = _projectCompletionValues.ColorToRgbMapper.Keys;
+                    colors = _projectCompletionValues.ColorMapper.Keys;
                 }
 
                 foreach (var color in colors)
@@ -225,7 +225,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                             null));
                 }
             }
-            else if (twClass.SupportsBrackets)
+            else if (twClass.HasArbitrary)
             {
                 var className = twClass.Name;
 
@@ -248,6 +248,11 @@ internal abstract class ClassCompletionGenerator : IDisposable
             else
             {
                 var className = twClass.Name;
+
+                if (className.Contains("{0}"))
+                {
+                    continue;
+                }
 
                 if (className.StartsWith("-"))
                 {
@@ -308,7 +313,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 completion.Properties.AddProperty("modifier", true);
                 modifierCompletions.Add(completion);
 
-                if (description.StartsWith("&:") && description.Substring(2) == modifier)
+                if (_projectCompletionValues.Version == TailwindVersion.V3 && description.StartsWith("&:") && description.Substring(2) == modifier)
                 {
                     completion = new Completion("group-" + modifier + ":",
                         modifiersAsString + "group-" + modifier + ":",
@@ -360,13 +365,16 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 completion.Properties.AddProperty("modifier", true);
                 modifierCompletions.Add(completion);
 
-                completion = new Completion("max-" + screen + ":",
-                                        modifiersAsString + "max-" + screen + ":",
-                                        screen,
-                                        _completionUtils.TailwindLogo,
-                                        null);
-                completion.Properties.AddProperty("modifier", true);
-                modifierCompletionsToAddToEnd.Add(completion);
+                if (_projectCompletionValues.Version == TailwindVersion.V3)
+                {
+                    completion = new Completion("max-" + screen + ":",
+                                            modifiersAsString + "max-" + screen + ":",
+                                            screen,
+                                            _completionUtils.TailwindLogo,
+                                            null);
+                    completion.Properties.AddProperty("modifier", true);
+                    modifierCompletionsToAddToEnd.Add(completion);
+                }
             }
         }
 
@@ -398,6 +406,9 @@ internal abstract class ClassCompletionGenerator : IDisposable
     private Task SettingsChangedAsync(TailwindSettings settings)
     {
         _showAutocomplete = settings.EnableTailwindCss;
+
+        _projectCompletionValues = _completionUtils.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
+
         return Task.CompletedTask;
     }
 }
