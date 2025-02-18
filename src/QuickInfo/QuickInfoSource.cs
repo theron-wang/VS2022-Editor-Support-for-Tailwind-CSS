@@ -1,5 +1,7 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
+using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Text;
+using Microsoft.VisualStudio.Text.Adornments;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -65,12 +67,21 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                     _descriptionGenerator.GetTotalModifierDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _completionUtilities) :
                     [];
 
-                return Task.FromResult(
-                    new QuickInfoItem(span, 
-                        DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText,
+                ContainerElement descriptionFormatted;
+
+                if (_completionUtilities.Version == TailwindVersion.V3)
+                {
+                    descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText,
                             totalModifier.LastOrDefault(),
                             totalModifier.Length > 1 ? totalModifier.Take(totalModifier.Length - 1).ToArray() : [],
-                            desc, isImportant)));
+                            desc, isImportant);
+                }
+                else
+                {
+                    descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormattedV4(fullText, totalModifier.FirstOrDefault(), desc, isImportant);
+                }
+
+                return Task.FromResult(new QuickInfoItem(span, descriptionFormatted));
             }
         }
 

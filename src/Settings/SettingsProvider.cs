@@ -213,6 +213,14 @@ public sealed class SettingsProvider : IDisposable
                         i--;
                         changed = true;
                     }
+                    else
+                    {
+                        if (projectSettings.BuildFiles is not null && Path.GetExtension(config.Path) == ".css" && !projectSettings.BuildFiles.Any(b => b.Input.Equals(config.Path, StringComparison.InvariantCultureIgnoreCase)))
+                        {
+                            projectSettings.BuildFiles.Add(new() { Input = config.Path });
+                            changed = true;
+                        }
+                    }
                 }
             }
 

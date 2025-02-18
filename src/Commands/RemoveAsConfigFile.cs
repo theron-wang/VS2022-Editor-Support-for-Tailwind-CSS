@@ -1,8 +1,10 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
@@ -33,7 +35,14 @@ namespace TailwindCSSIntellisense
             var settings = await SettingsProvider.GetSettingsAsync();
 
             var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
+
             settings.ConfigurationFiles.RemoveAll(c => c.Path.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
+
+            if (Path.GetExtension(filePath) == ".css")
+            {
+                settings.BuildFiles.RemoveAll(f => f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
+            }
+
             await SettingsProvider.OverrideSettingsAsync(settings);
         }
     }

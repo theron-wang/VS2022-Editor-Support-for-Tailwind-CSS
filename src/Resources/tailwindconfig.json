@@ -103,5 +103,7 @@
   "size": [ "size-{s}", "size" ],
   "aria": [ "aria:" ],
   "supports": [ "supports:" ],
-  "data": [ "data:" ]
+  "data": [ "data:" ],
+  "v4-insetShadow": [ "inset-shadow-{2xs|xs|sm|none}" ],
+  "v4-perspective": [ "perspective-{dramatic|near|normal|midrange|distant|none}" ]
 }

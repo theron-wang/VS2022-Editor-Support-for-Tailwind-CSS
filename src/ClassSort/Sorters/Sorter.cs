@@ -84,6 +84,9 @@ internal abstract class Sorter
     {
         var projectCompletionValues = CompletionUtilities.GetCompletionConfigurationByFilePath(filePath);
 
+        var classOrder = ClassSortUtilities.GetClassOrder(projectCompletionValues);
+        var variantOrder = ClassSortUtilities.GetVariantOrder(projectCompletionValues);
+
         var result = classes
             .OrderBy(className =>
             {
@@ -100,19 +103,60 @@ internal abstract class Sorter
             {
                 if (className.Contains(':'))
                 {
-                    var modifier = className.Split(':').First();
-                    // Modifiers should be sorted after
-                    if (modifier.StartsWith("group-"))
+                    var variants = className.Split(':');
+                    if (projectCompletionValues.Version == TailwindVersion.V4)
                     {
-                        return 0;
+                        int max = -1;
+                        foreach (var variant in variants)
+                        {
+                            if (variantOrder.TryGetValue(variant, out int index))
+                            {
+                                max = Math.Max(max, index);
+                            }
+                        }
+
+                        if (max > -1)
+                        {
+                            return max;
+                        }
                     }
-                    else if (projectCompletionValues.Screen.Contains(modifier) == true)
+                    else
                     {
-                        return ClassSortUtilities.ModifierOrder.Count + projectCompletionValues.Screen.IndexOf(modifier);
-                    }
-                    else if (ClassSortUtilities.ModifierOrder.TryGetValue(modifier, out int index))
-                    {
-                        return index;
+                        int max = -1;
+
+                        foreach (var variant in variants)
+                        {
+                            var num = -1;
+                            var searchVariant = variant.Replace("group-", "").Replace("peer-", "");
+
+                            // Normal --> group --> peer --> screen
+                            if (variantOrder.TryGetValue(variant, out int index))
+                            {
+                                num = index;
+                            }
+                            else if (variantOrder.TryGetValue(searchVariant, out index))
+                            {
+                                if (variant.StartsWith("group-"))
+                                {
+                                    num = variantOrder.Count + index;
+                                }
+                                else if (variant.StartsWith("peer-"))
+                                {
+                                    num = variantOrder.Count * 2 + index;
+                                }
+                            }
+                            else if (projectCompletionValues.Screen.Contains(variant) == true)
+                            {
+                                num = variantOrder.Count * 3 + projectCompletionValues.Screen.IndexOf(variant);
+                            }
+
+                            max = Math.Max(max, num);
+                        }
+
+                        if (max > -1)
+                        {
+                            return max;
+                        }
                     }
                     return int.MaxValue;
                 }
@@ -150,6 +194,8 @@ internal abstract class Sorter
                     var ending = classToSearch.Split('-').Last();
                     var stem = classToSearch.Substring(0, classToSearch.LastIndexOf('-'));
 
+                    var shouldKeepLooking = false;
+
                     if (projectCompletionValues.CustomSpacingMappers.TryGetValue($"{stem}-{{0}}", out var mapper))
                     {
                         if (mapper.ContainsKey(ending))
@@ -160,15 +206,19 @@ internal abstract class Sorter
                         // While it may not necessarily be inside the custom color mapper, the class could still be valid
                         // For example: bg-inherit; any unfound classes will be handled in the final conditional return
                     }
-                    else if (projectCompletionValues.SpacingMapper.ContainsKey(ending) ||
+                    // For V4, the later check is more comprehensive
+                    else if (projectCompletionValues.Version == TailwindVersion.V3 && projectCompletionValues.SpacingMapper.ContainsKey(ending) ||
                         (
                             ending.Length > 2 &&
                             ending[0] == '[' &&
                             ending[ending.Length - 1] == ']' &&
-                            ClassSortUtilities.ClassOrder.ContainsKey($"{stem}-{{s}}")
+                            classOrder.ContainsKey($"{stem}-{{s}}")
                         ))
                     {
-                        classToSearch = $"{stem}-{{s}}";
+                        if (!classOrder.ContainsKey(classToSearch))
+                        {
+                            classToSearch = $"{stem}-{{s}}";
+                        }
                     }
                     else if (projectCompletionValues.CustomColorMappers.TryGetValue($"{stem}-{{0}}", out mapper))
                     {
@@ -180,44 +230,93 @@ internal abstract class Sorter
                         // While it may not necessarily be inside the custom color mapper, the class could still be valid
                         // For example: bg-inherit; any unfound classes will be handled in the final conditional return
                     }
-                    else if (projectCompletionValues.ColorToRgbMapper.ContainsKey(ending) ||
+                    else if (projectCompletionValues.ColorMapper.ContainsKey(ending.Split('/')[0]) ||
                             (
                                 ending.Length > 2 &&
                                 ending[0] == '[' &&
                                 ending[ending.Length - 1] == ']' &&
-                                ClassSortUtilities.ClassOrder.ContainsKey($"{stem}-{{c}}")
+                                classOrder.ContainsKey($"{stem}-{{c}}")
                             ))
                     {
                         classToSearch = $"{stem}-{{c}}";
-                    }
-                    else if (ending.Length > 2 && ending[0] == '[' && ending[ending.Length - 1] == ']')
-                    {
-                        // We'll approximate the class here. For example, if we do rounded-[1.2rem],
-                        // find rounded instead
-                        classToSearch = stem;
                     }
                     else
                     {
                         if (stem.Contains('-'))
                         {
                             var splitIndex = classToSearch.LastIndexOf('-', classToSearch.LastIndexOf('-') - 1);
-                            stem = classToSearch.Substring(0, splitIndex);
-                            ending = classToSearch.Substring(splitIndex + 1);
+                            var colorStem = classToSearch.Substring(0, splitIndex);
+                            var colorEnding = classToSearch.Substring(splitIndex + 1);
 
-                            if (projectCompletionValues.CustomColorMappers.TryGetValue($"{stem}-{{0}}", out mapper))
+                            if (colorEnding.Contains('/'))
                             {
-                                if (mapper.ContainsKey(ending))
+                                colorEnding = colorEnding.Substring(0, colorEnding.IndexOf('/'));
+                            }
+
+                            if (projectCompletionValues.CustomColorMappers.TryGetValue($"{colorStem}-{{0}}", out mapper))
+                            {
+                                if (mapper.ContainsKey(colorEnding))
                                 {
-                                    classToSearch = $"{stem}-{{c}}";
+                                    classToSearch = $"{colorStem}-{{c}}";
+                                }
+                                else
+                                {
+                                    shouldKeepLooking = true;
                                 }
 
                                 // While it may not necessarily be inside the custom color mapper, the class could still be valid
                                 // For example: bg-inherit; any unfound classes will be handled in the final conditional return
                             }
-                            else if (projectCompletionValues.ColorToRgbMapper.ContainsKey(ending))
+                            else if (projectCompletionValues.ColorMapper.ContainsKey(colorEnding))
                             {
-                                classToSearch = $"{stem}-{{c}}";
+                                classToSearch = $"{colorStem}-{{c}}";
                             }
+                            else
+                            {
+                                shouldKeepLooking = true;
+                            }
+                        }
+                        else
+                        {
+                            shouldKeepLooking = true;
+                        }
+                    }
+
+                    if (shouldKeepLooking)
+                    {
+                        if (projectCompletionValues.Version == TailwindVersion.V4)
+                        {
+                            if (ending == "px")
+                            {
+                                classToSearch = $"{stem}-{{s}}";
+                            }
+                            else if (double.TryParse(ending, out _))
+                            {
+                                classToSearch = $"{stem}-{{s}}";
+
+                                if (!classOrder.TryGetValue(classToSearch, out _))
+                                {
+                                    classToSearch = $"{stem}-{{n}}";
+                                }
+                            }
+                            else if (ending.EndsWith("%") && int.TryParse(ending.TrimEnd('%'), out _))
+                            {
+                                classToSearch = $"{stem}-{{%}}";
+                            }
+                            else if (ending.Count(c => c == '/') == 1 && int.TryParse(ending.Replace("/", ""), out _))
+                            {
+                                classToSearch = $"{stem}-{{f}}";
+                            }
+                            else if ((classToSearch.Contains('[') || classToSearch.Contains('(')))
+                            {
+                                classToSearch = $"{classToSearch.Substring(0, classToSearch.IndexOfAny(['[', '('])).Trim('-')}-{{a}}";
+                            }
+                        }
+                        else if (ending.Length > 2 && ending[0] == '[' && ending[ending.Length - 1] == ']')
+                        {
+                            // We'll approximate the class here. For example, if we do rounded-[1.2rem],
+                            // find rounded instead
+                            classToSearch = stem;
                         }
                     }
                 }
@@ -227,7 +326,7 @@ internal abstract class Sorter
                     return -1;
                 }
 
-                return ClassSortUtilities.ClassOrder.TryGetValue(classToSearch, out int index) ? index : -1;
+                return classOrder.TryGetValue(classToSearch, out int index) ? index : -1;
             });
 
         return result;

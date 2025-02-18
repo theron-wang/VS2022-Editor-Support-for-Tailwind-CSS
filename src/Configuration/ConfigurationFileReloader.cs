@@ -59,6 +59,7 @@ public sealed class ConfigurationFileReloader : IDisposable
 
     private async Task OnSettingsChangedAsync(TailwindSettings settings)
     {
+        _settings = settings;
         var added = settings.ConfigurationFiles.Except(_settings.ConfigurationFiles).ToList();
 
         if (added.Count > 0)

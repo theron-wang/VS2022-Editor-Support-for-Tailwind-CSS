@@ -1,6 +1,4 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
@@ -8,12 +6,11 @@ using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
+using System.Runtime;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using TailwindCSSIntellisense.Configuration;
+using System.Windows.Controls;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
@@ -66,135 +63,14 @@ internal sealed class CheckForUpdates
             return;
         }
 
+        await VS.StatusBar.ShowMessageAsync("Checking for Tailwind CSS updates");
+
         try
         {
-            await VS.StatusBar.ShowMessageAsync("Checking for Tailwind CSS updates");
-            var processInfo = new ProcessStartInfo()
-            {
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true,
-                FileName = "cmd",
-                Arguments = "/C npm outdated tailwindcss --json",
-                WorkingDirectory = Path.GetDirectoryName(folder)
-            };
-
-            string output;
-
-            using (var process = Process.Start(processInfo))
-            {
-                /*
-                 * Sample output:
-                 
-                 {
-                  "tailwindcss": [
-                    {
-                      "current": "3.4.1",
-                      "wanted": "4.0.3",
-                      "latest": "4.0.3",
-                      "dependent": "@tailwindcss/container-queries",
-                      "location": "path/to/folder"
-                    },
-                    {
-                      "current": "3.4.1",
-                      "wanted": "3.4.17",
-                      "latest": "4.0.3",
-                      "dependent": "Test",
-                      "location": "path/to/folder"
-                    }
-                  ]
-                }
-
-                */
-                output = await process.StandardOutput.ReadToEndAsync();
-
-                await process.WaitForExitAsync();
-            }
-
-            var result = JsonSerializer.Deserialize<JsonObject>(output);
-
-            if (result.ContainsKey("tailwindcss") == false)
-            {
-                await VS.StatusBar.ShowMessageAsync("Tailwind CSS is up to date");
-                return;
-            }
-
-            OutdatedPackage relevantPackage = null;
-
-            if (result["tailwindcss"] is JsonArray array)
-            {
-                var packages = array.Select(obj => obj.Deserialize<OutdatedPackage>(new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                }));
-
-                relevantPackage = packages.FirstOrDefault(
-                    p => p.Dependent.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase));
-            }
-            else if (result["tailwindcss"] is JsonObject jsonObj)
-            {
-                relevantPackage = jsonObj.Deserialize<OutdatedPackage>(new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                if (!relevantPackage.Dependent.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase))
-                {
-                    relevantPackage = null;
-                }
-            }
-
-            if (relevantPackage is null)
-            {
-                await VS.StatusBar.ShowMessageAsync("Tailwind CSS is up to date");
-                return;
-            }
-
-            // Avoid updating major versions: 3.x --> 4.x, for example
-            var currentMajor = relevantPackage.Current.Split('.')[0];
-            var newMajor = relevantPackage.Latest.Split('.')[0];
-
-            if (currentMajor != newMajor)
-            {
-                await VS.StatusBar.ShowMessageAsync($"A major Tailwind update is available: {relevantPackage.Current}. If you would like to update, please manually run npm install tailwindcss@latest.");
-            }
-
-            if (relevantPackage.Current == relevantPackage.Wanted)
-            {
-                return;
-            }
-
-            await VS.StatusBar.ShowMessageAsync($"Updating Tailwind CSS ({relevantPackage.Current} -> {relevantPackage.Wanted})");
-
-            processInfo = new ProcessStartInfo()
-            {
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                CreateNoWindow = true,
-                FileName = "cmd",
-                Arguments = $"/C npm install tailwindcss@{relevantPackage.Wanted}",
-                WorkingDirectory = Path.GetDirectoryName(folder)
-            };
-
-            string error;
-
-            using (var process = Process.Start(processInfo))
-            {
-                error = await process.StandardError.ReadToEndAsync();
-
-                await process.WaitForExitAsync();
-            }
-
-            if (!string.IsNullOrWhiteSpace(error))
-            {
-                var ex = new Exception(error);
-                await ex.LogAsync();
-                await VS.StatusBar.ShowMessageAsync("An error occurred while updating Tailwind CSS: check the 'Extensions' output window for more details");
-                return;
-            }
-
-            await VS.StatusBar.ShowMessageAsync($"Tailwind CSS update successful (updated to version {relevantPackage.Wanted})");
-
+            // There is no concern in running outdated on v3 for @tailwindcss/cli, since
+            // a missing package simply returns {}
+            await UpdateModuleAsync(folder, "@tailwindcss/cli");
+            await UpdateModuleAsync(folder, "tailwindcss");
             _configFilesChecked.AddRange(settings.ConfigurationFiles.Select(f => f.Path));
         }
         catch (Exception ex)
@@ -202,6 +78,134 @@ internal sealed class CheckForUpdates
             await VS.StatusBar.ShowMessageAsync("Tailwind CSS update/check failed; check 'Extensions' output window for more details");
             await ex.LogAsync();
         }
+    }
+
+    private async Task UpdateModuleAsync(string folder, string module)
+    {
+        var processInfo = new ProcessStartInfo()
+        {
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            CreateNoWindow = true,
+            FileName = "cmd",
+            Arguments = $"/C npm outdated {module} --json",
+            WorkingDirectory = Path.GetDirectoryName(folder)
+        };
+
+        string output;
+
+        using (var process = Process.Start(processInfo))
+        {
+            /*
+             * Sample output:
+
+             {
+              "tailwindcss": [
+                {
+                  "current": "3.4.1",
+                  "wanted": "4.0.3",
+                  "latest": "4.0.3",
+                  "dependent": "@tailwindcss/container-queries",
+                  "location": "path/to/folder"
+                },
+                {
+                  "current": "3.4.1",
+                  "wanted": "3.4.17",
+                  "latest": "4.0.3",
+                  "dependent": "Test",
+                  "location": "path/to/folder"
+                }
+              ]
+            }
+
+            */
+            output = await process.StandardOutput.ReadToEndAsync();
+
+            await process.WaitForExitAsync();
+        }
+
+        var result = JsonSerializer.Deserialize<JsonObject>(output);
+
+        if (result.ContainsKey(module) == false)
+        {
+            await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: {module} is up to date");
+            return;
+        }
+
+        OutdatedPackage relevantPackage = null;
+
+        if (result[module] is JsonArray array)
+        {
+            var packages = array.Select(obj => obj.Deserialize<OutdatedPackage>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            }));
+            relevantPackage = packages.FirstOrDefault(
+                p => p.Dependent.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase));
+        }
+        else if (result[module] is JsonObject jsonObj)
+        {
+            relevantPackage = jsonObj.Deserialize<OutdatedPackage>(new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (!relevantPackage.Dependent.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase))
+            {
+                relevantPackage = null;
+            }
+        }
+
+        if (relevantPackage is null)
+        {
+            await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: {module} is up to date");
+            return;
+        }
+
+        // Avoid updating major versions: 3.x --> 4.x, for example
+        var currentMajor = relevantPackage.Current.Split('.')[0];
+        var newMajor = relevantPackage.Latest.Split('.')[0];
+
+        if (currentMajor != newMajor)
+        {
+            await VS.StatusBar.ShowMessageAsync($"A major Tailwind update is available: {relevantPackage.Current}. If you would like to update, please manually run npm install {module}@latest.");
+        }
+
+        if (relevantPackage.Current == relevantPackage.Wanted)
+        {
+            return;
+        }
+
+        await VS.StatusBar.ShowMessageAsync($"Updating {module} ({relevantPackage.Current} -> {relevantPackage.Wanted})");
+
+        processInfo = new ProcessStartInfo()
+        {
+            UseShellExecute = false,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            FileName = "cmd",
+            Arguments = $"/C npm install {module}@{relevantPackage.Wanted}",
+            WorkingDirectory = Path.GetDirectoryName(folder)
+        };
+
+        string error;
+
+        using (var process = Process.Start(processInfo))
+        {
+            error = await process.StandardError.ReadToEndAsync();
+
+            await process.WaitForExitAsync();
+        }
+
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+            var ex = new Exception(error);
+            await ex.LogAsync();
+            await VS.StatusBar.ShowMessageAsync("An error occurred while updating Tailwind CSS: check the 'Extensions' output window for more details");
+            return;
+        }
+
+        await VS.StatusBar.ShowMessageAsync($"Tailwind CSS update successful (updated to version {relevantPackage.Wanted})");
     }
 
     private class OutdatedPackage

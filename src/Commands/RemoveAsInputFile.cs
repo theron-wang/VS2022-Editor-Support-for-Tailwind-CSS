@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Shell;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense
@@ -14,10 +15,12 @@ namespace TailwindCSSIntellisense
         {
             SolutionExplorerSelection = await VS.GetMefServiceAsync<SolutionExplorerSelectionService>();
             SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
+            DirectoryVersionFinder = await VS.GetMefServiceAsync<DirectoryVersionFinder>();
         }
 
         internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
         internal SettingsProvider SettingsProvider { get; set; }
+        internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
 
         protected override void BeforeQueryStatus(EventArgs e)
         {
@@ -26,6 +29,18 @@ namespace TailwindCSSIntellisense
             var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
             Command.Visible = settings.EnableTailwindCss && settings.BuildFiles.Any(f => f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
+
+            if (!Command.Visible)
+            {
+                return;
+            }
+
+            var version = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.GetTailwindVersionAsync(filePath));
+
+            if (version == TailwindVersion.V4)
+            {
+                Command.Visible = false;
+            }
         }
 
         protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)

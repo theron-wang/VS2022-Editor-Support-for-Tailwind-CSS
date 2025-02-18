@@ -40,20 +40,20 @@ internal class ColorIconGenerator
         string value;
         if (projectCompletionValues.CustomColorMappers != null)
         {
-            if (projectCompletionValues.CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out value) && projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out var value2) && value == value2))
+            if (projectCompletionValues.CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out value) && projectCompletionValues.ColorMapper.TryGetValue(color, out var value2) && value == value2))
             {
                 if (cache.TryGetValue($"{color}/{opacity}", out result))
                 {
                     return result;
                 }
 
-                if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out value) == false)
+                if (projectCompletionValues.ColorMapper.TryGetValue(color, out value) == false)
                 {
                     return CompletionUtilities.TailwindLogo;
                 }
             }
         }
-        else if (projectCompletionValues.ColorToRgbMapper.TryGetValue(color, out value) == false)
+        else if (projectCompletionValues.ColorMapper.TryGetValue(color, out value) == false)
         {
             return CompletionUtilities.TailwindLogo;
         }
@@ -63,16 +63,27 @@ internal class ColorIconGenerator
             return CompletionUtilities.TailwindLogo;
         }
 
-        var rgb = value.Split(',');
+        byte r, g, b;
 
-        if (rgb.Length == 0)
+        if (ColorHelpers.ConvertToRgb(value) is int[] converted && converted.Length == 3)
         {
-            // Something wrong happened: fall back to default tailwind icon
-            return CompletionUtilities.TailwindLogo;
+            r = (byte)converted[0];
+            g = (byte)converted[1];
+            b = (byte)converted[2];
         }
-        var r = byte.Parse(rgb[0]);
-        var g = byte.Parse(rgb[1]);
-        var b = byte.Parse(rgb[2]);
+        else
+        {
+            var rgb = value.Split(',');
+
+            if (rgb.Length == 0)
+            {
+                // Something wrong happened: fall back to default tailwind icon
+                return CompletionUtilities.TailwindLogo;
+            }
+            r = byte.Parse(rgb[0]);
+            g = byte.Parse(rgb[1]);
+            b = byte.Parse(rgb[2]);
+        }
         var a = (byte)Math.Round(opacity / 100d * 255);
 
         var pen = new Pen() { Thickness = 8, Brush = new SolidColorBrush(Color.FromArgb(a, r, g, b)) };

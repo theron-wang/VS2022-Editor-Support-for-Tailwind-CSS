@@ -5,7 +5,7 @@
 	"properties": {
 		"ConfigurationFile": {
 			"type": "string",
-			"description": "The path to the configuration file."
+			"description": "Deprecated: use ConfigurationFiles instead."
 		},
 		"InputCssFile": {
 			"type": "string",

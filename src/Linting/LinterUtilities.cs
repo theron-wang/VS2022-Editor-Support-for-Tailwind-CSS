@@ -46,7 +46,8 @@ internal sealed class LinterUtilities : IDisposable
     /// <returns>A list of Tuples containing the class name and error message</returns>
     public IEnumerable<Tuple<string, string>> CheckForClassDuplicates(IEnumerable<string> classes, ProjectCompletionValues projectCompletionValues)
     {
-        if (_classSortUtilities.ClassOrder is null)
+        var classOrder = _classSortUtilities.GetClassOrder(projectCompletionValues);
+        if (classOrder.Count == 0)
         {
             yield break;
         }
@@ -90,7 +91,7 @@ internal sealed class LinterUtilities : IDisposable
             if (count > 1)
             {
                 var mostPrecedencePairs =
-                    _classSortUtilities.ClassOrder
+                    classOrder
                         .Where(c => erroneous.Any(e => e.Split(':').Last().Trim() == c.Key))
                         .OrderBy(c => c.Value);
 
