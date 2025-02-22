@@ -121,7 +121,6 @@ internal sealed class DescriptionGenerator : IDisposable
                     {
                         variableValue = null;
                     }
-                    return null;
                 }
                 else if (variable.StartsWith("--color"))
                 {
@@ -258,7 +257,7 @@ internal sealed class DescriptionGenerator : IDisposable
             string color;
             if (segments.Count >= 3)
             {
-                color = string.Join("-", segments.Skip(1));
+                color = string.Join("-", segments.Skip(segments.Count - 2));
             }
             else
             {
