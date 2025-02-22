@@ -62,22 +62,23 @@ public sealed class ConfigFileScanner
 
     private async Task<bool> DoesFileContainAsync(string filePath, string text)
     {
-        // Read up to line 15
-        var lines = 0;
         using var fs = File.OpenRead(filePath);
         using var reader = new StreamReader(fs);
 
-        var line = await reader.ReadLineAsync();
-        lines++;
-
-        if (line.Contains(text))
+        // Read up to line 15
+        for (int i = 0; i < 15; i++)
         {
-            return true;
-        }
+            var line = await reader.ReadLineAsync();
 
-        if (lines > 15)
-        {
-            return false;
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                break;
+            }
+
+            if (line.Contains(text))
+            {
+                return true;
+            }
         }
 
         return false;
