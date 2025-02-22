@@ -160,7 +160,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             string color;
             if (segments.Count >= 3)
             {
-                color = string.Join("-", segments.Skip(1));
+                color = string.Join("-", segments.Skip(segments.Count - 2));
             }
             else
             {

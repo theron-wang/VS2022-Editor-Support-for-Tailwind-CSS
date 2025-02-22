@@ -467,11 +467,15 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 if (await IsFileTailwindCssAsync(file))
                 {
-                    buildFiles = [.. buildFiles];
+                    buildFiles = [];
                     buildFiles.Add(new() { Input = file });
                     break;
                 }
             }
+        }
+        else
+        {
+            buildFiles = buildFiles.Select(b => new BuildPair() { Input = b.Input, Output = b.Output }).ToList();
         }
 
         var buildFilesFiltered = buildFiles

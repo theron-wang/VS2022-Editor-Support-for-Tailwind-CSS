@@ -23,6 +23,18 @@ public sealed class ConfigFileScanner
     /// <returns>A <see cref="Task"/> of type <see cref="string" />, which represents the absolute path to an existing configuration file, or null if one cannot be found</returns>
     internal async Task<string> TryFindConfigurationFileAsync()
     {
+        var cssFiles = await FileFinder.GetCssFilesAsync();
+
+        // Priority: check for @import "tailwindcss";
+        foreach (var file in cssFiles)
+        {
+            if (await DoesFileContainAsync(file, "@import", "tailwindcss"))
+            {
+                _configFilePath = file;
+                return _configFilePath;
+            }
+        }
+
         var jsFiles = await FileFinder.GetJavascriptFilesAsync();
 
         // Best case scenario: user names file tailwind.config.js
@@ -34,7 +46,6 @@ public sealed class ConfigFileScanner
         }
 
         // Next: search all css files and scrape for @config
-        var cssFiles = await FileFinder.GetCssFilesAsync();
 
         string cssTargetFile = null;
 
@@ -62,22 +73,50 @@ public sealed class ConfigFileScanner
 
     private async Task<bool> DoesFileContainAsync(string filePath, string text)
     {
-        // Read up to line 15
-        var lines = 0;
         using var fs = File.OpenRead(filePath);
         using var reader = new StreamReader(fs);
 
-        var line = await reader.ReadLineAsync();
-        lines++;
-
-        if (line.Contains(text))
+        // Read up to line 15
+        for (int i = 0; i < 15; i++)
         {
-            return true;
+            var line = await reader.ReadLineAsync();
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                break;
+            }
+
+            if (line.Contains(text))
+            {
+                return true;
+            }
         }
 
-        if (lines > 15)
+        return false;
+    }
+
+    /// <summary>
+    /// Checks if a file contains text and text1 on the same line. For example, use @import and tailwindcss to match @import "tailwindcss";
+    /// </summary>
+    private async Task<bool> DoesFileContainAsync(string filePath, string text, string text1)
+    {
+        using var fs = File.OpenRead(filePath);
+        using var reader = new StreamReader(fs);
+
+        // Read up to line 15
+        for (int i = 0; i < 15; i++)
         {
-            return false;
+            var line = await reader.ReadLineAsync();
+
+            if (string.IsNullOrWhiteSpace(line))
+            {
+                break;
+            }
+
+            if (line.Contains(text) && line.Contains(text1))
+            {
+                return true;
+            }
         }
 
         return false;

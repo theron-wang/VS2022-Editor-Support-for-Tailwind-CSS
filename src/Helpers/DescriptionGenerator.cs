@@ -46,9 +46,12 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (projectCompletionValues.Version == TailwindVersion.V4)
         {
-            while (text.IndexOf("var(--", index) != -1)
+            var resultText = new StringBuilder(text);
+            int offset = 0;
+            int varIndex;
+
+            while ((varIndex = text.IndexOf("var(--", index)) != -1)
             {
-                var varIndex = text.IndexOf("var(--", index);
                 var endParen = text.IndexOf(')', varIndex);
                 var semicolon = text.IndexOf(';', varIndex);
 
@@ -58,9 +61,10 @@ internal sealed class DescriptionGenerator : IDisposable
                     continue;
                 }
 
-                var start = text.IndexOf('-', varIndex);
+                var start = varIndex + 4;
 
                 var variable = text.Substring(start, endParen - start);
+                index = semicolon;
 
                 string variableValue;
 
@@ -159,14 +163,17 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 if (variableValue is not null)
                 {
-                    text = text.Insert(semicolon, $" /* {variableValue} */");
-                    index = text.IndexOf("*/", endParen);
+                    var insert = $" /* {variableValue} */";
+                    resultText.Insert(semicolon + offset, insert);
+                    offset += insert.Length;
+                    index = endParen;
                 }
                 else
                 {
                     index++;
                 }
             }
+            text = resultText.ToString();
         }
 
         var lines = text.Split([';'], StringSplitOptions.RemoveEmptyEntries);
@@ -249,7 +256,7 @@ internal sealed class DescriptionGenerator : IDisposable
             string color;
             if (segments.Count >= 3)
             {
-                color = string.Join("-", segments.Skip(1));
+                color = string.Join("-", segments.Skip(segments.Count - 2));
             }
             else
             {
@@ -291,6 +298,13 @@ internal sealed class DescriptionGenerator : IDisposable
                 return description;
             }
             
+            description = GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
+
+            if (string.IsNullOrEmpty(description) == false)
+            {
+                return description;
+            }
+
             description = GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
 
             if (string.IsNullOrEmpty(description) == false)

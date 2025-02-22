@@ -19,6 +19,9 @@ namespace TailwindCSSIntellisense.Completions;
 [ContentType("LegacyRazorCoreCSharp")]
 internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Completion, ICompletionSession>
 {
+    [Import]
+    private DescriptionGenerator DescriptionGenerator { get; set; }
+
     public UIElement GetUIElement(Completion itemToRender, ICompletionSession context, UIElementType elementType)
     {
         if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind") && !itemToRender.Properties.ContainsProperty("modifier"))
@@ -30,11 +33,19 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
                 return null;
             }
 
+            var project = itemToRender.Properties.GetProperty<ProjectCompletionValues>("tailwind");
+
             var classText = fullText.Split(':').Last();
 
-            var isImportant = ImportantModifierHelper.IsImportantModifier(classText);
+            var isImportant = ImportantModifierHelper.IsImportantModifier(itemToRender.DisplayText);
 
-            var desc = itemToRender.Description;
+            // Description property contains the class text parameter for GetDescription
+            var desc = DescriptionGenerator.GetDescription(itemToRender.Description, project);
+
+            if (desc is null)
+            {
+                return null;
+            }
 
             if (desc is null)
             {

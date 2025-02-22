@@ -75,7 +75,7 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
             .Select(c =>
             {
                 var item = new CompletionItem(c.DisplayText, this, _icon, ImmutableArray<CompletionFilter>.Empty, null, c.InsertionText, c.InsertionText, c.InsertionText, null, ImmutableArray<ImageElement>.Empty, ImmutableArray<char>.Empty, applicableToSpan, false, false);
-                item.Properties.AddProperty("description", c.Description);
+                item.Properties.AddProperty("description-text", c.Description);
 
                 return item;
             });
@@ -88,9 +88,9 @@ internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUti
     /// </summary>
     public Task<object> GetDescriptionAsync(IAsyncCompletionSession session, CompletionItem item, CancellationToken token)
     {
-        if (item.Properties.TryGetProperty("description", out string description))
+        if (item.Properties.TryGetProperty("description-text", out string description))
         {
-            return Task.FromResult<object>(description);
+            return Task.FromResult<object>(_descriptionGenerator.GetDescription(description, _projectCompletionValues));
         }
         return Task.FromResult<object>("");
     }

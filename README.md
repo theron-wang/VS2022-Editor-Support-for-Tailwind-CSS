@@ -78,11 +78,13 @@ Set your configuration, build and output files by right-clicking on any `.js`, `
 ![Customizability Build 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-1.png)
 ![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-2.png)
 
+In Tailwind v4, setting `.css` files as configuration files via the context menu will automatically add them to the build pipeline.
+
 Your preferences will be stored in a `tailwind.extension.json` file in your project root.
 
 ### NPM Integration
 
-When getting started in a new project, you can import the necessary modules by right-clicking on the project node:
+When getting started in a new project, you can install the necessary modules and configure the extension by right-clicking on the project node:
 
 ![NPM Shortcut 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/NPM-Shortcuts-1.png)
 
