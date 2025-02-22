@@ -1,11 +1,18 @@
 # Changelog
 
+## 1.10.1 (February 22nd, 2025)
+
+- Fixed a NRE with empty CSS files ([#101](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/101))
+- Fixed errors with completion filters and incorrect string formats ([#102](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/102))
+- Optimize completion efficiency by lazy-loading descriptions
+- Added missing descriptions and color adornments for classes like `border-x-amber-50`
+
 ## 1.10.0 (February 17th, 2025)
 
 - Added Tailwind v4 support ([#85](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/85))
 - Updated IntelliSense
     - New utilities and variants
-    - Support for new () syntax (i.e. `bg-green-(--variable)`))
+    - Support for new () syntax (i.e. `bg-green-(--variable)`)
 - Updated build (i.e. use `@tailwindcss/cli` instead)
 - Updated tooltips for spacing classes and other number/percentage classes
 - Parsing support for css files (partial)

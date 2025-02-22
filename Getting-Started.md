@@ -12,11 +12,11 @@ If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJ
 
 	![IDE Menu](art/getting-started/ide-install.png)
 
-	**IMPORTANT**: This extension uses `npm` and `node` for various purposes--follow the [official guide](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) if you do not already have it installed.
+	**IMPORTANT**: For Tailwind v3 projects, `npm` and `node` are required for building and configuration file parsing--follow the [official guide](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) if you do not already have it installed.
 
 ## Existing Projects
 
-2. The extension will automatically try to find a `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your solution. If it is not found, however, you can manually set it by **right-clicking your file and selecting 'Set as Tailwind CSS configuration file'**.
+2. The extension will automatically try to find a css file with `@import "tailwindcss"` or a JavaScript configuration file named `tailwind.config.{js,cjs,mjs,ts,cts,mts}` in your solution. If not found, however, you can manually set it by **right-clicking your file and selecting 'Set as Tailwind CSS configuration file'**.
 
 	**Extension features will only be enabled if a configuration file is found.**
 
@@ -28,14 +28,17 @@ If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJ
 
 ![Set up TailwindCSS](art/NPM-Shortcuts-1.png)
 
-This will import the Tailwind CSS node modules and configure your `tailwind.config.{js,cjs,mjs,ts,cts,mts}`.
+This will install `tailwindcss` `@tailwindcss/cli` (if needed) and create a new `tailwind.css` file with content `@import "tailwindcss";`.
 
 **Using the standalone Tailwind CSS CLI:**
 - If you have the Tailwind CSS CLI installed, you can click 'Set up Tailwind CSS (use CLI)' instead once you have specified the CLI path in Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path.
-- Following builds in the project will use the Tailwind CLI instead of `npx tailwindcss`
-- If you want to switch between `npx tailwindcss` and the standalone CLI, adjust the `UseCli` property in `tailwind.extension.json`
+- Following builds in the project will use the Tailwind CLI instead of `npx @tailwindcss/cli`
+- If you want to switch between `npx @tailwindcss/cli` and the standalone CLI, adjust the `UseCli` property in `tailwind.extension.json`
 
 2b. To configure Tailwind CSS, follow the [official documentation](https://tailwindcss.com/docs/installation) (specifically steps 2, 3, and 5).
+
+----
+#### V3
 
 - Include the following in your input css file:
 ```css
@@ -45,9 +48,17 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 ```
 - Ensure your configuration file has a valid `content` value (e.g. `["./**/*.{html,cshtml,razor,js}"]`)
 
+----
+#### V4
+
+- Include the following in your input css file:
+```css
+@import "tailwindcss";
+```
+
 ## Setting Up the Extension
 
-3. Before you are ready to build, **set your input CSS file**. Your output file will automatically be generated as `{input file name}.output.css`. If you want to specify a certain file, you can right click and click 'Link as Tailwind CSS output file' and select the corresponding input file. **Input files must already be defined prior to selecting an output file.**
+3. _Setting an input file is only necessary for projects using Tailwind v3._ Before you are ready to build, **set your input CSS file**. Your output file will automatically be generated as `{input file name}.output.css`. If you want to specify a certain file, you can right click and click 'Link as Tailwind CSS output file' and select the corresponding input file. **Input files must already be defined prior to selecting an output file.**
 
 ![Input and output CSS files](art/Customizability-Build-2.png)
 
@@ -80,7 +91,58 @@ This will import the Tailwind CSS node modules and configure your `tailwind.conf
 		- Custom regexes take precedence over default functionality; that is, if a context is matched in both your custom regex and the original regex, the custom regex will be used.
 		- It's recommended to thoroughly test your regexes before adding it into your options. Unintended behavior may occur if the regex is too general or if it overlaps with existing functionality.
 
-Sample file:
+Sample (v4) file:
+```json
+{
+  	"$schema": "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json",
+	"ConfigurationFiles": [
+		{
+		    "Path": "..\\Client\\tailwind.css",
+		    "IsDefault": false,
+		    "ApplicableLocations": [
+			    "..\\Client\\Pages\\"
+		    ]
+		},
+		{
+		    "Path": "tailwind.css",
+		    "IsDefault": true,
+		    "ApplicableLocations": []
+		}
+	],
+	"BuildFiles": [
+		{
+			"Input": "..\\Client\\tailwind.css",
+			"Output": "..\\Client\\tailwind.output.css"
+		},
+		{
+			"Input": "tailwind.css",
+			"Output": "tailwind.min.css"
+		}
+	],
+	"PackageConfigurationFile": "package.json",
+	"UseCli": false,
+	"CustomRegexes": {
+		"Razor": {
+			"Override": false,
+			"Values": [
+				"your regex"
+			]
+		},
+		"HTML": {
+			"Override": false,
+			"Values": []
+		},
+		"JavaScript": {
+			"Override": true,
+			"Values": [
+				"your regex"
+			]
+		}
+	}
+}
+```
+
+Sample (v3) file:
 ```json
 {
   	"$schema": "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json",
@@ -101,11 +163,11 @@ Sample file:
 	"BuildFiles": [
 		{
 			"Input": "site.css",
-			"Output": "wwwroot/css/site.output.css"
+			"Output": "wwwroot\\css\\site.output.css"
 		},
 		{
-			"Input": "Components/App.razor.tailwind.css",
-			"Output": "Components/App.razor.css"
+			"Input": "Components\\App.razor.tailwind.css",
+			"Output": "Components\\App.razor.css"
 		}
 	],
 	"PackageConfigurationFile": "package.json",
