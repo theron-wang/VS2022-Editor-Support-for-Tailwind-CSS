@@ -35,7 +35,7 @@ This will install `tailwindcss` `@tailwindcss/cli` (if needed) and create a new 
 - Following builds in the project will use the Tailwind CLI instead of `npx @tailwindcss/cli`
 - If you want to switch between `npx @tailwindcss/cli` and the standalone CLI, adjust the `UseCli` property in `tailwind.extension.json`
 
-2b. To configure Tailwind CSS, follow the [official documentation](https://tailwindcss.com/docs/installation) (specifically steps 2, 3, and 5).
+2b. To configure Tailwind CSS, follow the [official documentation](https://tailwindcss.com/docs/installation/tailwind-cli).
 
 ----
 #### V3
