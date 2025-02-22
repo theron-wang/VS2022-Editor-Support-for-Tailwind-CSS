@@ -173,7 +173,6 @@ internal sealed class DescriptionGenerator : IDisposable
                     index++;
                 }
             }
-
             text = resultText.ToString();
         }
 
@@ -293,6 +292,13 @@ internal sealed class DescriptionGenerator : IDisposable
             stem = text.Replace(last.Replace(' ', '_'), "{0}");
 
             description = GetDescriptionForSpacingClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
+
+            if (string.IsNullOrEmpty(description) == false)
+            {
+                return description;
+            }
+            
+            description = GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
 
             if (string.IsNullOrEmpty(description) == false)
             {

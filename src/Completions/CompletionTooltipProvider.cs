@@ -47,6 +47,11 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
                 return null;
             }
 
+            if (desc is null)
+            {
+                return null;
+            }
+
             return DescriptionUIHelper.GetDescriptionAsWPFFormatted(fullText, desc, isImportant);
         }
         else
