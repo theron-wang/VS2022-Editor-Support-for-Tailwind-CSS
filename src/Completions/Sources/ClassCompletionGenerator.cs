@@ -1,10 +1,7 @@
-﻿using EnvDTE;
-using Microsoft.VisualStudio.Language.Intellisense;
-using Microsoft.VisualStudio.Package;
+﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
-using System.IO.Ports;
 using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Settings;
@@ -16,7 +13,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
     protected readonly CompletionUtilities _completionUtils;
     protected ProjectCompletionValues _projectCompletionValues;
     protected readonly ColorIconGenerator _colorIconGenerator;
-    private readonly DescriptionGenerator _descriptionGenerator;
+    protected readonly DescriptionGenerator _descriptionGenerator;
     protected readonly SettingsProvider _settingsProvider;
     protected readonly ITextBuffer _textBuffer;
 
@@ -155,7 +152,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     completions.Add(
                                 new Completion(className,
                                                     modifiersAsString + className,
-                                                    _descriptionGenerator.GetDescription(className, _projectCompletionValues),
+                                                    className,
                                                     _colorIconGenerator.GetImageFromColor(_projectCompletionValues, twClass.Name, color, color == "transparent" ? 0 : 100),
                                                     null));
 
@@ -171,7 +168,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                             completions.Add(
                                     new Completion($"{className}/{opacity}",
                                                         $"{modifiersAsString}{className}/{opacity}",
-                                                        _descriptionGenerator.GetDescription($"{className}/{opacity}", _projectCompletionValues),
+                                                        $"{className}/{opacity}",
                                                         _colorIconGenerator.GetImageFromColor(_projectCompletionValues, twClass.Name, color, opacity),
                                                         null));
                         }
@@ -220,7 +217,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     completions.Add(
                         new Completion(className,
                                             modifiersAsString + className,
-                                            _descriptionGenerator.GetDescription(className, _projectCompletionValues),
+                                            className,
                                             _completionUtils.TailwindLogo,
                                             null));
                 }
@@ -271,7 +268,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 completions.Add(
                 new Completion(className,
                                     modifiersAsString + className,
-                                    _descriptionGenerator.GetDescription(twClass.Name, _projectCompletionValues),
+                                    twClass.Name,
                                     _completionUtils.TailwindLogo,
                                     null));
             }
@@ -289,7 +286,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 completions.Add(
                     new Completion(pluginClass.TrimStart('.'),
                                         modifiersAsString + prefix + pluginClass.TrimStart('.'),
-                                        _descriptionGenerator.GetDescription(pluginClass.TrimStart('.'), _projectCompletionValues),
+                                        pluginClass.TrimStart('.'),
                                         _completionUtils.TailwindLogo,
                                         null));
             }
@@ -392,9 +389,8 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
         foreach (var completion in completions)
         {
-            completion.Properties.AddProperty("tailwind", true);
+            completion.Properties.AddProperty("tailwind", _projectCompletionValues);
         }
-
         return completions;
     }
 
