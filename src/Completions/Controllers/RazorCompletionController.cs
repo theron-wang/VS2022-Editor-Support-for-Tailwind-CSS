@@ -308,28 +308,27 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         if (completionActive)
         {
             _currentSession = Broker.GetSessions(TextView).FirstOrDefault(s => s.SelectedCompletionSet?.DisplayName?.Contains("Shim") == false);
-            
-            if (_currentSession is null)
-            {
-                return true;
-            }
 
-            _currentSession.Dismissed += (sender, args) => _currentSession = null;
-
-            if (_currentSession.SelectedCompletionSet is TailwindCssCompletionSet)
+            if (_currentSession is not null)
             {
-                // Not handled correctly; sometimes these sessions do not get dismissed so we should dismiss them here
-                // This can be easily reproduced when typing bg-green-50/ and then backspacing /
-                // We expect transparency options to disappear, but they are still there
+                _currentSession.Dismissed += (sender, args) => _currentSession = null;
 
-                _currentSession.Dismiss();
-                _currentSession = null;
-            }
-            else
-            {
-                return true;
+                if (_currentSession.SelectedCompletionSet is TailwindCssCompletionSet)
+                {
+                    // Not handled correctly; sometimes these sessions do not get dismissed so we should dismiss them here
+                    // This can be easily reproduced when typing bg-green-50/ and then backspacing /
+                    // We expect transparency options to disappear, but they are still there
+
+                    _currentSession.Dismiss();
+                    _currentSession = null;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
+
         if (!completionActive || _currentSession is null)
         {
             DismissOtherSessions();

@@ -581,7 +581,11 @@ public sealed class CompletionUtilities : IDisposable
             {
                 classes.Add(new TailwindClass()
                 {
-                    Name = classType.Stem + "-",
+                    Name = classType.Stem.Replace("{c}", "")
+                        .Replace("{s}", "")
+                        .Replace("{n}", "")
+                        .Replace("{%}", "")
+                        .Replace("{f}", "").TrimEnd('-') + "-",
                     HasArbitrary = true
                 });
             }
