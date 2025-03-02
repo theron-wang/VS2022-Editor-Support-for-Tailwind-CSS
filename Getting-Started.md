@@ -55,6 +55,10 @@ This will install `tailwindcss` `@tailwindcss/cli` (if needed) and create a new 
 ```css
 @import "tailwindcss";
 ```
+- Or if your project root is not the same directory as your input css file:
+```css
+@import "tailwindcss" source("../path/to/source");
+```
 
 ## Setting Up the Extension
 
