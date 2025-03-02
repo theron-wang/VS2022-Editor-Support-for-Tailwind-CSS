@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.2 (March 2nd, 2025)
+
+- Add missing classes (`bg-conic-*`, `-underline-offset-*`, etc.)
+- Fix incorrect description formatting of `container`
+- Configuration class support for `--color-*` and `--breakpoint-*`
+
 ## 1.10.1 (February 22nd, 2025)
 
 - Fixed a NRE with empty CSS files ([#101](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/101))
