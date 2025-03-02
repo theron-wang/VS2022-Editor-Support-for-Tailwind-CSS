@@ -31,14 +31,14 @@ public sealed partial class CompletionConfiguration
 
         if (config.OverridenValues.ContainsKey("colors") && GetDictionary(config.OverridenValues["colors"], out Dictionary<string, object> dict))
         {
-            var newColorToRgbMapper = GetColorMapper(dict);
+            var newColorToRgbMapper = GetColorMapper(dict, project.Version);
 
             project.ColorMapper = newColorToRgbMapper;
             ColorIconGenerator.ClearCache(project);
         }
         if (config.ExtendedValues.ContainsKey("colors") && GetDictionary(config.ExtendedValues["colors"], out dict))
         {
-            foreach (var pair in GetColorMapper(dict))
+            foreach (var pair in GetColorMapper(dict, project.Version))
             {
                 project.ColorMapper[pair.Key] = pair.Value;
             }
@@ -262,7 +262,7 @@ public sealed partial class CompletionConfiguration
                 {
                     if (GetDictionary(config.OverridenValues[key], out var dict))
                     {
-                        project.CustomColorMappers[stem.Replace("{c}", "{0}")] = GetColorMapper(dict);
+                        project.CustomColorMappers[stem.Replace("{c}", "{0}")] = GetColorMapper(dict, project.Version);
                     }
                     else
                     {
@@ -425,8 +425,24 @@ public sealed partial class CompletionConfiguration
 
         var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
 
-        var classesToAdd = new List<TailwindClass>();
+        if (project.Version == TailwindVersion.V4 && config.ExtendedValues.TryGetValue("screens", out var obj) && obj is Dictionary<string, object> screens)
+        {
+            foreach (var screen in screens.Keys)
+            {
+                string[] toInsert = [$"not-{screen}", $"max-{screen}", $"min-{screen}", $"@max-{screen}", $"@min-{screen}"];
 
+                foreach (var insert in toInsert)
+                {
+                    if (project.Modifiers.Contains(insert) == false)
+                    {
+                        project.Modifiers.Add(insert);
+                    }
+                }
+            }
+        }
+
+        var classesToAdd = new List<TailwindClass>();
+        
         foreach (var key in applicable)
         {
             var stems = project.ConfigurationValueToClassStems[key];
@@ -467,7 +483,7 @@ public sealed partial class CompletionConfiguration
                     if (GetDictionary(config.ExtendedValues[key], out var dict))
                     {
                         var newMapper = project.ColorMapper.ToDictionary(p => p.Key, p => p.Value);
-                        foreach (var pair in GetColorMapper(dict))
+                        foreach (var pair in GetColorMapper(dict, project.Version))
                         {
                             newMapper[pair.Key] = pair.Value;
                         }
@@ -658,7 +674,7 @@ public sealed partial class CompletionConfiguration
         project.PluginModifiers = config.PluginModifiers;
     }
 
-    private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors, string prev = "")
+    private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors, TailwindVersion version, string prev = "")
     {
         var newColorToRgbMapper = new Dictionary<string, string>();
 
@@ -680,6 +696,11 @@ public sealed partial class CompletionConfiguration
 
             if (value is string s)
             {
+                if (version == TailwindVersion.V4)
+                {
+                    newColorToRgbMapper[actual] = s;
+                    continue;
+                }
                 if (ColorHelpers.IsHex(s, out string hex))
                 {
                     var color = ColorTranslator.FromHtml($"#{hex}");
@@ -711,7 +732,7 @@ public sealed partial class CompletionConfiguration
             }
             else if (value is Dictionary<string, object> colorVariants)
             {
-                foreach (var pair in GetColorMapper(colorVariants, actual))
+                foreach (var pair in GetColorMapper(colorVariants, version, actual))
                 {
                     newColorToRgbMapper[pair.Key] = pair.Value;
                 }
