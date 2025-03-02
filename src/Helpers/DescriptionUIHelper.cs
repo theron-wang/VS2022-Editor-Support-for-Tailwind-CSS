@@ -154,17 +154,26 @@ internal static class DescriptionUIHelper
 
         foreach (var l in desc.Split('\n'))
         {
-            if (l.Trim().EndsWith("{"))
+            var trimmed = l.Trim();
+
+            if (trimmed.EndsWith("{"))
             {
-                descriptionLines.Add(new ClassifiedTextElement(
-                   new ClassifiedTextRun(PredefinedClassificationTypeNames.WhiteSpace, totalIndent, ClassifiedTextRunStyle.UseClassificationFont),
-                        new ClassifiedTextRun(PredefinedClassificationTypeNames.Literal, l.Trim(), ClassifiedTextRunStyle.UseClassificationFont)
-                    )
-                );
+                if (trimmed.Contains('@'))
+                {
+                    descriptionLines.Add(FormatMediaQuery(trimmed, totalIndent));
+                }
+                else
+                {
+                    descriptionLines.Add(new ClassifiedTextElement(
+                       new ClassifiedTextRun(PredefinedClassificationTypeNames.WhiteSpace, totalIndent, ClassifiedTextRunStyle.UseClassificationFont),
+                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Literal, l.Trim(), ClassifiedTextRunStyle.UseClassificationFont)
+                        )
+                    );
+                }
                 totalIndent += singleIndent;
                 continue;
             }
-            else if (l.Trim().EndsWith("}"))
+            else if (trimmed.EndsWith("}"))
             {
                 totalIndent = totalIndent.Substring(2);
                 descriptionLines.Add(new ClassifiedTextElement(
@@ -300,10 +309,38 @@ internal static class DescriptionUIHelper
             Foreground = (Brush)Application.Current.Resources[VsBrushes.GrayTextKey]
         });
 
+        const string singleIndent = "  ";
+        string totalIndent = singleIndent;
+
         var descriptionPanel = new StackPanel();
         foreach (var l in desc.Split('\n'))
         {
             var line = l.Trim();
+
+            if (line.EndsWith("{"))
+            {
+                descriptionPanel.Children.Add(new TextBlock
+                {
+                    Text = totalIndent + line,
+                    FontFamily = new FontFamily("Consolas"),
+                    Foreground = (Brush)Application.Current.Resources[VsBrushes.VizSurfaceStrongBlueMediumKey]
+                });
+
+                totalIndent += singleIndent;
+
+                continue;
+            }
+            else if (line.EndsWith("}"))
+            {
+                totalIndent = totalIndent.Substring(2);
+                descriptionPanel.Children.Add(new TextBlock
+                {
+                    Text = totalIndent + line,
+                    FontFamily = new FontFamily("Consolas"),
+                    Foreground = (Brush)Application.Current.Resources[VsBrushes.GrayTextKey]
+                });
+                continue;
+            }
 
             var keyword = line.Contains(":") ? line.Substring(0, line.IndexOf(':')).Trim() : line;
             var value = line.Substring(line.IndexOf(':') + 1).Trim().Trim(';');
@@ -326,7 +363,7 @@ internal static class DescriptionUIHelper
 
             linePanel.Children.Add(new TextBlock
             {
-                Text = "  ",
+                Text = totalIndent,
                 FontFamily = new FontFamily("Consolas")
             });
             linePanel.Children.Add(new TextBlock

@@ -1,6 +1,4 @@
-﻿using Microsoft.VisualStudio.Language.NavigateTo.Interfaces;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -184,11 +182,19 @@ internal sealed class DescriptionGenerator : IDisposable
             // {0} handle for opacity
             if (line.Contains('{') && line.IndexOf("{0}") != line.IndexOf('{'))
             {
-                output.AppendLine($"{line.Split('{')[0].Trim()} {{");
-                output.AppendLine($"{line.Split('{')[1].Trim()};");
+                var trimmed = line.Trim();
+
+                if (trimmed.StartsWith("}"))
+                {
+                    output.AppendLine("}");
+                    trimmed = trimmed.TrimStart('}').Trim();
+                }
+
+                output.AppendLine($"{trimmed.Split('{')[0].Trim()} {{");
+                output.AppendLine($"{trimmed.Split('{')[1].Trim()};");
                 continue;
             }
-            else if (line.Contains('}') && line.IndexOf("{0}") != line.IndexOf('}') - 2)
+            else if (line.Contains('}') && (line.IndexOf("{0}") == -1 || line.IndexOf("{0}") != line.IndexOf('}') - 2))
             {
                 output.AppendLine("}");
                 continue;
@@ -575,7 +581,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 replace = $"{number}{replace}";
 
-                description = description.Replace(replace, $"{number}rem /*{(tailwindClass.StartsWith("-") ? -1 : 1) * number * 16}px*/;");
+                description = description.Replace(replace, $"{number}rem /* {(tailwindClass.StartsWith("-") ? -1 : 1) * number * 16}px */;");
                 index = description.IndexOf("*/", remIndex);
             }
 
