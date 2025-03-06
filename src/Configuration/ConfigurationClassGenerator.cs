@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Configuration;
@@ -19,7 +20,6 @@ public sealed partial class CompletionConfiguration
         project.Screen = [.. original.Screen];
         project.ColorMapper = original.ColorMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
         ColorIconGenerator.ClearCache(project);
-        project.CustomDescriptionMapper = config?.PluginDescriptions ?? [];
         project.Blocklist = new HashSet<string>(config?.Blocklist ?? []);
         project.CssVariables = original.CssVariables;
 
@@ -224,7 +224,7 @@ public sealed partial class CompletionConfiguration
         var original = _completionBase.GetUnsetCompletionConfiguration(project.Version);
 
         var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
-        project.Modifiers = original.Modifiers.ToList();
+        project.Modifiers = [.. original.Modifiers];
         var classesToRemove = new List<TailwindClass>();
         var classesToAdd = new List<TailwindClass>();
 
@@ -442,7 +442,7 @@ public sealed partial class CompletionConfiguration
         }
 
         var classesToAdd = new List<TailwindClass>();
-        
+
         foreach (var key in applicable)
         {
             var stems = project.ConfigurationValueToClassStems[key];
@@ -538,7 +538,7 @@ public sealed partial class CompletionConfiguration
                                     return $"{insertStem}-{k}";
                                 }
                             })
-                            .Where(k => project.Classes.Any(c => c.Name == k) == false)
+                            .Where(k => !string.IsNullOrWhiteSpace(k) && project.Classes.Any(c => c.Name == k) == false)
                             .Select(k =>
                             {
                                 return new TailwindClass()
@@ -665,13 +665,328 @@ public sealed partial class CompletionConfiguration
     }
 
     /// <summary>
-    /// Loads IntelliSense for plugins
+    /// Loads IntelliSense for plugins, @custom-variant and @utility
     /// </summary>
     /// <param name="config">The configuration object</param>
     private void LoadPlugins(ProjectCompletionValues project, TailwindConfiguration config)
     {
-        project.PluginClasses = config.PluginClasses;
-        project.PluginModifiers = config.PluginModifiers;
+        if (project.Version == TailwindVersion.V4)
+        {
+            // Handle plugin variants
+
+            if (config.PluginVariantDescriptions is not null)
+            {
+                project.VariantsToDescriptions =
+                    _completionBase.GetUnsetCompletionConfiguration(TailwindVersion.V4).VariantsToDescriptions
+                    .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+
+                foreach (var pair in config.PluginVariantDescriptions)
+                {
+                    if (project.VariantsToDescriptions.ContainsKey(pair.Key) == false)
+                    {
+                        // @slot; and @slot are both valid
+                        project.VariantsToDescriptions[pair.Key] = pair.Value.Replace("@slot;", "{0}").Replace("@slot", "{0}");
+                    }
+                }
+            }
+
+            if (config.PluginDescriptions is not null)
+            {
+                project.PluginClasses = [];
+                project.CustomDescriptionMapper = [];
+                var classesToAdd = new List<TailwindClass>();
+
+                foreach (var pair in config.PluginDescriptions)
+                {
+                    // Case 1: Simple/complex utilities
+                    /* 
+                    @utility content-auto {
+                        content-visibility: auto;
+                    }
+                    OR 
+                    @utility scrollbar-hidden {
+                        &::-webkit-scrollbar {
+                            display: none;
+                        }
+                    }
+                    */
+                    if (!pair.Key.Contains("*"))
+                    {
+                        project.PluginClasses.Add(pair.Key);
+                        project.CustomDescriptionMapper.Add(pair.Key, pair.Value);
+                    }
+                    // Case 2 (edge): no --value, but has a wildcard
+                    else if (!pair.Value.Contains("--value("))
+                    {
+                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{a}"), pair.Value);
+                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{f}"), pair.Value);
+                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{%}"), pair.Value);
+                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{n}"), pair.Value);
+                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{c}"), pair.Value);
+                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{s}"), pair.Value);
+                    }
+                    // Case 3: --value is present
+                    else
+                    {
+                        // Split based on --value type
+                        var valueToDescription = new Dictionary<string, string>();
+
+                        var description = pair.Value.Trim();
+                        var splitBySemicolon = CssConfigSplitter.Split(description);
+
+                        var standard = "";
+
+                        foreach (var split in splitBySemicolon)
+                        {
+                            var attribute = split;
+
+                            // Handle media queries / nested statements
+                            if (split.Contains('{'))
+                            {
+                                var media = split.Substring(0, split.IndexOf('{') + 1);
+                                attribute = split.Substring(media.Length + 1);
+
+                                if (attribute.Trim().StartsWith("}"))
+                                {
+                                    // Edge case: empty block
+                                    attribute = attribute.Substring(attribute.IndexOf('}') + 1);
+                                }
+                                else
+                                {
+                                    standard += media;
+
+                                    foreach (var key in valueToDescription.Keys.ToList())
+                                    {
+                                        valueToDescription[key] += media;
+                                    }
+                                }
+                            }
+                            // Handle ending brackets
+                            else if (split.Contains('}'))
+                            {
+                                var bracket = split.Substring(0, split.LastIndexOf('}') + 1);
+                                attribute = split.Substring(bracket.Length + 1);
+                                standard += bracket;
+
+                                foreach (var key in valueToDescription.Keys.ToList())
+                                {
+                                    valueToDescription[key] += bracket;
+                                }
+                            }
+
+                            attribute = attribute?.Trim();
+
+                            if (string.IsNullOrWhiteSpace(attribute))
+                            {
+                                continue;
+                            }
+                            // Case 1: No --value
+                            else if (!attribute.Contains("--value("))
+                            {
+                                standard += attribute;
+
+                                foreach (var key in valueToDescription.Keys.ToList())
+                                {
+                                    valueToDescription[key] += attribute;
+                                }
+                            }
+                            else
+                            {
+                                if (!attribute.Contains(':'))
+                                {
+                                    continue;
+                                }
+
+                                var attributeKey = attribute.Substring(0, attribute.IndexOf(':'));
+
+                                // Handle multiple or single --value
+                                // --value(--tab-size-*, integer, [integer])
+                                var start = attribute.IndexOf("--value(");
+
+                                var end = attribute.IndexOf(')', start + 1);
+
+                                // Malformed
+                                if (start == -1 || end == -1)
+                                {
+                                    continue;
+                                }
+
+                                // integer in --value(integer)
+                                var values = attribute.Substring(start + 8, end - start - 8);
+                                // --value(integer), full thing
+                                var valueMethod = attribute.Substring(start, end - start + 1);
+
+                                var descriptionFormat = $"{attribute.Replace(valueMethod, "{0}")};";
+
+                                foreach (var value in values.Split(','))
+                                {
+                                    var trimmed = value.Trim();
+
+                                    // Case 1: --theme-variable-*
+                                    if (trimmed.StartsWith("--"))
+                                    {
+                                        // --value does not handle without *
+                                        if (!trimmed.EndsWith("-*"))
+                                        {
+                                            continue;
+                                        }
+
+                                        if (valueToDescription.ContainsKey(trimmed) == false)
+                                        {
+                                            valueToDescription[trimmed] = standard;
+                                        }
+                                        valueToDescription[trimmed] += descriptionFormat;
+                                    }
+                                    // Case 2: integer/number
+                                    // Case 3: ratio
+                                    else if (trimmed == "integer" || trimmed == "number" || trimmed == "ratio")
+                                    {
+                                        if (valueToDescription.ContainsKey(trimmed) == false)
+                                        {
+                                            valueToDescription[trimmed] = standard;
+                                        }
+                                        valueToDescription[trimmed] += descriptionFormat;
+                                    }
+                                    // Case 4: [...] (arbitrary, such as [integer])
+                                    else if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+                                    {
+                                        if (valueToDescription.ContainsKey(trimmed) == false)
+                                        {
+                                            valueToDescription[trimmed] = standard;
+                                        }
+                                        valueToDescription[trimmed] += descriptionFormat;
+                                    }
+                                }
+                            }
+                        }
+
+                        foreach (var typeToDescriptionPair in valueToDescription)
+                        {
+                            var type = typeToDescriptionPair.Key;
+                            var desc = typeToDescriptionPair.Value;
+
+                            // Remove --spacing(...)
+                            int spacingIndex;
+                            var shouldContinue = false;
+
+                            while ((spacingIndex = desc.IndexOf("--spacing(")) != -1)
+                            {
+                                // Find a balancing pair of parenthesis
+
+                                var start = spacingIndex + "--spacing(".Length;
+
+                                var levels = 1;
+                                int end;
+                                for (end = start; end < desc.Length; end++)
+                                {
+                                    var current = desc[end];
+
+                                    if (current == '(')
+                                    {
+                                        levels++;
+                                    }
+                                    else if (current == ')')
+                                    {
+                                        levels--;
+                                        if (levels == 0)
+                                        {
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if (levels > 0)
+                                {
+                                    shouldContinue = true;
+                                    break;
+                                }
+
+                                var parameter = desc.Substring(start, end - start);
+                                var total = desc.Substring(spacingIndex, end - spacingIndex + 1);
+
+                                desc = desc.Replace(total, $"calc(var(--spacing) * {parameter})");
+                            }
+
+                            if (shouldContinue)
+                            {
+                                continue;
+                            }
+
+                            if (type.StartsWith("--"))
+                            {
+                                var stem = type.Substring(0, type.Length - 2).Trim();
+
+                                // Special case:
+                                // --color-*
+                                if (stem == "--color")
+                                {
+                                    classesToAdd.Add(new()
+                                    {
+                                        Name = pair.Key.Replace("*", "{c}"),
+                                        UseColors = true
+                                    });
+
+                                    project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{c}"), desc);
+                                }
+                                // Special case 2:
+                                // --color-red-*
+                                else if (stem.StartsWith("--color-"))
+                                {
+                                    var colorRoot = stem.Substring("--color-".Length);
+
+                                    var colors = 
+                                        project.ColorMapper.Where(k => k.Key.StartsWith(colorRoot));
+                                    var classes = colors.Select(v => pair.Key.Replace("*", v.Key));
+
+                                    project.PluginClasses.AddRange(classes);
+
+                                    foreach (var color in colors)
+                                    {
+                                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", color.Key), desc.Replace("{0}", $"var(--color-{color.Key})"));
+                                    }
+                                }
+                                else
+                                {
+                                    var variables = project.CssVariables.Where(k => k.Key.StartsWith(stem));
+
+                                    project.PluginClasses.AddRange(variables.Select(
+                                        v => pair.Key.Replace("-*", v.Key.Substring(stem.Length))));
+
+                                    foreach (var var in variables)
+                                    {
+                                        project.CustomDescriptionMapper.Add(pair.Key.Replace("-*", var.Key.Substring(stem.Length)), desc.Replace("{0}", $"var({var.Key})"));
+                                    }
+                                }
+                            }
+                            else if (type == "number" || type == "integer")
+                            {
+                                project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{n}"), desc);
+                            }
+                            else if (type == "ratio")
+                            {
+                                project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{f}"), desc);
+                            }
+                            else if (type.StartsWith("[") && type.EndsWith("]"))
+                            {
+                                var stem = pair.Key.Replace("*", "{a}");
+                                if (!project.CustomDescriptionMapper.ContainsKey(stem))
+                                {
+                                    project.CustomDescriptionMapper.Add(stem, desc);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                project.Classes.AddRange(classesToAdd);
+            }
+        }
+        else
+        {
+            project.CustomDescriptionMapper = config?.PluginDescriptions ?? [];
+            project.PluginClasses = config.PluginClasses;
+        }
+        project.PluginModifiers = config.PluginVariants;
     }
 
     private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors, TailwindVersion version, string prev = "")

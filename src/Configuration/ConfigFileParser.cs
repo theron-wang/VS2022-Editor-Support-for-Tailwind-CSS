@@ -20,8 +20,6 @@ namespace TailwindCSSIntellisense.Configuration;
 /// </summary>
 internal static class ConfigFileParser
 {
-    private static readonly Regex _cssSemicolonSplitter = new("(?<!\\\\);(?=(?:(?:[^\"']*[\"']){2})*[^\"']*$)", RegexOptions.Compiled);
-
     internal static async Task<JsonObject> GetConfigJsonNodeAsync(string path)
     {
         var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "parser.js");
@@ -140,99 +138,43 @@ internal static class ConfigFileParser
 
     private static async Task<TailwindConfiguration> GetCssConfigurationAsync(string path)
     {
-        string javascriptConfig = null;
-        StringBuilder themeBody = new();
-
-        var started = false;
-        var encounteredOpeningBraceYet = false;
-        var level = 0;
+        var fullText = "";
 
         using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
         {
             using var reader = new StreamReader(fileStream);
 
-            while (!reader.EndOfStream)
-            {
-                if (encounteredOpeningBraceYet && level == 0)
-                {
-                    break;
-                }
-
-                var line = await reader.ReadLineAsync();
-
-                if (line is null)
-                {
-                    continue;
-                }
-
-                line = line.Trim();
-
-                if (line.StartsWith("@config"))
-                {
-                    var relativePath = line.Replace("@config", "").Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
-
-                    javascriptConfig = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), relativePath);
-                    continue;
-                }
-
-                if (line.StartsWith("@theme"))
-                {
-                    if (line.Contains('{'))
-                    {
-                        level++;
-                        encounteredOpeningBraceYet = true;
-                    }
-
-                    started = true;
-                    continue;
-                }
-
-                if (!started)
-                {
-                    continue;
-                }
-
-                if (line.Contains('{'))
-                {
-                    level++;
-                    encounteredOpeningBraceYet = true;
-                    continue;
-                }
-
-                if (!encounteredOpeningBraceYet)
-                {
-                    continue;
-                }
-
-                if (line.Contains('}'))
-                {
-                    level--;
-                    continue;
-                }
-
-                themeBody.AppendLine(line);
-            }
+            fullText = await reader.ReadToEndAsync();
         }
 
         // Remove any text inside {}, since all theme values are in the base theme block
         // We need this because there may be multiple blocks on one line
-        var themeUntrimmed = themeBody.ToString().Trim();
         var themeTrimmed = new StringBuilder();
 
-        level = 0;
+        var imports = new List<string>();
+        var utilities = new Dictionary<string, string>();
+        var variants = new Dictionary<string, string>();
+
+        var level = 0;
         var inComment = false;
 
-        for (int i = 0; i < themeUntrimmed.Length; i++)
+        var directive = "";
+        var buildingDirective = false;
+
+        var directiveParameter = "";
+        var buildingDirectiveParameter = false;
+
+        for (int i = 0; i < fullText.Length; i++)
         {
-            var current = themeUntrimmed[i];
+            var current = fullText[i];
 
             if (current == '/')
             {
-                if (i + 1 < themeUntrimmed.Length && themeUntrimmed[i + 1] == '*')
+                if (i + 1 < fullText.Length && fullText[i + 1] == '*')
                 {
                     inComment = true;
                 }
-                else if (i > 0 && themeUntrimmed[i - 1] == '*')
+                else if (i > 0 && fullText[i - 1] == '*')
                 {
                     inComment = false;
                     continue;
@@ -251,34 +193,183 @@ internal static class ConfigFileParser
             else if (current == '}')
             {
                 level--;
+
+                if (level == 0)
+                {
+                    directive = "";
+                    directiveParameter = "";
+                }
             }
-            else if (level == 0)
+
+            if (current == '@' && level == 0 && !buildingDirectiveParameter)
             {
-                themeTrimmed.Append(current);
+                directive = "";
+                buildingDirective = true;
+                continue;
+            }
+
+            if (buildingDirective)
+            {
+                if (char.IsLetter(current) || current == '-')
+                {
+                    directive += current;
+                }
+                else
+                {
+                    buildingDirective = false;
+                    buildingDirectiveParameter = true;
+                    directiveParameter = "";
+                }
+                continue;
+            }
+
+            if (buildingDirectiveParameter)
+            {
+                if (current == ';')
+                {
+                    directiveParameter = directiveParameter.Trim();
+                    buildingDirectiveParameter = false;
+
+                    if (directive == "import")
+                    {
+                        var import = directiveParameter.Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
+                        if (import != "tailwindcss" && !import.StartsWith("url"))
+                        {
+                            import = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import);
+                            imports.Add($"@import{import}");
+                        }
+                        continue;
+                    }
+                    else if (directive == "config")
+                    {
+                        var import = directiveParameter.Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
+
+                        import = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import);
+                        imports.Add($"@config{import}");
+                        continue;
+                    }
+                    // Handle short-hand:
+                    // @custom-variant pointer-coarse (@media (pointer: coarse))
+                    else if (directive == "custom-variant")
+                    {
+                        var splitAt = directiveParameter.IndexOf(' ');
+
+                        if (splitAt == -1)
+                        {
+                            continue;
+                        }
+
+                        var variantName = directiveParameter.Substring(0, splitAt);
+                        var variantValue = directiveParameter.Substring(splitAt + 1).Trim();
+
+                        if (variantValue.StartsWith("(") && variantValue.EndsWith(")"))
+                        {
+                            variantValue = variantValue.Substring(1, variantValue.Length - 2);
+                            variants[variantName] = $"{variantValue} {{ @slot; }}";
+                        }
+
+                        continue;
+                    }
+
+                    directive = "";
+                    directiveParameter = "";
+                }
+                else if (current == '{')
+                {
+                    directiveParameter = directiveParameter.Trim();
+                    buildingDirectiveParameter = false;
+                }
+                else
+                {
+                    directiveParameter += current;
+                }
+                continue;
+            }
+
+            if (level >= 1)
+            {
+                if (directive == "theme" && level == 1 && current != '{' && current != '}')
+                {
+                    themeTrimmed.Append(current);
+                }
+                else if (directive == "utility")
+                {
+                    if (!utilities.ContainsKey(directiveParameter))
+                    {
+                        utilities[directiveParameter] = "";
+                    }
+
+                    utilities[directiveParameter] += current.ToString();
+                }
+                else if (directive == "custom-variant")
+                {
+                    if (!variants.ContainsKey(directiveParameter))
+                    {
+                        variants[directiveParameter] = "";
+                    }
+
+                    variants[directiveParameter] += current.ToString();
+                }
             }
         }
 
-        var themeValuePairs = _cssSemicolonSplitter.Split(themeTrimmed.ToString())
-            .Select(s => s.Trim())
-            .Where(s => !string.IsNullOrWhiteSpace(s))
+        var themeValuePairs = CssConfigSplitter.Split(themeTrimmed.ToString())
             .Select(s =>
             {
                 var split = s.IndexOf(':');
                 return new KeyValuePair<string, string>(s.Substring(0, split), s.Substring(split + 1));
             });
 
-        TailwindConfiguration jsConfig = null;
+        TailwindConfiguration imported = null;
 
-        if (javascriptConfig is not null)
+        foreach (var import in imports)
         {
-            jsConfig = await GetJavaScriptConfigurationAsync(javascriptConfig);
+            // Skips the @import or @config appended at the beginning
+            var importPath = import.Substring(7);
+            var prev = imported;
+
+            if (import.StartsWith("@import"))
+            {
+                imported = await GetCssConfigurationAsync(importPath);
+            }
+            else if (import.StartsWith("@config"))
+            {
+                imported = await GetJavaScriptConfigurationAsync(importPath);
+            }
+            else
+            {
+                continue;
+            }
+
+            if (prev is not null)
+            {
+                DictionaryHelpers.MergeDictionaries(imported.OverridenValues, prev.OverridenValues);
+                DictionaryHelpers.MergeDictionaries(imported.ExtendedValues, prev.ExtendedValues);
+                DictionaryHelpers.MergeDictionaries(imported.ThemeVariables, prev.ThemeVariables);
+                imported.PluginClasses.AddRange(prev.PluginClasses);
+                imported.PluginVariants.AddRange(prev.PluginVariants);
+                DictionaryHelpers.MergeDictionaries(imported.PluginDescriptions, prev.PluginDescriptions);
+                DictionaryHelpers.MergeDictionaries(imported.PluginVariantDescriptions, prev.PluginVariantDescriptions);
+            }
+        }
+
+        if (imported is not null)
+        {
+            imported.PluginClasses = imported.PluginClasses.Distinct().ToList();
+            imported.PluginVariants = imported.PluginVariants.Distinct().ToList();
         }
 
         var config = new TailwindConfiguration
         {
             OverridenValues = [],
             ExtendedValues = [],
-            ThemeVariables = []
+            ThemeVariables = [],
+            PluginClasses = [..utilities.Keys],
+            PluginVariants = [..variants.Keys],
+            PluginDescriptions = utilities,
+            // For variants, put everything on the same line so it looks fine in completion tooltip
+            PluginVariantDescriptions = variants.ToDictionary(v => v.Key, v => 
+                string.Join(" ", v.Value.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries)))
         };
 
         foreach (var pair in themeValuePairs)
@@ -292,7 +383,7 @@ internal static class ConfigFileParser
                 continue;
             }
 
-            var valueKey = pair.Key.Trim().Substring(namespaceStem.Length + 1);
+            var valueKey = pair.Key.Trim().Substring(namespaceStem.Length);
 
             if (pair.Key.EndsWith("*"))
             {
@@ -319,10 +410,15 @@ internal static class ConfigFileParser
             dict[valueKey] = pair.Value.Trim();
         }
 
-        if (jsConfig is not null)
+        if (imported is not null)
         {
-            DictionaryHelpers.MergeDictionaries(config.OverridenValues, jsConfig.OverridenValues);
-            DictionaryHelpers.MergeDictionaries(config.ExtendedValues, jsConfig.ExtendedValues);
+            DictionaryHelpers.MergeDictionaries(config.OverridenValues, imported.OverridenValues);
+            DictionaryHelpers.MergeDictionaries(config.ExtendedValues, imported.ExtendedValues);
+            DictionaryHelpers.MergeDictionaries(config.ThemeVariables, imported.ThemeVariables);
+            config.PluginClasses = config.PluginClasses.Concat(imported.PluginClasses).Distinct().ToList();
+            config.PluginVariants = config.PluginVariants.Concat(imported.PluginVariants).Distinct().ToList();
+            DictionaryHelpers.MergeDictionaries(config.PluginDescriptions, imported.PluginDescriptions);
+            DictionaryHelpers.MergeDictionaries(config.PluginVariantDescriptions, imported.PluginVariantDescriptions);
         }
 
         return config;
@@ -330,80 +426,80 @@ internal static class ConfigFileParser
 
     private static string GetCssVariableNamespace(string variable)
     {
-        if (variable.StartsWith("--color"))
+        if (variable.StartsWith("--color-"))
         {
-            return "--color";
+            return "--color-";
         }
-        else if (variable.StartsWith("--font-weight"))
+        else if (variable.StartsWith("--font-weight-"))
         {
-            return "--font-weight";
+            return "--font-weight-";
         }
-        else if (variable.StartsWith("--font"))
+        else if (variable.StartsWith("--font-"))
         {
-            return "--font";
+            return "--font-";
         }
-        else if (variable.StartsWith("--text"))
+        else if (variable.StartsWith("--text-"))
         {
-            return "--text";
+            return "--text-";
         }
-        else if (variable.StartsWith("--tracking"))
+        else if (variable.StartsWith("--tracking-"))
         {
-            return "--tracking";
+            return "--tracking-";
         }
-        else if (variable.StartsWith("--leading"))
+        else if (variable.StartsWith("--leading-"))
         {
-            return "--leading";
+            return "--leading-";
         }
-        else if (variable.StartsWith("--breakpoint"))
+        else if (variable.StartsWith("--breakpoint-"))
         {
-            return "--breakpoint";
+            return "--breakpoint-";
         }
-        else if (variable.StartsWith("--container"))
+        else if (variable.StartsWith("--container-"))
         {
             // v4
-            return "--container";
+            return "--container-";
         }
-        else if (variable.StartsWith("--spacing"))
+        else if (variable.StartsWith("--spacing-"))
         {
-            return "--spacing";
+            return "--spacing-";
         }
-        else if (variable.StartsWith("--radius"))
+        else if (variable.StartsWith("--radius-"))
         {
-            return "--radius";
+            return "--radius-";
         }
-        else if (variable.StartsWith("--shadow"))
+        else if (variable.StartsWith("--shadow-"))
         {
-            return "--shadow";
+            return "--shadow-";
         }
-        else if (variable.StartsWith("--inset-shadow"))
-        {
-            // v4
-            return "--inset-shadow";
-        }
-        else if (variable.StartsWith("--drop-shadow"))
-        {
-            return "--drop-shadow";
-        }
-        else if (variable.StartsWith("--blur"))
-        {
-            return "--blur";
-        }
-        else if (variable.StartsWith("--perspective"))
+        else if (variable.StartsWith("--inset-shadow-"))
         {
             // v4
-            return "--perspective";
+            return "--inset-shadow-";
         }
-        else if (variable.StartsWith("--aspect"))
+        else if (variable.StartsWith("--drop-shadow-"))
         {
-            return "--aspect";
+            return "--drop-shadow-";
         }
-        else if (variable.StartsWith("--ease"))
+        else if (variable.StartsWith("--blur-"))
         {
-            return "--ease";
+            return "--blur-";
         }
-        else if (variable.StartsWith("--animate"))
+        else if (variable.StartsWith("--perspective-"))
         {
-            return "--animate";
+            // v4
+            return "--perspective-";
+        }
+        else if (variable.StartsWith("--aspect-"))
+        {
+            return "--aspect-";
+        }
+        else if (variable.StartsWith("--ease-"))
+        {
+            return "--ease-";
+        }
+        else if (variable.StartsWith("--animate-"))
+        {
+            return "--animate-";
         }
 
         return null;
@@ -411,78 +507,78 @@ internal static class ConfigFileParser
 
     private static string GetConfigurationClassStemFromCssVariable(string variable)
     {
-        if (variable.StartsWith("--color"))
+        if (variable.StartsWith("--color-"))
         {
             return "colors";
         }
-        else if (variable.StartsWith("--font-weight"))
+        else if (variable.StartsWith("--font-weight-"))
         {
             return "fontWeight";
         }
-        else if (variable.StartsWith("--font"))
+        else if (variable.StartsWith("--font-"))
         {
             return "fontFamily";
         }
-        else if (variable.StartsWith("--text"))
+        else if (variable.StartsWith("--text-"))
         {
             return "fontSize";
         }
-        else if (variable.StartsWith("--tracking"))
+        else if (variable.StartsWith("--tracking-"))
         {
             return "letterSpacing";
         }
-        else if (variable.StartsWith("--leading"))
+        else if (variable.StartsWith("--leading-"))
         {
             return "lineHeight";
         }
-        else if (variable.StartsWith("--breakpoint"))
+        else if (variable.StartsWith("--breakpoint-"))
         {
             return "screens";
         }
-        else if (variable.StartsWith("--container"))
+        else if (variable.StartsWith("--container-"))
         {
             // v4
             return "v4-container";
         }
-        else if (variable.StartsWith("--spacing"))
+        else if (variable.StartsWith("--spacing-"))
         {
             return "spacing";
         }
-        else if (variable.StartsWith("--radius"))
+        else if (variable.StartsWith("--radius-"))
         {
             return "borderRadius";
         }
-        else if (variable.StartsWith("--shadow"))
+        else if (variable.StartsWith("--shadow-"))
         {
             return "boxShadow";
         }
-        else if (variable.StartsWith("--inset-shadow"))
+        else if (variable.StartsWith("--inset-shadow-"))
         {
             // v4
             return "v4-insetShadow";
         }
-        else if (variable.StartsWith("--drop-shadow"))
+        else if (variable.StartsWith("--drop-shadow-"))
         {
             return "dropShadow";
         }
-        else if (variable.StartsWith("--blur"))
+        else if (variable.StartsWith("--blur-"))
         {
             return "blur";
         }
-        else if (variable.StartsWith("--perspective"))
+        else if (variable.StartsWith("--perspective-"))
         {
             // v4
             return "v4-perspective";
         }
-        else if (variable.StartsWith("--aspect"))
+        else if (variable.StartsWith("--aspect-"))
         {
             return "aspectRatio";
         }
-        else if (variable.StartsWith("--ease"))
+        else if (variable.StartsWith("--ease-"))
         {
             return "transitionTimingFunction";
         }
-        else if (variable.StartsWith("--animate"))
+        else if (variable.StartsWith("--animate-"))
         {
             return "animation";
         }
@@ -521,7 +617,7 @@ internal static class ConfigFileParser
 
         try
         {
-            config.PluginModifiers = plugins.ContainsKey("modifiers") ? (List<string>)plugins["modifiers"] : null;
+            config.PluginVariants = plugins.ContainsKey("modifiers") ? (List<string>)plugins["modifiers"] : null;
 
             if (plugins.ContainsKey("classes"))
             {

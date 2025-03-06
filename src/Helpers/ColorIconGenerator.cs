@@ -58,7 +58,7 @@ internal class ColorIconGenerator
             return CompletionUtilities.TailwindLogo;
         }
 
-        if (string.IsNullOrWhiteSpace(value) || value.StartsWith("{noparse}"))
+        if (string.IsNullOrWhiteSpace(value) || value.StartsWith("{noparse}") || value.StartsWith("var"))
         {
             return CompletionUtilities.TailwindLogo;
         }

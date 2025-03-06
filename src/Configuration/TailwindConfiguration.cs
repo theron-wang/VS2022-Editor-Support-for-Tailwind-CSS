@@ -29,11 +29,13 @@ namespace TailwindCSSIntellisense.Configuration
 
         public string Prefix { get; set; }
 
-        public List<string> PluginClasses { get; set; }
+        public List<string> PluginClasses { get; set; } = [];
 
-        public List<string> PluginModifiers { get; set; }
+        public List<string> PluginVariants { get; set; } = [];
 
-        public Dictionary<string, string> PluginDescriptions { get; set; }
+        public Dictionary<string, string> PluginDescriptions { get; set; } = [];
+
+        public Dictionary<string, string> PluginVariantDescriptions { get; set; } = [];
 
         public List<string> Blocklist { get; set; }
 

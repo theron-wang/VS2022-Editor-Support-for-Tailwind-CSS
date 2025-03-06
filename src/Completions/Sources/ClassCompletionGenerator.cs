@@ -337,9 +337,10 @@ internal abstract class ClassCompletionGenerator : IDisposable
             {
                 if (modifiers.Contains(modifier) == false)
                 {
-                    var completion = new Completion(modifier,
+                    var completion = new Completion(modifier + ":",
                                             modifiersAsString + modifier + ":",
-                                            modifier,
+                                            _projectCompletionValues.Version == TailwindVersion.V4 ? 
+                                            _descriptionGenerator.GetModifierDescription(modifier, _projectCompletionValues) : modifier,
                                             _completionUtils.TailwindLogo,
                                             null);
 

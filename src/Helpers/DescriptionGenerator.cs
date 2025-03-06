@@ -66,7 +66,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 string variableValue;
 
-                if (variable == "--spacing")
+                if (variable == "--spacing-")
                 {
                     if (projectCompletionValues.CssVariables.TryGetValue("--spacing", out var spacing))
                     {
@@ -120,7 +120,7 @@ internal sealed class DescriptionGenerator : IDisposable
                         variableValue = null;
                     }
                 }
-                else if (variable.StartsWith("--color"))
+                else if (variable.StartsWith("--color-"))
                 {
                     var color = variable.Substring(8);
 
@@ -297,27 +297,6 @@ internal sealed class DescriptionGenerator : IDisposable
             var last = segments.Last();
             stem = text.Replace(last.Replace(' ', '_'), "{0}");
 
-            description = GetDescriptionForSpacingClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
-
-            if (string.IsNullOrEmpty(description) == false)
-            {
-                return description;
-            }
-            
-            description = GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
-
-            if (string.IsNullOrEmpty(description) == false)
-            {
-                return description;
-            }
-
-            description = GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
-
-            if (string.IsNullOrEmpty(description) == false)
-            {
-                return description;
-            }
-
             description = GetDescriptionForParenthesisClass(stem.Replace("{0}", "{a}"), last, projectCompletionValues, shouldFormat: shouldFormat);
 
             if (string.IsNullOrEmpty(description) == false)
@@ -325,7 +304,21 @@ internal sealed class DescriptionGenerator : IDisposable
                 return description;
             }
 
-            return GetDescriptionForArbitraryClass(stem.Replace("-{0}", projectCompletionValues.Version == TailwindVersion.V3 ? "" : "-{a}"), last, projectCompletionValues, shouldFormat: shouldFormat);
+            description = GetDescriptionForArbitraryClass(stem.Replace("-{0}", projectCompletionValues.Version == TailwindVersion.V3 ? "" : "-{a}"), last, projectCompletionValues, shouldFormat: shouldFormat);
+
+            if (string.IsNullOrEmpty(description) == false)
+            {
+                return description;
+            }
+
+            description = GetDescriptionForSpacingClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
+
+            if (string.IsNullOrEmpty(description) == false)
+            {
+                return description;
+            }
+
+            return GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
         }
 
         return null;
@@ -807,13 +800,14 @@ internal sealed class DescriptionGenerator : IDisposable
         {
             var key = tailwindClass.Replace("{0}", type);
 
-            if (!projectCompletionValues.DescriptionMapper.TryGetValue(key, out var description))
+            if (!projectCompletionValues.DescriptionMapper.TryGetValue(key, out var description) && !projectCompletionValues.CustomDescriptionMapper.TryGetValue(key, out description))
             {
                 if (!negative || projectCompletionValues.Version != TailwindVersion.V4)
                 {
                     continue;
                 }
 
+                // Do not use CustomDescriptionMapper since negative utilities are not generated automatically
                 if (!projectCompletionValues.DescriptionMapper.TryGetValue(key.TrimStart('-'), out description))
                 {
                     continue;
@@ -1037,7 +1031,7 @@ internal sealed class DescriptionGenerator : IDisposable
         {
             return null;
         }
-
+        
         if (_arbitraryDescriptionCache.TryGetValue($"{stem}-[{special}]", out var description))
         {
             if (string.IsNullOrWhiteSpace(description))
@@ -1140,7 +1134,7 @@ internal sealed class DescriptionGenerator : IDisposable
             return description.Replace("{0}", arbitrary);
         }
 
-        if (projectCompletionValues.DescriptionMapper.TryGetValue(stem.TrimStart('-'), out description))
+        if (projectCompletionValues.DescriptionMapper.TryGetValue(stem.TrimStart('-'), out description) || projectCompletionValues.CustomDescriptionMapper.TryGetValue(stem, out description))
         {
             if (shouldFormat)
             {
@@ -1159,7 +1153,10 @@ internal sealed class DescriptionGenerator : IDisposable
         // If the descriptions have different css attributes, return null
         if (existingDescriptions.Count != 2 || existingDescriptions[0].Length != existingDescriptions[1].Length)
         {
-            _arbitraryDescriptionCache[$"{stem}-[]"] = null;
+            if (projectCompletionValues.Version == TailwindVersion.V3)
+            {
+                _arbitraryDescriptionCache[$"{stem}-[]"] = null;
+            }
             return null;
         }
 
@@ -1180,7 +1177,10 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 if (attribute1 != attribute2)
                 {
-                    _arbitraryDescriptionCache[$"{stem}-[]"] = null;
+                    if (projectCompletionValues.Version == TailwindVersion.V3)
+                    {
+                        _arbitraryDescriptionCache[$"{stem}-[]"] = null;
+                    }
                     return null;
                 }
 
@@ -1189,7 +1189,10 @@ internal sealed class DescriptionGenerator : IDisposable
         }
 
         description = returnFormat.ToString().Trim();
-        _arbitraryDescriptionCache[$"{stem}-[]"] = description;
+        if (projectCompletionValues.Version == TailwindVersion.V3)
+        {
+            _arbitraryDescriptionCache[$"{stem}-[]"] = description;
+        }
 
         if (shouldFormat)
         {

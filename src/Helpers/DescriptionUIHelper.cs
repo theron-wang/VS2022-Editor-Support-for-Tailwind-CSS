@@ -181,8 +181,16 @@ internal static class DescriptionUIHelper
                 ));
                 continue;
             }
+            else if (trimmed.StartsWith("}"))
+            {
+                totalIndent = totalIndent.Substring(2);
+                descriptionLines.Add(new ClassifiedTextElement(
+                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, totalIndent + "}", ClassifiedTextRunStyle.UseClassificationFont)
+                ));
+                trimmed = trimmed.TrimStart('}').Trim();
+            }
 
-            descriptionLines.Add(FormatKeyValuePair(l, totalIndent, isImportant));
+            descriptionLines.Add(FormatKeyValuePair(trimmed, totalIndent, isImportant));
         }
 
 

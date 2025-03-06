@@ -7,6 +7,12 @@ internal static class ColorHelpers
 {
     public static bool IsHex(object value, out string hex)
     {
+        if (value.ToString().LastIndexOf('#') != 0)
+        {
+            hex = null;
+            return false;
+        }
+
         var content = value.ToString().Trim('#').ToUpper();
         var hexLetters = "ABCDEF";
         if (content.All(c => char.IsNumber(c) || hexLetters.Contains(c)))
