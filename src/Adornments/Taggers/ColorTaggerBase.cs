@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
@@ -7,7 +8,6 @@ using System.Linq;
 using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Options;
-using Microsoft.VisualStudio.Shell;
 
 namespace TailwindCSSIntellisense.Adornments.Taggers;
 
@@ -74,7 +74,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
         _generalOptions = general;
         TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length)));
     }
-
+    
     private bool Enabled()
     {
         _generalOptions ??= ThreadHelper.JoinableTaskFactory.Run(General.GetLiveInstanceAsync);
@@ -147,6 +147,15 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
         {
             segmentText = text.Substring(0, endsWithArbitrary);
         }
+        else
+        {
+            endsWithArbitrary = text.LastIndexOf('(');
+
+            if (endsWithArbitrary != -1)
+            {
+                segmentText = text.Substring(0, endsWithArbitrary);
+            }
+        }
 
         var segments = segmentText.Split([ '-' ], StringSplitOptions.RemoveEmptyEntries).ToList();
 
@@ -180,9 +189,19 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 }
             }
 
-            if (color[0] == '[' && color[color.Length - 1] == ']')
+            if ((color[0] == '[' && color[color.Length - 1] == ']') ||
+                (color[0] == '(' && color[color.Length - 1] == ')'))
             {
                 var c = color.Substring(1, color.Length - 2);
+
+                if (color[0] == '(' && color[color.Length - 1] == ')')
+                {
+                    if (!_completionUtilities.CssVariables.TryGetValue(c, out c))
+                    {
+                        return null;
+                    }
+                }
+
                 if (ColorHelpers.IsHex(c, out var hex))
                 {
                     var fromHex = System.Drawing.ColorTranslator.FromHtml($"#{hex}");
