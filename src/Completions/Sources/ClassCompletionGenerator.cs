@@ -38,9 +38,9 @@ internal abstract class ClassCompletionGenerator : IDisposable
     /// <returns>A list of completions</returns>
     protected List<Completion> GetCompletions(string classRaw)
     {
-        var modifiers = classRaw.Split(':').ToList();
+        var variants = classRaw.Split(':').ToList();
 
-        var currentClass = modifiers.Last();
+        var currentClass = variants.Last();
 
         var isImportant = false;
         // Handle important modifier
@@ -79,14 +79,14 @@ internal abstract class ClassCompletionGenerator : IDisposable
             }
         }
 
-        modifiers.RemoveAt(modifiers.Count - 1);
+        variants.RemoveAt(variants.Count - 1);
 
         var completions = new List<Completion>();
 
-        var modifiersAsString = string.Join(":", modifiers);
-        if (string.IsNullOrWhiteSpace(modifiersAsString) == false)
+        var variantsAsString = string.Join(":", variants);
+        if (string.IsNullOrWhiteSpace(variantsAsString) == false)
         {
-            modifiersAsString += ":";
+            variantsAsString += ":";
         }
         var segments = currentClass.Split('-');
 
@@ -151,7 +151,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                     completions.Add(
                                 new Completion(className,
-                                                    modifiersAsString + className,
+                                                    variantsAsString + className,
                                                     className,
                                                     _colorIconGenerator.GetImageFromColor(_projectCompletionValues, twClass.Name, color, color == "transparent" ? 0 : 100),
                                                     null));
@@ -167,14 +167,14 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                             completions.Add(
                                     new Completion($"{className}/{opacity}",
-                                                        $"{modifiersAsString}{className}/{opacity}",
+                                                        $"{variantsAsString}{className}/{opacity}",
                                                         $"{className}/{opacity}",
                                                         _colorIconGenerator.GetImageFromColor(_projectCompletionValues, twClass.Name, color, opacity),
                                                         null));
                         }
                         completions.Add(
                                     new Completion(className + "/[]",
-                                                        modifiersAsString + className + "/[]",
+                                                        variantsAsString + className + "/[]",
                                                         className + "/[]",
                                                         _completionUtils.TailwindLogo,
                                                         null));
@@ -216,7 +216,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                     completions.Add(
                         new Completion(className,
-                                            modifiersAsString + className,
+                                            variantsAsString + className,
                                             className,
                                             _completionUtils.TailwindLogo,
                                             null));
@@ -237,7 +237,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                 completions.Add(
                 new Completion(className + "[]",
-                                    modifiersAsString + className + "[]",
+                                    variantsAsString + className + "[]",
                                     twClass.Name + "[]",
                                     _completionUtils.TailwindLogo,
                                     null));
@@ -267,10 +267,61 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                 completions.Add(
                 new Completion(className,
-                                    modifiersAsString + className,
+                                    variantsAsString + className,
                                     twClass.Name,
                                     _completionUtils.TailwindLogo,
                                     null));
+
+                if (currentClass.Contains('/'))
+                {
+                    if (currentClass.StartsWith("bg-linear") || currentClass.StartsWith("bg-radial") || currentClass.StartsWith("bg-conic"))
+                    {
+                        foreach (var modifier in KnownModifiers.GradientModifierToDescription.Keys)
+                        {
+                            if (!_projectCompletionValues.IsClassAllowed($"{className}/{modifier}"))
+                            {
+                                continue;
+                            }
+
+                            completions.Add(
+                                    new Completion($"{className}/{modifier}",
+                                                        $"{variantsAsString}{className}/{modifier}",
+                                                        $"{className}/{modifier}",
+                                                        _completionUtils.TailwindLogo,
+                                                        null));
+                        }
+                        completions.Add(
+                                    new Completion(className + "/[]",
+                                                        variantsAsString + className + "/[]",
+                                                        className + "/[]",
+                                                        _completionUtils.TailwindLogo,
+                                                        null));
+                    }
+                    else if (KnownModifiers.IsEligibleForLineHeightModifier(currentClass, _projectCompletionValues))
+                    {
+                        var lineHeightModifiers = _projectCompletionValues.CssVariables.Where(v => v.Key.StartsWith("--leading-")).Select(v => v.Key.Replace("--leading-", ""));
+                        foreach (var modifier in lineHeightModifiers)
+                        {
+                            if (!_projectCompletionValues.IsClassAllowed($"{className}/{modifier}"))
+                            {
+                                continue;
+                            }
+
+                            completions.Add(
+                                    new Completion($"{className}/{modifier}",
+                                                        $"{variantsAsString}{className}/{modifier}",
+                                                        $"{className}/{modifier}",
+                                                        _completionUtils.TailwindLogo,
+                                                        null));
+                        }
+                        completions.Add(
+                                    new Completion(className + "/[]",
+                                                        variantsAsString + className + "/[]",
+                                                        className + "/[]",
+                                                        _completionUtils.TailwindLogo,
+                                                        null));
+                    }
+                }
             }
         }
 
@@ -285,107 +336,107 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                 completions.Add(
                     new Completion(pluginClass.TrimStart('.'),
-                                        modifiersAsString + prefix + pluginClass.TrimStart('.'),
+                                        variantsAsString + prefix + pluginClass.TrimStart('.'),
                                         pluginClass.TrimStart('.'),
                                         _completionUtils.TailwindLogo,
                                         null));
             }
         }
 
-        var modifierCompletions = new List<Completion>();
-        var modifierCompletionsToAddToEnd = new List<Completion>();
+        var variantCompletions = new List<Completion>();
+        var variantCompletionsToAddToEnd = new List<Completion>();
 
-        foreach (var modifier in _projectCompletionValues.Modifiers)
+        foreach (var variant in _projectCompletionValues.Variants)
         {
-            var description = _descriptionGenerator.GetModifierDescription(modifier, _projectCompletionValues);
+            var description = _descriptionGenerator.GetVariantDescription(variant, _projectCompletionValues);
 
-            if (modifiers.Contains(modifier) == false)
+            if (variants.Contains(variant) == false)
             {
-                var completion = new Completion(modifier + ":",
-                    modifiersAsString + modifier + ":",
+                var completion = new Completion(variant + ":",
+                    variantsAsString + variant + ":",
                     description,
                     _completionUtils.TailwindLogo,
                     null);
 
-                completion.Properties.AddProperty("modifier", true);
-                modifierCompletions.Add(completion);
+                completion.Properties.AddProperty("variant", true);
+                variantCompletions.Add(completion);
 
-                if (_projectCompletionValues.Version == TailwindVersion.V3 && description.StartsWith("&:") && description.Substring(2) == modifier)
+                if (_projectCompletionValues.Version == TailwindVersion.V3 && description.StartsWith("&:") && description.Substring(2) == variant)
                 {
-                    completion = new Completion("group-" + modifier + ":",
-                        modifiersAsString + "group-" + modifier + ":",
-                        _descriptionGenerator.GetModifierDescription("group-" + modifier, _projectCompletionValues),
+                    completion = new Completion("group-" + variant + ":",
+                        variantsAsString + "group-" + variant + ":",
+                        _descriptionGenerator.GetVariantDescription("group-" + variant, _projectCompletionValues),
                         _completionUtils.TailwindLogo,
                         null);
-                    completion.Properties.AddProperty("modifier", true);
-                    modifierCompletionsToAddToEnd.Add(completion);
+                    completion.Properties.AddProperty("variant", true);
+                    variantCompletionsToAddToEnd.Add(completion);
 
-                    completion = new Completion("peer-" + modifier + ":",
-                        modifiersAsString + "peer-" + modifier + ":",
-                        _descriptionGenerator.GetModifierDescription("peer-" + modifier, _projectCompletionValues),
+                    completion = new Completion("peer-" + variant + ":",
+                        variantsAsString + "peer-" + variant + ":",
+                        _descriptionGenerator.GetVariantDescription("peer-" + variant, _projectCompletionValues),
                         _completionUtils.TailwindLogo,
                         null);
-                    completion.Properties.AddProperty("modifier", true);
-                    modifierCompletionsToAddToEnd.Add(completion);
+                    completion.Properties.AddProperty("variant", true);
+                    variantCompletionsToAddToEnd.Add(completion);
                 }
             }
         }
 
-        if (_projectCompletionValues.PluginModifiers != null)
+        if (_projectCompletionValues.PluginVariants != null)
         {
-            foreach (var modifier in _projectCompletionValues.PluginModifiers)
+            foreach (var variant in _projectCompletionValues.PluginVariants)
             {
-                if (modifiers.Contains(modifier) == false)
+                if (variants.Contains(variant) == false)
                 {
-                    var completion = new Completion(modifier + ":",
-                                            modifiersAsString + modifier + ":",
-                                            _projectCompletionValues.Version == TailwindVersion.V4 ? 
-                                            _descriptionGenerator.GetModifierDescription(modifier, _projectCompletionValues) : modifier,
+                    var completion = new Completion(variant + ":",
+                                            variantsAsString + variant + ":",
+                                            _projectCompletionValues.Version == TailwindVersion.V4 ?
+                                            _descriptionGenerator.GetVariantDescription(variant, _projectCompletionValues) : variant,
                                             _completionUtils.TailwindLogo,
                                             null);
 
-                    completion.Properties.AddProperty("modifier", true);
-                    modifierCompletions.Add(completion);
+                    completion.Properties.AddProperty("variant", true);
+                    variantCompletions.Add(completion);
                 }
             }
         }
 
         foreach (var screen in _projectCompletionValues.Screen)
         {
-            if (modifiers.Contains(screen) == false)
+            if (variants.Contains(screen) == false)
             {
                 var completion = new Completion(screen + ":",
-                                        modifiersAsString + screen + ":",
+                                        variantsAsString + screen + ":",
                                         screen,
                                         _completionUtils.TailwindLogo,
                                         null);
 
-                completion.Properties.AddProperty("modifier", true);
-                modifierCompletions.Add(completion);
+                completion.Properties.AddProperty("variant", true);
+                variantCompletions.Add(completion);
 
                 if (_projectCompletionValues.Version == TailwindVersion.V3)
                 {
                     completion = new Completion("max-" + screen + ":",
-                                            modifiersAsString + "max-" + screen + ":",
+                                            variantsAsString + "max-" + screen + ":",
                                             screen,
                                             _completionUtils.TailwindLogo,
                                             null);
-                    completion.Properties.AddProperty("modifier", true);
-                    modifierCompletionsToAddToEnd.Add(completion);
+                    completion.Properties.AddProperty("variant", true);
+                    variantCompletionsToAddToEnd.Add(completion);
                 }
             }
         }
 
-        // keep peer, group, max modifiers at the end
-        modifierCompletions.AddRange(modifierCompletionsToAddToEnd);
+        // keep peer, group, max variants at the end
+        variantCompletions.AddRange(variantCompletionsToAddToEnd);
 
         if (string.IsNullOrWhiteSpace(currentClass))
         {
-            completions.InsertRange(0, modifierCompletions);
+            completions.InsertRange(0, variantCompletions);
         }
         else
         {
-            completions.AddRange(modifierCompletions);
+            completions.AddRange(variantCompletions);
         }
 
         foreach (var completion in completions)

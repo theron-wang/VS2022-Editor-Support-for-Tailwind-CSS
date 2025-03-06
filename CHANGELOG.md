@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.10.3 (March 5th, 2025)
+
+- Fix an error when using `var(...)` in `--color-...` theme settings ([#102](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/102))
+- Handle `@import` and `@config`
+- Add support for `@utility` and `@custom-variant`
+- Color adornments should show up for arbitrary classes with variables (i.e. `text-(--color-blue-100)`)
+- Arbitrary classes with a non-hex, three-digit value show color adornments (i.e. for `rotate-[100]`)
+- Adds modifier support for `bg-conic`, `bg-linear`, `bg-radial`, `text-<size>` (i.e. `bg-conic/oklch`, `text-sm/snug`)
+
 ## 1.10.2 (March 2nd, 2025)
 
 - Add missing classes (`bg-conic-*`, `-underline-offset-*`, etc.)

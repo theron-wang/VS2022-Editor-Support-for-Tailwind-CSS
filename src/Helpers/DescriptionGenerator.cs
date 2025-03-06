@@ -66,7 +66,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 string variableValue;
 
-                if (variable == "--spacing-")
+                if (variable == "--spacing")
                 {
                     if (projectCompletionValues.CssVariables.TryGetValue("--spacing", out var spacing))
                     {
@@ -208,22 +208,22 @@ internal sealed class DescriptionGenerator : IDisposable
     /// <summary>
     /// Gets the description for a Tailwind CSS class
     /// </summary>
-    /// <param name="text">The unprocessed text: <c>hover:bg-green-800/90</c>, <c>min-w-[10px]</c></param>
+    /// <param name="className">The unprocessed text: <c>hover:bg-green-800/90</c>, <c>min-w-[10px]</c></param>
     /// <param name="shouldFormat">true iff the description should be formatted</param>
     /// <returns>The description for the given class</returns>
-    internal string GetDescription(string text, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    internal string GetDescription(string className, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
-        text = text.Split(':').Last();
+        className = className.Split(':').Last();
 
         if (string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
         {
-            if (text.StartsWith(projectCompletionValues.Prefix))
+            if (className.StartsWith(projectCompletionValues.Prefix))
             {
-                text = text.Substring(projectCompletionValues.Prefix.Length);
+                className = className.Substring(projectCompletionValues.Prefix.Length);
             }
-            else if (text.StartsWith($"-{projectCompletionValues.Prefix}"))
+            else if (className.StartsWith($"-{projectCompletionValues.Prefix}"))
             {
-                text = $"-{text.Substring(projectCompletionValues.Prefix.Length + 1)}";
+                className = $"-{className.Substring(projectCompletionValues.Prefix.Length + 1)}";
             }
             else
             {
@@ -231,30 +231,45 @@ internal sealed class DescriptionGenerator : IDisposable
             }
         }
 
-        if (ImportantModifierHelper.IsImportantModifier(text))
+        if (ImportantModifierHelper.IsImportantModifier(className))
         {
-            text = text.TrimStart('!');
+            className = className.TrimStart('!');
         }
 
-        var description = GetDescriptionForClassOnly(text, projectCompletionValues, shouldFormat: shouldFormat);
-        if (string.IsNullOrEmpty(description) == false)
+        var description = GetDescriptionForClassOnly(className, projectCompletionValues, shouldFormat: shouldFormat);
+
+        if (string.IsNullOrEmpty(description))
+        {
+            if (className.Contains('/'))
+            {
+                description = GetDescriptionForClassOnly(className.Substring(0, className.LastIndexOf('/')), projectCompletionValues, shouldFormat: shouldFormat);
+
+                if (!string.IsNullOrEmpty(description))
+                {
+                    var modifier = className.Split('/').Last();
+
+                    return HandleModifier(modifier, className, description, projectCompletionValues);
+                }
+            }
+        }
+        else
         {
             return description;
         }
 
-        var endsWithArbitrary = text.LastIndexOf('[');
-        var segmentText = text;
+        var endsWithArbitrary = className.LastIndexOf('[');
+        var segmentText = className;
 
         if (endsWithArbitrary != -1)
         {
-            segmentText = text.Substring(0, endsWithArbitrary);
+            segmentText = className.Substring(0, endsWithArbitrary);
         }
 
         var segments = _stemSplitter.Split(segmentText).Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
 
         if (endsWithArbitrary != -1)
         {
-            segments.Add(text.Substring(endsWithArbitrary).Replace('_', ' '));
+            segments.Add(className.Substring(endsWithArbitrary).Replace('_', ' '));
         }
 
         if (segments.Count >= 2)
@@ -268,15 +283,15 @@ internal sealed class DescriptionGenerator : IDisposable
             {
                 color = segments[segments.Count - 1];
             }
-            var stem = text.Replace(color.Replace(' ', '_'), "{0}");
+            var stem = className.Replace(color.Replace(' ', '_'), "{0}");
 
-            var opacityText = color.Split('/').Last();
+            var modifier = color.Split('/').Last();
             int? opacity = null;
 
-            if (opacityText != color)
+            if (modifier != color)
             {
-                color = color.Replace($"/{opacityText}", "");
-                if (int.TryParse(opacityText, out var o))
+                color = color.Replace($"/{modifier}", "");
+                if (int.TryParse(modifier, out var o))
                 {
                     opacity = o;
                 }
@@ -295,7 +310,7 @@ internal sealed class DescriptionGenerator : IDisposable
             }
 
             var last = segments.Last();
-            stem = text.Replace(last.Replace(' ', '_'), "{0}");
+            stem = className.Replace(last.Replace(' ', '_'), "{0}");
 
             description = GetDescriptionForParenthesisClass(stem.Replace("{0}", "{a}"), last, projectCompletionValues, shouldFormat: shouldFormat);
 
@@ -318,7 +333,13 @@ internal sealed class DescriptionGenerator : IDisposable
                 return description;
             }
 
-            return GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
+            description = GetDescriptionForNumericClass(stem, last, projectCompletionValues, shouldFormat: shouldFormat);
+
+            if (className.Contains('/'))
+            {
+                return HandleModifier(modifier, className, description, projectCompletionValues);
+            }
+            return description;
         }
 
         return null;
@@ -784,10 +805,19 @@ internal sealed class DescriptionGenerator : IDisposable
         {
             var split = numberFractionOrPercent.Split('/');
 
-            if (split.Length == 2 && split.All(s => double.TryParse(s, out _)))
+            if (split.Length == 2)
             {
-                value = numberFractionOrPercent;
-                types.Add("{f}");
+                if (split.All(s => double.TryParse(s, out _)))
+                {
+                    value = numberFractionOrPercent;
+                    types.Add("{f}");
+                }
+                // Possible modifier
+                else if (double.TryParse(split[0], out _))
+                {
+                    value = split[0];
+                    types.Add("{n}");
+                }
             }
         }
 
@@ -1031,7 +1061,7 @@ internal sealed class DescriptionGenerator : IDisposable
         {
             return null;
         }
-        
+
         if (_arbitraryDescriptionCache.TryGetValue($"{stem}-[{special}]", out var description))
         {
             if (string.IsNullOrWhiteSpace(description))
@@ -1329,6 +1359,48 @@ internal sealed class DescriptionGenerator : IDisposable
         _colorDescriptionMapper[key] = result;
 
         return result;
+    }
+
+    private string HandleModifier(string modifier, string stem, string desc, ProjectCompletionValues projectCompletionValues)
+    {
+        if (projectCompletionValues.Version == TailwindVersion.V3 || string.IsNullOrWhiteSpace(modifier) || string.IsNullOrWhiteSpace(desc))
+        {
+            return desc;
+        }
+
+        if (stem.StartsWith("bg-linear") || stem.StartsWith("bg-radial") || stem.StartsWith("bg-conic"))
+        {
+            if (KnownModifiers.GradientModifierToDescription.TryGetValue(modifier, out var value))
+            {
+                return desc.Replace("oklch", value);
+            }
+        }
+        else if (KnownModifiers.IsEligibleForLineHeightModifier(stem, projectCompletionValues))
+        {
+            var variableToSearchFor = $"--leading-{modifier}";
+            var startOfLine = desc.IndexOf("line-height:");
+            var end = desc.IndexOf(';', startOfLine + 1);
+
+            if (startOfLine == -1 || end == -1)
+            {
+                return desc;
+            }
+
+            var start = startOfLine + "line-height:".Length;
+
+            var toReplace = desc.Substring(start, end - start);
+
+            if (projectCompletionValues.CssVariables.ContainsKey(variableToSearchFor))
+            {
+                return desc.Replace(toReplace, $"var({variableToSearchFor})");
+            }
+            else if (double.TryParse(modifier, out _))
+            {
+                return desc.Replace(toReplace, $"calc(var(--spacing) * {modifier})");
+            }
+        }
+        
+        return desc;
     }
 
     private Task OnSettingsChangedAsync(TailwindSettings settings)

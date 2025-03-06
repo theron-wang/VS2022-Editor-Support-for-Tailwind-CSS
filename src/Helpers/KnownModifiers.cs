@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Collections.Immutable;
+using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Helpers;
-internal static class BgGradientModifiers
+internal static class KnownModifiers
 {
-    public static readonly IReadOnlyDictionary<string, string> ModifiersToDescriptions = new Dictionary<string, string>()
+    public static readonly IReadOnlyDictionary<string, string> GradientModifierToDescription = new Dictionary<string, string>()
     {
         { "oklab", "oklab" },
         { "oklch", "oklch" },
@@ -15,4 +16,9 @@ internal static class BgGradientModifiers
         { "increasing", "oklch increasing hue" },
         { "decreasing", "oklch decreasing hue" }
     }.ToImmutableDictionary();
+
+    public static bool IsEligibleForLineHeightModifier(string className, ProjectCompletionValues project)
+    {
+        return className.StartsWith("text-") && project.CssVariables.ContainsKey($"--{className.Split('/')[0]}");
+    }
 }
