@@ -212,7 +212,7 @@ public sealed class CompletionUtilities : IDisposable
         var loadTasks = new List<Task>
         {
             LoadJsonAsync<List<Variant>>(Path.Combine(baseFolder, "tailwindclasses.json"), v => variants = v),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindmodifiers.json"), m => _unsetProjectCompletionConfiguration.Modifiers = m),
+            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindmodifiers.json"), m => _unsetProjectCompletionConfiguration.Variants = m),
             LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwindrgbmapper.json"), c => _unsetProjectCompletionConfiguration.ColorMapper = c),
             LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), spacing =>
             {
@@ -379,7 +379,7 @@ public sealed class CompletionUtilities : IDisposable
 
                 if (stem.Contains(":"))
                 {
-                    _unsetProjectCompletionConfiguration.Modifiers.Add($"{name.Replace(":-", "")}-[]");
+                    _unsetProjectCompletionConfiguration.Variants.Add($"{name.Replace(":-", "")}-[]");
                 }
                 else
                 {
@@ -430,7 +430,7 @@ public sealed class CompletionUtilities : IDisposable
 
         await Task.WhenAll(loadTasks);
 
-        _unsetProjectCompletionConfigurationV4.Modifiers = [.. _unsetProjectCompletionConfigurationV4.VariantsToDescriptions.Keys];
+        _unsetProjectCompletionConfigurationV4.Variants = [.. _unsetProjectCompletionConfigurationV4.VariantsToDescriptions.Keys];
 
         _unsetProjectCompletionConfigurationV4.Classes = [];
 

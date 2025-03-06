@@ -23,15 +23,15 @@ internal static class DescriptionUIHelper
     /// <summary>
     /// Returns a formatted UI element for a class description (for Visual Studio)
     /// </summary>
-    /// <param name="fullClass">The full class, including all modifiers</param>
-    /// <param name="modifierTotal">The full modifier adjustment, i.e. &amp;[open]:hover</param>
+    /// <param name="fullClass">The full class, including all variants</param>
+    /// <param name="variantTotal">The full variant adjustment, i.e. &amp;[open]:hover</param>
     /// <param name="mediaQueries">A list of media queries</param>
     /// <param name="desc">The description, already formatted via DescriptionGenerator</param>
     /// <param name="isImportant">!important or not</param>
     /// <returns></returns>
-    internal static ContainerElement GetDescriptionAsUIFormatted(string fullClass, string modifierTotal, string[] mediaQueries, string desc, bool isImportant)
+    internal static ContainerElement GetDescriptionAsUIFormatted(string fullClass, string variantTotal, string[] mediaQueries, string desc, bool isImportant)
     {
-        modifierTotal ??= "&";
+        variantTotal ??= "&";
         var mediaQueryElements = new List<ClassifiedTextElement>();
 
         const string singleIndent = "  ";
@@ -48,7 +48,7 @@ internal static class DescriptionUIHelper
         var classElement = new ContainerElement(
                     ContainerElementStyle.Wrapped,
                     new ClassifiedTextElement(
-                        new ClassifiedTextRun(PredefinedClassificationTypeNames.Literal, $"{totalIndent}{modifierTotal.Replace("&", $".{CssEscape(fullClass)}")} {{", ClassifiedTextRunStyle.UseClassificationFont)
+                        new ClassifiedTextRun(PredefinedClassificationTypeNames.Literal, $"{totalIndent}{variantTotal.Replace("&", $".{CssEscape(fullClass)}")} {{", ClassifiedTextRunStyle.UseClassificationFont)
                     ));
 
         totalIndent += singleIndent;
@@ -90,14 +90,14 @@ internal static class DescriptionUIHelper
     /// <summary>
     /// Returns a formatted UI element for a V4 class description (for Visual Studio)
     /// </summary>
-    /// <param name="fullClass">The full class, including all modifiers</param>
-    /// <param name="modifierTotal">The full modifier adjustment</param>
+    /// <param name="fullClass">The full class, including all variants</param>
+    /// <param name="variantTotal">The full variant adjustment</param>
     /// <param name="desc">The description, already formatted via DescriptionGenerator</param>
     /// <param name="isImportant">!important or not</param>
     /// <returns></returns>
-    internal static ContainerElement GetDescriptionAsUIFormattedV4(string fullClass, string modifierTotal, string desc, bool isImportant)
+    internal static ContainerElement GetDescriptionAsUIFormattedV4(string fullClass, string variantTotal, string desc, bool isImportant)
     {
-        modifierTotal ??= "";
+        variantTotal ??= "";
 
         const string singleIndent = "  ";
 
@@ -112,11 +112,11 @@ internal static class DescriptionUIHelper
 
         var descriptionLines = new List<ClassifiedTextElement>();
 
-        var modifiers = modifierTotal.Replace("{0}", "").Split(['{'], System.StringSplitOptions.RemoveEmptyEntries);
+        var variants = variantTotal.Replace("{0}", "").Split(['{'], System.StringSplitOptions.RemoveEmptyEntries);
 
-        foreach (var modifier in modifiers)
+        foreach (var variant in variants)
         {
-            var trimmed = modifier.Trim();
+            var trimmed = variant.Trim();
 
             if (trimmed.Contains('}'))
             {
@@ -300,7 +300,7 @@ internal static class DescriptionUIHelper
     /// <summary>
     /// Returns a formatted UI element for a class description (for WPF)
     /// </summary>
-    /// <param name="fullClass">The full class, including all modifiers</param>
+    /// <param name="fullClass">The full class, including all variants</param>
     /// <param name="desc">The description, already formatted via DescriptionGenerator</param>
     /// <param name="isImportant">!important or not</param>
     /// <returns></returns>

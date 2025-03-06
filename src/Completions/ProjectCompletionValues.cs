@@ -12,7 +12,7 @@ public class ProjectCompletionValues
 
     internal bool Initialized { get; set; }
     internal List<TailwindClass> Classes { get; set; } = [];
-    internal List<string> Modifiers { get; set; } = [];
+    internal List<string> Variants { get; set; } = [];
     /// <summary>
     /// V4 and above
     /// </summary>
@@ -46,7 +46,7 @@ public class ProjectCompletionValues
     internal Dictionary<string, string> CssVariables { get; set; } = [];
 
     internal List<string> PluginClasses { get; set; } = [];
-    internal List<string> PluginModifiers { get; set; } = [];
+    internal List<string> PluginVariants { get; set; } = [];
 
     /// <summary>
     /// Removed in V4
@@ -70,7 +70,7 @@ public class ProjectCompletionValues
         {
             Initialized = Initialized,
             Classes = Classes?.Select(c => c).ToList(),
-            Modifiers = Modifiers?.ToList(),
+            Variants = Variants?.ToList(),
             Screen = Screen?.ToList(),
             Prefix = Prefix,
             ColorMapper = new Dictionary<string, string>(ColorMapper),
@@ -87,7 +87,7 @@ public class ProjectCompletionValues
             DescriptionMapper = new Dictionary<string, string>(DescriptionMapper),
             CustomDescriptionMapper = new Dictionary<string, string>(CustomDescriptionMapper),
             PluginClasses = PluginClasses?.ToList(),
-            PluginModifiers = PluginModifiers?.ToList(),
+            PluginVariants = PluginVariants?.ToList(),
             Blocklist = new HashSet<string>(Blocklist),
             Version = Version,
             CssVariables = CssVariables?.ToDictionary(

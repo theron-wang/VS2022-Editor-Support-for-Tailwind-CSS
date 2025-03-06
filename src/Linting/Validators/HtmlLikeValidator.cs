@@ -31,7 +31,7 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
 
             List<string> classes = ClassSplitter(content).Select(c => c.Value).ToList();
 
-            var classesByModifiers = classes.GroupBy(c =>
+            var classesByVariants = classes.GroupBy(c =>
             {
                 var index = c.LastIndexOf(':');
 
@@ -42,7 +42,7 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
                 return string.Join(":", c.Substring(0, index).Split(':').OrderBy(x => x));
             });
 
-            foreach (var grouping in classesByModifiers)
+            foreach (var grouping in classesByVariants)
             {
                 // Find duplicates, since we are parsing from left to right
                 int index = -1;

@@ -35,11 +35,11 @@ internal sealed class ClassSortUtilities
             }
             using (var fs = File.Open(Path.Combine(baseFolder, "tailwindmodifiersorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                var modifierOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
+                var variantOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
                 _variantOrder = [];
-                for (int i = 0; i < modifierOrder.Count; i++)
+                for (int i = 0; i < variantOrder.Count; i++)
                 {
-                    _variantOrder[modifierOrder[i]] = i;
+                    _variantOrder[variantOrder[i]] = i;
                 }
             }
             using (var fs = File.Open(Path.Combine(v4Folder, "order.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -53,11 +53,11 @@ internal sealed class ClassSortUtilities
             }
             using (var fs = File.Open(Path.Combine(v4Folder, "variantorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                var modifierOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
+                var variantOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
                 _variantOrderV4 = [];
-                for (int i = 0; i < modifierOrder.Count; i++)
+                for (int i = 0; i < variantOrder.Count; i++)
                 {
-                    _variantOrderV4[modifierOrder[i]] = i;
+                    _variantOrderV4[variantOrder[i]] = i;
                 }
             }
 

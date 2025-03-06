@@ -24,7 +24,7 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
 
     public UIElement GetUIElement(Completion itemToRender, ICompletionSession context, UIElementType elementType)
     {
-        if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind") && !itemToRender.Properties.ContainsProperty("modifier"))
+        if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind") && !itemToRender.Properties.ContainsProperty("variant"))
         {
             var fullText = itemToRender.DisplayText;
             

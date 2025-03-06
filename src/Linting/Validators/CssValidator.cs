@@ -36,7 +36,7 @@ internal class CssValidator : Validator
 
             classes.Remove("@apply");
 
-            var classesByModifiers = classes.GroupBy(c =>
+            var classesByVariants = classes.GroupBy(c =>
             {
                 var index = c.LastIndexOf(':');
 
@@ -47,7 +47,7 @@ internal class CssValidator : Validator
                 return string.Join(":", c.Substring(0, index).Split(':').OrderBy(x => x));
             });
 
-            foreach (var grouping in classesByModifiers)
+            foreach (var grouping in classesByVariants)
             {
                 // Find duplicates, since we are parsing from left to right
                 int index = -1;
@@ -266,11 +266,11 @@ internal class CssValidator : Validator
                         }
                         else if (classType.EndsWith(":"))
                         {
-                            var modifier = classType.Replace(':', '-');
+                            var variant = classType.Replace(':', '-');
 
-                            foreach (var value in _projectCompletionValues.Modifiers.Where(m => m.StartsWith(modifier)))
+                            foreach (var value in _projectCompletionValues.Variants.Where(m => m.StartsWith(variant)))
                             {
-                                values.Add(value.Replace(modifier, ""));
+                                values.Add(value.Replace(variant, ""));
                             }
                         }
                         else

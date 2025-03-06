@@ -175,7 +175,7 @@
             (key, value) => {
                 if (key === 'plugins') {
                     var classes = [];
-                    var modifiers = [];
+                    var variants = [];
                     var customDescripts = [];
                     value.forEach(function (p) {
                         p({
@@ -310,7 +310,7 @@
                                 return;
                             },
                             addVariant: (name, value) => {
-                                modifiers.push(name)
+                                variants.push(name)
                             },
                             matchVariant: (name, cb, { values } = null) => {
                                 if (name !== '@') {
@@ -318,11 +318,11 @@
                                 }
                                 if (values) {
                                     for (const v of Object.entries(values)) {
-                                        modifiers.push(`${name}${v[0].replace('DEFAULT', '')}`);
+                                        variants.push(`${name}${v[0].replace('DEFAULT', '')}`);
                                     }
                                 }
 
-                                modifiers.push(`${name}[]`);
+                                variants.push(`${name}[]`);
                             },
                             corePlugins: (path) => {
                                 return configuration.corePlugins[path] !== false;
@@ -364,7 +364,7 @@
 
                     return {
                         'classes': classes,
-                        'modifiers': modifiers,
+                        'variants': variants,
                         'descriptions': customDescripts
                     };
                 } else {

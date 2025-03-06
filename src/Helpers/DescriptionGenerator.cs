@@ -325,70 +325,70 @@ internal sealed class DescriptionGenerator : IDisposable
     }
 
     /// <summary>
-    /// For Tailwind V3, returns an array of the media queries and the total modifier (i.e. &amp;[open]:hover) as the last element.
+    /// For Tailwind V3, returns an array of the media queries and the total variant (i.e. &amp;[open]:hover) as the last element.
     /// <br />
-    /// For Tailwind V4, returns an array of length one containing the total modifier, with a {0} placeholder for the class description.
+    /// For Tailwind V4, returns an array of length one containing the total variant, with a {0} placeholder for the class description.
     /// </summary>
-    /// <param name="modifiersAsString"></param>
+    /// <param name="variantsAsString"></param>
     /// <param name="projectCompletionValues"></param>
     /// <returns></returns>
-    internal string[] GetTotalModifierDescription(string modifiersAsString, ProjectCompletionValues projectCompletionValues)
+    internal string[] GetTotalVariantDescription(string variantsAsString, ProjectCompletionValues projectCompletionValues)
     {
-        var modifiers = Regex.Split(modifiersAsString, ":(?![^\\[]*\\])");
+        var variants = Regex.Split(variantsAsString, ":(?![^\\[]*\\])");
 
-        var modifierDescriptions = modifiers.Select(m => GetModifierDescription(m, projectCompletionValues, false));
+        var variantDescriptions = variants.Select(m => GetVariantDescription(m, projectCompletionValues, false));
 
         if (projectCompletionValues.Version == TailwindVersion.V3)
         {
-            var nonMediaModifiers = modifierDescriptions
+            var nonMediaVariants = variantDescriptions
                 .Where(d => !string.IsNullOrWhiteSpace(d) && !d.StartsWith("@"));
 
-            var mediaModifiers = modifierDescriptions
+            var mediaVariants = variantDescriptions
                 .Where(d => !string.IsNullOrWhiteSpace(d) && d.StartsWith("@"));
 
-            var strippedSelectors = nonMediaModifiers.Select(s => s.TrimStart('&')).ToList();
+            var strippedSelectors = nonMediaVariants.Select(s => s.TrimStart('&')).ToList();
 
-            var selectors = nonMediaModifiers.Where(s => !s.StartsWith("@") && s.Contains(' ')).ToList();
+            var selectors = nonMediaVariants.Where(s => !s.StartsWith("@") && s.Contains(' ')).ToList();
             var attributes = strippedSelectors.Where(s => s.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
             var pseudoClasses = strippedSelectors.Where(s => s.Contains(':') && !s.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
 
-            var modifierTemplate = "&" + string.Join("", attributes) + string.Join("", pseudoClasses);
+            var variantTemplate = "&" + string.Join("", attributes) + string.Join("", pseudoClasses);
 
-            string totalModifier;
+            string totalVariant;
 
             if (selectors.Count > 0)
             {
-                totalModifier = string.Join(", ", selectors).Replace("&", modifierTemplate);
+                totalVariant = string.Join(", ", selectors).Replace("&", variantTemplate);
             }
             else
             {
-                totalModifier = modifierTemplate;
+                totalVariant = variantTemplate;
             }
 
-            return [.. mediaModifiers, totalModifier];
+            return [.. mediaVariants, totalVariant];
         }
         else
         {
             var accumulator = "{0}";
 
-            foreach (var modifier in modifierDescriptions)
+            foreach (var variant in variantDescriptions)
             {
-                if (string.IsNullOrWhiteSpace(modifier))
+                if (string.IsNullOrWhiteSpace(variant))
                 {
                     continue;
                 }
-                accumulator = accumulator.Replace("{0}", modifier);
+                accumulator = accumulator.Replace("{0}", variant);
             }
 
             return [accumulator];
         }
     }
 
-    internal string GetModifierDescription(string modifier, ProjectCompletionValues projectCompletionValues, bool trim = true)
+    internal string GetVariantDescription(string variant, ProjectCompletionValues projectCompletionValues, bool trim = true)
     {
         if (projectCompletionValues.VariantsToDescriptions.Count > 0)
         {
-            if (projectCompletionValues.VariantsToDescriptions.TryGetValue(modifier, out var description))
+            if (projectCompletionValues.VariantsToDescriptions.TryGetValue(variant, out var description))
             {
                 if (trim)
                 {
@@ -402,66 +402,66 @@ internal sealed class DescriptionGenerator : IDisposable
             return null;
         }
 
-        if (modifier.StartsWith("peer-"))
+        if (variant.StartsWith("peer-"))
         {
-            return $"{GetModifierDescription(modifier.Substring(5), projectCompletionValues).Replace("&", ".peer")} ~ &";
+            return $"{GetVariantDescription(variant.Substring(5), projectCompletionValues).Replace("&", ".peer")} ~ &";
         }
-        else if (modifier.StartsWith("group-"))
+        else if (variant.StartsWith("group-"))
         {
-            return $"{GetModifierDescription(modifier.Substring(6), projectCompletionValues).Replace("&", ".group")} &";
+            return $"{GetVariantDescription(variant.Substring(6), projectCompletionValues).Replace("&", ".group")} &";
         }
-        else if (modifier.StartsWith("[") && modifier.EndsWith("]"))
+        else if (variant.StartsWith("[") && variant.EndsWith("]"))
         {
-            return modifier;
+            return variant;
         }
         // Special cases
-        else if (modifier == "*")
+        else if (variant == "*")
         {
             return "& > *";
         }
-        else if (modifier == "first-letter" || modifier == "first-line" || modifier == "placeholder" || modifier == "backdrop" || modifier == "before" ||
-                 modifier == "after" || modifier == "marker" || modifier == "selection")
+        else if (variant == "first-letter" || variant == "first-line" || variant == "placeholder" || variant == "backdrop" || variant == "before" ||
+                 variant == "after" || variant == "marker" || variant == "selection")
         {
-            modifier = $":{modifier}";
+            variant = $":{variant}";
         }
-        else if (modifier == "file")
+        else if (variant == "file")
         {
-            modifier = ":file-selector-button";
+            variant = ":file-selector-button";
         }
-        else if (modifier == "even" || modifier == "odd")
+        else if (variant == "even" || variant == "odd")
         {
-            modifier = $":nth-child({modifier})";
+            variant = $":nth-child({variant})";
         }
-        else if (modifier == "open")
+        else if (variant == "open")
         {
             return "&[open]";
         }
-        else if (modifier.StartsWith("aria") || modifier.StartsWith("data"))
+        else if (variant.StartsWith("aria") || variant.StartsWith("data"))
         {
-            if (modifier.Contains('[') || modifier.Contains(']'))
+            if (variant.Contains('[') || variant.Contains(']'))
             {
-                if (!modifier.EndsWith("]"))
+                if (!variant.EndsWith("]"))
                 {
                     return "";
                 }
                 // arbitrary; return as is without brackets
-                return $"&[{modifier.Replace("[", "").Replace("]", "")}=\"true\"]";
+                return $"&[{variant.Replace("[", "").Replace("]", "")}=\"true\"]";
             }
             else
             {
-                return $"&[{modifier}=\"true\"]";
+                return $"&[{variant}=\"true\"]";
             }
         }
-        else if (modifier == "rtl" || modifier == "ltr")
+        else if (variant == "rtl" || variant == "ltr")
         {
-            return $"&:where([dir=\"{modifier}\"], [dir=\"{modifier}\"] *)";
+            return $"&:where([dir=\"{variant}\"], [dir=\"{variant}\"] *)";
         }
-        else if (modifier.StartsWith("has"))
+        else if (variant.StartsWith("has"))
         {
-            if (modifier.Contains('[') && modifier.EndsWith("]"))
+            if (variant.Contains('[') && variant.EndsWith("]"))
             {
                 // has-[ length is 5, remove one extra ] at the end
-                var inner = modifier.Substring(5, modifier.Length - 6);
+                var inner = variant.Substring(5, variant.Length - 6);
 
                 return $"&:has({inner})";
             }
@@ -469,12 +469,12 @@ internal sealed class DescriptionGenerator : IDisposable
             return "";
         }
         // @ media queries
-        else if (modifier.StartsWith("supports"))
+        else if (variant.StartsWith("supports"))
         {
-            if (modifier.Contains('[') && modifier.EndsWith("]"))
+            if (variant.Contains('[') && variant.EndsWith("]"))
             {
                 // supports-[ length is 10, remove one extra ] at the end
-                var inner = modifier.Substring(10, modifier.Length - 11);
+                var inner = variant.Substring(10, variant.Length - 11);
 
                 if (inner.Contains(':'))
                 {
@@ -488,58 +488,58 @@ internal sealed class DescriptionGenerator : IDisposable
 
             return "";
         }
-        else if (modifier == "motion-safe")
+        else if (variant == "motion-safe")
         {
             return "@media (prefers-reduced-motion: no-preference)";
         }
-        else if (modifier == "motion-reduce")
+        else if (variant == "motion-reduce")
         {
             return "@media (prefers-reduced-motion: reduce)";
         }
-        else if (modifier == "contrast-more")
+        else if (variant == "contrast-more")
         {
             return "@media (prefers-contrast: more)";
         }
-        else if (modifier == "contrast-less")
+        else if (variant == "contrast-less")
         {
             return "@media (prefers-contrast: less)";
         }
-        else if (modifier == "portrait" || modifier == "landscape")
+        else if (variant == "portrait" || variant == "landscape")
         {
-            return $"@media (orientation: {modifier})";
+            return $"@media (orientation: {variant})";
         }
-        else if (modifier == "dark")
+        else if (variant == "dark")
         {
             return "@media (prefers-color-scheme: dark)";
         }
-        else if (modifier == "forced-colors")
+        else if (variant == "forced-colors")
         {
             return "@media (forced-colors: active)";
         }
-        else if (modifier == "print")
+        else if (variant == "print")
         {
             return "@media print";
         }
-        else if (modifier.StartsWith("min-"))
+        else if (variant.StartsWith("min-"))
         {
-            return $"@media (min-width: {modifier.Substring(5).TrimEnd(']')})";
+            return $"@media (min-width: {variant.Substring(5).TrimEnd(']')})";
         }
-        else if (modifier.StartsWith("max-["))
+        else if (variant.StartsWith("max-["))
         {
-            if (modifier.EndsWith("]"))
+            if (variant.EndsWith("]"))
             {
-                return $"@media (min-width: {modifier.Substring(5).TrimEnd(']')})";
+                return $"@media (min-width: {variant.Substring(5).TrimEnd(']')})";
             }
 
             return "";
         }
-        else if (projectCompletionValues.Screen.Contains(modifier) || projectCompletionValues.Screen.Contains($"max-{modifier}"))
+        else if (projectCompletionValues.Screen.Contains(variant) || projectCompletionValues.Screen.Contains($"max-{variant}"))
         {
             // TODO: handle screens
             return "";
         }
 
-        return $"&:{modifier}";
+        return $"&:{variant}";
     }
 
     private string GetDescriptionForClassOnly(string tailwindClass, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)

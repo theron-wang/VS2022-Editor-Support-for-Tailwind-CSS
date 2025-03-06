@@ -224,7 +224,7 @@ public sealed partial class CompletionConfiguration
         var original = _completionBase.GetUnsetCompletionConfiguration(project.Version);
 
         var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
-        project.Modifiers = [.. original.Modifiers];
+        project.Variants = [.. original.Variants];
         var classesToRemove = new List<TailwindClass>();
         var classesToAdd = new List<TailwindClass>();
 
@@ -240,11 +240,11 @@ public sealed partial class CompletionConfiguration
                 if (stem.Contains(':'))
                 {
                     var s = stem.Trim(':');
-                    project.Modifiers.RemoveAll(c => c.StartsWith(s) && c.Replace($"{s}-", "").Count(ch => ch == '-') == 0 && c.Contains("[]") == false);
+                    project.Variants.RemoveAll(c => c.StartsWith(s) && c.Replace($"{s}-", "").Count(ch => ch == '-') == 0 && c.Contains("[]") == false);
 
                     if (GetDictionary(config.OverridenValues[key], out var dict))
                     {
-                        project.Modifiers.AddRange(dict.Keys.Select(k => k == "DEFAULT" ? s : $"{s}-{k}"));
+                        project.Variants.AddRange(dict.Keys.Select(k => k == "DEFAULT" ? s : $"{s}-{k}"));
                     }
                 }
                 else if (stem.Contains("{s}"))
@@ -433,9 +433,9 @@ public sealed partial class CompletionConfiguration
 
                 foreach (var insert in toInsert)
                 {
-                    if (project.Modifiers.Contains(insert) == false)
+                    if (project.Variants.Contains(insert) == false)
                     {
-                        project.Modifiers.Add(insert);
+                        project.Variants.Add(insert);
                     }
                 }
             }
@@ -459,9 +459,9 @@ public sealed partial class CompletionConfiguration
                         {
                             var insert = k == "DEFAULT" ? s : $"{s}-{k}";
 
-                            if (project.Modifiers.Contains(insert) == false)
+                            if (project.Variants.Contains(insert) == false)
                             {
-                                project.Modifiers.Add(insert);
+                                project.Variants.Add(insert);
                             }
                         };
                     }
@@ -986,7 +986,7 @@ public sealed partial class CompletionConfiguration
             project.CustomDescriptionMapper = config?.PluginDescriptions ?? [];
             project.PluginClasses = config.PluginClasses;
         }
-        project.PluginModifiers = config.PluginVariants;
+        project.PluginVariants = config.PluginVariants;
     }
 
     private Dictionary<string, string> GetColorMapper(Dictionary<string, object> colors, TailwindVersion version, string prev = "")

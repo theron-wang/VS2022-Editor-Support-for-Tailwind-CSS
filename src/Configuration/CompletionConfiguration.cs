@@ -117,7 +117,7 @@ public sealed partial class CompletionConfiguration
                 LastConfig = config;
                 projectCompletionValues.Prefix = config.Prefix;
                 LoadGlobalConfiguration(projectCompletionValues, config);
-                projectCompletionValues.Modifiers = projectCompletionValues.Modifiers.Distinct().ToList();
+                projectCompletionValues.Variants = projectCompletionValues.Variants.Distinct().ToList();
 
                 LoadIndividualConfigurationOverride(projectCompletionValues, config);
                 LoadIndividualConfigurationExtend(projectCompletionValues, config);

@@ -63,8 +63,8 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
             {
                 session.Properties.AddProperty(PropertyKey, true);
 
-                var totalModifier = fullText.Contains(':') ?
-                    _descriptionGenerator.GetTotalModifierDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _completionUtilities) :
+                var totalVariant = fullText.Contains(':') ?
+                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _completionUtilities) :
                     [];
 
                 ContainerElement descriptionFormatted;
@@ -72,13 +72,13 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 if (_completionUtilities.Version == TailwindVersion.V3)
                 {
                     descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText,
-                            totalModifier.LastOrDefault(),
-                            totalModifier.Length > 1 ? totalModifier.Take(totalModifier.Length - 1).ToArray() : [],
+                            totalVariant.LastOrDefault(),
+                            totalVariant.Length > 1 ? totalVariant.Take(totalVariant.Length - 1).ToArray() : [],
                             desc, isImportant);
                 }
                 else
                 {
-                    descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormattedV4(fullText, totalModifier.FirstOrDefault(), desc, isImportant);
+                    descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormattedV4(fullText, totalVariant.FirstOrDefault(), desc, isImportant);
                 }
 
                 return Task.FromResult(new QuickInfoItem(span, descriptionFormatted));

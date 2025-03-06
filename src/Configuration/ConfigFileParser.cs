@@ -617,7 +617,7 @@ internal static class ConfigFileParser
 
         try
         {
-            config.PluginVariants = plugins.ContainsKey("modifiers") ? (List<string>)plugins["modifiers"] : null;
+            config.PluginVariants = plugins.ContainsKey("variants") ? (List<string>)plugins["variants"] : null;
 
             if (plugins.ContainsKey("classes"))
             {
