@@ -48,12 +48,17 @@ internal static class ColorHelpers
         {
             var rgb = color.Replace("rgb(", "").Replace(")", "").Trim();
 
-            var values = rgb.Split(' ');
+            var values = rgb.Split(' ')
+                .Take(3)
+                .Where(v => byte.TryParse(v, out _))
+                .Select(byte.Parse)
+                .ToArray();
+
             if (values.Length != 3)
             {
                 return null;
             }
-            return $"#{int.Parse(values[0]):X2}{int.Parse(values[1]):X2}{int.Parse(values[2]):X2}";
+            return $"#{values[0]:X2}{values[1]:X2}{values[2]:X2}";
         }
 
         if (color.StartsWith("oklch"))

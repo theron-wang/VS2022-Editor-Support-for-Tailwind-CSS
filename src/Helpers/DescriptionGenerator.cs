@@ -591,7 +591,12 @@ internal sealed class DescriptionGenerator : IDisposable
                 var replace = description.Substring(remIndex, 4);
 
                 var start = description.LastIndexOf(' ', remIndex) + 1;
-                var number = float.Parse(description.Substring(start, remIndex - start));
+
+                if (!float.TryParse(description.Substring(start, remIndex - start), out var number))
+                {
+                    index++;
+                    continue;
+                }
 
                 replace = $"{number}{replace}";
 
@@ -1333,7 +1338,11 @@ internal sealed class DescriptionGenerator : IDisposable
             return value;
         }
 
-        var rgb = value.Split(',');
+        var rgb = value.Split(',')
+            .Take(3)
+            .Where(v => byte.TryParse(v, out _))
+            .Select(byte.Parse)
+            .ToArray();
 
         if (rgb.Length == 0)
         {
@@ -1343,7 +1352,7 @@ internal sealed class DescriptionGenerator : IDisposable
         string result;
         if (hex)
         {
-            result = $"#{int.Parse(rgb[0]):X2}{int.Parse(rgb[1]):X2}{int.Parse(rgb[2]):X2}";
+            result = $"#{rgb[0]:X2}{rgb[1]:X2}{rgb[2]:X2}";
         }
         else
         {

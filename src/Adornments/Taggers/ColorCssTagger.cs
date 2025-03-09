@@ -44,8 +44,8 @@ internal sealed class ColorCssTaggerProvider : IViewTaggerProvider
                     continue;
                 }
 
-                // "@apply".Length + 1
-                int offset = apply + 7;
+                // "@apply".Length
+                int offset = apply + 6;
 
                 text = text.Substring(offset);
 

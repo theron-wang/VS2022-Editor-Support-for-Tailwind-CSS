@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
@@ -73,16 +74,21 @@ internal class ColorIconGenerator
         }
         else
         {
-            var rgb = value.Split(',');
+            var rgb = value.Split(',')
+                .Take(3)
+                .Where(v => byte.TryParse(v, out _))
+                .Select(byte.Parse)
+                .ToArray();
 
-            if (rgb.Length == 0)
+            if (rgb.Length != 3)
             {
                 // Something wrong happened: fall back to default tailwind icon
                 return CompletionUtilities.TailwindLogo;
             }
-            r = byte.Parse(rgb[0]);
-            g = byte.Parse(rgb[1]);
-            b = byte.Parse(rgb[2]);
+
+            r = rgb[0];
+            g = rgb[1];
+            b = rgb[2];
         }
         var a = (byte)Math.Round(opacity / 100d * 255);
 

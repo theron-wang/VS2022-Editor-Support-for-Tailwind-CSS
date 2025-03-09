@@ -1028,11 +1028,15 @@ public sealed partial class CompletionConfiguration
                     if (openParen != -1 && closeParen != -1 && closeParen - openParen > 1)
                     {
                         var text = s.Substring(openParen + 1, closeParen - openParen - 1);
-                        var values = text.Split(new char[] { ' ', ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        var values = text.Split([' ', ','], StringSplitOptions.RemoveEmptyEntries)
+                            .Take(3)
+                            .Where(v => byte.TryParse(v, out _))
+                            .Select(byte.Parse)
+                            .ToArray();
 
-                        if (values.Length >= 3 && values.Take(3).All(v => float.TryParse(v, out _)))
+                        if (values.Length == 3)
                         {
-                            newColorToRgbMapper[actual] = $"{float.Parse(values[0]):0},{float.Parse(values[1]):1},{float.Parse(values[2]):2}";
+                            newColorToRgbMapper[actual] = $"{values[0]},{values[1]},{values[2]}";
                         }
                         else
                         {

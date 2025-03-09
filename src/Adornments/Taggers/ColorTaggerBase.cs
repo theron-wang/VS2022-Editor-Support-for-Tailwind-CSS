@@ -211,19 +211,36 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 {
                     var numbers = c.Substring(c.IndexOf('(') + 1, c.IndexOf(')') - c.IndexOf('(') - 1)
                         .Split([' ', ',', '/'], StringSplitOptions.RemoveEmptyEntries);
+
+                    var numbersAsBytes = numbers.Take(3).Where(n => byte.TryParse(n, out _))
+                        .Select(byte.Parse)
+                        .ToArray();
+
+                    if (numbersAsBytes.Length != 3)
+                    {
+                        return null;
+                    }
+
                     if (numbers.Length == 3)
                     {
-                        return [byte.Parse(numbers[0]), byte.Parse(numbers[1]), byte.Parse(numbers[2]), 255];
+                        return [.. numbersAsBytes, 255];
                     }
                     else if (numbers.Length == 4)
                     {
                         // decimal or percent
                         if (!double.TryParse(numbers[3], out var alpha))
                         {
-                            alpha = double.Parse(numbers[3].Replace("%", "")) / 100;
+                            if (numbers[3].EndsWith("%") && double.TryParse(numbers[3].TrimEnd('%'), out alpha))
+                            {
+                                alpha /= 100;
+                            }
+                            else
+                            {
+                                return [.. numbersAsBytes, 255];
+                            }
                         }
 
-                        return [byte.Parse(numbers[0]), byte.Parse(numbers[1]), byte.Parse(numbers[2]), (byte)(alpha * 255)];
+                        return [.. numbersAsBytes, (byte)(alpha * 255)];
                     }
                 }
                 return null;
@@ -253,7 +270,10 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             }
             else
             {
-                var rgb = value.Split(',');
+                var rgb = value.Split(',')
+                    .Where(v => byte.TryParse(v, out _))
+                    .Select(byte.Parse)
+                    .ToArray();
 
                 if (rgb.Length != 3)
                 {
@@ -261,7 +281,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                     return null;
                 }
 
-                return [byte.Parse(rgb[0]), byte.Parse(rgb[1]), byte.Parse(rgb[2]), (byte)Math.Round(opacity / 100d * 255)];
+                return [..rgb, (byte)Math.Round(opacity / 100d * 255)];
             }
         }
         return null;
