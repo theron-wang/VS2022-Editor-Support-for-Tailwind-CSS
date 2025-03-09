@@ -660,6 +660,13 @@ internal sealed class DescriptionGenerator : IDisposable
                 return null;
             }
 
+            var spacingType = GetSpecialArbitraryTypeByInput(spacingValue);
+
+            if (spacingType == "color" || spacingType == "family")
+            {
+                return null;
+            }
+
             if (spacingValue.StartsWith("--"))
             {
                 spacingValue = $"var({spacingValue})";
@@ -972,7 +979,7 @@ internal sealed class DescriptionGenerator : IDisposable
             {
                 var c = color.Substring(1, color.Length - 2);
 
-                if (string.IsNullOrWhiteSpace(c))
+                if (string.IsNullOrWhiteSpace(c) || GetSpecialArbitraryTypeByInput(c) == "length")
                 {
                     return null;
                 }
@@ -1061,6 +1068,12 @@ internal sealed class DescriptionGenerator : IDisposable
                     arbitrary = $"calc({arbitrary} * -1)";
                 }
             }
+
+            // Necessary to handle classes like text-[10px]
+            if (special is null && projectCompletionValues.Version == TailwindVersion.V4)
+            {
+                special = GetSpecialArbitraryTypeByInput(arbitrary);
+            }
         }
         else
         {
@@ -1095,7 +1108,9 @@ internal sealed class DescriptionGenerator : IDisposable
             {
                 _arbitraryDescriptionCache[$"{stem}-[{special}]"] = "background-image: {0};";
             }
-            else if (stem == "bg-{a}" && special == "position")
+            // No, bg-[length:] does not exist, but position has the same constraints
+            // i.e. they both contain "length" units like px
+            else if (stem == "bg-{a}" && (special == "position" || special == "length"))
             {
                 _arbitraryDescriptionCache[$"{stem}-[{special}]"] = "background-position: {0};";
             }
@@ -1411,6 +1426,52 @@ internal sealed class DescriptionGenerator : IDisposable
         
         return desc;
     }
+
+    private static string GetSpecialArbitraryTypeByInput(string input)
+    {
+        // https://developer.mozilla.org/en-US/docs/Web/CSS/background-image#formal_syntax
+        if (input.Contains("gradient") || input.Contains("src") || input.Contains("url"))
+        {
+            return "image";
+        }
+
+        string[] colors = [
+            // rgba/hsla also accounted for
+            "rgb",
+            "hsl",
+            "hwb",
+            // oklab/oklch is also accounted for
+            "lab",
+            "lch",
+            "color"
+        ];
+
+        foreach (var color in colors)
+        {
+            if (input.Contains(color))
+                return "color";
+        }
+
+        string[] units = [
+            "px", "pt", "pc", "in", "cm", "mm", "Q",
+            "%", "em", "rem", "vw", "vh", "vmin", "vmax",
+            "ex", "ch", "lh", "rlh", "fr"
+        ];
+
+        foreach (var unit in units)
+        {
+            if (input.Contains(unit))
+                return "length";
+        }
+
+        if (input.Contains(',') || input.Contains('_'))
+        {
+            return "family-name";
+        }
+
+        return null;
+    }
+
 
     private Task OnSettingsChangedAsync(TailwindSettings settings)
     {
