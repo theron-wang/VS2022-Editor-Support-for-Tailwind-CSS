@@ -1,9 +1,11 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Documents;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Configuration;
@@ -23,6 +25,8 @@ public sealed class ConfigurationFileReloader : IDisposable
 
     private CompletionConfiguration _config;
     private TailwindSettings _settings;
+
+    private readonly Dictionary<string, HashSet<ConfigurationFile>> _importToConfigurationFiles = [];
 
     /// <summary>
     /// Initializes the class to subscribe to relevant events
@@ -48,12 +52,37 @@ public sealed class ConfigurationFileReloader : IDisposable
         }
     }
 
+    public void AddImport(string import, ConfigurationFile config)
+    {
+        if (_importToConfigurationFiles.TryGetValue(import.ToLower(), out var values))
+        {
+            values.Add(config);
+        }
+        else
+        {
+            _importToConfigurationFiles.Add(import.ToLower(), [config]);
+        }
+    }
+
     private void OnFileSave(string file)
     {
+        List<ConfigurationFile> configFiles = [];
+
         var configFile = _settings.ConfigurationFiles.FirstOrDefault(c => c.Path.Equals(file, StringComparison.InvariantCultureIgnoreCase));
+        
         if (configFile is not null)
         {
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => _config.ReloadCustomAttributesAsync(configFile)).FireAndForget();
+            configFiles.Add(configFile);
+        }
+
+        if (_importToConfigurationFiles.TryGetValue(file.ToLower(), out var values))
+        {
+            configFiles.AddRange(values);
+        }
+
+        foreach (var config in configFiles)
+        {
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => _config.ReloadCustomAttributesAsync(config)).FireAndForget();
         }
     }
 
@@ -61,6 +90,11 @@ public sealed class ConfigurationFileReloader : IDisposable
     {
         _settings = settings;
         var added = settings.ConfigurationFiles.Except(_settings.ConfigurationFiles).ToList();
+
+        foreach (var values in _importToConfigurationFiles.Values)
+        {
+            values.RemoveWhere(v => !settings.ConfigurationFiles.Contains(v));
+        }
 
         if (added.Count > 0)
         {

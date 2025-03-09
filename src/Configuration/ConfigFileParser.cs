@@ -361,6 +361,7 @@ internal static class ConfigFileParser
                 DictionaryHelpers.MergeDictionaries(imported.ThemeVariables, prev.ThemeVariables);
                 imported.PluginClasses.AddRange(prev.PluginClasses);
                 imported.PluginVariants.AddRange(prev.PluginVariants);
+                imported.Imports.AddRange(prev.Imports);
                 DictionaryHelpers.MergeDictionaries(imported.PluginDescriptions, prev.PluginDescriptions);
                 DictionaryHelpers.MergeDictionaries(imported.PluginVariantDescriptions, prev.PluginVariantDescriptions);
             }
@@ -370,6 +371,7 @@ internal static class ConfigFileParser
         {
             imported.PluginClasses = imported.PluginClasses.Distinct().ToList();
             imported.PluginVariants = imported.PluginVariants.Distinct().ToList();
+            imported.Imports = imported.Imports.Distinct().ToList();
         }
 
         var config = new TailwindConfiguration
@@ -382,7 +384,8 @@ internal static class ConfigFileParser
             PluginDescriptions = utilities,
             // For variants, put everything on the same line so it looks fine in completion tooltip
             PluginVariantDescriptions = variants.ToDictionary(v => v.Key, v => 
-                string.Join(" ", v.Value.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries)))
+                string.Join(" ", v.Value.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries))),
+            Imports = imports.Select(i => i.Replace("@import", "").Replace("@config", "")).ToList()
         };
 
         foreach (var pair in themeValuePairs)
@@ -430,6 +433,7 @@ internal static class ConfigFileParser
             DictionaryHelpers.MergeDictionaries(config.ThemeVariables, imported.ThemeVariables);
             config.PluginClasses = config.PluginClasses.Concat(imported.PluginClasses).Distinct().ToList();
             config.PluginVariants = config.PluginVariants.Concat(imported.PluginVariants).Distinct().ToList();
+            config.Imports = config.Imports.Concat(imported.Imports).Distinct().ToList();
             DictionaryHelpers.MergeDictionaries(config.PluginDescriptions, imported.PluginDescriptions);
             DictionaryHelpers.MergeDictionaries(config.PluginVariantDescriptions, imported.PluginVariantDescriptions);
         }

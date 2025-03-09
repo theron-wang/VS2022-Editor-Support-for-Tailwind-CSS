@@ -42,5 +42,7 @@ namespace TailwindCSSIntellisense.Configuration
         public List<string> EnabledCorePlugins { get; set; }
 
         public List<string> DisabledCorePlugins { get; set; }
+
+        public List<string> Imports { get; set; } = [];
     }
 }

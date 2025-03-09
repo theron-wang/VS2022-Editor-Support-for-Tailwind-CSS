@@ -112,6 +112,11 @@ public sealed partial class CompletionConfiguration
             {
                 var config = await ConfigFileParser.GetConfigurationAsync(configurationFile.Path);
 
+                foreach (var imports in config.Imports)
+                {
+                    Reloader.AddImport(imports, configurationFile);
+                }
+
                 var projectCompletionValues = _completionBase.GetCompletionConfigurationByConfigFilePath(configurationFile.Path);
 
                 LastConfig = config;
