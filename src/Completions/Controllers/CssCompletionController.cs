@@ -9,8 +9,10 @@ using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
 using System;
 using System.ComponentModel.Composition;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Runtime.InteropServices;
+using static Microsoft.VisualStudio.Shell.ThreadedWaitDialogHelper;
 
 namespace TailwindCSSIntellisense.Completions.Controllers;
 
@@ -28,32 +30,35 @@ internal sealed class CssCompletionController : IVsTextViewCreationListener
     [Import]
     internal ICompletionBroker CompletionBroker { get; set; }
 
+    [Import]
+    internal SVsServiceProvider ServiceProvider { get; set; }
+
     public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
         IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
 
-        var filter = new CssCommandFilter(view, CompletionBroker);
-
-        textViewAdapter.AddCommandFilter(filter, out var next);
-        filter.Next = next;
+        view.Properties.GetOrCreateSingletonProperty(() => new CssCommandFilter(view, textViewAdapter, this));
     }
 }
 
 internal sealed class CssCommandFilter : IOleCommandTarget
 {
-    ICompletionSession _currentSession;
+    private ICompletionSession _currentSession;
+    private readonly IOleCommandTarget _next;
+    private readonly ICompletionBroker _broker;
+    private readonly IWpfTextView _textView;
+    private readonly CssCompletionController _provider;
 
-    public CssCommandFilter(IWpfTextView textView, ICompletionBroker broker)
+    public CssCommandFilter(IWpfTextView textView, IVsTextView textViewAdapter, CssCompletionController provider)
     {
         _currentSession = null;
 
-        TextView = textView;
-        Broker = broker;
-    }
+        _textView = textView;
+        _broker = provider.CompletionBroker;
+        _provider = provider;
 
-    public IWpfTextView TextView { get; private set; }
-    public ICompletionBroker Broker { get; private set; }
-    public IOleCommandTarget Next { get; set; }
+        textViewAdapter.AddCommandFilter(this, out _next);
+    }
 
     private char GetTypeChar(IntPtr pvaIn)
     {
@@ -62,6 +67,11 @@ internal sealed class CssCommandFilter : IOleCommandTarget
 
     public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
     {
+        if (VsShellUtilities.IsInAutomationFunction(_provider.ServiceProvider))
+        {
+            return _next.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
+
         ThreadHelper.ThrowIfNotOnUIThread();
 
         if (pguidCmdGroup == VSConstants.VSStd2K)
@@ -78,7 +88,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
                 case VSConstants.VSStd2KCmdID.BACKSPACE:
                     break;
                 default:
-                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
         }
         else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
@@ -89,7 +99,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
                 case VSConstants.VSStd97CmdID.Undo:
                     break;
                 default:
-                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
         }
 
@@ -144,7 +154,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
 
         if (!handled)
         {
-            hresult = Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            hresult = _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
         if (retrigger)
@@ -209,7 +219,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
     /// </summary>
     private void DismissOtherSessions()
     {
-        foreach (var session in Broker.GetSessions(TextView))
+        foreach (var session in _broker.GetSessions(_textView))
         {
             if (session != _currentSession)
             {
@@ -272,11 +282,11 @@ internal sealed class CssCommandFilter : IOleCommandTarget
 
         if (moveOneBack)
         {
-            TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 1);
         }
         else if (moveTwoBack)
         {
-            TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 2);
         }
 
         return true;
@@ -290,20 +300,30 @@ internal sealed class CssCommandFilter : IOleCommandTarget
         if (_currentSession != null)
             return false;
 
-        SnapshotPoint caret = TextView.Caret.Position.BufferPosition;
+        var caretPoint =
+            _textView.Caret.Position.Point.GetPoint(
+            textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
+
+        if (!caretPoint.HasValue)
+        {
+            return false;
+        }
+
+        var caret = caretPoint.Value;
+
         ITextSnapshot snapshot = caret.Snapshot;
 
-        var completionActive = Broker.IsCompletionActive(TextView);
+        var completionActive = _broker.IsCompletionActive(_textView);
 
         if (completionActive)
         {
-            _currentSession = Broker.GetSessions(TextView)[0];
+            _currentSession = _broker.GetSessions(_textView)[0];
             _currentSession.Dismissed += (sender, args) => _currentSession = null;
         }
         else if (shouldStartNew)
         {
             DismissOtherSessions();
-            _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
+            _currentSession = _broker.CreateCompletionSession(_textView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
             _currentSession.Dismissed += (sender, args) => _currentSession = null;
             _currentSession.Start();
 
@@ -320,24 +340,13 @@ internal sealed class CssCommandFilter : IOleCommandTarget
 
     public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
     {
-        ThreadHelper.ThrowIfNotOnUIThread();
-        if (pguidCmdGroup == VSConstants.VSStd2K)
-        {
-            switch ((VSConstants.VSStd2KCmdID)prgCmds[0].cmdID)
-            {
-                case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
-                case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                    prgCmds[0].cmdf = (uint)OLECMDF.OLECMDF_ENABLED | (uint)OLECMDF.OLECMDF_SUPPORTED;
-                    return VSConstants.S_OK;
-            }
-        }
-        return Next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+        return _next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
     }
 
     private bool IsUsingAtDirective()
     {
-        var startPos = new SnapshotPoint(TextView.TextSnapshot, 0);
-        var caretPos = TextView.Caret.Position.BufferPosition;
+        var startPos = new SnapshotPoint(_textView.TextSnapshot, 0);
+        var caretPos = _textView.Caret.Position.BufferPosition;
 
         var searchSnapshot = new SnapshotSpan(startPos, caretPos);
         var text = searchSnapshot.GetText();
@@ -350,8 +359,8 @@ internal sealed class CssCommandFilter : IOleCommandTarget
 
     private string GetClassText()
     {
-        var startPos = new SnapshotPoint(TextView.TextSnapshot, 0);
-        var caretPos = TextView.Caret.Position.BufferPosition;
+        var startPos = new SnapshotPoint(_textView.TextSnapshot, 0);
+        var caretPos = _textView.Caret.Position.BufferPosition;
 
         var searchSnapshot = new SnapshotSpan(startPos, caretPos);
         var text = searchSnapshot.GetText();

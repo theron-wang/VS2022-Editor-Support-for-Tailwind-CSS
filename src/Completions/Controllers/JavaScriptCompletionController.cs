@@ -1,5 +1,6 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
+using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.OLE.Interop;
@@ -31,32 +32,43 @@ internal sealed class JavaScriptCompletionController : IVsTextViewCreationListen
     [Import]
     internal IAsyncCompletionBroker CompletionBroker { get; set; }
 
+    [Import]
+    internal SVsServiceProvider ServiceProvider { get; set; }
+
     public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
         IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
 
-        var filter = new JavaScriptCommandFilter(view, CompletionBroker);
-
-        textViewAdapter.AddCommandFilter(filter, out var next);
-        filter.Next = next;
+        view.Properties.GetOrCreateSingletonProperty(() => new JavaScriptCommandFilter(view, textViewAdapter, this));
     }
 }
 
 internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 {
-    IAsyncCompletionSession _currentSession;
+    private IAsyncCompletionSession _currentSession;
+    private readonly IOleCommandTarget _next;
+    private readonly IAsyncCompletionBroker _broker;
+    private readonly IWpfTextView _textView;
+    private readonly JavaScriptCompletionController _provider;
+
+    public JavaScriptCommandFilter(IWpfTextView textView, IVsTextView textViewAdapter, JavaScriptCompletionController provider)
+    {
+        _currentSession = null;
+
+        _textView = textView;
+        _broker = provider.CompletionBroker;
+        _provider = provider;
+
+        textViewAdapter.AddCommandFilter(this, out _next);
+    }
 
     public JavaScriptCommandFilter(IWpfTextView textView, IAsyncCompletionBroker broker)
     {
         _currentSession = null;
 
-        TextView = textView;
-        Broker = broker;
+        _textView = textView;
+        _broker = broker;
     }
-
-    public IWpfTextView TextView { get; private set; }
-    public IAsyncCompletionBroker Broker { get; private set; }
-    public IOleCommandTarget Next { get; set; }
 
     private char GetTypeChar(IntPtr pvaIn)
     {
@@ -65,6 +77,11 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 
     public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
     {
+        if (VsShellUtilities.IsInAutomationFunction(_provider.ServiceProvider))
+        {
+            return _next.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
+
         ThreadHelper.ThrowIfNotOnUIThread();
 
         if (pguidCmdGroup == VSConstants.VSStd2K)
@@ -81,7 +98,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
                 case VSConstants.VSStd2KCmdID.BACKSPACE:
                     break;
                 default:
-                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
         }
         else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
@@ -92,17 +109,17 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
                 case VSConstants.VSStd97CmdID.Undo:
                     break;
                 default:
-                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
         }
 
         // Is the caret in a className="" scope?
-        if (JSParser.IsCursorInClassScope(TextView, out var classSpan) == false || classSpan is null)
+        if (JSParser.IsCursorInClassScope(_textView, out var classSpan) == false || classSpan is null)
         {
-            return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
-        var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, TextView.Caret.Position.BufferPosition);
+        var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, _textView.Caret.Position.BufferPosition);
         var classText = truncatedClassSpan.GetText();
 
         bool handled = false;
@@ -144,7 +161,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 
         if (!handled)
         {
-            hresult = Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            hresult = _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
         if (retrigger)
@@ -213,7 +230,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
             return;
         }
 
-        _currentSession.OpenOrUpdate(new CompletionTrigger(), TextView.Caret.Position.BufferPosition, default);
+        _currentSession.OpenOrUpdate(new CompletionTrigger(), _textView.Caret.Position.BufferPosition, default);
     }
 
     /// <summary>
@@ -270,11 +287,11 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 
         if (moveOneBack)
         {
-            TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 1);
         }
         else if (moveTwoBack)
         {
-            TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 2);
         }
 
         return true;
@@ -288,7 +305,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
         if (_currentSession != null)
             return false;
 
-        var caret = TextView.Caret.Position.Point.GetPoint(
+        var caret = _textView.Caret.Position.Point.GetPoint(
             textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
 
         if (!caret.HasValue)
@@ -296,16 +313,16 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 
         ITextSnapshot snapshot = caret.Value.Snapshot;
 
-        var completionActive = Broker.IsCompletionActive(TextView);
+        var completionActive = _broker.IsCompletionActive(_textView);
 
         if (completionActive)
         {
-            _currentSession = Broker.GetSession(TextView);
+            _currentSession = _broker.GetSession(_textView);
             _currentSession.Dismissed += OnSessionDismissed;
         }
         else
         {
-            _currentSession = Broker.TriggerCompletion(TextView, new CompletionTrigger(), caret.Value, default);
+            _currentSession = _broker.TriggerCompletion(_textView, new CompletionTrigger(), caret.Value, default);
 
             if (_currentSession is not null)
             {
@@ -323,18 +340,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 
     public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
     {
-        ThreadHelper.ThrowIfNotOnUIThread();
-        if (pguidCmdGroup == VSConstants.VSStd2K)
-        {
-            switch ((VSConstants.VSStd2KCmdID)prgCmds[0].cmdID)
-            {
-                case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
-                case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                    prgCmds[0].cmdf = (uint)OLECMDF.OLECMDF_ENABLED | (uint)OLECMDF.OLECMDF_SUPPORTED;
-                    return VSConstants.S_OK;
-            }
-        }
-        return Next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+        return _next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
     }
 
     private void OnSessionDismissed(object sender, EventArgs e)

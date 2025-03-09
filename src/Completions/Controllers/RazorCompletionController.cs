@@ -31,32 +31,35 @@ internal sealed class RazorCompletionController : IVsTextViewCreationListener
     [Import]
     internal ICompletionBroker CompletionBroker { get; set; }
 
+    [Import]
+    internal SVsServiceProvider ServiceProvider { get; set; }
+
     public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
         IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
 
-        var filter = new RazorCommandFilter(view, CompletionBroker);
-
-        textViewAdapter.AddCommandFilter(filter, out var next);
-        filter.Next = next;
+        view.Properties.GetOrCreateSingletonProperty(() => new RazorCommandFilter(view, textViewAdapter, this));
     }
 }
 
 internal sealed class RazorCommandFilter : IOleCommandTarget
 {
-    ICompletionSession _currentSession;
+    private ICompletionSession _currentSession;
+    private readonly IOleCommandTarget _next;
+    private readonly ICompletionBroker _broker;
+    private readonly IWpfTextView _textView;
+    private readonly RazorCompletionController _provider;
 
-    public RazorCommandFilter(IWpfTextView textView, ICompletionBroker broker)
+    public RazorCommandFilter(IWpfTextView textView, IVsTextView textViewAdapter, RazorCompletionController provider)
     {
         _currentSession = null;
 
-        TextView = textView;
-        Broker = broker;
-    }
+        _textView = textView;
+        _broker = provider.CompletionBroker;
+        _provider = provider;
 
-    public IWpfTextView TextView { get; private set; }
-    public ICompletionBroker Broker { get; private set; }
-    public IOleCommandTarget Next { get; set; }
+        textViewAdapter.AddCommandFilter(this, out _next);
+    }
 
     private char GetTypeChar(IntPtr pvaIn)
     {
@@ -65,6 +68,11 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
 
     public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
     {
+        if (VsShellUtilities.IsInAutomationFunction(_provider.ServiceProvider))
+        {
+            return _next.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
+
         ThreadHelper.ThrowIfNotOnUIThread();
 
         if (pguidCmdGroup == VSConstants.VSStd2K)
@@ -81,7 +89,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                 case VSConstants.VSStd2KCmdID.BACKSPACE:
                     break;
                 default:
-                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
         }
         else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
@@ -92,22 +100,22 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                 case VSConstants.VSStd97CmdID.Undo:
                     break;
                 default:
-                    return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
             }
         }
 
         // Is the caret in a class="" scope?
-        if (RazorParser.IsCursorInClassScope(TextView, out var classSpan) == false || classSpan is null)
+        if (RazorParser.IsCursorInClassScope(_textView, out var classSpan) == false || classSpan is null)
         {
-            return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
-        var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, TextView.Caret.Position.BufferPosition);
+        var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, _textView.Caret.Position.BufferPosition);
         var classText = truncatedClassSpan.GetText();
 
         if (string.IsNullOrWhiteSpace(classText) == false && classText.Split(' ').Last().StartsWith("@"))
         {
-            return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
         bool handled = false;
@@ -149,7 +157,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
 
         if (!handled)
         {
-            hresult = Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            hresult = _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
         if (retrigger)
@@ -213,7 +221,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
     /// </summary>
     private void DismissOtherSessions()
     {
-        foreach (var session in Broker.GetSessions(TextView))
+        foreach (var session in _broker.GetSessions(_textView))
         {
             if (session != _currentSession)
             {
@@ -282,11 +290,11 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
 
         if (moveOneBack)
         {
-            TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 1);
         }
         else if (moveTwoBack)
         {
-            TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 2);
         }
 
         return true;
@@ -300,14 +308,24 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         if (_currentSession != null && _currentSession.IsDismissed == false)
             return false;
 
-        SnapshotPoint caret = TextView.Caret.Position.BufferPosition;
+        var caretPoint =
+            _textView.Caret.Position.Point.GetPoint(
+            textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
+
+        if (!caretPoint.HasValue)
+        {
+            return false;
+        }
+
+        var caret = caretPoint.Value;
+
         ITextSnapshot snapshot = caret.Snapshot;
 
-        var completionActive = Broker.IsCompletionActive(TextView);
+        var completionActive = _broker.IsCompletionActive(_textView);
 
         if (completionActive)
         {
-            _currentSession = Broker.GetSessions(TextView).FirstOrDefault(s => s.SelectedCompletionSet?.DisplayName?.Contains("Shim") == false);
+            _currentSession = _broker.GetSessions(_textView).FirstOrDefault(s => s.SelectedCompletionSet?.DisplayName?.Contains("Shim") == false);
 
             if (_currentSession is not null)
             {
@@ -332,7 +350,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         if (!completionActive || _currentSession is null)
         {
             DismissOtherSessions();
-            _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
+            _currentSession = _broker.CreateCompletionSession(_textView, snapshot.CreateTrackingPoint(caret, PointTrackingMode.Positive), true);
             _currentSession.Dismissed += (sender, args) => _currentSession = null;
             _currentSession.Start();
         }
@@ -342,18 +360,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
 
     public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
     {
-        ThreadHelper.ThrowIfNotOnUIThread();
-        if (pguidCmdGroup == VSConstants.VSStd2K)
-        {
-            switch ((VSConstants.VSStd2KCmdID)prgCmds[0].cmdID)
-            {
-                case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
-                case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                    prgCmds[0].cmdf = (uint)OLECMDF.OLECMDF_ENABLED | (uint)OLECMDF.OLECMDF_SUPPORTED;
-                    return VSConstants.S_OK;
-            }
-        }
-        return Next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+        return _next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
     }
 }
 

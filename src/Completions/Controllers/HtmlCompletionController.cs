@@ -13,352 +13,346 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using TailwindCSSIntellisense.Parsers;
 
-namespace TailwindCSSIntellisense.Completions.Controllers
+namespace TailwindCSSIntellisense.Completions.Controllers;
+
+#region Command Filter
+
+[Export(typeof(IVsTextViewCreationListener))]
+[ContentType("html")]
+[ContentType("WebForms")]
+[TextViewRole(PredefinedTextViewRoles.Editable)]
+internal sealed class HtmlCompletionController : IVsTextViewCreationListener
 {
-    #region Command Filter
+    [Import]
+    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; }
 
-    [Export(typeof(IVsTextViewCreationListener))]
-    [ContentType("html")]
-    [ContentType("WebForms")]
-    [TextViewRole(PredefinedTextViewRoles.Editable)]
-    internal sealed class HtmlCompletionController : IVsTextViewCreationListener
+    [Import]
+    internal ICompletionBroker CompletionBroker { get; set; }
+
+    [Import]
+    internal SVsServiceProvider ServiceProvider { get; set; }
+
+    public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
-        [Import]
-        internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; }
+        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
 
-        [Import]
-        internal ICompletionBroker CompletionBroker { get; set; }
-
-        public void VsTextViewCreated(IVsTextView textViewAdapter)
+        if (view.TextBuffer.IsLegacyRazorEditor())
         {
-            IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
-
-            // Handle legacy Razor editor; this completion controller is prioritized but
-            // we should only use the Razor completion controller in that case
-            if (view.TextBuffer.IsLegacyRazorEditor())
-            {
-                return;
-            }
-
-            var filter = new HtmlCommandFilter(view, CompletionBroker);
-
-            textViewAdapter.AddCommandFilter(filter, out var next);
-            filter.Next = next;
+            return;
         }
+
+        view.Properties.GetOrCreateSingletonProperty(() => new HtmlCommandFilter(view, textViewAdapter, this));
+    }
+}
+
+internal sealed class HtmlCommandFilter : IOleCommandTarget
+{
+    private ICompletionSession _currentSession;
+    private readonly IOleCommandTarget _next;
+    private readonly ICompletionBroker _broker;
+    private readonly IWpfTextView _textView;
+    private readonly HtmlCompletionController _provider;
+
+    public HtmlCommandFilter(IWpfTextView textView, IVsTextView textViewAdapter, HtmlCompletionController provider)
+    {
+        _currentSession = null;
+
+        _textView = textView;
+        _broker = provider.CompletionBroker;
+        _provider = provider;
+
+        textViewAdapter.AddCommandFilter(this, out _next);
     }
 
-    internal sealed class HtmlCommandFilter : IOleCommandTarget
+    private char GetTypeChar(IntPtr pvaIn)
     {
-        ICompletionSession _currentSession;
+        return (char)(ushort)Marshal.GetObjectForNativeVariant(pvaIn);
+    }
 
-        public HtmlCommandFilter(IWpfTextView textView, ICompletionBroker broker)
+    public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
+    {
+        if (VsShellUtilities.IsInAutomationFunction(_provider.ServiceProvider))
         {
-            _currentSession = null;
-
-            TextView = textView;
-            Broker = broker;
+            return _next.Exec(ref pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
-        public IWpfTextView TextView { get; private set; }
-        public ICompletionBroker Broker { get; private set; }
-        public IOleCommandTarget Next { get; set; }
+        ThreadHelper.ThrowIfNotOnUIThread();
 
-        private char GetTypeChar(IntPtr pvaIn)
+        if (pguidCmdGroup == VSConstants.VSStd2K)
         {
-            return (char)(ushort)Marshal.GetObjectForNativeVariant(pvaIn);
+            switch ((VSConstants.VSStd2KCmdID)nCmdID)
+            {
+                case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
+                case VSConstants.VSStd2KCmdID.COMPLETEWORD:
+                case VSConstants.VSStd2KCmdID.RETURN:
+                case VSConstants.VSStd2KCmdID.TAB:
+                case VSConstants.VSStd2KCmdID.CANCEL:
+                case VSConstants.VSStd2KCmdID.TYPECHAR:
+                case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
+                case VSConstants.VSStd2KCmdID.BACKSPACE:
+                    break;
+                default:
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            }
+        }
+        else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
+        {
+            switch ((VSConstants.VSStd97CmdID)nCmdID)
+            {
+                case VSConstants.VSStd97CmdID.Paste:
+                case VSConstants.VSStd97CmdID.Undo:
+                    break;
+                default:
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            }
         }
 
-        public int Exec(ref Guid pguidCmdGroup, uint nCmdID, uint nCmdexecopt, IntPtr pvaIn, IntPtr pvaOut)
+        // Is the caret in a class="" scope?
+        if (HtmlParser.IsCursorInClassScope(_textView, out var classSpan) == false || classSpan is null)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
+            return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
 
+        var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, _textView.Caret.Position.BufferPosition);
+        var classText = truncatedClassSpan.GetText();
+
+        bool handled = false;
+        bool retrigger = false;
+        int hresult = VSConstants.S_OK;
+
+        // 1. Pre-process
+        if (pguidCmdGroup == VSConstants.VSStd2K)
+        {
+            switch ((VSConstants.VSStd2KCmdID)nCmdID)
+            {
+                case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
+                case VSConstants.VSStd2KCmdID.COMPLETEWORD:
+                    handled = StartSession();
+                    Filter();
+                    break;
+                case VSConstants.VSStd2KCmdID.RETURN:
+                    handled = Complete(false);
+                    break;
+                case VSConstants.VSStd2KCmdID.TAB:
+                    handled = Complete(true);
+                    retrigger = RetriggerIntellisense(classText);
+                    break;
+                case VSConstants.VSStd2KCmdID.CANCEL:
+                    handled = Cancel();
+                    break;
+            }
+        }
+        else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
+        {
+            switch ((VSConstants.VSStd97CmdID)nCmdID)
+            {
+                case VSConstants.VSStd97CmdID.Paste:
+                case VSConstants.VSStd97CmdID.Undo:
+                    Cancel();
+                    break;
+            }
+        }
+
+        if (!handled)
+        {
+            hresult = _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+        }
+
+        if (retrigger)
+        {
+            StartSession();
+        }
+
+        if (ErrorHandler.Succeeded(hresult))
+        {
             if (pguidCmdGroup == VSConstants.VSStd2K)
             {
                 switch ((VSConstants.VSStd2KCmdID)nCmdID)
                 {
-                    case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
-                    case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                    case VSConstants.VSStd2KCmdID.RETURN:
-                    case VSConstants.VSStd2KCmdID.TAB:
-                    case VSConstants.VSStd2KCmdID.CANCEL:
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
-                    case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
-                    case VSConstants.VSStd2KCmdID.BACKSPACE:
-                        break;
-                    default:
-                        return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-                }
-            }
-            else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
-            {
-                switch ((VSConstants.VSStd97CmdID)nCmdID)
-                {
-                    case VSConstants.VSStd97CmdID.Paste:
-                    case VSConstants.VSStd97CmdID.Undo:
-                        break;
-                    default:
-                        return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-                }
-            }
-
-            // Is the caret in a class="" scope?
-            if (HtmlParser.IsCursorInClassScope(TextView, out var classSpan) == false || classSpan is null)
-            {
-                return Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-            }
-
-            var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, TextView.Caret.Position.BufferPosition);
-            var classText = truncatedClassSpan.GetText();
-
-            bool handled = false;
-            bool retrigger = false;
-            int hresult = VSConstants.S_OK;
-
-            // 1. Pre-process
-            if (pguidCmdGroup == VSConstants.VSStd2K)
-            {
-                switch ((VSConstants.VSStd2KCmdID)nCmdID)
-                {
-                    case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
-                    case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                        handled = StartSession();
-                        Filter();
-                        break;
-                    case VSConstants.VSStd2KCmdID.RETURN:
-                        handled = Complete(false);
-                        break;
-                    case VSConstants.VSStd2KCmdID.TAB:
-                        handled = Complete(true);
-                        retrigger = RetriggerIntellisense(classText);
-                        break;
-                    case VSConstants.VSStd2KCmdID.CANCEL:
-                        handled = Cancel();
-                        break;
-                }
-            }
-            else if (pguidCmdGroup == VSConstants.GUID_VSStandardCommandSet97)
-            {
-                switch ((VSConstants.VSStd97CmdID)nCmdID)
-                {
-                    case VSConstants.VSStd97CmdID.Paste:
-                    case VSConstants.VSStd97CmdID.Undo:
-                        Cancel();
-                        break;
-                }
-            }
-
-            if (!handled)
-            {
-                hresult = Next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
-            }
-
-            if (retrigger)
-            {
-                StartSession();
-            }
-
-            if (ErrorHandler.Succeeded(hresult))
-            {
-                if (pguidCmdGroup == VSConstants.VSStd2K)
-                {
-                    switch ((VSConstants.VSStd2KCmdID)nCmdID)
-                    {
-                        case VSConstants.VSStd2KCmdID.TYPECHAR:
-                            var character = GetTypeChar(pvaIn);
-                            if (_currentSession == null || character == ' ' || character == '/')
-                            {
-                                _currentSession?.Dismiss();
-                                StartSession();
-                                Filter();
-                            }
-                            else if (_currentSession != null)
-                            {
-                                DismissOtherSessions();
-                                Filter();
-                            }
-                            break;
-                        case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
+                        var character = GetTypeChar(pvaIn);
+                        if (_currentSession == null || character == ' ' || character == '/')
+                        {
                             _currentSession?.Dismiss();
                             StartSession();
+                            Filter();
+                        }
+                        else if (_currentSession != null)
+                        {
+                            DismissOtherSessions();
+                            Filter();
+                        }
+                        break;
+                    case VSConstants.VSStd2KCmdID.DELETEWORDLEFT:
+                        _currentSession?.Dismiss();
+                        StartSession();
+                        break;
+                    case VSConstants.VSStd2KCmdID.BACKSPACE:
+                        if (classText.Any() && char.IsWhiteSpace(classText.Last()))
+                        {
                             break;
-                        case VSConstants.VSStd2KCmdID.BACKSPACE:
-                            if (classText.Any() && char.IsWhiteSpace(classText.Last()))
-                            {
-                                break;
-                            }
-                            if (_currentSession == null || classText.EndsWith("/"))
-                            {
-                                _currentSession?.Dismiss();
-                                StartSession();
-                                Filter();
-                            }
-                            else if (_currentSession != null)
-                            {
-                                DismissOtherSessions();
-                                Filter();
-                            }
-                            break;
-                    }
-                }
-            }
-
-            return hresult;
-        }
-
-        private bool RetriggerIntellisense(string classText)
-        {
-            return classText != null && classText.EndsWith(":");
-        }
-
-        /// <summary>
-        /// Narrow down the list of options as the user types input
-        /// </summary>
-        private void Filter()
-        {
-            if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
-                return;
-
-            _currentSession?.SelectedCompletionSet?.Filter();
-            _currentSession?.SelectedCompletionSet?.SelectBestMatch();
-        }
-
-        /// <summary>
-        /// Dismisses the other sessions so two completion windows do not show up at once
-        /// </summary>
-        private void DismissOtherSessions()
-        {
-            foreach (var session in Broker.GetSessions(TextView))
-            {
-                if (session != _currentSession)
-                {
-                    session.Dismiss();
+                        }
+                        if (_currentSession == null || classText.EndsWith("/"))
+                        {
+                            _currentSession?.Dismiss();
+                            StartSession();
+                            Filter();
+                        }
+                        else if (_currentSession != null)
+                        {
+                            DismissOtherSessions();
+                            Filter();
+                        }
+                        break;
                 }
             }
         }
 
-        /// <summary>
-        /// Cancel the auto-complete session, and leave the text unmodified
-        /// </summary>
-        bool Cancel()
+        return hresult;
+    }
+
+    private bool RetriggerIntellisense(string classText)
+    {
+        return classText != null && classText.EndsWith(":");
+    }
+
+    /// <summary>
+    /// Narrow down the list of options as the user types input
+    /// </summary>
+    private void Filter()
+    {
+        if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
+            return;
+
+        _currentSession?.SelectedCompletionSet?.Filter();
+        _currentSession?.SelectedCompletionSet?.SelectBestMatch();
+    }
+
+    /// <summary>
+    /// Dismisses the other sessions so two completion windows do not show up at once
+    /// </summary>
+    private void DismissOtherSessions()
+    {
+        foreach (var session in _broker.GetSessions(_textView))
         {
-            if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
-                return false;
-
-            _currentSession.Dismiss();
-
-            return true;
-        }
-
-        /// <summary>
-        /// Auto-complete text using the specified token
-        /// </summary>
-        bool Complete(bool force)
-        {
-            if (_currentSession == null || _currentSession.SelectedCompletionSet == null || _currentSession.SelectedCompletionSet.SelectionStatus == null)
+            if (session != _currentSession)
             {
-                return false;
+                session.Dismiss();
             }
-
-            if (!_currentSession.SelectedCompletionSet.SelectionStatus.IsSelected)
-            {
-                if (force)
-                {
-                    _currentSession.SelectedCompletionSet.SelectBestMatch();
-                }
-                else
-                {
-                    _currentSession.Dismiss();
-                    return false;
-                }
-            }
-
-            var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
-            var moveOneBack = completionText.EndsWith("]");
-            var moveTwoBack = completionText.EndsWith("]:");
-            _currentSession.Commit();
-
-            if (moveOneBack)
-            {
-                TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 1);
-            }
-            else if (moveTwoBack)
-            {
-                TextView.Caret.MoveTo(TextView.Caret.Position.BufferPosition - 2);
-            }
-
-            return true;
-        }
-
-        /// <summary>
-        /// Display list of potential tokens
-        /// </summary>
-        bool StartSession()
-        {
-            if (_currentSession != null)
-                return false;
-
-            var caret = TextView.Caret.Position.Point.GetPoint(
-                textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
-
-            if (!caret.HasValue)
-                return false;
-
-            ITextSnapshot snapshot = caret.Value.Snapshot;
-
-            var completionActive = Broker.IsCompletionActive(TextView);
-
-            if (completionActive)
-            {
-                _currentSession = Broker.GetSessions(TextView)[0];
-                _currentSession.Dismissed += OnSessionDismissed;
-
-                if (_currentSession.SelectedCompletionSet is TailwindCssCompletionSet)
-                {
-                    // Not handled correctly; sometimes these sessions do not get dismissed so we should dismiss them here
-                    // This can be easily reproduced when typing bg-green-50/ and then backspacing /
-                    // We expect transparency options to disappear, but they are still there
-
-                    _currentSession.Dismiss();
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            DismissOtherSessions();
-            _currentSession = Broker.CreateCompletionSession(TextView, snapshot.CreateTrackingPoint(caret.Value.Position, PointTrackingMode.Positive), true);
-            _currentSession.Dismissed += OnSessionDismissed;
-            _currentSession.Start();
-
-            // Sometimes, creating another session will have irrelevant completions, so we need to filter
-            Filter();
-
-            return true;
-        }
-
-        public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
-        {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            if (pguidCmdGroup == VSConstants.VSStd2K)
-            {
-                switch ((VSConstants.VSStd2KCmdID)prgCmds[0].cmdID)
-                {
-                    case VSConstants.VSStd2KCmdID.AUTOCOMPLETE:
-                    case VSConstants.VSStd2KCmdID.COMPLETEWORD:
-                        prgCmds[0].cmdf = (uint)OLECMDF.OLECMDF_ENABLED | (uint)OLECMDF.OLECMDF_SUPPORTED;
-                        return VSConstants.S_OK;
-                }
-            }
-            return Next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
-        }
-
-        private void OnSessionDismissed(object sender, EventArgs e)
-        {
-            _currentSession.Dismissed -= OnSessionDismissed;
-            _currentSession = null;
         }
     }
 
-    #endregion
+    /// <summary>
+    /// Cancel the auto-complete session, and leave the text unmodified
+    /// </summary>
+    bool Cancel()
+    {
+        if (_currentSession == null || _currentSession.SelectedCompletionSet == null)
+            return false;
+
+        _currentSession.Dismiss();
+
+        return true;
+    }
+
+    /// <summary>
+    /// Auto-complete text using the specified token
+    /// </summary>
+    bool Complete(bool force)
+    {
+        if (_currentSession == null || _currentSession.SelectedCompletionSet == null || _currentSession.SelectedCompletionSet.SelectionStatus == null)
+        {
+            return false;
+        }
+
+        if (!_currentSession.SelectedCompletionSet.SelectionStatus.IsSelected)
+        {
+            if (force)
+            {
+                _currentSession.SelectedCompletionSet.SelectBestMatch();
+            }
+            else
+            {
+                _currentSession.Dismiss();
+                return false;
+            }
+        }
+
+        var completionText = _currentSession.SelectedCompletionSet.SelectionStatus.Completion.InsertionText;
+        var moveOneBack = completionText.EndsWith("]");
+        var moveTwoBack = completionText.EndsWith("]:");
+        _currentSession.Commit();
+
+        if (moveOneBack)
+        {
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 1);
+        }
+        else if (moveTwoBack)
+        {
+            _textView.Caret.MoveTo(_textView.Caret.Position.BufferPosition - 2);
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Display list of potential tokens
+    /// </summary>
+    bool StartSession()
+    {
+        if (_currentSession != null)
+            return false;
+
+        var caret = _textView.Caret.Position.Point.GetPoint(
+            textBuffer => !textBuffer.ContentType.IsOfType("projection"), PositionAffinity.Predecessor);
+
+        if (!caret.HasValue)
+            return false;
+
+        ITextSnapshot snapshot = caret.Value.Snapshot;
+
+        var completionActive = _broker.IsCompletionActive(_textView);
+
+        if (completionActive)
+        {
+            _currentSession = _broker.GetSessions(_textView)[0];
+            _currentSession.Dismissed += OnSessionDismissed;
+
+            if (_currentSession.SelectedCompletionSet is TailwindCssCompletionSet)
+            {
+                // Not handled correctly; sometimes these sessions do not get dismissed so we should dismiss them here
+                // This can be easily reproduced when typing bg-green-50/ and then backspacing /
+                // We expect transparency options to disappear, but they are still there
+
+                _currentSession.Dismiss();
+            }
+            else
+            {
+                return true;
+            }
+        }
+
+        DismissOtherSessions();
+        _currentSession = _broker.CreateCompletionSession(_textView, snapshot.CreateTrackingPoint(caret.Value.Position, PointTrackingMode.Positive), true);
+        _currentSession.Dismissed += OnSessionDismissed;
+        _currentSession.Start();
+
+        // Sometimes, creating another session will have irrelevant completions, so we need to filter
+        Filter();
+
+        return true;
+    }
+
+    public int QueryStatus(ref Guid pguidCmdGroup, uint cCmds, OLECMD[] prgCmds, IntPtr pCmdText)
+    {
+        return _next.QueryStatus(pguidCmdGroup, cCmds, prgCmds, pCmdText);
+    }
+
+    private void OnSessionDismissed(object sender, EventArgs e)
+    {
+        _currentSession.Dismissed -= OnSessionDismissed;
+        _currentSession = null;
+    }
 }
+
+#endregion
