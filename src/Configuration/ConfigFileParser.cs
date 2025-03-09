@@ -232,8 +232,21 @@ internal static class ConfigFileParser
 
                     if (directive == "import")
                     {
-                        var import = directiveParameter.Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
-                        if (import != "tailwindcss" && !import.StartsWith("url"))
+                        var firstQuote = directiveParameter.IndexOfAny(['\'', '"']);
+                        var secondQuote = directiveParameter.IndexOfAny(['\'', '"'], firstQuote + 1);
+
+                        if (firstQuote == -1 || secondQuote == -1)
+                        {
+                            continue;
+                        }
+
+                        // Handle: @import './_components.css' layer(components);
+                        var import = directiveParameter.Substring(firstQuote + 1, secondQuote - firstQuote - 1).Trim();
+
+                        // Handle these cases:
+                        // @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+                        // @import "tailwindcss";
+                        if (import != "tailwindcss" && !directiveParameter.StartsWith("url"))
                         {
                             import = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import);
                             imports.Add($"@import{import}");
