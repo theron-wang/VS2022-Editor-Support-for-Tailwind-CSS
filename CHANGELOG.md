@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.10.4 (March 9th, 2025)
+
+- Handle `@import` statements with additional parameters ([#85](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/85))
+- Remove `int/float/byte.Parse()` calls to avoid format string errors ([#102](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/102))
+- Singleton command filters for completion controllers ([#107](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/107))
+- Reload files referenced through `@config` and `@import` ([#85](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/85))
+- Correct class descriptions for ambiguous arbitrary classes (i.e. `text-[10px]`) ([#108](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/108))
+- Add IntelliSense for missing css directives (`@utility`, `@custom-variant`, etc.)
+
 ## 1.10.3 (March 5th, 2025)
 
 - Fix an error when using `var(...)` in `--color-...` theme settings ([#102](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/102))

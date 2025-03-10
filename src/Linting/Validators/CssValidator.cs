@@ -79,7 +79,7 @@ internal class CssValidator : Validator
         }
         #endregion
         #region @screen
-        else if (_linterUtils.GetErrorSeverity(ErrorType.InvalidScreen) != ErrorSeverity.None && HasOnlyOneDirective(text, "@screen"))
+        else if (_projectCompletionValues.Version == TailwindVersion.V3 && _linterUtils.GetErrorSeverity(ErrorType.InvalidScreen) != ErrorSeverity.None && HasOnlyOneDirective(text, "@screen"))
         {
             text = GetFullScope(span, text);
 
@@ -127,13 +127,34 @@ internal class CssValidator : Validator
             text = GetFullScope(span, text);
 
             var tailwindDirective = text.Substring(text.IndexOf("@tailwind") + 9).Trim().TrimEnd(';').TrimEnd();
-            List<string> valid = ["base", "components", "utilities", "variants"];
-            if (valid.Contains(tailwindDirective) == false)
-            {
-                var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(tailwindDirective), tailwindDirective.Length);
 
-                _checkedSpans.Add(span);
-                yield return new Error(errorSpan, $"'{tailwindDirective}' is not a valid value.", ErrorType.InvalidTailwindDirective);
+            var startIndex = text.IndexOf("@tailwind") + 9;
+
+            List<string> valid = ["base", "components", "utilities", "screens", "variants"];
+
+            if (!string.IsNullOrWhiteSpace(tailwindDirective))
+            {
+                if (valid.Contains(tailwindDirective) == false)
+                {
+                    var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(tailwindDirective, startIndex), tailwindDirective.Length);
+
+                    _checkedSpans.Add(span);
+                    yield return new Error(errorSpan, $"'{tailwindDirective}' is not a valid value.", ErrorType.InvalidTailwindDirective);
+                }
+                else if (_projectCompletionValues.Version == TailwindVersion.V4)
+                {
+                    var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(tailwindDirective, startIndex), tailwindDirective.Length);
+                    if (tailwindDirective == "base")
+                    {
+                        _checkedSpans.Add(span);
+                        yield return new Error(errorSpan, "'@tailwind base' is no longer available in v4. Use '@import \"tailwindcss/preflight\"' instead.", ErrorType.InvalidTailwindDirective);
+                    }
+                    else if (tailwindDirective != "utilities")
+                    {
+                        _checkedSpans.Add(span);
+                        yield return new Error(errorSpan, $"'@tailwind {tailwindDirective}' is no longer available in v4. Use '@tailwind utilities' instead.", ErrorType.InvalidTailwindDirective);
+                    }
+                }
             }
         }
         #endregion

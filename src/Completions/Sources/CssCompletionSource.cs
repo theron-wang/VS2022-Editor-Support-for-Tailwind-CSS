@@ -63,65 +63,107 @@ namespace TailwindCSSIntellisense.Completions.Sources
             {
                 if (IsUsingDirective(session, out string directive))
                 {
-                    switch (directive)
+                    if (_projectCompletionValues.Version == TailwindVersion.V3)
                     {
-                        case "@tailwind":
-                            completions = new List<Completion>()
-                            {
-                                new Completion("base", "base", "base", _completionUtils.TailwindLogo, null),
-                                new Completion("components", "components", "components", _completionUtils.TailwindLogo, null),
-                                new Completion("utilities", "utilities", "utilities", _completionUtils.TailwindLogo, null),
-                                new Completion("variants", "variants", "variants", _completionUtils.TailwindLogo, null)
-                            };
-                            break;
-                        case "@layer":
-                            completions = new List<Completion>()
-                            {
-                                new Completion("base", "base", "base", _completionUtils.TailwindLogo, null),
-                                new Completion("components", "components", "components", _completionUtils.TailwindLogo, null),
-                                new Completion("utilities", "utilities", "utilities", _completionUtils.TailwindLogo, null)
-                            };
-                            break;
-                        case "@media":
-                            completions = [];
-                            foreach (var screen in _projectCompletionValues.Screen)
-                            {
-                                completions.Add(new($"screen({screen})", $"screen({screen})", $"screen({screen})", _completionUtils.TailwindLogo, null));
-                            }
-                            break;
+                        switch (directive)
+                        {
+                            case "@tailwind":
+                                completions =
+                                [
+                                    new("base", "base", "base", _completionUtils.TailwindLogo, null),
+                                    new("components", "components", "components", _completionUtils.TailwindLogo, null),
+                                    new("utilities", "utilities", "utilities", _completionUtils.TailwindLogo, null),
+                                    new("screens", "screens", "screens", _completionUtils.TailwindLogo, null),
+                                    new("variants", "variants", "variants", _completionUtils.TailwindLogo, null)
+                                ];
+                                break;
+                            case "@layer":
+                                completions =
+                                [
+                                    new("base", "base", "base", _completionUtils.TailwindLogo, null),
+                                new("components", "components", "components", _completionUtils.TailwindLogo, null),
+                                new("utilities", "utilities", "utilities", _completionUtils.TailwindLogo, null)
+                                ];
+                                break;
+                            case "@media":
+                                completions = [];
+                                foreach (var screen in _projectCompletionValues.Screen)
+                                {
+                                    completions.Add(new($"screen({screen})", $"screen({screen})", $"screen({screen})", _completionUtils.TailwindLogo, null));
+                                }
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        if (directive == "@theme")
+                        {
+                            completions =
+                            [
+                                new("reference", "reference", "Don't emit CSS variables for these theme values.", _completionUtils.TailwindLogo, null),
+                                new("inline", "inline", "Inline these theme values into generated utilities instead of using var(…).", _completionUtils.TailwindLogo, null),
+                                new("static", "static", "Always emit these theme values into the CSS file instead of only when used.", _completionUtils.TailwindLogo, null),
+                                new("default", "default", "Allow these theme values to be overriden by JS configs and plugins.", _completionUtils.TailwindLogo, null)
+                            ];
+                        }
                     }
                 }
                 else
                 {
-                    completions = new List<Completion>()
+                    if (_projectCompletionValues.Version == TailwindVersion.V3)
                     {
-                        // Directive completions are hard-coded in as there are only two of them
-                        new Completion("@tailwind", "@tailwind", "Use the @tailwind directive to insert Tailwind’s base, components, utilities and variants styles into your CSS.", _completionUtils.TailwindLogo, null),
-                        new Completion("@config", "@config", "Use the @config directive to specify which config file Tailwind should use when compiling that CSS file. This is useful for projects that need to use different configuration files for different CSS entry points.", _completionUtils.TailwindLogo, null)
-                    };
+                        completions =
+                        [
+                            // Directive completions are hard-coded in as there are only two of them
+                            new("@tailwind", "@tailwind", "Use the @tailwind directive to insert Tailwind’s base, components, utilities and variants styles into your CSS.", _completionUtils.TailwindLogo, null),
+                            new("@config", "@config", "Use the @config directive to specify which config file Tailwind should use when compiling that CSS file. This is useful for projects that need to use different configuration files for different CSS entry points.", _completionUtils.TailwindLogo, null)
+                        ];
+                    }
+                    else
+                    {
+                        completions = [
+                            new("@theme", "@theme", "Use the @theme directive to specify which config file Tailwind should use when compiling that CSS file.", _completionUtils.TailwindLogo, null),
+                            new("@source", "@source", "Use the @source directive to explicitly specify source files that aren't picked up by Tailwind's automatic content detection.", _completionUtils.TailwindLogo, null),
+                            new("@utility", "@utility", "Use the @utility directive to define a custom utility.", _completionUtils.TailwindLogo, null),
+                            new("@custom-variant", "@custom-variant", "Use the @custom-variant directive to add a custom variant in your project.", _completionUtils.TailwindLogo, null),
+                            new("@config", "@config", "Use the @config directive to specify which config file Tailwind should use when compiling that CSS file.", _completionUtils.TailwindLogo, null),
+                            new("@plugin", "@plugin", "Use the @plugin directive to include a JS plugin in your Tailwind CSS build.", _completionUtils.TailwindLogo, null)
+                        ];
+                    }
                 }
             }
             else if (!isInBaseDirectiveBlock)
             {
                 if (IsUsingApplyDirective(session))
                 {
-                    var classRaw = applicableTo.GetText(snapshot).Split(new[] { "@apply" }, StringSplitOptions.None).Last().TrimStart().Split(' ').Last() ?? "";
+                    var classRaw = applicableTo.GetText(snapshot).Split(["@apply"], StringSplitOptions.None).Last().TrimStart().Split(' ').Last() ?? "";
 
                     completions = GetCompletions(classRaw);
                 }
-                else if (CanShowApplyDirective(session))
+                else if (IsInsideSelectorBlock(session))
                 {
                     completions.Add(
                         // @apply completion is the only completion in this context
                         new Completion("@apply", "@apply", "Use @apply to inline any existing utility classes into your own custom CSS.", _completionUtils.TailwindLogo, null)
                     );
+                    if (_projectCompletionValues.Version == TailwindVersion.V4)
+                    {
+                        completions.Add(
+                            // @apply completion is the only completion in this context
+                            new Completion("@variant", "@variant", "Use the @variant directive to apply a Tailwind variant to styles in your CSS.", _completionUtils.TailwindLogo, null)
+                        );
+                    }
                 }
                 else
                 {
-                    completions = new List<Completion>()
-                    {
-                        new Completion("theme()", "theme()", "Use the theme() function to access your Tailwind config values using dot notation.", _completionUtils.TailwindLogo, null)
-                    };
+                    completions =
+                    [
+                        new Completion("theme()", "theme()",
+                        _projectCompletionValues.Version == TailwindVersion.V4 ?
+                            "Deprecated - use CSS theme variables instead." :
+                            "Use the theme() function to access your Tailwind config values using dot notation.",
+                        _completionUtils.TailwindLogo, null)
+                    ];
                 }
             }
 
@@ -167,7 +209,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     "All",
                     applicableTo,
                     completions,
-                    new List<Completion>()));
+                    []));
             }
         }
 
@@ -264,7 +306,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
             }
         }
 
-        private bool CanShowApplyDirective(ICompletionSession session)
+        private bool IsInsideSelectorBlock(ICompletionSession session)
         {
             // Function is called and ensured that the caret is inside a block
 
