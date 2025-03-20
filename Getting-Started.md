@@ -62,7 +62,7 @@ This will install `tailwindcss` `@tailwindcss/cli` (if needed) and create a new 
 
 ## Setting Up the Extension
 
-3. _Setting an input file is only necessary for projects using Tailwind v3._ Before you are ready to build, **set your input CSS file**. Your output file will automatically be generated as `{input file name}.output.css`. If you want to specify a certain file, you can right click and click 'Link as Tailwind CSS output file' and select the corresponding input file. **Input files must already be defined prior to selecting an output file.**
+3. _Setting an input file via the context menu is only necessary for projects using Tailwind v3. In v4 projects, this is done automatically when you set a configuration file._ Before you are ready to build, **set your input CSS file**. Your output file will automatically be generated as `{input file name}.output.css`. If you want to specify a certain file, you can right click and click 'Link as Tailwind CSS output file' and select the corresponding input file. **Input files must already be defined prior to selecting an output file.**
 
 ![Input and output CSS files](art/Customizability-Build-2.png)
 
