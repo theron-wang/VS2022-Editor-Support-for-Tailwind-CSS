@@ -168,7 +168,7 @@ internal sealed class CheckForUpdates
 
         if (currentMajor != newMajor)
         {
-            await VS.StatusBar.ShowMessageAsync($"A major Tailwind update is available: {relevantPackage.Current}. If you would like to update, please manually run npm install {module}@latest.");
+            await VS.StatusBar.ShowMessageAsync($"A major Tailwind update is available: {relevantPackage.Latest}. If you would like to update, please manually run npm install {module}@latest.");
         }
 
         if (relevantPackage.Current == relevantPackage.Wanted)

@@ -51,12 +51,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Adornments\ColorAdornment.cs" />
-    <Compile Include="Adornments\Taggers\ColorCssTagger.cs" />
-    <Compile Include="Adornments\Taggers\ColorJSTagger.cs" />
-    <Compile Include="Adornments\Taggers\ColorHtmlTagger.cs" />
-    <Compile Include="Adornments\Taggers\ColorTaggerBase.cs" />
-    <Compile Include="Adornments\Taggers\ColorRazorTagger.cs" />
+    <Compile Include="Adornments\Colors\ColorAdornment.cs" />
+    <Compile Include="Adornments\Colors\ColorCssTagger.cs" />
+    <Compile Include="Adornments\Colors\ColorJSTagger.cs" />
+    <Compile Include="Adornments\Colors\ColorHtmlTagger.cs" />
+    <Compile Include="Adornments\Colors\ColorTaggerBase.cs" />
+    <Compile Include="Adornments\Colors\ColorRazorTagger.cs" />
+    <Compile Include="Adornments\Directives\CssDirectiveTagger.cs" />
     <Compile Include="Build\TailwindBuildProcess.cs" />
     <Compile Include="ClassSort\ClassSorter.cs" />
     <Compile Include="ClassSort\ClassSortUtilities.cs" />
@@ -155,7 +156,9 @@
     <Compile Include="Parsers\HtmlParser.cs" />
     <Compile Include="Parsers\CssParser.cs" />
     <Compile Include="Parsers\RazorParser.cs" />
+    <Compile Include="QuickInfo\CssDirectiveQuickInfoSource.cs" />
     <Compile Include="QuickInfo\CssQuickInfoSource.cs" />
+    <Compile Include="QuickInfo\CssDirectiveQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\JSQuickInfoSource.cs" />
     <Compile Include="QuickInfo\JSQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\RazorQuickInfoSourceProvider.cs" />
