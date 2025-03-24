@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.5 (March 23rd, 2025)
+
+- Added a quick info message and Tailwind logos to Tailwind css directives to mitigate confusion with error tags ([#105](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/105))
+- Major version update message should show major version, not minor version
+
 ## 1.10.4 (March 9th, 2025)
 
 - Handle `@import` statements with additional parameters ([#85](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/85))
