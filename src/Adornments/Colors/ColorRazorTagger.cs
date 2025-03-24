@@ -9,7 +9,7 @@ using System.Text;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Parsers;
 
-namespace TailwindCSSIntellisense.Adornments.Taggers;
+namespace TailwindCSSIntellisense.Adornments.Colors;
 
 [Export(typeof(IViewTaggerProvider))]
 [TagType(typeof(IntraTextAdornmentTag))]

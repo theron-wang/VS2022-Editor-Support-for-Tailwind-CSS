@@ -9,7 +9,7 @@ using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Options;
 
-namespace TailwindCSSIntellisense.Adornments.Taggers;
+namespace TailwindCSSIntellisense.Adornments.Colors;
 
 /// <summary>
 /// Code adapted from https://github.com/madskristensen/EditorColorPreview/blob/master/src/Adornments/ColorAdornmentTagger.cs

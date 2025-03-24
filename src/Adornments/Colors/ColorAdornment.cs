@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text.Editor;
 
-namespace TailwindCSSIntellisense.Adornments;
+namespace TailwindCSSIntellisense.Adornments.Colors;
 
 /// <summary>
 /// Code adapted from https://github.com/madskristensen/EditorColorPreview/blob/master/src/Adornments/ColorAdornment.cs
