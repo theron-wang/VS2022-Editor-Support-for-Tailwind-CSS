@@ -129,7 +129,7 @@ public sealed class SettingsProvider : IDisposable
 
                     projectSettings = new TailwindSettingsProjectOnly()
                     {
-                        ConfigurationFiles = [new() { ApplicableLocations = [], IsDefault = true, Path = file }]
+                        ConfigurationFiles = [new() { Path = file }]
                     };
 
                     if (file != null)
@@ -144,7 +144,7 @@ public sealed class SettingsProvider : IDisposable
 
                 projectSettings = new TailwindSettingsProjectOnly()
                 {
-                    ConfigurationFiles = [new() { ApplicableLocations = [], IsDefault = true, Path = file }]
+                    ConfigurationFiles = [new() { Path = file }]
                 };
 
                 if (file != null)
@@ -171,7 +171,7 @@ public sealed class SettingsProvider : IDisposable
 
             if (projectSettings.ConfigurationFile != null)
             {
-                projectSettings.ConfigurationFiles = [new() { Path = projectSettings.ConfigurationFile, ApplicableLocations = [], IsDefault = true }];
+                projectSettings.ConfigurationFiles = [new() { Path = projectSettings.ConfigurationFile }];
                 projectSettings.ConfigurationFile = null;
                 changed = true;
             }
@@ -205,7 +205,6 @@ public sealed class SettingsProvider : IDisposable
                 {
                     var config = projectSettings.ConfigurationFiles[i];
                     config.Path = PathHelpers.GetAbsolutePath(activeProjectPath, config.Path?.Trim());
-                    config.ApplicableLocations = config.ApplicableLocations.Select(l => PathHelpers.GetAbsolutePath(activeProjectPath, l.Trim())).ToList();
 
                     if (string.IsNullOrWhiteSpace(config.Path) || File.Exists(config.Path) == false)
                     {
@@ -213,13 +212,16 @@ public sealed class SettingsProvider : IDisposable
                         i--;
                         changed = true;
                     }
-                    else
+                    else if (Path.GetExtension(config.Path) == ".css")
                     {
-                        if (projectSettings.BuildFiles is not null && Path.GetExtension(config.Path) == ".css" && !projectSettings.BuildFiles.Any(b => b.Input.Equals(config.Path, StringComparison.InvariantCultureIgnoreCase)))
+                        projectSettings.ConfigurationFiles.Remove(config);
+                        i--;
+
+                        if (projectSettings.BuildFiles is not null && !projectSettings.BuildFiles.Any(b => b.Input.Equals(config.Path, StringComparison.InvariantCultureIgnoreCase)))
                         {
                             projectSettings.BuildFiles.Add(new() { Input = config.Path });
-                            changed = true;
                         }
+                        changed = true;
                     }
                 }
             }
@@ -287,13 +289,13 @@ public sealed class SettingsProvider : IDisposable
             }
         }
 
-        var defaultConfigFile = settings.ConfigurationFiles.FirstOrDefault(c => c.IsDefault)?.Path ??
+        var defaultConfigFile = settings.ConfigurationFiles.FirstOrDefault()?.Path ??
             settings.ConfigurationFiles.FirstOrDefault()?.Path;
 
         string oldDefaultConfigFile = null;
         if (_cachedSettings is not null)
         {
-            oldDefaultConfigFile = _cachedSettings.ConfigurationFiles.FirstOrDefault(c => c.IsDefault)?.Path ??
+            oldDefaultConfigFile = _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path ??
             _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path;
         }
 
@@ -310,17 +312,21 @@ public sealed class SettingsProvider : IDisposable
             });
         }
 
-        var projectSettings = new TailwindSettingsProjectOnly()
-        {
-            ConfigurationFiles = settings.ConfigurationFiles.Select(cf =>
+        List<ConfigurationFile> configurationFiles = [..
+            settings.ConfigurationFiles
+            .Where(cf => settings.BuildFiles.Any(b => !b.Input.Equals(cf.Path, StringComparison.InvariantCultureIgnoreCase)))
+            .Select(cf =>
             {
                 return new ConfigurationFile()
                 {
-                    Path = PathHelpers.GetRelativePath(cf.Path?.Trim(), projectRoot),
-                    ApplicableLocations = cf.ApplicableLocations.Select(l => PathHelpers.GetRelativePath(l.Trim(), projectRoot)).ToList(),
-                    IsDefault = cf.IsDefault
+                    Path = PathHelpers.GetRelativePath(cf.Path?.Trim(), projectRoot)
                 };
-            }).ToList(),
+            })
+        ];
+
+        var projectSettings = new TailwindSettingsProjectOnly()
+        {
+            ConfigurationFiles = configurationFiles.Count > 0 ? configurationFiles : null,
             BuildFiles = copyBuildFilePair,
             PackageConfigurationFile = PathHelpers.GetRelativePath(settings.PackageConfigurationFile, projectRoot),
             UseCli = settings.UseCli

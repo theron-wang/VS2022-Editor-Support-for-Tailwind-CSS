@@ -46,7 +46,7 @@ internal sealed class SetUpAndUseTailwindGlobal : BaseCommand<SetUpAndUseTailwin
 
             var configFile = await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, false));
 
-            settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
+            settings.ConfigurationFiles.Add(new() { Path = configFile });
             settings.BuildFiles.Add(new() { Input = configFile });
             await SettingsProvider.OverrideSettingsAsync(settings);
 

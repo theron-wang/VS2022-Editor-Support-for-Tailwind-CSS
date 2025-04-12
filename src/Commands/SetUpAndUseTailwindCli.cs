@@ -49,7 +49,7 @@ internal sealed class SetUpAndUseTailwindCli : BaseCommand<SetUpAndUseTailwindCl
 
             var configFile = await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, false, settings.TailwindCliPath));
 
-            settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
+            settings.ConfigurationFiles.Add(new() { Path = configFile });
             settings.BuildFiles.Add(new() { Input = configFile });
             settings.UseCli = true;
             await SettingsProvider.OverrideSettingsAsync(settings);

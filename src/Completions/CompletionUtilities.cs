@@ -41,7 +41,7 @@ public sealed class CompletionUtilities : IDisposable
     /// <summary>
     /// Completion settings for each project, keyed by configuration file paths.
     /// </summary>
-    private Dictionary<string, ProjectCompletionValues> _projectCompletionConfiguration = [];
+    private readonly Dictionary<string, ProjectCompletionValues> _projectCompletionConfiguration = [];
     private ProjectCompletionValues _defaultProjectCompletionConfiguration;
     private readonly ProjectCompletionValues _unsetProjectCompletionConfiguration = new();
     private readonly ProjectCompletionValues _unsetProjectCompletionConfigurationV4 = new();
@@ -131,9 +131,24 @@ public sealed class CompletionUtilities : IDisposable
 
         foreach (var k in _projectCompletionConfiguration.Values)
         {
-            if (k.ApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
+            if (k.Version >= TailwindVersion.V4)
             {
-                return k;
+                if (k.NotApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    continue;
+                }
+
+                if (k.ApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    return k;
+                }
+            }
+            else
+            {
+                if (k.ApplicablePaths.Any(p => PathHelpers.PathMatchesGlob(filePath, p)))
+                {
+                    return k;
+                }
             }
         }
 
@@ -143,6 +158,21 @@ public sealed class CompletionUtilities : IDisposable
     private async Task OnSettingsChangedAsync(TailwindSettings settings)
     {
         _defaultProjectCompletionConfiguration = null;
+
+        // V4 uses BuildFiles as ConfigurationFiles. Since existing code already uses ConfigurationFiles, it's easier to just
+        // populate it here rather than rewrite everything to account for BuildFiles.
+        foreach (var buildFile in settings.BuildFiles)
+        {
+            if (settings.ConfigurationFiles.All(cf => !cf.Path.Equals(buildFile.Input, StringComparison.InvariantCultureIgnoreCase)))
+            {
+                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(buildFile.Input);
+
+                if (version >= TailwindVersion.V4)
+                {
+                    settings.ConfigurationFiles.Add(new() { Path = buildFile.Input.ToLower() });
+                }
+            }
+        }
 
         foreach (var file in settings.ConfigurationFiles)
         {
@@ -165,13 +195,7 @@ public sealed class CompletionUtilities : IDisposable
                 _projectCompletionConfiguration.Add(file.Path.ToLower(), projectConfig);
             }
 
-            projectConfig.ApplicablePaths = file.ApplicableLocations;
             projectConfig.FilePath = file.Path.ToLower();
-
-            if (file.IsDefault && _defaultProjectCompletionConfiguration is null)
-            {
-                _defaultProjectCompletionConfiguration = projectConfig;
-            }
         }
 
         var toRemove = _projectCompletionConfiguration.Keys.Except(settings.ConfigurationFiles.Select(f => f.Path.ToLower())).ToList();

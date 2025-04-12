@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace TailwindCSSIntellisense.Helpers;
 public static class PathHelpers
@@ -56,5 +57,30 @@ public static class PathHelpers
         var absUri = new Uri(dirUri, rel);
 
         return Uri.UnescapeDataString(absUri.AbsolutePath.Replace('/', Path.DirectorySeparatorChar));
+    }
+
+    /// <summary>
+    /// Checks if a given path matches a glob pattern.
+    /// Supports *, **, and {} for globbing.
+    /// </summary>
+    /// <param name="path">The path to check.</param>
+    /// <param name="pattern">The glob pattern.</param>
+    /// <returns>True if the path matches the pattern, otherwise false.</returns>
+    public static bool PathMatchesGlob(string path, string pattern)
+    {
+        // Normalize path separators
+        path = path.Replace('\\', '/');
+        pattern = pattern.Replace('\\', '/');
+
+        // Handle ** for recursive matching
+        pattern = Regex.Escape(pattern)
+            .Replace(@"\*\*", ".*")
+            .Replace(@"\*", "[^/]*")
+            .Replace(@"\{", "(")
+            .Replace("}", ")")
+            .Replace(@",", "|");
+
+        var regex = new Regex($"^{pattern}$", RegexOptions.Compiled);
+        return regex.IsMatch(path);
     }
 }

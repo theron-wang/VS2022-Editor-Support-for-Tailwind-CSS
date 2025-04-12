@@ -17,24 +17,13 @@
 		},
 		"ConfigurationFiles": {
 			"type": "array",
-			"description": "List of configuration files, in order of precedence.",
+			"description": "List of configuration files, in order of precedence. For use in V3, only.",
 			"items": {
 				"type": "object",
 				"properties": {
 					"Path": {
 						"type": "string",
-						"description": "The configuration file for the given paths."
-					},
-					"IsDefault": {
-						"type": "boolean",
-						"description": "Indicates if the given configuration file should be used as the default, if a file is not found under ApplicableLocations. The first will be chosen as default if multiple files have this set to true."
-					},
-					"ApplicableLocations": {
-						"type": "array",
-						"items": {
-							"type": "string",
-							"description": "The base folders of the projects to apply this configuration file to."
-						}
+						"description": "The path of the configuration file."
 					}
 				},
 				"required": [ "Path", "ApplicableLocations" ]

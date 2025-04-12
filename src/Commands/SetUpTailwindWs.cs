@@ -65,11 +65,9 @@ namespace TailwindCSSIntellisense
                     return;
                 }
 
-                await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, true));
+                var configFile = await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, true));
 
-                var configFile = Path.Combine(directory, "tailwind.config.js");
-
-                settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
+                settings.ConfigurationFiles.Add(new() { Path = configFile });
                 await SettingsProvider.OverrideSettingsAsync(settings);
 
                 var fileNames = new string[]

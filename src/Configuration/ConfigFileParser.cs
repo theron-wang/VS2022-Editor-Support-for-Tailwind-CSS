@@ -1,5 +1,4 @@
 ﻿using Community.VisualStudio.Toolkit;
-using Microsoft.VisualStudio.PlatformUI.OleComponentSupport;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Configuration;
@@ -154,6 +152,8 @@ internal static class ConfigFileParser
         var imports = new List<string>();
         var utilities = new Dictionary<string, string>();
         var variants = new Dictionary<string, string>();
+        var content = new List<string>();
+        var blocklist = new List<string>();
 
         var level = 0;
         var inComment = false;
@@ -186,11 +186,11 @@ internal static class ConfigFileParser
                 continue;
             }
 
-            if (current == '{')
+            if (current == '{' && !buildingDirectiveParameter)
             {
                 level++;
             }
-            else if (current == '}')
+            else if (current == '}' && !buildingDirectiveParameter)
             {
                 level--;
 
@@ -251,6 +251,34 @@ internal static class ConfigFileParser
                             import = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import);
                             imports.Add($"@import{import}");
                         }
+                        // Handle @import "tailwindcss" source(...)
+                        else if (import == "tailwindcss")
+                        {
+                            if (directiveParameter.IndexOf("source(", secondQuote) is int index && index != -1)
+                            {
+                                if (directiveParameter.Substring(index + 7).Trim().StartsWith("none"))
+                                {
+                                    continue;
+                                }
+
+                                firstQuote = directiveParameter.IndexOfAny(['\'', '"'], index);
+                                secondQuote = directiveParameter.IndexOfAny(['\'', '"'], firstQuote + 1);
+
+                                if (firstQuote == -1 || secondQuote == -1)
+                                {
+                                    continue;
+                                }
+
+                                var source = directiveParameter.Substring(firstQuote + 1, secondQuote - firstQuote - 1).Trim();
+
+                                source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), source);
+                                content.Add(source);
+                            }
+                            else
+                            {
+                                content.Add(Path.GetDirectoryName(path));
+                            }
+                        }
                         continue;
                     }
                     else if (directive == "config")
@@ -283,11 +311,53 @@ internal static class ConfigFileParser
 
                         continue;
                     }
+                    else if (directive == "source")
+                    {
+                        var not = false;
+
+                        // @source not "../src/components/legacy";
+                        // @source not inline("{hover:,focus:,}bg-red-{50,{100..900..100},950}");
+                        if (directiveParameter.StartsWith("not"))
+                        {
+                            not = true;
+                            directiveParameter = directiveParameter.Substring(3).Trim();
+                        }
+
+                        var firstQuote = directiveParameter.IndexOfAny(['\'', '"']);
+                        var secondQuote = directiveParameter.IndexOfAny(['\'', '"'], firstQuote + 1);
+
+                        if (firstQuote == -1 || secondQuote == -1)
+                        {
+                            continue;
+                        }
+
+                        var inQuotes = directiveParameter.Substring(firstQuote + 1, secondQuote - firstQuote - 1).Trim();
+
+                        // @source inline("{hover:,focus:,}bg-red-{50,{100..900..100},950}");
+                        if (directiveParameter.StartsWith("inline("))
+                        {
+                            blocklist = BraceExpander.Expand(inQuotes);
+                        }
+                        else
+                        {
+                            // @source "../src/components/legacy";
+                            var source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), inQuotes);
+
+                            if (not)
+                            {
+                                content.Add($"!{source}");
+                            }
+                            else
+                            {
+                                content.Add(source);
+                            }
+                        }
+                    }
 
                     directive = "";
                     directiveParameter = "";
                 }
-                else if (current == '{')
+                else if (current == '{' && !(directiveParameter.Count(p => p == '\'') == 1 || directiveParameter.Count(p => p == '"') == 1))
                 {
                     directiveParameter = directiveParameter.Trim();
                     buildingDirectiveParameter = false;
@@ -362,6 +432,7 @@ internal static class ConfigFileParser
                 imported.PluginClasses.AddRange(prev.PluginClasses);
                 imported.PluginVariants.AddRange(prev.PluginVariants);
                 imported.Imports.AddRange(prev.Imports);
+                imported.Blocklist.AddRange(blocklist);
                 DictionaryHelpers.MergeDictionaries(imported.PluginDescriptions, prev.PluginDescriptions);
                 DictionaryHelpers.MergeDictionaries(imported.PluginVariantDescriptions, prev.PluginVariantDescriptions);
             }
@@ -369,9 +440,10 @@ internal static class ConfigFileParser
 
         if (imported is not null)
         {
-            imported.PluginClasses = imported.PluginClasses.Distinct().ToList();
-            imported.PluginVariants = imported.PluginVariants.Distinct().ToList();
-            imported.Imports = imported.Imports.Distinct().ToList();
+            imported.PluginClasses = [.. imported.PluginClasses.Distinct()];
+            imported.PluginVariants = [.. imported.PluginVariants.Distinct()];
+            imported.Imports = [.. imported.Imports.Distinct()];
+            imported.Blocklist = [.. imported.Blocklist.Distinct()];
         }
 
         var config = new TailwindConfiguration
@@ -379,13 +451,15 @@ internal static class ConfigFileParser
             OverridenValues = [],
             ExtendedValues = [],
             ThemeVariables = [],
-            PluginClasses = [..utilities.Keys],
-            PluginVariants = [..variants.Keys],
+            PluginClasses = [.. utilities.Keys],
+            PluginVariants = [.. variants.Keys],
             PluginDescriptions = utilities,
             // For variants, put everything on the same line so it looks fine in completion tooltip
-            PluginVariantDescriptions = variants.ToDictionary(v => v.Key, v => 
+            PluginVariantDescriptions = variants.ToDictionary(v => v.Key, v =>
                 string.Join(" ", v.Value.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries))),
-            Imports = imports.Select(i => i.Replace("@import", "").Replace("@config", "")).ToList()
+            Imports = [.. imports.Select(i => i.Replace("@import", "").Replace("@config", ""))],
+            ContentPaths = content,
+            Blocklist = blocklist
         };
 
         foreach (var pair in themeValuePairs)
@@ -431,9 +505,10 @@ internal static class ConfigFileParser
             DictionaryHelpers.MergeDictionaries(config.OverridenValues, imported.OverridenValues);
             DictionaryHelpers.MergeDictionaries(config.ExtendedValues, imported.ExtendedValues);
             DictionaryHelpers.MergeDictionaries(config.ThemeVariables, imported.ThemeVariables);
-            config.PluginClasses = config.PluginClasses.Concat(imported.PluginClasses).Distinct().ToList();
-            config.PluginVariants = config.PluginVariants.Concat(imported.PluginVariants).Distinct().ToList();
-            config.Imports = config.Imports.Concat(imported.Imports).Distinct().ToList();
+            config.PluginClasses = [.. config.PluginClasses.Concat(imported.PluginClasses).Distinct()];
+            config.PluginVariants = [.. config.PluginVariants.Concat(imported.PluginVariants).Distinct()];
+            config.Imports = [.. config.Imports.Concat(imported.Imports).Distinct()];
+            config.Blocklist = [.. config.Blocklist.Concat(imported.Blocklist).Distinct()];
             DictionaryHelpers.MergeDictionaries(config.PluginDescriptions, imported.PluginDescriptions);
             DictionaryHelpers.MergeDictionaries(config.PluginVariantDescriptions, imported.PluginVariantDescriptions);
         }
@@ -630,6 +705,7 @@ internal static class ConfigFileParser
             OverridenValues = theme is null ? [] : GetTotalValue(theme, "extend") ?? [],
             ExtendedValues = theme is null ? [] : GetTotalValue(theme["extend"]) ?? [],
             Prefix = obj["prefix"]?.ToString(),
+            ContentPaths = obj["content"] is null ? [] : JsonSerializer.Deserialize<List<string>>(obj["content"])
         };
 
         try

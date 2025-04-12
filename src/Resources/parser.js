@@ -56,12 +56,6 @@
             configuration = configuration.default;
         }
 
-        // transform function in content may cause exceptions
-        // remove `content` since we don't use it for anything
-        if (configuration.content) {
-            delete configuration.content;
-        }
-
         function getValueByKeyBracket(object, key) {
             const keys = key.split('.');
 
@@ -139,6 +133,14 @@
             } else {
                 configuration.corePlugins = originalCorePlugins;
             }
+        }
+
+        if (configuration.content.files) {
+            configuration.content = configuration.content.files;
+        }
+
+        if (configuration.content && Array.isArray(configuration.content)) {  
+            configuration.content = configuration.content.filter(item => typeof item === 'string');  
         }
 
         function theme(key, defaultValue) {
@@ -365,7 +367,8 @@
                     return {
                         'classes': classes,
                         'variants': variants,
-                        'descriptions': customDescripts
+                        'descriptions': customDescripts,
+                        'content': configuration.content
                     };
                 } else {
                     return typeof value === 'function' ? value({

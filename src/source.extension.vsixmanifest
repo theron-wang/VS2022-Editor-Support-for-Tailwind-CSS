@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="TailwindCSSIntellisense.b29696d4-76a4-43d1-a203-c8e692368847" Version="1.10.5" Language="en-US" Publisher="Theron Wang" />
+        <Identity Id="TailwindCSSIntellisense.b29696d4-76a4-43d1-a203-c8e692368847" Version="1.10.6" Language="en-US" Publisher="Theron Wang" />
         <DisplayName>Tailwind CSS VS2022 Editor Support</DisplayName>
         <Description xml:space="preserve">Unofficial VS2022 Tailwind CSS extension for IntelliSense, linting, sorting, and more.</Description>
         <MoreInfo>https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS</MoreInfo>
@@ -27,12 +27,5 @@
     <Assets>
         <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
         <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%|" />
-        <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="Microsoft.Bcl.AsyncInterfaces.dll" AssemblyName="Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
-        <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="System.Buffers.dll" AssemblyName="System.Buffers, Version=4.5.1.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
-        <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="System.Memory.dll" AssemblyName="System.Memory, Version=4.5.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
-        <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="System.Runtime.CompilerServices.Unsafe.dll" AssemblyName="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
-        <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="System.Text.Encodings.Web.dll" AssemblyName="System.Text.Encodings.Web, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
-        <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="System.Threading.Tasks.Extensions.dll" AssemblyName="System.Threading.Tasks.Extensions, Version=4.5.4.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
-        <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="File" Path="System.ValueTuple.dll" AssemblyName="System.ValueTuple, Version=4.5.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
     </Assets>
 </PackageManifest>

@@ -52,7 +52,7 @@ internal sealed class SetUpAndInstallTailwind : BaseCommand<SetUpAndInstallTailw
                 return;
             }
 
-            settings.ConfigurationFiles.Add(new() { Path = configFile, IsDefault = true, ApplicableLocations = [] });
+            settings.ConfigurationFiles.Add(new() { Path = configFile });
             settings.BuildFiles.Add(new() { Input = configFile });
             await SettingsProvider.OverrideSettingsAsync(settings);
 

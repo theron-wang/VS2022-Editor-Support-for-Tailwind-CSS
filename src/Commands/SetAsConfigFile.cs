@@ -54,7 +54,7 @@ internal sealed class SetAsConfigFile : BaseCommand<SetAsConfigFile>
 
         var path = SolutionExplorerSelection.CurrentSelectedItemFullPath;
 
-        settings.ConfigurationFiles.Add(new() { Path = path, IsDefault = settings.ConfigurationFiles.Count == 0, ApplicableLocations = [] });
+        settings.ConfigurationFiles.Add(new() { Path = path });
 
         if (Path.GetExtension(path) == ".css" && !settings.BuildFiles.Any(f => f.Input.Equals(path, StringComparison.InvariantCultureIgnoreCase)))
         {

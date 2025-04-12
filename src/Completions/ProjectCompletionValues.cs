@@ -9,6 +9,10 @@ public class ProjectCompletionValues
     /// </summary>
     public string FilePath { get; set; }
     public List<string> ApplicablePaths { get; set; } = [];
+    /// <summary>
+    /// V4+ only
+    /// </summary>
+    public List<string> NotApplicablePaths { get; set; } = [];
 
     internal bool Initialized { get; set; }
     internal List<TailwindClass> Classes { get; set; } = [];
@@ -48,9 +52,6 @@ public class ProjectCompletionValues
     internal List<string> PluginClasses { get; set; } = [];
     internal List<string> PluginVariants { get; set; } = [];
 
-    /// <summary>
-    /// Removed in V4
-    /// </summary>
     internal HashSet<string> Blocklist { get; set; } = [];
 
     internal TailwindVersion Version { get; set; }
