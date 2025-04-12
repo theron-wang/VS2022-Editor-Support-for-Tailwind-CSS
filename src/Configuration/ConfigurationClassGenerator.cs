@@ -922,30 +922,15 @@ public sealed partial class CompletionConfiguration
                                 {
                                     classesToAdd.Add(new()
                                     {
-                                        Name = pair.Key.Replace("*", "{c}"),
+                                        Name = pair.Key.Replace("*", "{0}"),
                                         UseColors = true
                                     });
 
                                     project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{c}"), desc);
                                 }
                                 // Special case 2:
-                                // --color-red-*
-                                else if (stem.StartsWith("--color-"))
-                                {
-                                    var colorRoot = stem.Substring("--color-".Length);
-
-                                    var colors = 
-                                        project.ColorMapper.Where(k => k.Key.StartsWith(colorRoot));
-                                    var classes = colors.Select(v => pair.Key.Replace("*", v.Key));
-
-                                    project.PluginClasses.AddRange(classes);
-
-                                    foreach (var color in colors)
-                                    {
-                                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", color.Key), desc.Replace("{0}", $"var(--color-{color.Key})"));
-                                    }
-                                }
-                                else
+                                // --color-red-* -> this does not do anything
+                                else if (!stem.StartsWith("--color-"))
                                 {
                                     var variables = project.CssVariables.Where(k => k.Key.StartsWith(stem));
 
