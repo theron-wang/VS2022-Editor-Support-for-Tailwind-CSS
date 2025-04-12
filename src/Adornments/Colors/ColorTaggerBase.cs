@@ -140,6 +140,11 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             }
         }
 
+        if (!_completionUtilities.IsClassAllowed(text))
+        {
+            return null;
+        }
+
         var endsWithArbitrary = text.LastIndexOf('[');
         var segmentText = text;
 
@@ -246,7 +251,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 return null;
             }
 
-            if (_completionUtilities.DescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false)
+            if (_completionUtilities.DescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false && _completionUtilities.CustomDescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false)
             {
                 return null;
             }

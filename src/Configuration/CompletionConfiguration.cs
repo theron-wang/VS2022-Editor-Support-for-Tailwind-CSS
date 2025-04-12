@@ -119,10 +119,13 @@ public sealed partial class CompletionConfiguration
 
                 var projectCompletionValues = _completionBase.GetCompletionConfigurationByConfigFilePath(configurationFile.Path);
 
+                projectCompletionValues.ApplicablePaths = [.. config.ContentPaths.Where(c => !c.StartsWith("!"))];
+                projectCompletionValues.NotApplicablePaths = [.. config.ContentPaths.Where(c => c.StartsWith("!")).Select(c => c.Trim('!'))];
+
                 LastConfig = config;
                 projectCompletionValues.Prefix = config.Prefix;
                 LoadGlobalConfiguration(projectCompletionValues, config);
-                projectCompletionValues.Variants = projectCompletionValues.Variants.Distinct().ToList();
+                projectCompletionValues.Variants = [.. projectCompletionValues.Variants.Distinct()];
 
                 LoadIndividualConfigurationOverride(projectCompletionValues, config);
                 LoadIndividualConfigurationExtend(projectCompletionValues, config);
