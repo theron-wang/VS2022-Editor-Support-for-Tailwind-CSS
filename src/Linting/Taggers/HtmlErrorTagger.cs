@@ -20,7 +20,7 @@ internal class HtmlErrorTaggerProvider : ITaggerProvider
     [Import]
     public LinterUtilities LinterUtilities { get; set; }
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
@@ -31,12 +31,12 @@ internal class HtmlErrorTaggerProvider : ITaggerProvider
             return null;
         }
 
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new HtmlErrorTagger(buffer, LinterUtilities, CompletionUtilities)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new HtmlErrorTagger(buffer, LinterUtilities, ProjectConfigurationManager)) as ITagger<T>;
     }
 
     internal sealed class HtmlErrorTagger : ErrorTaggerBase, IDisposable
     {
-        public HtmlErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils)
+        public HtmlErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities) : base(buffer, linterUtils)
         {
             _errorChecker = HtmlValidator.Create(buffer, linterUtils, completionUtilities);
             _errorChecker.Validated += UpdateErrors;

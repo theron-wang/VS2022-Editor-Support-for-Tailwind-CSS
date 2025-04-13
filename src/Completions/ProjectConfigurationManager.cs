@@ -16,16 +16,15 @@ using TailwindCSSIntellisense.Completions.V4;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Settings;
-using static Microsoft.VisualStudio.Shell.ThreadedWaitDialogHelper;
 
 namespace TailwindCSSIntellisense.Completions;
 
 /// <summary>
-/// Provides basic utilities for use in <see cref="CssCompletionSource"/> and <see cref="HtmlCompletionSource"/>
+/// Provides project configurations (completion data) for each configuration file.
 /// </summary>
 [Export]
 [PartCreationPolicy(CreationPolicy.Shared)]
-public sealed class CompletionUtilities : IDisposable
+public sealed class ProjectConfigurationManager : IDisposable
 {
     [Import]
     internal CompletionConfiguration Configuration { get; set; }
@@ -233,7 +232,8 @@ public sealed class CompletionUtilities : IDisposable
 
     private async Task<bool> ShouldInitializeAsync()
     {
-        return (await SettingsProvider.GetSettingsAsync()).ConfigurationFiles.Count > 0;
+        var settings = await SettingsProvider.GetSettingsAsync();
+        return settings.ConfigurationFiles.Count > 0 || settings.BuildFiles.Count > 0;
     }
 
     private async Task LoadClassesV3Async()

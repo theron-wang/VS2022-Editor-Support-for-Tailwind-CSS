@@ -20,7 +20,7 @@ internal abstract class ErrorListListener : ITextViewCreationListener, IDisposab
     [Import]
     protected LinterUtilities _linterUtilities = null;
     [Import]
-    protected CompletionUtilities _completionUtilities = null;
+    protected ProjectConfigurationManager _projectConfigurationManager = null;
 
     private readonly Dictionary<ITextBuffer, ErrorListContext> _contexts = [];
 

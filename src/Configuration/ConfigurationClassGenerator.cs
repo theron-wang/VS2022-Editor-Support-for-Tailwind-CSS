@@ -14,7 +14,7 @@ public sealed partial class CompletionConfiguration
     /// </summary>
     private void LoadGlobalConfiguration(ProjectCompletionValues project, TailwindConfiguration config)
     {
-        var original = CompletionUtilities.GetUnsetCompletionConfiguration(project.Version);
+        var original = ProjectConfigurationManager.GetUnsetCompletionConfiguration(project.Version);
 
         project.SpacingMapper = original.SpacingMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
         project.Screen = [.. original.Screen];
@@ -79,7 +79,7 @@ public sealed partial class CompletionConfiguration
     /// </summary>
     private void HandleCorePlugins(ProjectCompletionValues project, TailwindConfiguration config)
     {
-        var original = CompletionUtilities.GetUnsetCompletionConfiguration(project.Version);
+        var original = ProjectConfigurationManager.GetUnsetCompletionConfiguration(project.Version);
         var enabledClasses = new List<TailwindClass>();
         if (config.EnabledCorePlugins is not null)
         {
@@ -221,7 +221,7 @@ public sealed partial class CompletionConfiguration
 
         HandleCorePlugins(project, config);
 
-        var original = CompletionUtilities.GetUnsetCompletionConfiguration(project.Version);
+        var original = ProjectConfigurationManager.GetUnsetCompletionConfiguration(project.Version);
 
         var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
         project.Variants = [.. original.Variants];
@@ -677,7 +677,7 @@ public sealed partial class CompletionConfiguration
             if (config.PluginVariantDescriptions is not null)
             {
                 project.VariantsToDescriptions =
-                    CompletionUtilities.GetUnsetCompletionConfiguration(TailwindVersion.V4).VariantsToDescriptions
+                    ProjectConfigurationManager.GetUnsetCompletionConfiguration(TailwindVersion.V4).VariantsToDescriptions
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
                 foreach (var pair in config.PluginVariantDescriptions)

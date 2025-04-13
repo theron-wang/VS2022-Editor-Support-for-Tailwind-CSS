@@ -18,15 +18,15 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 {
     private readonly ITextBuffer _buffer;
     private readonly ITextView _view;
-    private readonly ProjectCompletionValues _completionUtilities;
+    private readonly ProjectCompletionValues _projectConfigurationManager;
     private bool _isProcessing;
     private General _generalOptions;
 
-    protected ColorTaggerBase(ITextBuffer buffer, ITextView view, CompletionUtilities completionUtilities)
+    protected ColorTaggerBase(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)
     {
         _buffer = buffer;
         _view = view;
-        _completionUtilities = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
+        _projectConfigurationManager = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         _buffer.Changed += OnBufferChanged;
         General.Saved += GeneralSettingsChanged;
     }
@@ -124,15 +124,15 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             text = text.TrimStart('!');
         }
 
-        if (string.IsNullOrWhiteSpace(_completionUtilities.Prefix) == false)
+        if (string.IsNullOrWhiteSpace(_projectConfigurationManager.Prefix) == false)
         {
-            if (text.StartsWith(_completionUtilities.Prefix))
+            if (text.StartsWith(_projectConfigurationManager.Prefix))
             {
-                text = text.Substring(_completionUtilities.Prefix.Length);
+                text = text.Substring(_projectConfigurationManager.Prefix.Length);
             }
-            else if (text.StartsWith($"-{_completionUtilities.Prefix}"))
+            else if (text.StartsWith($"-{_projectConfigurationManager.Prefix}"))
             {
-                text = text.Substring(_completionUtilities.Prefix.Length + 1);
+                text = text.Substring(_projectConfigurationManager.Prefix.Length + 1);
             }
             else
             {
@@ -140,7 +140,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             }
         }
 
-        if (!_completionUtilities.IsClassAllowed(text))
+        if (!_projectConfigurationManager.IsClassAllowed(text))
         {
             return null;
         }
@@ -201,7 +201,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 
                 if (color[0] == '(' && color[color.Length - 1] == ')')
                 {
-                    if (!_completionUtilities.CssVariables.TryGetValue(c, out c))
+                    if (!_projectConfigurationManager.CssVariables.TryGetValue(c, out c))
                     {
                         return null;
                     }
@@ -251,20 +251,20 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 return null;
             }
 
-            if (_completionUtilities.DescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false && _completionUtilities.CustomDescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false)
+            if (_projectConfigurationManager.DescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false && _projectConfigurationManager.CustomDescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false)
             {
                 return null;
             }
 
             string value;
-            if (_completionUtilities.CustomColorMappers != null && _completionUtilities.CustomColorMappers.ContainsKey(stem))
+            if (_projectConfigurationManager.CustomColorMappers != null && _projectConfigurationManager.CustomColorMappers.ContainsKey(stem))
             {
-                if (_completionUtilities.CustomColorMappers[stem].TryGetValue(color, out value) == false)
+                if (_projectConfigurationManager.CustomColorMappers[stem].TryGetValue(color, out value) == false)
                 {
                     return null;
                 }
             }
-            else if (_completionUtilities.ColorMapper.TryGetValue(color, out value) == false)
+            else if (_projectConfigurationManager.ColorMapper.TryGetValue(color, out value) == false)
             {
                 return null;
             }

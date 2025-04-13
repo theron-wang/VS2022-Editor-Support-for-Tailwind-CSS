@@ -13,14 +13,14 @@ namespace TailwindCSSIntellisense.QuickInfo;
 internal class CssDirectiveQuickInfoSource : IAsyncQuickInfoSource
 {
     protected ITextBuffer _textBuffer;
-    private readonly ProjectCompletionValues _completionUtilities;
+    private readonly ProjectCompletionValues _projectConfigurationManager;
     private readonly ITextStructureNavigator _textStructureNavigator;
 
 
-    public CssDirectiveQuickInfoSource(ITextBuffer textBuffer, CompletionUtilities completionUtilities, ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService)
+    public CssDirectiveQuickInfoSource(ITextBuffer textBuffer, ProjectConfigurationManager completionUtilities, ITextStructureNavigatorSelectorService textStructureNavigatorSelectorService)
     {
         _textBuffer = textBuffer;
-        _completionUtilities = completionUtilities.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
+        _projectConfigurationManager = completionUtilities.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
         _textStructureNavigator = textStructureNavigatorSelectorService.GetTextStructureNavigator(_textBuffer);
     }
 
@@ -51,7 +51,7 @@ internal class CssDirectiveQuickInfoSource : IAsyncQuickInfoSource
             if (text == "@apply")
             {
             }
-            else if (_completionUtilities.Version == TailwindVersion.V3 && (text == "@tailwind" || text == "@config"))
+            else if (_projectConfigurationManager.Version == TailwindVersion.V3 && (text == "@tailwind" || text == "@config"))
             {
             }
             else if (text == "@theme" || text == "@source" || text == "@utility" || text == "@custom-variant" || text == "@config" || text == "@plugin" || text == "@variant" || text.StartsWith("@slot"))

@@ -19,16 +19,16 @@ internal class CssErrorTaggerProvider : ITaggerProvider
     [Import]
     public LinterUtilities LinterUtilities { get; set; }
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new CssErrorTagger(buffer, LinterUtilities, CompletionUtilities)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new CssErrorTagger(buffer, LinterUtilities, ProjectConfigurationManager)) as ITagger<T>;
     }
 
     internal sealed class CssErrorTagger : ErrorTaggerBase
     {
-        public CssErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils)
+        public CssErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities) : base(buffer, linterUtils)
         {
             _errorChecker = CssValidator.Create(buffer, linterUtils, completionUtilities);
             _errorChecker.Validated += UpdateErrors;

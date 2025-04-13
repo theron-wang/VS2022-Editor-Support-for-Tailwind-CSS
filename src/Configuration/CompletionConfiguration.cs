@@ -32,7 +32,7 @@ public sealed partial class CompletionConfiguration
     internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
 
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     internal TailwindConfiguration LastConfig { get; private set; }
 
@@ -98,7 +98,7 @@ public sealed partial class CompletionConfiguration
     /// </returns>
     private async Task<bool> ReloadCustomAttributesImplAsync(ConfigurationFile configurationFile)
     {
-        if (CompletionUtilities is not null)
+        if (ProjectConfigurationManager is not null)
         {
             await VS.StatusBar.ShowMessageAsync("Reloading Tailwind CSS configuration");
 
@@ -113,7 +113,7 @@ public sealed partial class CompletionConfiguration
                     Reloader.AddImport(imports, configurationFile);
                 }
 
-                var projectCompletionValues = CompletionUtilities.GetCompletionConfigurationByConfigFilePath(configurationFile.Path);
+                var projectCompletionValues = ProjectConfigurationManager.GetCompletionConfigurationByConfigFilePath(configurationFile.Path);
 
                 projectCompletionValues.ApplicablePaths = [.. config.ContentPaths.Where(c => !c.StartsWith("!"))];
                 projectCompletionValues.NotApplicablePaths = [.. config.ContentPaths.Where(c => c.StartsWith("!")).Select(c => c.Trim('!'))];

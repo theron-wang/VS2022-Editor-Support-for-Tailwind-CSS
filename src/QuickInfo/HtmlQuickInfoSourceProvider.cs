@@ -17,7 +17,7 @@ internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvide
     public DescriptionGenerator DescriptionGenerator { get; set; }
 
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
@@ -27,6 +27,6 @@ internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvide
         {
             return null;
         }
-        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, DescriptionGenerator, CompletionUtilities));
+        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, DescriptionGenerator, ProjectConfigurationManager));
     }
 }

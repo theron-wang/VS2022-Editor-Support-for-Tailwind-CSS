@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Linting.Validators;
-internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities)
+internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities)
     : Validator(buffer, linterUtils, completionUtilities)
 {
     protected abstract Func<string, IEnumerable<Match>> ClassSplitter { get; set; }

@@ -13,7 +13,7 @@ namespace TailwindCSSIntellisense.Helpers;
 internal class ColorIconGenerator
 {
     [Import]
-    internal CompletionUtilities CompletionUtilities { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     private readonly Dictionary<ProjectCompletionValues, Dictionary<string, ImageSource>> _colorToRgbMapperCaches = [];
 
@@ -50,18 +50,18 @@ internal class ColorIconGenerator
 
                 if (projectCompletionValues.ColorMapper.TryGetValue(color, out value) == false)
                 {
-                    return CompletionUtilities.TailwindLogo;
+                    return ProjectConfigurationManager.TailwindLogo;
                 }
             }
         }
         else if (projectCompletionValues.ColorMapper.TryGetValue(color, out value) == false)
         {
-            return CompletionUtilities.TailwindLogo;
+            return ProjectConfigurationManager.TailwindLogo;
         }
 
         if (string.IsNullOrWhiteSpace(value) || value.StartsWith("{noparse}") || value.StartsWith("var"))
         {
-            return CompletionUtilities.TailwindLogo;
+            return ProjectConfigurationManager.TailwindLogo;
         }
 
         byte r, g, b;
@@ -83,7 +83,7 @@ internal class ColorIconGenerator
             if (rgb.Length != 3)
             {
                 // Something wrong happened: fall back to default tailwind icon
-                return CompletionUtilities.TailwindLogo;
+                return ProjectConfigurationManager.TailwindLogo;
             }
 
             r = rgb[0];

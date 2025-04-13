@@ -20,7 +20,7 @@ namespace TailwindCSSIntellisense.Linting;
 [PartCreationPolicy(CreationPolicy.Shared)]
 internal sealed class LinterUtilities : IDisposable
 {
-    private readonly CompletionUtilities _completionUtilities;
+    private readonly ProjectConfigurationManager _projectConfigurationManager;
     private readonly DescriptionGenerator _descriptionGenerator;
     private readonly ClassSortUtilities _classSortUtilities;
     private readonly Dictionary<ProjectCompletionValues, Dictionary<string, string>> _cacheCssAttributes = [];
@@ -29,14 +29,14 @@ internal sealed class LinterUtilities : IDisposable
     private General _generalOptions;
 
     [ImportingConstructor]
-    public LinterUtilities(CompletionUtilities completionUtilities, DescriptionGenerator descriptionGenerator, ClassSortUtilities classSortUtilities)
+    public LinterUtilities(ProjectConfigurationManager completionUtilities, DescriptionGenerator descriptionGenerator, ClassSortUtilities classSortUtilities)
     {
-        _completionUtilities = completionUtilities;
+        _projectConfigurationManager = completionUtilities;
         _descriptionGenerator = descriptionGenerator;
         _classSortUtilities = classSortUtilities;
         Linter.Saved += LinterSettingsChanged;
         General.Saved += GeneralSettingsChanged;
-        _completionUtilities.Configuration.ConfigurationUpdated += ConfigurationUpdated;
+        _projectConfigurationManager.Configuration.ConfigurationUpdated += ConfigurationUpdated;
     }
 
     /// <summary>
@@ -207,6 +207,6 @@ internal sealed class LinterUtilities : IDisposable
     public void Dispose()
     {
         Linter.Saved -= LinterSettingsChanged;
-        _completionUtilities.Configuration.ConfigurationUpdated -= ConfigurationUpdated;
+        _projectConfigurationManager.Configuration.ConfigurationUpdated -= ConfigurationUpdated;
     }
 }

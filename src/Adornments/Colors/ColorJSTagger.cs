@@ -20,14 +20,14 @@ namespace TailwindCSSIntellisense.Adornments.Colors;
 internal sealed class ColorJSTaggerProvider : IViewTaggerProvider
 {
     [Import]
-    internal CompletionUtilities CompletionUtilities { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorJSTagger(buffer, textView, CompletionUtilities)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorJSTagger(buffer, textView, ProjectConfigurationManager)) as ITagger<T>;
     }
 
-    private class ColorJSTagger(ITextBuffer buffer, ITextView view, CompletionUtilities completionUtilities)
+    private class ColorJSTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)
         : ColorTaggerBase(buffer, view, completionUtilities)
     {
         protected override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot)

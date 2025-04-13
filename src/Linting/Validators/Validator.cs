@@ -11,7 +11,7 @@ internal abstract class Validator : IDisposable
 {
     protected readonly ITextBuffer _buffer;
     protected readonly LinterUtilities _linterUtils;
-    protected readonly CompletionUtilities _completionUtilities;
+    protected readonly ProjectConfigurationManager _projectConfigurationManager;
     protected readonly ProjectCompletionValues _projectCompletionValues;
 
     protected readonly HashSet<SnapshotSpan> _checkedSpans = [];
@@ -29,15 +29,15 @@ internal abstract class Validator : IDisposable
 
     public Action<ITextBuffer> BufferValidated;
 
-    public Validator(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities)
+    public Validator(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities)
     {
         _buffer = buffer;
         _linterUtils = linterUtils;
-        _completionUtilities = completionUtilities;
+        _projectConfigurationManager = completionUtilities;
         _projectCompletionValues = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         _buffer.ChangedHighPriority += OnBufferChange;
         Linter.Saved += LinterOptionsChanged;
-        _completionUtilities.Configuration.ConfigurationUpdated += ConfigurationUpdated;
+        _projectConfigurationManager.Configuration.ConfigurationUpdated += ConfigurationUpdated;
 
         StartUpdate();
     }
@@ -134,7 +134,7 @@ internal abstract class Validator : IDisposable
     {
         _buffer.ChangedHighPriority -= OnBufferChange;
         Linter.Saved -= LinterOptionsChanged;
-        _completionUtilities.Configuration.ConfigurationUpdated -= ConfigurationUpdated;
+        _projectConfigurationManager.Configuration.ConfigurationUpdated -= ConfigurationUpdated;
     }
 
     private void LinterOptionsChanged(Linter linter)

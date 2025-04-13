@@ -19,7 +19,7 @@ namespace TailwindCSSIntellisense.Completions.Providers
     internal class HtmlCompletionSourceProvider : ICompletionSourceProvider
     {
         [Import]
-        internal CompletionUtilities CompletionUtils { get; set; }
+        internal ProjectConfigurationManager CompletionUtils { get; set; }
         [Import]
         internal SettingsProvider SettingsProvider { get; set; }
         [Import]

@@ -10,7 +10,7 @@ namespace TailwindCSSIntellisense.Completions.Sources;
 
 internal abstract class ClassCompletionGenerator : IDisposable
 {
-    protected readonly CompletionUtilities _completionUtils;
+    protected readonly ProjectConfigurationManager _completionUtils;
     protected ProjectCompletionValues _projectCompletionValues;
     protected readonly ColorIconGenerator _colorIconGenerator;
     protected readonly DescriptionGenerator _descriptionGenerator;
@@ -19,7 +19,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
     protected bool? _showAutocomplete;
 
-    protected ClassCompletionGenerator(ITextBuffer textBuffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider)
+    protected ClassCompletionGenerator(ITextBuffer textBuffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider)
     {
         _textBuffer = textBuffer;
         _completionUtils = completionUtils;

@@ -31,7 +31,7 @@ internal sealed class TailwindBuildProcess : IDisposable
     [Import]
     internal PackageJsonReader PackageJsonReader { get; set; }
     [Import]
-    internal CompletionUtilities CompletionUtilities { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     private Dictionary<string, string> _inputToOutputFile = [];
 
@@ -212,11 +212,11 @@ internal sealed class TailwindBuildProcess : IDisposable
         try
         {
             // V4
-            config = CompletionUtilities.GetCompletionConfigurationByConfigFilePath(pair.Key);
+            config = ProjectConfigurationManager.GetCompletionConfigurationByConfigFilePath(pair.Key);
         }
         catch
         {
-            config = CompletionUtilities.GetCompletionConfigurationByFilePath(pair.Key);
+            config = ProjectConfigurationManager.GetCompletionConfigurationByFilePath(pair.Key);
         }
 
         _minify = minify;

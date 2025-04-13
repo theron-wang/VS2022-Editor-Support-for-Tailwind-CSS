@@ -55,7 +55,7 @@ namespace TailwindCSSIntellisense
         #region Package Members
 
         private TailwindBuildProcess _buildProcess;
-        private CompletionUtilities _completionUtils;
+        private ProjectConfigurationManager _completionUtils;
         private ClassSortUtilities _classSortUtilities;
         private ClassSorter _classSorter;
 
@@ -75,7 +75,7 @@ namespace TailwindCSSIntellisense
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
             _buildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
-            _completionUtils = await VS.GetMefServiceAsync<CompletionUtilities>();
+            _completionUtils = await VS.GetMefServiceAsync<ProjectConfigurationManager>();
             _classSortUtilities = await VS.GetMefServiceAsync<ClassSortUtilities>();
             _classSorter = await VS.GetMefServiceAsync<ClassSorter>();
 

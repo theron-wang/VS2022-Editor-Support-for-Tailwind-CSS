@@ -14,7 +14,7 @@ using TailwindCSSIntellisense.Parsers;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Sources.JS;
-internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider) :
+internal class JavaScriptAsyncCompletionSource(ITextBuffer buffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider) :
     ClassCompletionGenerator(buffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider), IAsyncCompletionSource
 {
     private static readonly ImageElement _icon = new(KnownMonikers.Field.ToImageId(), "Tailwind CSS Class");

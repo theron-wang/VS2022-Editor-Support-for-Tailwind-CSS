@@ -25,13 +25,13 @@ namespace TailwindCSSIntellisense.Adornments.Directives;
 internal sealed class DirectiveCssTaggerProvider : IViewTaggerProvider
 {
     [Import]
-    internal CompletionUtilities CompletionUtilities { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
     [Import]
     internal ITextStructureNavigatorSelectorService TextStructureNavigatorSelector { get; set; }
 
     public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new CssDirectiveTagger(buffer, TextStructureNavigatorSelector, CompletionUtilities)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new CssDirectiveTagger(buffer, TextStructureNavigatorSelector, ProjectConfigurationManager)) as ITagger<T>;
     }
 
     /// <summary>
@@ -42,16 +42,16 @@ internal sealed class DirectiveCssTaggerProvider : IViewTaggerProvider
     private class CssDirectiveTagger : ITagger<IntraTextAdornmentTag>, IDisposable
     {
         private readonly ITextBuffer _buffer;
-        private readonly ProjectCompletionValues _completionUtilities;
+        private readonly ProjectCompletionValues _projectConfigurationManager;
         private readonly ITextStructureNavigator _textStructureNavigator;
         private readonly ImageSource _tailwindLogo;
         private bool _isProcessing;
         private General _generalOptions;
 
-        internal CssDirectiveTagger(ITextBuffer buffer, ITextStructureNavigatorSelectorService textStructureNavigatorSelector, CompletionUtilities completionUtilities)
+        internal CssDirectiveTagger(ITextBuffer buffer, ITextStructureNavigatorSelectorService textStructureNavigatorSelector, ProjectConfigurationManager completionUtilities)
         {
             _buffer = buffer;
-            _completionUtilities = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
+            _projectConfigurationManager = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
             _tailwindLogo = completionUtilities.TailwindLogo;
 
             _textStructureNavigator = textStructureNavigatorSelector.GetTextStructureNavigator(buffer);
@@ -112,7 +112,7 @@ internal sealed class DirectiveCssTaggerProvider : IViewTaggerProvider
                     {
                         yield return extent.Span;
                     }
-                    else if (_completionUtilities.Version == TailwindVersion.V3 && (text == "@tailwind" || text == "@config"))
+                    else if (_projectConfigurationManager.Version == TailwindVersion.V3 && (text == "@tailwind" || text == "@config"))
                     {
                         yield return extent.Span;
                     }

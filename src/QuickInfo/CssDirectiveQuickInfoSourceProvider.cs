@@ -16,10 +16,10 @@ internal sealed class CssDirectiveQuickInfoSourceProvider : IAsyncQuickInfoSourc
     public ITextStructureNavigatorSelectorService ITextStructureNavigatorSelectorService { get; set; }
 
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
-        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new CssDirectiveQuickInfoSource(textBuffer, CompletionUtilities, ITextStructureNavigatorSelectorService));
+        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new CssDirectiveQuickInfoSource(textBuffer, ProjectConfigurationManager, ITextStructureNavigatorSelectorService));
     }
 }

@@ -15,10 +15,10 @@ internal sealed class CssQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
     public DescriptionGenerator DescriptionGenerator { get; set; }
 
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
-        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new CssQuickInfoSource(textBuffer, DescriptionGenerator, CompletionUtilities));
+        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new CssQuickInfoSource(textBuffer, DescriptionGenerator, ProjectConfigurationManager));
     }
 }

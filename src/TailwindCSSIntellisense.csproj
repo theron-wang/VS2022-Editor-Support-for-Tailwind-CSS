@@ -208,7 +208,7 @@
     <Compile Include="Settings\TailwindSettings.cs" />
     <Compile Include="Settings\TailwindSettingsProjectOnly.cs" />
     <Compile Include="TailwindCSSIntellisensePackage.cs" />
-    <Compile Include="Completions\CompletionUtilities.cs" />
+    <Compile Include="Completions\ProjectConfigurationManager.cs" />
     <Compile Include="Completions\Variant.cs" />
   </ItemGroup>
   <ItemGroup>

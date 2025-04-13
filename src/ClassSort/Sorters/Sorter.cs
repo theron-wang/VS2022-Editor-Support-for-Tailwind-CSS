@@ -10,7 +10,7 @@ namespace TailwindCSSIntellisense.ClassSort.Sorters;
 internal abstract class Sorter
 {
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
     [Import]
     public ClassSortUtilities ClassSortUtilities { get; set; }
 
@@ -82,7 +82,7 @@ internal abstract class Sorter
 
     protected IEnumerable<string> Sort(IEnumerable<string> classes, string filePath)
     {
-        var projectCompletionValues = CompletionUtilities.GetCompletionConfigurationByFilePath(filePath);
+        var projectCompletionValues = ProjectConfigurationManager.GetCompletionConfigurationByFilePath(filePath);
 
         var classOrder = ClassSortUtilities.GetClassOrder(projectCompletionValues);
         var variantOrder = ClassSortUtilities.GetVariantOrder(projectCompletionValues);

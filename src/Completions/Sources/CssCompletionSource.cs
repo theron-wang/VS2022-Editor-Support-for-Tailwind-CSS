@@ -14,7 +14,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
     /// <summary>
     /// Completion provider for all CSS files to provide Intellisense support for TailwindCSS classes, functions, and directives
     /// </summary>
-    internal class CssCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider) :
+    internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider) :
         ClassCompletionGenerator(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider), ICompletionSource
     {
         private bool _initializeSuccess = true;

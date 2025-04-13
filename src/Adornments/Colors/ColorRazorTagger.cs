@@ -22,14 +22,14 @@ namespace TailwindCSSIntellisense.Adornments.Colors;
 internal sealed class ColorRazorTaggerProvider : IViewTaggerProvider
 {
     [Import]
-    internal CompletionUtilities CompletionUtilities { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorRazorTagger(buffer, textView, CompletionUtilities)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorRazorTagger(buffer, textView, ProjectConfigurationManager)) as ITagger<T>;
     }
 
-    private class ColorRazorTagger(ITextBuffer buffer, ITextView view, CompletionUtilities completionUtilities)
+    private class ColorRazorTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)
         : ColorTaggerBase(buffer, view, completionUtilities)
     {
         protected override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot)

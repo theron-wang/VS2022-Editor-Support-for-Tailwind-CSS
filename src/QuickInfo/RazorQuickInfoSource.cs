@@ -7,7 +7,7 @@ using TailwindCSSIntellisense.Parsers;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
-internal class RazorQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, CompletionUtilities completionUtilities) : QuickInfoSource(textBuffer, descriptionGenerator, completionUtilities)
+internal class RazorQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, ProjectConfigurationManager completionUtilities) : QuickInfoSource(textBuffer, descriptionGenerator, completionUtilities)
 {
     protected override bool IsInClassScope(IAsyncQuickInfoSession session, out SnapshotSpan? span)
     {

@@ -21,16 +21,16 @@ internal class JSErrorTaggerProvider : ITaggerProvider
     [Import]
     public LinterUtilities LinterUtilities { get; set; }
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new JSErrorTagger(buffer, LinterUtilities, CompletionUtilities)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new JSErrorTagger(buffer, LinterUtilities, ProjectConfigurationManager)) as ITagger<T>;
     }
 
     internal sealed class JSErrorTagger : ErrorTaggerBase, IDisposable
     {
-        public JSErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils)
+        public JSErrorTagger(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities) : base(buffer, linterUtils)
         {
             _errorChecker = JSValidator.Create(buffer, linterUtils, completionUtilities);
             _errorChecker.Validated += UpdateErrors;

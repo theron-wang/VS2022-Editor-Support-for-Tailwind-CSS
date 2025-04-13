@@ -9,7 +9,7 @@ namespace TailwindCSSIntellisense.Linting.Validators;
 
 internal class CssValidator : Validator
 {
-    private CssValidator(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils, completionUtilities)
+    private CssValidator(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities) : base(buffer, linterUtils, completionUtilities)
     {
 
     }
@@ -195,9 +195,9 @@ internal class CssValidator : Validator
             {
                 error = !_projectCompletionValues.Screen.Contains(string.Join("-", segments.Skip(1)));
             }
-            else if (_completionUtilities.Configuration.LastConfig is not null)
+            else if (_projectConfigurationManager.Configuration.LastConfig is not null)
             {
-                if (_completionUtilities.Configuration.LastConfig.OverridenValues.TryGetValue(segments[0], out var config))
+                if (_projectConfigurationManager.Configuration.LastConfig.OverridenValues.TryGetValue(segments[0], out var config))
                 {
                     for (int i = 1; i < segments.Count; i++)
                     {
@@ -361,7 +361,7 @@ internal class CssValidator : Validator
                     error = true;
                 }
 
-                if (_completionUtilities.Configuration.LastConfig.ExtendedValues.TryGetValue(segments[0], out config))
+                if (_projectConfigurationManager.Configuration.LastConfig.ExtendedValues.TryGetValue(segments[0], out config))
                 {
                     bool previouslyFound = foundButInvalid || !error;
 
@@ -410,7 +410,7 @@ internal class CssValidator : Validator
         #endregion
     }
 
-    public static Validator Create(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities)
+    public static Validator Create(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities)
     {
         return buffer.Properties.GetOrCreateSingletonProperty<Validator>(() => new CssValidator(buffer, linterUtils, completionUtilities));
     }

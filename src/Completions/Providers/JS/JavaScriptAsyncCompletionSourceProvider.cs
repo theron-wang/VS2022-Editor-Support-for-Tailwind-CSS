@@ -19,7 +19,7 @@ internal class JavaScriptAsyncCompletionSourceProvider : IAsyncCompletionSourceP
     private readonly IDictionary<ITextView, IAsyncCompletionSource> _cache = new Dictionary<ITextView, IAsyncCompletionSource>();
 
     [Import]
-    public CompletionUtilities CompletionUtilities { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     [Import]
     public SettingsProvider SettingsProvider { get; set; }
@@ -35,7 +35,7 @@ internal class JavaScriptAsyncCompletionSourceProvider : IAsyncCompletionSourceP
         if (_cache.TryGetValue(textView, out var itemSource))
             return itemSource;
         
-        var source = new JavaScriptAsyncCompletionSource(textView.TextBuffer, CompletionUtilities, ColorIconGenerator, DescriptionGenerator, SettingsProvider);
+        var source = new JavaScriptAsyncCompletionSource(textView.TextBuffer, ProjectConfigurationManager, ColorIconGenerator, DescriptionGenerator, SettingsProvider);
         textView.Closed += (o, e) => _cache.Remove(textView);
         _cache.Add(textView, source);
         return source;

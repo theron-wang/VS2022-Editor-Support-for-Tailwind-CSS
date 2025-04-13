@@ -13,15 +13,15 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
 {
     protected ITextBuffer _textBuffer;
     protected DescriptionGenerator _descriptionGenerator;
-    private readonly ProjectCompletionValues _completionUtilities;
+    private readonly ProjectCompletionValues _projectConfigurationManager;
 
     private const string PropertyKey = "tailwindintellisensequickinfoadded";
 
-    public QuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, CompletionUtilities completionUtilities)
+    public QuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, ProjectConfigurationManager completionUtilities)
     {
         _textBuffer = textBuffer;
         _descriptionGenerator = descriptionGenerator;
-        _completionUtilities = completionUtilities.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
+        _projectConfigurationManager = completionUtilities.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
     }
 
     public void Dispose()
@@ -50,12 +50,12 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 classText = classText.TrimStart('!');
             }
 
-            if (!_completionUtilities.IsClassAllowed(classText))
+            if (!_projectConfigurationManager.IsClassAllowed(classText))
             {
                 return Task.FromResult<QuickInfoItem>(null);
             }
 
-            var desc = _descriptionGenerator.GetDescription(classText, _completionUtilities);
+            var desc = _descriptionGenerator.GetDescription(classText, _projectConfigurationManager);
 
             var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
 
@@ -64,12 +64,12 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 session.Properties.AddProperty(PropertyKey, true);
 
                 var totalVariant = fullText.Contains(':') ?
-                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _completionUtilities) :
+                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _projectConfigurationManager) :
                     [];
 
                 ContainerElement descriptionFormatted;
 
-                if (_completionUtilities.Version == TailwindVersion.V3)
+                if (_projectConfigurationManager.Version == TailwindVersion.V3)
                 {
                     descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText,
                             totalVariant.LastOrDefault(),

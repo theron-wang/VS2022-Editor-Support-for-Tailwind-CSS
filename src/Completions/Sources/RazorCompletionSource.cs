@@ -21,7 +21,7 @@ internal class RazorCompletionSource : ClassCompletionGenerator, ICompletionSour
     private readonly IAsyncCompletionBroker _asyncCompletionBroker;
     private readonly ICompletionBroker _completionBroker;
 
-    public RazorCompletionSource(ITextBuffer textBuffer, CompletionUtilities completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker)
+    public RazorCompletionSource(ITextBuffer textBuffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker)
         : base(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider)
     {
         _asyncCompletionBroker = asyncCompletionBroker;

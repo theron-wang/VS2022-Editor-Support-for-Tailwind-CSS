@@ -11,7 +11,7 @@ internal class RazorValidator : HtmlLikeValidator
     protected override Func<string, IEnumerable<Match>> ClassSplitter { get; set; } = ClassRegexHelper.SplitRazorClasses;
     protected override Func<string, string, IEnumerable<Match>> ClassMatchGetter { get; set; } = ClassRegexHelper.GetClassesRazor;
 
-    protected RazorValidator(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities) : base(buffer, linterUtils, completionUtilities)
+    protected RazorValidator(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities) : base(buffer, linterUtils, completionUtilities)
     {
 
     }
@@ -21,7 +21,7 @@ internal class RazorValidator : HtmlLikeValidator
         return RazorParser.GetScopes(span);
     }
 
-    public static Validator Create(ITextBuffer buffer, LinterUtilities linterUtils, CompletionUtilities completionUtilities)
+    public static Validator Create(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities)
     {
         return buffer.Properties.GetOrCreateSingletonProperty<Validator>(() => new RazorValidator(buffer, linterUtils, completionUtilities));
     }
