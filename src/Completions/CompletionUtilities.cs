@@ -14,7 +14,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using TailwindCSSIntellisense.Completions.V4;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Settings;
+using static Microsoft.VisualStudio.Shell.ThreadedWaitDialogHelper;
 
 namespace TailwindCSSIntellisense.Completions;
 
@@ -43,8 +45,8 @@ public sealed class CompletionUtilities : IDisposable
     /// </summary>
     private readonly Dictionary<string, ProjectCompletionValues> _projectCompletionConfiguration = [];
     private ProjectCompletionValues _defaultProjectCompletionConfiguration;
-    private readonly ProjectCompletionValues _unsetProjectCompletionConfiguration = new();
-    private readonly ProjectCompletionValues _unsetProjectCompletionConfigurationV4 = new();
+
+    private readonly Dictionary<TailwindVersion, ProjectCompletionValues> _unsetProjectCompletionConfigurations = [];
 
     /// <summary>
     /// Initializes the necessary utilities to provide completion
@@ -67,13 +69,8 @@ public sealed class CompletionUtilities : IDisposable
 
             Initializing = true;
 
-            await LoadClassesV3Async();
-            await LoadClassesV4Async();
-
             var settings = await SettingsProvider.GetSettingsAsync();
             await OnSettingsChangedAsync(settings);
-
-            await Configuration.InitializeAsync(this);
 
             SettingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
 
@@ -99,11 +96,7 @@ public sealed class CompletionUtilities : IDisposable
     {
         ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
 
-        if (version == TailwindVersion.V4)
-        {
-            return _unsetProjectCompletionConfigurationV4;
-        }
-        return _unsetProjectCompletionConfiguration;
+        return _unsetProjectCompletionConfigurations[version];
     }
 
     /// <summary>
@@ -118,7 +111,6 @@ public sealed class CompletionUtilities : IDisposable
 
     /// <summary>
     /// For IntelliSense; detect which configuration file this file belongs to and return the completion configuration for it.
-    /// By default, this will return the default v3 configuration if none is found.
     /// </summary>
     public ProjectCompletionValues GetCompletionConfigurationByFilePath(string filePath)
     {
@@ -126,7 +118,20 @@ public sealed class CompletionUtilities : IDisposable
 
         if (filePath is null)
         {
-            return _defaultProjectCompletionConfiguration ?? _unsetProjectCompletionConfiguration;
+            if (_defaultProjectCompletionConfiguration is not null)
+            {
+                return _defaultProjectCompletionConfiguration;
+            }
+            else if (_unsetProjectCompletionConfigurations.Any())
+            {
+                return _unsetProjectCompletionConfigurations.First().Value;
+            }
+            else
+            {
+                // Default to v3
+                ThreadHelper.JoinableTaskFactory.Run(LoadClassesV3Async);
+                return _unsetProjectCompletionConfigurations[TailwindVersion.V3];
+            }
         }
 
         foreach (var k in _projectCompletionConfiguration.Values)
@@ -152,7 +157,20 @@ public sealed class CompletionUtilities : IDisposable
             }
         }
 
-        return _defaultProjectCompletionConfiguration ?? _unsetProjectCompletionConfiguration;
+        if (_defaultProjectCompletionConfiguration is not null)
+        {
+            return _defaultProjectCompletionConfiguration;
+        }
+        else if (_unsetProjectCompletionConfigurations.Any())
+        {
+            return _unsetProjectCompletionConfigurations.First().Value;
+        }
+        else
+        {
+            // Default to v3
+            ThreadHelper.JoinableTaskFactory.Run(LoadClassesV3Async);
+            return _unsetProjectCompletionConfigurations[TailwindVersion.V3];
+        }
     }
 
     private async Task OnSettingsChangedAsync(TailwindSettings settings)
@@ -180,19 +198,16 @@ public sealed class CompletionUtilities : IDisposable
             {
                 var version = await DirectoryVersionFinder.GetTailwindVersionAsync(file.Path);
 
-                ProjectCompletionValues toCopy;
-
-                if (version == TailwindVersion.V3)
+                if (!_unsetProjectCompletionConfigurations.TryGetValue(version, out var toCopy))
                 {
-                    toCopy = _unsetProjectCompletionConfiguration;
-                }
-                else
-                {
-                    toCopy = _unsetProjectCompletionConfigurationV4;
+                    await LoadClassesAsync(version);
+                    toCopy = _unsetProjectCompletionConfigurations[version];
                 }
 
                 projectConfig = toCopy.Copy();
                 _projectCompletionConfiguration.Add(file.Path.ToLower(), projectConfig);
+
+                await CheckForUpdates.UpdateConfigFileFolderAsync(file.Path);
             }
 
             projectConfig.FilePath = file.Path.ToLower();
@@ -223,37 +238,41 @@ public sealed class CompletionUtilities : IDisposable
 
     private async Task LoadClassesV3Async()
     {
-        if (_unsetProjectCompletionConfiguration.Classes.Count > 0)
+        if (_unsetProjectCompletionConfigurations.ContainsKey(TailwindVersion.V3))
         {
             return;
         }
 
-        _unsetProjectCompletionConfiguration.Version = TailwindVersion.V3;
+        var project = new ProjectCompletionValues
+        {
+            Version = TailwindVersion.V3
+        };
 
         var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
+        var versionFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", TailwindVersion.V3.ToString());
         List<Variant> variants = [];
 
         var loadTasks = new List<Task>
         {
-            LoadJsonAsync<List<Variant>>(Path.Combine(baseFolder, "tailwindclasses.json"), v => variants = v),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindmodifiers.json"), m => _unsetProjectCompletionConfiguration.Variants = m),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwindrgbmapper.json"), c => _unsetProjectCompletionConfiguration.ColorMapper = c),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), spacing =>
+            LoadJsonAsync<List<Variant>>(Path.Combine(versionFolder, "classes.json"), v => variants = v),
+            LoadJsonAsync<List<string>>(Path.Combine(versionFolder, "variants.json"), m => project.Variants = m),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "colors.json"), c => project.ColorMapper = c),
+            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "spacing.json"), spacing =>
             {
-                _unsetProjectCompletionConfiguration.SpacingMapper = [];
+                project.SpacingMapper = [];
                 foreach (var s in spacing)
                 {
-                    _unsetProjectCompletionConfiguration.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
+                    project.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
                 }
             }),
-            LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "tailwindopacity.json"), o => Opacity = o),
-            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => _unsetProjectCompletionConfiguration.ConfigurationValueToClassStems = c),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(baseFolder, "tailwinddesc.json"), d => _unsetProjectCompletionConfiguration.DescriptionMapper = d)
+            LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "opacity.json"), o => Opacity = o),
+            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => project.ConfigurationValueToClassStems = c),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "descriptions.json"), d => project.DescriptionMapper = d)
         };
 
         await Task.WhenAll(loadTasks);
 
-        _unsetProjectCompletionConfiguration.Classes = new List<TailwindClass>();
+        project.Classes = [];
 
         foreach (var variant in variants)
         {
@@ -342,7 +361,7 @@ public sealed class CompletionUtilities : IDisposable
                         classes.Add(new TailwindClass()
                         {
                             Name = variant.Stem + "-" + subvariant.Stem.Replace("{s}", "{0}"),
-                            // Notify the completion provider to show color options
+                            // Notify the completion provider to show spacing options
                             UseSpacing = true
                         });
                     }
@@ -369,7 +388,7 @@ public sealed class CompletionUtilities : IDisposable
                 classes.Add(newClass);
             }
 
-            _unsetProjectCompletionConfiguration.Classes.AddRange(classes);
+            project.Classes.AddRange(classes);
 
             if (variant.HasNegative == true)
             {
@@ -383,10 +402,10 @@ public sealed class CompletionUtilities : IDisposable
                     };
                 }).ToList();
 
-                _unsetProjectCompletionConfiguration.Classes.AddRange(negativeClasses);
+                project.Classes.AddRange(negativeClasses);
             }
         }
-        foreach (var stems in _unsetProjectCompletionConfiguration.ConfigurationValueToClassStems.Values)
+        foreach (var stems in project.ConfigurationValueToClassStems.Values)
         {
             foreach (var stem in stems)
             {
@@ -403,13 +422,13 @@ public sealed class CompletionUtilities : IDisposable
 
                 if (stem.Contains(":"))
                 {
-                    _unsetProjectCompletionConfiguration.Variants.Add($"{name.Replace(":-", "")}-[]");
+                    project.Variants.Add($"{name.Replace(":-", "")}-[]");
                 }
                 else
                 {
-                    if (_unsetProjectCompletionConfiguration.Classes.All(c => (c.Name == name && c.HasArbitrary == false) || c.Name != name))
+                    if (project.Classes.All(c => (c.Name == name && c.HasArbitrary == false) || c.Name != name))
                     {
-                        _unsetProjectCompletionConfiguration.Classes.Add(new TailwindClass()
+                        project.Classes.Add(new TailwindClass()
                         {
                             Name = name,
                             HasArbitrary = true
@@ -418,45 +437,56 @@ public sealed class CompletionUtilities : IDisposable
                 }
             }
         }
+
+        _unsetProjectCompletionConfigurations[TailwindVersion.V3] = project;
     }
 
-    private async Task LoadClassesV4Async()
+    private async Task LoadClassesAsync(TailwindVersion version)
     {
-        if (_unsetProjectCompletionConfigurationV4.Classes.Count > 0)
+        if (_unsetProjectCompletionConfigurations.ContainsKey(version))
         {
             return;
         }
 
-        _unsetProjectCompletionConfigurationV4.Version = TailwindVersion.V4;
+        if (version == TailwindVersion.V3)
+        {
+            await LoadClassesV3Async();
+        }
 
-        var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
-        var v4Folder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "V4");
+        var project = new ProjectCompletionValues
+        {
+            Version = version
+        };
+
+        var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
+        var versionFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
+
         List<ClassType> classTypes = [];
 
         var loadTasks = new List<Task>
         {
-            LoadJsonAsync<List<ClassType>>(Path.Combine(v4Folder, "classes.json"), v => classTypes = v),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "colors.json"), c => _unsetProjectCompletionConfigurationV4.ColorMapper = c),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "tailwindspacing.json"), spacing =>
+            LoadJsonAsync<List<ClassType>>(Path.Combine(versionFolder, "classes.json"), v => classTypes = v),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "colors.json"), c => project.ColorMapper = c),
+            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "spacing.json"), spacing =>
             {
-                _unsetProjectCompletionConfigurationV4.SpacingMapper = [];
+                project.SpacingMapper = [];
                 foreach (var s in spacing)
                 {
-                    _unsetProjectCompletionConfigurationV4.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
+                    project.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
                 }
             }),
-            LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "tailwindopacity.json"), o => Opacity = o),
-            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => _unsetProjectCompletionConfigurationV4.ConfigurationValueToClassStems = c),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "descriptions.json"), d => _unsetProjectCompletionConfigurationV4.DescriptionMapper = d),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "theme.json"), d => _unsetProjectCompletionConfigurationV4.CssVariables = d),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(v4Folder, "variants.json"), d => _unsetProjectCompletionConfigurationV4.VariantsToDescriptions = d)
+            LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "opacity.json"), o => Opacity = o),
+            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => project.ConfigurationValueToClassStems = c),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "descriptions.json"), d => project.DescriptionMapper = d),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "theme.json"), d => project.CssVariables = d),
+            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "variants.json"), d => project.VariantsToDescriptions = d)
         };
 
         await Task.WhenAll(loadTasks);
 
-        _unsetProjectCompletionConfigurationV4.Variants = [.. _unsetProjectCompletionConfigurationV4.VariantsToDescriptions.Keys];
+        project.Variants = [.. project.VariantsToDescriptions.Keys];
 
-        _unsetProjectCompletionConfigurationV4.Classes = [];
+        project.Classes = [];
 
         foreach (var classType in classTypes)
         {
@@ -614,7 +644,7 @@ public sealed class CompletionUtilities : IDisposable
                 });
             }
 
-            _unsetProjectCompletionConfigurationV4.Classes.AddRange(classes);
+            project.Classes.AddRange(classes);
 
             if (classType.HasNegative == true)
             {
@@ -633,9 +663,11 @@ public sealed class CompletionUtilities : IDisposable
                     };
                 }).ToList();
 
-                _unsetProjectCompletionConfigurationV4.Classes.AddRange(negativeClasses);
+                project.Classes.AddRange(negativeClasses);
             }
         }
+
+        _unsetProjectCompletionConfigurations[version] = project;
     }
 
     private async Task LoadJsonAsync<T>(string path, Action<T> process)

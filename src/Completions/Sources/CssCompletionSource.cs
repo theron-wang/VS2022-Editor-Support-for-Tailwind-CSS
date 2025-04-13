@@ -146,7 +146,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                         // @apply completion is the only completion in this context
                         new Completion("@apply", "@apply", "Use @apply to inline any existing utility classes into your own custom CSS.", _completionUtils.TailwindLogo, null)
                     );
-                    if (_projectCompletionValues.Version == TailwindVersion.V4)
+                    if (_projectCompletionValues.Version >= TailwindVersion.V4)
                     {
                         completions.Add(
                             // @apply completion is the only completion in this context
@@ -159,7 +159,7 @@ namespace TailwindCSSIntellisense.Completions.Sources
                     completions =
                     [
                         new Completion("theme()", "theme()",
-                        _projectCompletionValues.Version == TailwindVersion.V4 ?
+                        _projectCompletionValues.Version >= TailwindVersion.V4 ?
                             "Deprecated - use CSS theme variables instead." :
                             "Use the theme() function to access your Tailwind config values using dot notation.",
                         _completionUtils.TailwindLogo, null)

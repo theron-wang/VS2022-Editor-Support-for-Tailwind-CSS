@@ -14,10 +14,11 @@ namespace TailwindCSSIntellisense.Configuration;
 /// Check ConfigurationClassGenerator.cs for the other half
 /// </summary>
 [Export]
+[PartCreationPolicy(CreationPolicy.Shared)]
 public sealed partial class CompletionConfiguration
 {
     internal Action ConfigurationUpdated;
-
+    
     [Import]
     internal ConfigurationFileReloader Reloader { get; set; }
 
@@ -27,20 +28,13 @@ public sealed partial class CompletionConfiguration
     [Import]
     internal ColorIconGenerator ColorIconGenerator { get; set; }
 
-    private CompletionUtilities _completionBase;
+    [Import]
+    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
+
+    [Import]
+    public CompletionUtilities CompletionUtilities { get; set; }
 
     internal TailwindConfiguration LastConfig { get; private set; }
-
-    /// <summary>
-    /// Initializes the configuration file (tailwind.config.js) for completion
-    /// </summary>
-    /// <param name="completionBase">The <see cref="CompletionUtilities"/> object calling the initialization</param>
-    public async Task InitializeAsync(CompletionUtilities completionBase)
-    {
-        _completionBase = completionBase;
-
-        await Reloader.InitializeAsync(this);
-    }
 
     /// <summary>
     /// Shorthand for calling <see cref="ReloadCustomAttributesAsync(ConfigurationFile)"/> on all projects
@@ -104,20 +98,22 @@ public sealed partial class CompletionConfiguration
     /// </returns>
     private async Task<bool> ReloadCustomAttributesImplAsync(ConfigurationFile configurationFile)
     {
-        if (_completionBase is not null)
+        if (CompletionUtilities is not null)
         {
             await VS.StatusBar.ShowMessageAsync("Reloading Tailwind CSS configuration");
 
             try
             {
-                var config = await ConfigFileParser.GetConfigurationAsync(configurationFile.Path);
+                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(configurationFile.Path);
+
+                var config = await ConfigFileParser.GetConfigurationAsync(configurationFile.Path, version);
 
                 foreach (var imports in config.Imports)
                 {
                     Reloader.AddImport(imports, configurationFile);
                 }
 
-                var projectCompletionValues = _completionBase.GetCompletionConfigurationByConfigFilePath(configurationFile.Path);
+                var projectCompletionValues = CompletionUtilities.GetCompletionConfigurationByConfigFilePath(configurationFile.Path);
 
                 projectCompletionValues.ApplicablePaths = [.. config.ContentPaths.Where(c => !c.StartsWith("!"))];
                 projectCompletionValues.NotApplicablePaths = [.. config.ContentPaths.Where(c => c.StartsWith("!")).Select(c => c.Trim('!'))];

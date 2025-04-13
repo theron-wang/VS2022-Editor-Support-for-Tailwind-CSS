@@ -14,7 +14,7 @@ public sealed partial class CompletionConfiguration
     /// </summary>
     private void LoadGlobalConfiguration(ProjectCompletionValues project, TailwindConfiguration config)
     {
-        var original = _completionBase.GetUnsetCompletionConfiguration(project.Version);
+        var original = CompletionUtilities.GetUnsetCompletionConfiguration(project.Version);
 
         project.SpacingMapper = original.SpacingMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
         project.Screen = [.. original.Screen];
@@ -65,7 +65,7 @@ public sealed partial class CompletionConfiguration
             }
         }
 
-        if (project.Version == TailwindVersion.V4)
+        if (project.Version >= TailwindVersion.V4)
         {
             DictionaryHelpers.MergeDictionaries(config.ThemeVariables, project.CssVariables);
             project.CssVariables = config.ThemeVariables;
@@ -79,7 +79,7 @@ public sealed partial class CompletionConfiguration
     /// </summary>
     private void HandleCorePlugins(ProjectCompletionValues project, TailwindConfiguration config)
     {
-        var original = _completionBase.GetUnsetCompletionConfiguration(project.Version);
+        var original = CompletionUtilities.GetUnsetCompletionConfiguration(project.Version);
         var enabledClasses = new List<TailwindClass>();
         if (config.EnabledCorePlugins is not null)
         {
@@ -221,7 +221,7 @@ public sealed partial class CompletionConfiguration
 
         HandleCorePlugins(project, config);
 
-        var original = _completionBase.GetUnsetCompletionConfiguration(project.Version);
+        var original = CompletionUtilities.GetUnsetCompletionConfiguration(project.Version);
 
         var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.OverridenValues?.ContainsKey(k) == true);
         project.Variants = [.. original.Variants];
@@ -425,7 +425,7 @@ public sealed partial class CompletionConfiguration
 
         var applicable = project.ConfigurationValueToClassStems.Keys.Where(k => config.ExtendedValues?.ContainsKey(k) == true);
 
-        if (project.Version == TailwindVersion.V4 && config.ExtendedValues.TryGetValue("screens", out var obj) && obj is Dictionary<string, object> screens)
+        if (project.Version >= TailwindVersion.V4 && config.ExtendedValues.TryGetValue("screens", out var obj) && obj is Dictionary<string, object> screens)
         {
             foreach (var screen in screens.Keys)
             {
@@ -670,14 +670,14 @@ public sealed partial class CompletionConfiguration
     /// <param name="config">The configuration object</param>
     private void LoadPlugins(ProjectCompletionValues project, TailwindConfiguration config)
     {
-        if (project.Version == TailwindVersion.V4)
+        if (project.Version >= TailwindVersion.V4)
         {
             // Handle plugin variants
 
             if (config.PluginVariantDescriptions is not null)
             {
                 project.VariantsToDescriptions =
-                    _completionBase.GetUnsetCompletionConfiguration(TailwindVersion.V4).VariantsToDescriptions
+                    CompletionUtilities.GetUnsetCompletionConfiguration(TailwindVersion.V4).VariantsToDescriptions
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
                 foreach (var pair in config.PluginVariantDescriptions)
@@ -996,7 +996,7 @@ public sealed partial class CompletionConfiguration
 
             if (value is string s)
             {
-                if (version == TailwindVersion.V4)
+                if (version >= TailwindVersion.V4)
                 {
                     newColorToRgbMapper[actual] = s;
                     continue;

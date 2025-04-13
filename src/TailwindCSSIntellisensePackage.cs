@@ -54,7 +54,6 @@ namespace TailwindCSSIntellisense
 
         #region Package Members
 
-        private CheckForUpdates _checkForUpdates;
         private TailwindBuildProcess _buildProcess;
         private CompletionUtilities _completionUtils;
         private ClassSortUtilities _classSortUtilities;
@@ -75,7 +74,6 @@ namespace TailwindCSSIntellisense
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
-            _checkForUpdates = await VS.GetMefServiceAsync<CheckForUpdates>();
             _buildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
             _completionUtils = await VS.GetMefServiceAsync<CompletionUtilities>();
             _classSortUtilities = await VS.GetMefServiceAsync<ClassSortUtilities>();
@@ -93,14 +91,8 @@ namespace TailwindCSSIntellisense
                 {
                     await _buildProcess.InitializeAsync(true);
                     await _completionUtils.InitializeAsync();
-                    await _classSortUtilities.InitializeAsync();
-                    await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
+                    await _completionUtils.Configuration.Reloader.InitializeAsync();
                     _classSorter.Initialize();
-
-                    foreach (var project in await VS.Solutions.GetAllProjectsAsync())
-                    {
-                        await _checkForUpdates.UpdateIfNeededAsync(Path.GetDirectoryName(project.FullPath));
-                    }
                 }).FireAndForget();
             }
         }
@@ -118,9 +110,7 @@ namespace TailwindCSSIntellisense
                 {
                     await _buildProcess.InitializeAsync(true);
                     await _completionUtils.InitializeAsync();
-                    await _classSortUtilities.InitializeAsync();
-                    await _completionUtils.Configuration.Reloader.InitializeAsync(_completionUtils.Configuration, true);
-                    await _checkForUpdates.UpdateIfNeededAsync(folderName);
+                    await _completionUtils.Configuration.Reloader.InitializeAsync();
                     _classSorter.Initialize();
                 }).FireAndForget();
             }

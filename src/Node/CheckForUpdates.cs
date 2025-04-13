@@ -2,47 +2,34 @@
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 using TailwindCSSIntellisense.Options;
-using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Node;
 
 /// <summary>
 /// Helper class which provides methods to update and check for Tailwind npm module updates
 /// </summary>
-[Export]
-internal sealed class CheckForUpdates
+internal static class CheckForUpdates
 {
-    [Import]
-    internal SettingsProvider SettingsProvider { get; set; }
-
-    private readonly List<string> _configFilesChecked = [];
+    private static readonly HashSet<string> _checkedDirectories = [];
 
     /// <summary>
-    /// Updates the Tailwind CSS module in the specified folder if needed
+    /// Updates the Tailwind CSS module in a configuration file's folder, if needed
     /// </summary>
-    /// <param name="project">The folder to update</param>
-    public async Task UpdateIfNeededAsync(string folder)
+    /// <param name="folder">The file to update</param>
+    public static async Task UpdateConfigFileFolderAsync(string config)
     {
-        var settings = await SettingsProvider.GetSettingsAsync();
-
-        if (settings.ConfigurationFiles.Count == 0)
-        {
-            return;
-        }
+        var folder = Path.GetDirectoryName(config).ToLower();
 
         var general = await General.GetLiveInstanceAsync();
 
-        if (general.AutomaticallyUpdateLibrary == false)
+        if (!general.UseTailwindCss || !general.AutomaticallyUpdateLibrary || !File.Exists(config))
         {
             return;
         }
@@ -52,18 +39,11 @@ internal sealed class CheckForUpdates
             folder += Path.DirectorySeparatorChar;
         }
 
-        var shouldCheck = settings.EnableTailwindCss &&
-            !(settings.ConfigurationFiles.Count == 0 || settings.ConfigurationFiles.All(c =>
-                string.IsNullOrEmpty(c.Path) || File.Exists(c.Path) == false));
-
-        var configFilePaths = settings.ConfigurationFiles.Select(c => c.Path);
         // Prevents multiple projects in same solution from re-checking the same file
-        if (shouldCheck == false || _configFilesChecked.Any(configFilePaths.Contains))
+        if (_checkedDirectories.Contains(folder))
         {
             return;
         }
-
-        await VS.StatusBar.ShowMessageAsync("Checking for Tailwind CSS updates");
 
         try
         {
@@ -71,7 +51,7 @@ internal sealed class CheckForUpdates
             // a missing package simply returns {}
             await UpdateModuleAsync(folder, "@tailwindcss/cli");
             await UpdateModuleAsync(folder, "tailwindcss");
-            _configFilesChecked.AddRange(settings.ConfigurationFiles.Select(f => f.Path));
+            _checkedDirectories.Add(folder);
         }
         catch (Exception ex)
         {
@@ -80,7 +60,7 @@ internal sealed class CheckForUpdates
         }
     }
 
-    private async Task UpdateModuleAsync(string folder, string module)
+    private static async Task UpdateModuleAsync(string folder, string module)
     {
         var processInfo = new ProcessStartInfo()
         {

@@ -104,7 +104,7 @@ internal abstract class Sorter
                 if (className.Contains(':'))
                 {
                     var variants = className.Split(':');
-                    if (projectCompletionValues.Version == TailwindVersion.V4)
+                    if (projectCompletionValues.Version >= TailwindVersion.V4)
                     {
                         int max = -1;
                         foreach (var variant in variants)
@@ -284,7 +284,7 @@ internal abstract class Sorter
 
                     if (shouldKeepLooking)
                     {
-                        if (projectCompletionValues.Version == TailwindVersion.V4)
+                        if (projectCompletionValues.Version >= TailwindVersion.V4)
                         {
                             if (ending == "px")
                             {

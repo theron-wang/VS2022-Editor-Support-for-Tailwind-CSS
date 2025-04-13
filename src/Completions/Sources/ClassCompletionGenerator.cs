@@ -390,7 +390,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 {
                     var completion = new Completion(variant + ":",
                                             variantsAsString + variant + ":",
-                                            _projectCompletionValues.Version == TailwindVersion.V4 ?
+                                            _projectCompletionValues.Version >= TailwindVersion.V4 ?
                                             _descriptionGenerator.GetVariantDescription(variant, _projectCompletionValues) : variant,
                                             _completionUtils.TailwindLogo,
                                             null);

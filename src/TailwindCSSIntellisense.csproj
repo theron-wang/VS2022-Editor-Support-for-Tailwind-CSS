@@ -212,53 +212,53 @@
     <Compile Include="Completions\Variant.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\tailwindmodifiers.json">
+    <Content Include="Resources\V3\variants.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\tailwindclasses.json">
+    <Content Include="Resources\V3\classes.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\tailwindrgbmapper.json">
+    <Content Include="Resources\V3\colors.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\tailwindspacing.json">
+    <Content Include="Resources\spacing.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <None Include=".editorconfig" />
-    <Content Include="Resources\tailwindopacity.json">
+    <Content Include="Resources\opacity.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\tailwindconfig.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\tailwinddesc.json">
+    <Content Include="Resources\V3\descriptions.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\tailwindmodifiersorder.json">
+    <Content Include="Resources\V3\variantorder.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\tailwindorder.json">
+    <Content Include="Resources\V3\order.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\V41\classes.json">
+    <Content Include="Resources\V4_1\classes.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\V41\colors.json">
+    <Content Include="Resources\V4_1\colors.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\V41\descriptions.json">
+    <Content Include="Resources\V4_1\descriptions.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\V41\order.json">
+    <Content Include="Resources\V4_1\order.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\V41\theme.json">
+    <Content Include="Resources\V4_1\theme.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\V41\variantorder.json">
+    <Content Include="Resources\V4_1\variantorder.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <Content Include="Resources\V41\variants.json">
+    <Content Include="Resources\V4_1\variants.json">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <Content Include="Resources\V4\classes.json" />

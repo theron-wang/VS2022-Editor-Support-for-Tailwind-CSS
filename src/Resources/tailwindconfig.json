@@ -105,5 +105,6 @@
   "supports": [ "supports:" ],
   "data": [ "data:" ],
   "v4-insetShadow": [ "inset-shadow-{2xs|xs|sm|none}" ],
-  "v4-perspective": [ "perspective-{dramatic|near|normal|midrange|distant|none}" ]
+  "v4-perspective": [ "perspective-{dramatic|near|normal|midrange|distant|none}" ],
+  "v4_1-text-shadow": [ "perspective-{2xs|xs|sm|md|lg|none}" ]
 }

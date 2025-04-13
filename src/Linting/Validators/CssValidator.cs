@@ -141,7 +141,7 @@ internal class CssValidator : Validator
                     _checkedSpans.Add(span);
                     yield return new Error(errorSpan, $"'{tailwindDirective}' is not a valid value.", ErrorType.InvalidTailwindDirective);
                 }
-                else if (_projectCompletionValues.Version == TailwindVersion.V4)
+                else if (_projectCompletionValues.Version >= TailwindVersion.V4)
                 {
                     var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(tailwindDirective, startIndex), tailwindDirective.Length);
                     if (tailwindDirective == "base")

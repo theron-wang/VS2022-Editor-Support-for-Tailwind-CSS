@@ -37,7 +37,7 @@ namespace TailwindCSSIntellisense
 
             var version = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.GetTailwindVersionAsync(filePath));
 
-            if (version == TailwindVersion.V4)
+            if (version >= TailwindVersion.V4)
             {
                 Command.Visible = false;
             }

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Documents;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Configuration;
@@ -20,10 +19,11 @@ public sealed class ConfigurationFileReloader : IDisposable
     internal ConfigFileScanner Scanner { get; set; }
     [Import]
     internal SettingsProvider SettingsProvider { get; set; }
+    [Import]
+    internal CompletionConfiguration CompletionConfiguration { get; set; }
 
     private bool _subscribed;
 
-    private CompletionConfiguration _config;
     private TailwindSettings _settings;
 
     private readonly Dictionary<string, HashSet<ConfigurationFile>> _importToConfigurationFiles = [];
@@ -31,12 +31,9 @@ public sealed class ConfigurationFileReloader : IDisposable
     /// <summary>
     /// Initializes the class to subscribe to relevant events
     /// </summary>
-    /// <param name="config">The <see cref="CompletionConfiguration"/> object calling the initialization</param>
     /// <param name="fromNewProject">Should only be called from <see cref="TailwindCSSIntellisensePackage"/> to reset the configuration file path</param>
-    public async Task InitializeAsync(CompletionConfiguration config, bool fromNewProject = false)
+    public async Task InitializeAsync()
     {
-        _config = config;
-
         if (_subscribed == false)
         {
             VS.Events.DocumentEvents.Saved += OnFileSave;
@@ -45,11 +42,8 @@ public sealed class ConfigurationFileReloader : IDisposable
             _subscribed = true;
         }
 
-        if (fromNewProject)
-        {
-            _settings = await SettingsProvider.GetSettingsAsync();
-            await _config.ReloadCustomAttributesAsync(_settings);
-        }
+        _settings = await SettingsProvider.GetSettingsAsync();
+        await CompletionConfiguration.ReloadCustomAttributesAsync(_settings);
     }
 
     public void AddImport(string import, ConfigurationFile config)
@@ -82,7 +76,7 @@ public sealed class ConfigurationFileReloader : IDisposable
 
         foreach (var config in configFiles)
         {
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => _config.ReloadCustomAttributesAsync(config)).FireAndForget();
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => CompletionConfiguration.ReloadCustomAttributesAsync(config)).FireAndForget();
         }
     }
 
@@ -98,7 +92,7 @@ public sealed class ConfigurationFileReloader : IDisposable
 
         if (added.Count > 0)
         {
-            await _config.ReloadCustomAttributesAsync(settings);
+            await CompletionConfiguration.ReloadCustomAttributesAsync(settings);
         }
     }
 

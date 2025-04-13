@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.VisualStudio.Shell;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Reflection;
@@ -7,79 +8,85 @@ using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.ClassSort;
+
 [Export]
+[PartCreationPolicy(CreationPolicy.Shared)]
 internal sealed class ClassSortUtilities
 {
-    private bool _initialized;
+    private readonly Dictionary<TailwindVersion, Dictionary<string, int>> _classOrders = [];
+    private readonly Dictionary<TailwindVersion, Dictionary<string, int>> _variantOrders = [];
 
-    private Dictionary<string, int> _classOrder = [];
-    private Dictionary<string, int> _variantOrder = [];
-    private Dictionary<string, int> _classOrderV4 = [];
-    private Dictionary<string, int> _variantOrderV4 = [];
-
-    public async Task InitializeAsync()
+    private void InitializeClassOrder(TailwindVersion version)
     {
-        if (!_initialized)
+        if (_classOrders.ContainsKey(version))
         {
-            var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
-            var v4Folder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "V4");
-
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                var classOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
-                _classOrder = [];
-                for (int i = 0; i < classOrder.Count; i++)
-                {
-                    _classOrder[classOrder[i]] = i;
-                }
-            }
-            using (var fs = File.Open(Path.Combine(baseFolder, "tailwindmodifiersorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                var variantOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
-                _variantOrder = [];
-                for (int i = 0; i < variantOrder.Count; i++)
-                {
-                    _variantOrder[variantOrder[i]] = i;
-                }
-            }
-            using (var fs = File.Open(Path.Combine(v4Folder, "order.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                var classOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
-                _classOrderV4 = [];
-                for (int i = 0; i < classOrder.Count; i++)
-                {
-                    _classOrderV4[classOrder[i]] = i;
-                }
-            }
-            using (var fs = File.Open(Path.Combine(v4Folder, "variantorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-            {
-                var variantOrder = await JsonSerializer.DeserializeAsync<List<string>>(fs);
-                _variantOrderV4 = [];
-                for (int i = 0; i < variantOrder.Count; i++)
-                {
-                    _variantOrderV4[variantOrder[i]] = i;
-                }
-            }
-
-            _initialized = true;
+            return;
         }
+
+        var folder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
+
+        List<string> order;
+        using (var fs = File.Open(Path.Combine(folder, "order.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            order = JsonSerializer.Deserialize<List<string>>(fs);
+        }
+
+        var classToOrderIndex = new Dictionary<string, int>();
+        for (int i = 0; i < order.Count; i++)
+        {
+            classToOrderIndex[order[i]] = i;
+        }
+
+        _classOrders[version] = classToOrderIndex;
+    }
+
+    private void InitializeVariantOrder(TailwindVersion version)
+    {
+        if (_variantOrders.ContainsKey(version))
+        {
+            return;
+        }
+
+        var folder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
+
+        List<string> order;
+        using (var fs = File.Open(Path.Combine(folder, "variantorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
+        {
+            order = JsonSerializer.Deserialize<List<string>>(fs);
+        }
+
+        var variantToOrderIndex = new Dictionary<string, int>();
+        for (int i = 0; i < order.Count; i++)
+        {
+            variantToOrderIndex[order[i]] = i;
+        }
+
+        _variantOrders[version] = variantToOrderIndex;
     }
 
     public Dictionary<string, int> GetClassOrder(ProjectCompletionValues project)
     {
-        if (project.Version == TailwindVersion.V4)
+        if (_classOrders.TryGetValue(project.Version, out var classOrder))
         {
-            return _classOrderV4;
+            return classOrder;
         }
-        return _classOrder;
+        else
+        {
+            InitializeClassOrder(project.Version);
+            return _classOrders[project.Version];
+        }
     }
 
     public Dictionary<string, int> GetVariantOrder(ProjectCompletionValues project)
     {
-        if (project.Version == TailwindVersion.V4)
+        if (_variantOrders.TryGetValue(project.Version, out var classOrder))
         {
-            return _variantOrderV4;
+            return classOrder;
         }
-        return _variantOrder;
+        else
+        {
+            InitializeVariantOrder(project.Version);
+            return _variantOrders[project.Version];
+        }
     }
 }

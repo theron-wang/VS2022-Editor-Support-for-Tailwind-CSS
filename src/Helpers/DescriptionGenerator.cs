@@ -42,7 +42,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
         var index = 0;
 
-        if (projectCompletionValues.Version == TailwindVersion.V4)
+        if (projectCompletionValues.Version >= TailwindVersion.V4)
         {
             var resultText = new StringBuilder(text);
             int offset = 0;
@@ -693,7 +693,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 spacingValue = $"calc({spacingValue} * -1)";
             }
         }
-        else if (projectCompletionValues.Version == TailwindVersion.V4)
+        else if (projectCompletionValues.Version >= TailwindVersion.V4)
         {
             if (double.TryParse(spacing, out _))
             {
@@ -1070,7 +1070,7 @@ internal sealed class DescriptionGenerator : IDisposable
             }
 
             // Necessary to handle classes like text-[10px]
-            if (special is null && projectCompletionValues.Version == TailwindVersion.V4)
+            if (special is null && projectCompletionValues.Version >= TailwindVersion.V4)
             {
                 special = GetSpecialArbitraryTypeByInput(arbitrary);
             }
@@ -1094,7 +1094,7 @@ internal sealed class DescriptionGenerator : IDisposable
             return description.Replace("{0}", arbitrary);
         }
 
-        if (special is not null && projectCompletionValues.Version == TailwindVersion.V4)
+        if (special is not null && projectCompletionValues.Version >= TailwindVersion.V4)
         {
             if (stem == "text-{a}" && special == "length")
             {
@@ -1169,6 +1169,14 @@ internal sealed class DescriptionGenerator : IDisposable
             else if (stem == "shadow-{a}" && special == "color")
             {
                 _arbitraryDescriptionCache[$"{stem}-[{special}]"] = "--tw-shadow-color: {0};";
+            }
+            else if (stem == "text-shadow-{a}" && special == "color")
+            {
+                _arbitraryDescriptionCache[$"{stem}-[{special}]"] = "--tw-text-shadow-color: {0};";
+            }
+            else if (stem == "drop-shadow-{a}" && special == "color")
+            {
+                _arbitraryDescriptionCache[$"{stem}-[{special}]"] = "--tw-drop-shadow-color: {0};";
             }
             else
             {

@@ -10,11 +10,12 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Configuration;
 
 /// <summary>
-/// Parses the TailwindCSS configuration file
+/// Parses the Tailwind CSS configuration file
 /// </summary>
 internal static class ConfigFileParser
 {
@@ -120,13 +121,12 @@ internal static class ConfigFileParser
     /// <summary>
     /// Gets the configuration settings from the Tailwind CSS configuration file.
     /// </summary>
-    /// <remarks>Returns null if the configuration file cannot be found, or if the configuration file does not have a 'theme' section.</remarks>
     /// <returns>Returns a <see cref="Task{TailwindConfiguration}" /> of type <see cref="TailwindConfiguration"/> which contains the parsed configuration information</returns>
-    internal static Task<TailwindConfiguration> GetConfigurationAsync(string path)
+    internal static Task<TailwindConfiguration> GetConfigurationAsync(string path, TailwindVersion version)
     {
         if (Path.GetExtension(path) == ".css")
         {
-            return GetCssConfigurationAsync(path);
+            return GetCssConfigurationAsync(path, version);
         }
         else
         {
@@ -134,7 +134,7 @@ internal static class ConfigFileParser
         }
     }
 
-    private static async Task<TailwindConfiguration> GetCssConfigurationAsync(string path)
+    private static async Task<TailwindConfiguration> GetCssConfigurationAsync(string path, TailwindVersion version)
     {
         var fullText = "";
 
@@ -336,7 +336,10 @@ internal static class ConfigFileParser
                         // @source inline("{hover:,focus:,}bg-red-{50,{100..900..100},950}");
                         if (directiveParameter.StartsWith("inline("))
                         {
-                            blocklist = BraceExpander.Expand(inQuotes);
+                            if (version > TailwindVersion.V4_1)
+                            {
+                                blocklist = BraceExpander.Expand(inQuotes);
+                            }
                         }
                         else
                         {
@@ -413,7 +416,7 @@ internal static class ConfigFileParser
 
             if (import.StartsWith("@import"))
             {
-                imported = await GetCssConfigurationAsync(importPath);
+                imported = await GetCssConfigurationAsync(importPath, version);
             }
             else if (import.StartsWith("@config"))
             {
@@ -464,8 +467,8 @@ internal static class ConfigFileParser
 
         foreach (var pair in themeValuePairs)
         {
-            var stem = GetConfigurationClassStemFromCssVariable(pair.Key);
-            var namespaceStem = GetCssVariableNamespace(pair.Key);
+            var stem = GetConfigurationClassStemFromCssVariable(pair.Key, version);
+            var namespaceStem = GetCssVariableNamespace(pair.Key, version);
 
             if (stem is null || namespaceStem is null)
             {
@@ -516,7 +519,7 @@ internal static class ConfigFileParser
         return config;
     }
 
-    private static string GetCssVariableNamespace(string variable)
+    private static string GetCssVariableNamespace(string variable, TailwindVersion version)
     {
         if (variable.StartsWith("--color-"))
         {
@@ -529,6 +532,10 @@ internal static class ConfigFileParser
         else if (variable.StartsWith("--font-"))
         {
             return "--font-";
+        }
+        else if (variable.StartsWith("--text-shadow") && version >= TailwindVersion.V4_1)
+        {
+            return "--text-shadow";
         }
         else if (variable.StartsWith("--text-"))
         {
@@ -597,7 +604,7 @@ internal static class ConfigFileParser
         return null;
     }
 
-    private static string GetConfigurationClassStemFromCssVariable(string variable)
+    private static string GetConfigurationClassStemFromCssVariable(string variable, TailwindVersion version)
     {
         if (variable.StartsWith("--color-"))
         {
@@ -610,6 +617,11 @@ internal static class ConfigFileParser
         else if (variable.StartsWith("--font-"))
         {
             return "fontFamily";
+        }
+        else if (variable.StartsWith("--text-shadow") && version >= TailwindVersion.V4_1)
+        {
+            // 4.1+
+            return "v4_1-text-shadow";
         }
         else if (variable.StartsWith("--text-"))
         {
