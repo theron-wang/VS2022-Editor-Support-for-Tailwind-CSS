@@ -18,7 +18,7 @@ namespace TailwindCSSIntellisense.Configuration;
 public sealed partial class CompletionConfiguration
 {
     internal Action ConfigurationUpdated;
-    
+
     [Import]
     internal ConfigurationFileReloader Reloader { get; set; }
 

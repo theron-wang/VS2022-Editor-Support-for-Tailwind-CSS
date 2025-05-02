@@ -74,7 +74,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
         _generalOptions = general;
         TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length)));
     }
-    
+
     private bool Enabled()
     {
         _generalOptions ??= ThreadHelper.JoinableTaskFactory.Run(General.GetLiveInstanceAsync);
@@ -162,7 +162,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             }
         }
 
-        var segments = segmentText.Split([ '-' ], StringSplitOptions.RemoveEmptyEntries).ToList();
+        var segments = segmentText.Split(['-'], StringSplitOptions.RemoveEmptyEntries).ToList();
 
         if (endsWithArbitrary != -1)
         {
@@ -291,7 +291,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                     return null;
                 }
 
-                return [..rgb, (byte)Math.Round(opacity / 100d * 255)];
+                return [.. rgb, (byte)Math.Round(opacity / 100d * 255)];
             }
         }
         return null;

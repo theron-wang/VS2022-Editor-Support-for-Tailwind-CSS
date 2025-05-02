@@ -103,7 +103,7 @@ namespace TailwindCSSIntellisense
                     await ex.LogAsync();
                     await VS.StatusBar.ShowMessageAsync("One or more Tailwind CSS items could not be shown in the Solution Explorer.");
                 }
-            }            
+            }
         }
     }
 }

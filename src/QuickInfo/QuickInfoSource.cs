@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
-using Microsoft.VisualStudio.Language.StandardClassification;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
 using System.Linq;

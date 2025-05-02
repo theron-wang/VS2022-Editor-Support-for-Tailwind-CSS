@@ -1,6 +1,5 @@
 ﻿using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.OLE.Interop;

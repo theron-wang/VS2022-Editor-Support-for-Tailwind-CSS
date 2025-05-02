@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace TailwindCSSIntellisense.Settings;
+﻿namespace TailwindCSSIntellisense.Settings;
 public class ConfigurationFile
 {
     public string Path { get; set; }

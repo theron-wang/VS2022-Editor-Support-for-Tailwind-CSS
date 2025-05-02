@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.Language.CodeCleanUp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -1436,7 +1435,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 return desc.Replace(toReplace, $"calc(var(--spacing) * {modifier})");
             }
         }
-        
+
         return desc;
     }
 

@@ -1,7 +1,5 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
-using System;
-using System.Linq;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Parsers;
 

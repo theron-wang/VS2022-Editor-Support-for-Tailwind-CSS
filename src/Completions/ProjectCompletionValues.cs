@@ -43,7 +43,7 @@ public class ProjectCompletionValues
 
     internal Dictionary<string, string> DescriptionMapper { get; set; } = [];
     internal Dictionary<string, string> CustomDescriptionMapper { get; set; } = [];
-    
+
     /// <summary>
     /// V4 only
     /// </summary>

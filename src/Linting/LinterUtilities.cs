@@ -11,7 +11,6 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using TailwindCSSIntellisense.ClassSort;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 
 namespace TailwindCSSIntellisense.Linting;
@@ -78,7 +77,7 @@ internal sealed class LinterUtilities : IDisposable
                     _cacheCssAttributes[projectCompletionValues] = [];
                 }
 
-                _cacheCssAttributes[projectCompletionValues][classTrimmed] = string.Join(",", desc.Split([ ';' ], StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
+                _cacheCssAttributes[projectCompletionValues][classTrimmed] = string.Join(",", desc.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
             }
 
             cssAttributes[c] = _cacheCssAttributes[projectCompletionValues][classTrimmed];

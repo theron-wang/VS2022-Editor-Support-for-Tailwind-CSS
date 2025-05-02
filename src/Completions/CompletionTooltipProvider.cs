@@ -27,7 +27,7 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
         if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind") && !itemToRender.Properties.ContainsProperty("variant"))
         {
             var fullText = itemToRender.DisplayText;
-            
+
             if (fullText.EndsWith("[]"))
             {
                 return null;

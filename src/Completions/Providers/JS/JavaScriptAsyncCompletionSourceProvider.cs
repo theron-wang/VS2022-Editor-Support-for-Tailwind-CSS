@@ -34,7 +34,7 @@ internal class JavaScriptAsyncCompletionSourceProvider : IAsyncCompletionSourceP
     {
         if (_cache.TryGetValue(textView, out var itemSource))
             return itemSource;
-        
+
         var source = new JavaScriptAsyncCompletionSource(textView.TextBuffer, ProjectConfigurationManager, ColorIconGenerator, DescriptionGenerator, SettingsProvider);
         textView.Closed += (o, e) => _cache.Remove(textView);
         _cache.Add(textView, source);

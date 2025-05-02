@@ -66,7 +66,7 @@ internal class CssDirectiveQuickInfoSource : IAsyncQuickInfoSource
                 ContainerElementStyle.Stacked,
                 new ClassifiedTextElement(
                         new ClassifiedTextRun(
-                            PredefinedClassificationTypeNames.Type, 
+                            PredefinedClassificationTypeNames.Type,
                             $"{text} is a valid Tailwind directive. Please disregard the error.",
                             ClassifiedTextRunStyle.Bold
                 )));

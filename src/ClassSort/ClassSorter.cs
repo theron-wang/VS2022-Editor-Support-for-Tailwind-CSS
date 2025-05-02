@@ -133,7 +133,7 @@ internal sealed class ClassSorter : IDisposable
                 using var reader = new StreamReader(file);
                 encoding = reader.CurrentEncoding;
                 fileContent = await reader.ReadToEndAsync();
-            } 
+            }
 
             var sorted = Sorter.Sort(path, fileContent);
 

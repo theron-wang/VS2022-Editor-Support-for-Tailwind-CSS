@@ -1,11 +1,9 @@
 ﻿using Microsoft.VisualStudio.Core.Imaging;
 using Microsoft.VisualStudio.Imaging;
-using Microsoft.VisualStudio.Language.CodeCleanUp;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
 using Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion.Data;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
-using System;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;

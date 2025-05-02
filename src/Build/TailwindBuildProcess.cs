@@ -1,7 +1,6 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -356,7 +355,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                         processInfo = GetProcessStartInfo(dir);
                         processInfo.Arguments = "/c ";
                     }
-                    
+
                     if (config.Version == TailwindVersion.V3)
                     {
                         processInfo.Arguments += $"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")} {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "& exit")}";

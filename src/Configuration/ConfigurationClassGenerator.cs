@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Configuration;
@@ -463,7 +462,8 @@ public sealed partial class CompletionConfiguration
                             {
                                 project.Variants.Add(insert);
                             }
-                        };
+                        }
+                        ;
                     }
                 }
                 else if (stem.Contains("{s}"))

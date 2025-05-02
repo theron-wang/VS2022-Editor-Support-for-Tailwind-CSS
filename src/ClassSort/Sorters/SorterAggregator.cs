@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
 [Export(typeof(SorterAggregator))]

@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
 [Export(typeof(Sorter))]
@@ -17,7 +15,7 @@ internal class JSSorter : Sorter
         foreach (var match in ClassRegexHelper.GetClassesJavaScriptEnumerator(content))
         {
             indexOfClass = match.Index;
-            
+
             // If we've already crossed over this part, don't sort again
             if (indexOfClass < lastIndex)
             {

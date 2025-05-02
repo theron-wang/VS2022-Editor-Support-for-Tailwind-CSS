@@ -36,7 +36,7 @@ public sealed class ProjectConfigurationManager
     internal ImageSource TailwindLogo { get; private set; } = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindlogo.png"), UriKind.Relative));
     internal bool Initialized { get; private set; }
     internal bool Initializing { get; private set; }
-    
+
     internal List<int> Opacity { get; set; }
 
     /// <summary>

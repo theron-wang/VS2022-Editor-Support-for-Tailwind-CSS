@@ -9,9 +9,7 @@ using System.Threading;
 using TailwindCSSIntellisense.Build;
 using TailwindCSSIntellisense.ClassSort;
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Options;
-using TailwindCSSIntellisense.Settings;
 using Task = System.Threading.Tasks.Task;
 
 namespace TailwindCSSIntellisense

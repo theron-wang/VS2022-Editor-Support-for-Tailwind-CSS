@@ -63,7 +63,7 @@ public sealed class ConfigurationFileReloader : IDisposable
         List<ConfigurationFile> configFiles = [];
 
         var configFile = _settings.ConfigurationFiles.FirstOrDefault(c => c.Path.Equals(file, StringComparison.InvariantCultureIgnoreCase));
-        
+
         if (configFile is not null)
         {
             configFiles.Add(configFile);

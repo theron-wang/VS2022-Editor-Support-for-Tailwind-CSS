@@ -1,13 +1,13 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
-using Community.VisualStudio.Toolkit;
+﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Text.Editor;
+using System;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace TailwindCSSIntellisense.Adornments.Colors;
 

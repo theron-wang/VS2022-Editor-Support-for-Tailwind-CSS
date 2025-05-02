@@ -41,7 +41,7 @@ public sealed class FileFinder
         {
             return null;
         }
-        
+
         var solution = await vsSolution.ToSolutionItemAsync();
 
         if (solution is null)

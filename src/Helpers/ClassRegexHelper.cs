@@ -1,6 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
-using stdole;
 using System;
 using System.Collections.Generic;
 using System.Linq;

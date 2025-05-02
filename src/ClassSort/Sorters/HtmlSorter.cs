@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Linq;
-using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
 [Export(typeof(Sorter))]

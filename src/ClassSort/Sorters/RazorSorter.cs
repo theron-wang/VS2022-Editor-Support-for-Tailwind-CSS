@@ -50,7 +50,7 @@ internal class RazorSorter : Sorter
 
             var tokens = new List<string>();
             var razorIndices = new HashSet<int>();
-            
+
             // A list of numbers that represent where a new line should be inserted;
             // each number represents a text token in tokens
             var newLines = new HashSet<int>();

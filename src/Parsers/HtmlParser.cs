@@ -79,7 +79,7 @@ internal static class HtmlParser
             {
                 continue;
             }
-            
+
             yield return potentialReturn;
         }
     }
