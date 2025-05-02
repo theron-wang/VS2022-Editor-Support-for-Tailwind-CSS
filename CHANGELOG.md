@@ -3,9 +3,13 @@
 ## 1.10.6 (April 9th, 2025)
 
 - Simplify `tailwind.extension.json` by removing `ConfigurationFiles.IsDefault` and `ConfigurationFiles.ApplicableLocations`. The extension now directly parses configuration files to find applicable locations (specified in `content` or with `@source`)
-- Add blocklist support for v4 (`@source not inline(...)`)
+- Add blocklist support for v4.1 (`@source not inline(...)`)
 - Fix handling of `color-*` and `color-___-*` in `@utility` declarations
 - Add Tailwind v4.1 support
+- Fix incorrect descriptions for classes like `drop-shadow-{color}` and `shadow-{color}`
+- Fix inefficient caching of color icons when showing completion menu
+- Fix an error which could occur when typing a class with opacity modifier without a color (i.e. `text-/`)
+- Use `powershell` instead of `cmd` when building with `--watch` ([#111](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/111))
 
 ## 1.10.5 (March 23rd, 2025)
 

@@ -123,7 +123,7 @@ namespace TailwindCSSIntellisense
 
         public void Dispose()
         {
-            if (_checkForUpdates != null)
+            if (_classSorter != null)
             {
                 VS.Events.SolutionEvents.OnAfterOpenProject -= ProjectLoaded;
                 VS.Events.SolutionEvents.OnAfterOpenFolder -= FolderOpened;

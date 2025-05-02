@@ -1,6 +1,7 @@
 ﻿using Community.VisualStudio.Toolkit;
 using Microsoft.VisualStudio.Shell;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
@@ -261,7 +262,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                 }
                 else if (_settings.OverrideBuild)
                 {
-                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(packageJsonPath)} & npm run {_settings.BuildScript}");
+                    _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
                 }
             }
             else
@@ -294,9 +295,9 @@ internal sealed class TailwindBuildProcess : IDisposable
                 }
                 else if (_settings.OverrideBuild)
                 {
-                    CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(dir));
+                    CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath)));
 
-                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(packageJsonPath)} & npm run {_settings.BuildScript}");
+                    _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
 
                     PostSetupProcess(_secondaryProcess);
                 }
@@ -341,25 +342,41 @@ internal sealed class TailwindBuildProcess : IDisposable
                         return;
                     }
 
-                    process = CreateAndStartProcess(GetProcessStartInfo(dir));
+                    ProcessStartInfo processInfo;
 
-                    if (config.Version == TailwindVersion.V3)
+                    // We need powershell to run --watch, otherwise the output file will not update.
+                    // https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/111
+                    if (_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT)
                     {
-                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")} {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "& exit")}");
+                        processInfo = GetProcessStartInfo(dir, true);
+                        processInfo.Arguments = "-Command ";
                     }
                     else
                     {
-                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")} {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "& exit")}");
+                        processInfo = GetProcessStartInfo(dir);
+                        processInfo.Arguments = "/c ";
                     }
+                    
+                    if (config.Version == TailwindVersion.V3)
+                    {
+                        processInfo.Arguments += $"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")} {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "& exit")}";
+                    }
+                    else
+                    {
+                        processInfo.Arguments += $"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")} {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "& exit")}";
+                    }
+
+                    process = CreateAndStartProcess(processInfo);
                     PostSetupProcess(process);
 
                     _outputFileToProcesses[outputFile] = process;
                 }
                 else if (_settings.OverrideBuild)
                 {
-                    CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(dir));
+                    var processInfo = GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath));
+                    processInfo.Arguments = $"/c npm run {_settings.BuildScript}";
 
-                    _secondaryProcess.StandardInput.WriteLine($"cd {Path.GetDirectoryName(packageJsonPath)} & npm run {_settings.BuildScript}");
+                    CreateAndSetAndStartSecondaryProcess(processInfo);
 
                     PostSetupProcess(_secondaryProcess);
                     _secondaryProcess.StandardInput.Flush();
@@ -374,9 +391,11 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Running '{_settings.BuildScript}' script..."));
 
-                CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath)));
+                var processInfo = GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath));
+                processInfo.Arguments = $"/c npm run {_settings.BuildScript}";
 
-                _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                CreateAndSetAndStartSecondaryProcess(processInfo);
+
                 PostSetupProcess(_secondaryProcess);
 
                 _secondaryProcess.StandardInput.Flush();
@@ -602,7 +621,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 var text = await reader.ReadToEndAsync();
 
-                if (text.Contains("@tailwind"))
+                if (text.Contains("@tailwind") || (text.Contains("@import") && text.Contains("tailwindcss")))
                 {
                     return true;
                 }
@@ -611,7 +630,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         return false;
     }
 
-    private static ProcessStartInfo GetProcessStartInfo(string dir)
+    private static ProcessStartInfo GetProcessStartInfo(string dir, bool powershell = false)
     {
         return new ProcessStartInfo()
         {
@@ -620,7 +639,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             RedirectStandardInput = true,
             RedirectStandardError = true,
             CreateNoWindow = true,
-            FileName = "cmd",
+            FileName = powershell ? "powershell" : "cmd",
             WorkingDirectory = dir,
             StandardOutputEncoding = Encoding.UTF8,
             StandardErrorEncoding = Encoding.UTF8

@@ -5,8 +5,10 @@ using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Runtime;
 using System.Text.Json;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 
@@ -37,6 +39,9 @@ public sealed class SettingsProvider : IDisposable
 
     [Import]
     public ConfigFileScanner ConfigFileScanner { get; set; }
+
+    [Import]
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
 
     private const string ExtensionConfigFileName = "tailwind.extension.json";
 
@@ -244,7 +249,10 @@ public sealed class SettingsProvider : IDisposable
                 CustomRegexes = projectSettings.CustomRegexes
             };
 
+            await ProjectConfigurationManager.OnSettingsChangedAsync(returnSettings);
+
             _cachedSettings = returnSettings;
+
             _cacheValid = true;
         }
 
@@ -381,6 +389,8 @@ public sealed class SettingsProvider : IDisposable
         }
 
         _cachedSettings = settings;
+
+        await ProjectConfigurationManager.OnSettingsChangedAsync(settings);
 
         if (OnSettingsChanged != null)
         {

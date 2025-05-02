@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.VisualStudio.Language.CodeCleanUp;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -190,8 +191,9 @@ internal sealed class DescriptionGenerator : IDisposable
                     trimmed = trimmed.TrimStart('}').Trim();
                 }
 
-                output.AppendLine($"{trimmed.Split('{')[0].Trim()} {{");
-                output.AppendLine($"{trimmed.Split('{')[1].Trim()};");
+                var beforeBraces = trimmed.Split('{')[0];
+                output.AppendLine($"{beforeBraces.Trim()} {{");
+                output.AppendLine($"{trimmed.Substring(beforeBraces.Length + 1).Trim()};");
                 continue;
             }
             else if (line.Contains('}') && (line.IndexOf("{0}") == -1 || line.IndexOf("{0}") != line.IndexOf('}') - 2))
@@ -297,16 +299,19 @@ internal sealed class DescriptionGenerator : IDisposable
                 }
             }
 
-            description = GetDescriptionForColorClass(stem, color, opacity: opacity != null, projectCompletionValues, shouldFormat: shouldFormat);
-
-            if (string.IsNullOrEmpty(description) == false)
+            if (!string.IsNullOrWhiteSpace(color))
             {
-                if (opacity != null)
-                {
-                    description = description.Replace("{0}", (projectCompletionValues.Version == TailwindVersion.V3 ? opacity.Value / 100f : opacity.Value).ToString());
-                }
+                description = GetDescriptionForColorClass(stem, color, opacity: opacity != null, projectCompletionValues, shouldFormat: shouldFormat);
 
-                return description;
+                if (string.IsNullOrEmpty(description) == false)
+                {
+                    if (opacity != null)
+                    {
+                        description = description.Replace("{0}", (projectCompletionValues.Version == TailwindVersion.V3 ? opacity.Value / 100f : opacity.Value).ToString());
+                    }
+
+                    return description;
+                }
             }
 
             var last = segments.Last();

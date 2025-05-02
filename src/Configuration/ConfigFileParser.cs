@@ -336,7 +336,7 @@ internal static class ConfigFileParser
                         // @source inline("{hover:,focus:,}bg-red-{50,{100..900..100},950}");
                         if (directiveParameter.StartsWith("inline("))
                         {
-                            if (version > TailwindVersion.V4_1)
+                            if (version >= TailwindVersion.V4_1)
                             {
                                 blocklist = BraceExpander.Expand(inQuotes);
                             }

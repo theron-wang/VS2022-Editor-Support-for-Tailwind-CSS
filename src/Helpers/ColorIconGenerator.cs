@@ -33,17 +33,13 @@ internal class ColorIconGenerator
             _colorToRgbMapperCaches[projectCompletionValues] = cache;
         }
 
-        if (cache.TryGetValue($"{stem}/{color}/{opacity}", out var result) || cache.TryGetValue($"{color}/{opacity}", out result))
-        {
-            return result;
-        }
-
         string value;
-        if (projectCompletionValues.CustomColorMappers != null)
+        var custom = false;
+        if (projectCompletionValues.CustomColorMappers != null && projectCompletionValues.CustomColorMappers.Count > 0)
         {
             if (projectCompletionValues.CustomColorMappers.TryGetValue(stem, out var dict) == false || (dict.TryGetValue(color, out value) && projectCompletionValues.ColorMapper.TryGetValue(color, out var value2) && value == value2))
             {
-                if (cache.TryGetValue($"{color}/{opacity}", out result))
+                if (cache.TryGetValue($"{color}/{opacity}", out var result))
                 {
                     return result;
                 }
@@ -53,6 +49,18 @@ internal class ColorIconGenerator
                     return ProjectConfigurationManager.TailwindLogo;
                 }
             }
+            else
+            {
+                if (cache.TryGetValue($"{stem}/{color}/{opacity}", out var result))
+                {
+                    return result;
+                }
+                custom = true;
+            }
+        }
+        else if (cache.TryGetValue($"{color}/{opacity}", out var result))
+        {
+            return result;
         }
         else if (projectCompletionValues.ColorMapper.TryGetValue(color, out value) == false)
         {
@@ -103,19 +111,19 @@ internal class ColorIconGenerator
         geometry.Children.Add(mainImage);
         geometry.Children.Add(vsPrevent);
 
-        result = new DrawingImage
+        var output = new DrawingImage
         {
             Drawing = geometry
         };
 
         var key = $"{color}/{opacity}";
-        if (string.IsNullOrEmpty(stem) == false)
+        if (custom)
         {
             key = $"{stem}/{key}";
         }
 
-        cache[key] = result;
+        cache[key] = output;
 
-        return result;
+        return output;
     }
 }

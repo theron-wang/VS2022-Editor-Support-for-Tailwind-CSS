@@ -74,14 +74,22 @@ internal class DirectoryVersionFinder : IDisposable
         }
 
         // Sample output: `-- tailwindcss@4.0.0
-        if (!string.IsNullOrWhiteSpace(output) && output.Contains("@3"))
+        if (!string.IsNullOrWhiteSpace(output))
         {
-            _cache[directory] = TailwindVersion.V3;
-            return TailwindVersion.V3;
+            if (output.Contains("@3"))
+            {
+                _cache[directory] = TailwindVersion.V3;
+                return TailwindVersion.V3;
+            }
+            else if (output.Contains("@4.0"))
+            {
+                _cache[directory] = TailwindVersion.V4;
+                return TailwindVersion.V4;
+            }
         }
 
-        _cache[directory] = TailwindVersion.V4;
-        return TailwindVersion.V4;
+        _cache[directory] = TailwindVersion.V4_1;
+        return TailwindVersion.V4_1;
     }
 
     private void InvalidateCache(string _)

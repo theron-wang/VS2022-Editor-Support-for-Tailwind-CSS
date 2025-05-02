@@ -192,6 +192,11 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 {
                     opacity = o;
                 }
+
+                if (string.IsNullOrWhiteSpace(color))
+                {
+                    return null;
+                }
             }
 
             if ((color[0] == '[' && color[color.Length - 1] == ']') ||

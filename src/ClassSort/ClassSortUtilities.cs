@@ -1,10 +1,8 @@
-﻿using Microsoft.VisualStudio.Shell;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.ClassSort;

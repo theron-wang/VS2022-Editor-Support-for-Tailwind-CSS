@@ -24,14 +24,14 @@ namespace TailwindCSSIntellisense.Completions;
 /// </summary>
 [Export]
 [PartCreationPolicy(CreationPolicy.Shared)]
-public sealed class ProjectConfigurationManager : IDisposable
+public sealed class ProjectConfigurationManager
 {
     [Import]
     internal CompletionConfiguration Configuration { get; set; }
     [Import]
-    internal SettingsProvider SettingsProvider { get; set; }
-    [Import]
     internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
+    [Import]
+    internal SettingsProvider SettingsProvider { get; set; }
 
     internal ImageSource TailwindLogo { get; private set; } = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindlogo.png"), UriKind.Relative));
     internal bool Initialized { get; private set; }
@@ -68,12 +68,9 @@ public sealed class ProjectConfigurationManager : IDisposable
 
             Initializing = true;
 
-            var settings = await SettingsProvider.GetSettingsAsync();
-            await OnSettingsChangedAsync(settings);
+            // Initial load of settings, which then triggers class loading based on the versions of the config files
+            await SettingsProvider.GetSettingsAsync();
 
-            SettingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
-
-            Initializing = false;
             Initialized = true;
 
             await VS.StatusBar.ShowMessageAsync("Tailwind CSS IntelliSense initialized");
@@ -89,11 +86,20 @@ public sealed class ProjectConfigurationManager : IDisposable
 
             return false;
         }
+        finally
+        {
+            Initializing = false;
+        }
     }
 
     public ProjectCompletionValues GetUnsetCompletionConfiguration(TailwindVersion version)
     {
         ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
+
+        if (!_unsetProjectCompletionConfigurations.ContainsKey(version))
+        {
+            ThreadHelper.JoinableTaskFactory.Run(() => LoadClassesAsync(version));
+        }
 
         return _unsetProjectCompletionConfigurations[version];
     }
@@ -172,7 +178,7 @@ public sealed class ProjectConfigurationManager : IDisposable
         }
     }
 
-    private async Task OnSettingsChangedAsync(TailwindSettings settings)
+    public async Task OnSettingsChangedAsync(TailwindSettings settings)
     {
         _defaultProjectCompletionConfiguration = null;
 
@@ -249,7 +255,7 @@ public sealed class ProjectConfigurationManager : IDisposable
         };
 
         var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
-        var versionFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", TailwindVersion.V3.ToString());
+        var versionFolder = Path.Combine(baseFolder, TailwindVersion.V3.ToString());
         List<Variant> variants = [];
 
         var loadTasks = new List<Task>
@@ -451,6 +457,7 @@ public sealed class ProjectConfigurationManager : IDisposable
         if (version == TailwindVersion.V3)
         {
             await LoadClassesV3Async();
+            return;
         }
 
         var project = new ProjectCompletionValues
@@ -458,8 +465,8 @@ public sealed class ProjectConfigurationManager : IDisposable
             Version = version
         };
 
-        var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
-        var versionFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
+        var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
+        var versionFolder = Path.Combine(baseFolder, version.ToString());
 
         List<ClassType> classTypes = [];
 
@@ -675,10 +682,5 @@ public sealed class ProjectConfigurationManager : IDisposable
         using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         var data = await JsonSerializer.DeserializeAsync<T>(fs);
         process(data);
-    }
-
-    public void Dispose()
-    {
-        SettingsProvider.OnSettingsChanged -= OnSettingsChangedAsync;
     }
 }
