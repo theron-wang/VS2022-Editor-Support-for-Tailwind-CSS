@@ -150,7 +150,11 @@ internal sealed class ClassSorter : IDisposable
                 {
                     var view = await VS.Documents.GetDocumentViewAsync(path);
 
-                    view?.Document?.Reload(new EditOptions(new(StringDifferenceTypes.Word, 0, false)));
+                    view?.Document?.Reload(new EditOptions(new()
+                    {
+                        DifferenceType = StringDifferenceTypes.Line | StringDifferenceTypes.Word,
+                        IgnoreTrimWhiteSpace = true
+                    }));
                 }
             }
             _sorted.Add(path.ToLower());

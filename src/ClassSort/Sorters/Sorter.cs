@@ -42,6 +42,21 @@ internal abstract class Sorter
             .Where(p => p.c == '\n')
             .Select(p => p.i).ToList();
 
+        var indents = newlines.Select(i =>
+        {
+            var result = "";
+
+            for (++i; i < classText.Length; i++)
+            {
+                if (!char.IsWhiteSpace(classText[i]))
+                {
+                    break;
+                }
+                result += classText[i];
+            }
+            return result;
+        }).ToList();
+
         var sortedSegment = new StringBuilder();
 
         int index = 0;
@@ -54,22 +69,20 @@ internal abstract class Sorter
                 continue;
             }
 
-            var before = index;
-
-            sortedSegment.Append(sortedClass);
-            index += sortedClass.Length;
-
             if (nextNewLineIndex < newlines.Count &&
-                before <= newlines[nextNewLineIndex] && newlines[nextNewLineIndex] <= index)
+                index <= newlines[nextNewLineIndex] && newlines[nextNewLineIndex] <= index + sortedClass.Length)
             {
-                sortedSegment.AppendLine();
+                sortedSegment.AppendLine().Append(indents[nextNewLineIndex]).Append(sortedClass);
+                index += indents[nextNewLineIndex].Length;
+
                 nextNewLineIndex++;
             }
             else
             {
-                sortedSegment.Append(' ');
+                sortedSegment.Append(' ').Append(sortedClass);
             }
-            index++;
+
+            index += sortedClass.Length + 1;
         }
 
         if (shouldMoveImportant)

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.10.7 (May 2nd, 2025)
+
+- Class sorting should respect indents on new lines
+- Add certain missing utility classes
+
 ## 1.10.6 (May 1st, 2025)
 
 - Simplify `tailwind.extension.json` by removing `ConfigurationFiles.IsDefault` and `ConfigurationFiles.ApplicableLocations`. The extension now directly parses configuration files to find applicable locations (specified in `content` or with `@source`)
