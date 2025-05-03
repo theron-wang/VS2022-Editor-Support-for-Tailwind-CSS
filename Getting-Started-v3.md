@@ -1,10 +1,14 @@
-﻿# Getting Started (Tailwind v4+)
+﻿# Getting Started (Tailwind v3.x)
 
-> The following guide is for projects using Tailwind v4 and above. For Tailwind v3 projects, use the [v3 Getting Started guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started-v3.md).
+> The following guide is for projects using Tailwind v3.x. For Tailwind v4+ projects, use the [Getting Started guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started.md).
+
+## Video
+
+If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJgtQHQwPo) to watch CodingWithGreg's YouTube video.
 
 ## Existing Projects
 
-1. The extension auto-detects CSS files containing `@import "tailwindcss"`.  
+1. The extension auto-detects `tailwind.config.{js,cjs,mjs,ts,cts,mts}` files in your solution.
    To set manually, right-click the file → **Set as Tailwind CSS configuration file**.  
    Features are only enabled when a config file is found or set.
 
@@ -13,29 +17,17 @@
 ## New Projects
 
 1. Right-click the project in the Solution Explorer → **Set up Tailwind CSS**:  
-	- Installs `tailwindcss`, `@tailwindcss/cli` (if needed)
-	- Creates `tailwind.css` with `@import "tailwindcss"`
+	- Installs `tailwindcss`, if needed
+	- Creates `tailwind.config.js`
 
 	![Set up TailwindCSS](art/NPM-Shortcuts-1.png)
 
 2. Using the standalone Tailwind CSS CLI:
 	- Set path: Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path  
-	- Then use **Set up Tailwind CSS (use CLI)**  
+	- Then use **Set up Tailwind CSS (use CLI)** 
 	- Toggle CLI usage via `UseCli` in `tailwind.extension.json`
 
-3. Theme setup: follow the [official guide](https://tailwindcss.com/docs/installation/tailwind-cli).
-	
-	For basic files with no theme values:
-
-	```css
-	@import "tailwindcss";
-	```
-
-	Project root is not the same directory as the one which contains your input css file:
-
-	```css
-	@import "tailwindcss" source("../path/to/source");
-	```
+3. Theme setup: follow the [official guide](https://v3.tailwindcss.com/docs/installation).
 
 ## Setting Up the Extension
 
@@ -46,7 +38,7 @@
 	![Input and output CSS files](art/Customizability-Build-2.png)
 
 2. IntelliSense works in `.html`, `.css`, `.cshtml`, `.razor`, etc.
-	Configuration contexts are based on [Tailwind's file detection](https://tailwindcss.com/docs/detecting-classes-in-source-files).
+	Configuration contexts are based on [Tailwind's file detection](https://v3.tailwindcss.com/docs/content-configuration).
 
 	![IntelliSense](art/IntelliSense-Demo-1.gif)
 
@@ -60,7 +52,7 @@ Settings for this extension can be updated in **Tools > Options > Tailwind CSS I
 | Setting | Category | Description | Default Value |
 | --- | --- | --- | --- |
 | Enable extension | General | Enables/disables the extension globally | `true` |
-| Automatically apply library updates | General | `tailwindcss` and `@tailwindcss/cli` update on project open. The extension works best with the most recent update of each major version, so this setting is recommended. | `true` |
+| Automatically apply library updates | General | `tailwindcss` updates on project open. The extension works best with the most recent update of each major version, so this setting is recommended. | `true` |
 | Show color previews | General | Color previews for color classes | `true` |
 | Minify builds | Build | Use of `--minify` when building | `false` |
 | Default output file name | Build | Output file name template to be used when not specificially specified. Use `{0}` to reference the original input file's name. | `{0}.output.css` |
@@ -85,6 +77,8 @@ Settings for this extension can be updated in **Tools > Options > Tailwind CSS I
 
 ### `tailwind.extension.json` Customization
 
+- **`ConfigurationFiles`**: List of relative configuration file paths
+  - **`Path`**: The relative path to the configuration file
 - **`BuildFiles`**: List of relative input file paths to build with the project.
   - **`Input`**: Input CSS file (one output per input).
   - **`Output`**: Output CSS file.
@@ -104,14 +98,22 @@ Settings for this extension can be updated in **Tools > Options > Tailwind CSS I
 ```json
 {
   	"$schema": "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json",
-	"BuildFiles": [
+	"ConfigurationFiles": [
 		{
-			"Input": "..\\Client\\tailwind.css",
-			"Output": "..\\Client\\tailwind.output.css"
+		    "Path": "..\\Client\\tailwind.config.js"
 		},
 		{
-			"Input": "tailwind.css",
-			"Output": "tailwind.min.css"
+		    "Path": "tailwind.config.js"
+		}
+	],
+	"BuildFiles": [
+		{
+			"Input": "site.css",
+			"Output": "wwwroot\\css\\site.output.css"
+		},
+		{
+			"Input": "Components\\App.razor.tailwind.css",
+			"Output": "Components\\App.razor.css"
 		}
 	],
 	"PackageConfigurationFile": "package.json",
