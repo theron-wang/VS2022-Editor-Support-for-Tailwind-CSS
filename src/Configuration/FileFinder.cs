@@ -31,7 +31,7 @@ public sealed class FileFinder
     /// Gets the path of the current miscellaneous project
     /// </summary>
     /// <returns>A <see cref="Task"/> which returns a <see cref="string"/> representing the folder path or <see langword="null"/> if the project does not exist</returns>
-    internal async Task<string> GetCurrentMiscellaneousProjectPathAsync()
+    internal async Task<string?> GetCurrentMiscellaneousProjectPathAsync()
     {
         await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
 
@@ -85,10 +85,10 @@ public sealed class FileFinder
 
         foreach (var project in projects)
         {
-            projectItems.AddRange(GetProjectItems(project.Children.ToList(), extensions));
+            projectItems.AddRange(GetProjectItems([.. project.Children], extensions));
         }
 
-        return projectItems.Select(i => i.Name).ToList();
+        return [.. projectItems.Select(i => i.Name)];
     }
 
     private List<SolutionItem> GetProjectItems(List<SolutionItem> projectItems, IEnumerable<string> extensions)
@@ -102,7 +102,7 @@ public sealed class FileFinder
             }
             else if (item.Type == SolutionItemType.PhysicalFolder)
             {
-                list.AddRange(GetProjectItems(item.Children.ToList(), extensions));
+                list.AddRange(GetProjectItems([.. item.Children], extensions));
             }
         }
 

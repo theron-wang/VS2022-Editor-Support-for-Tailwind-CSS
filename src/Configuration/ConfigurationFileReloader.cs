@@ -16,15 +16,15 @@ namespace TailwindCSSIntellisense.Configuration;
 public sealed class ConfigurationFileReloader : IDisposable
 {
     [Import]
-    internal ConfigFileScanner Scanner { get; set; }
+    internal ConfigFileScanner Scanner { get; set; } = null!;
     [Import]
-    internal SettingsProvider SettingsProvider { get; set; }
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
     [Import]
-    internal CompletionConfiguration CompletionConfiguration { get; set; }
+    internal CompletionConfiguration CompletionConfiguration { get; set; } = null!;
 
     private bool _subscribed;
 
-    private TailwindSettings _settings;
+    private TailwindSettings _settings = null!;
 
     private readonly Dictionary<string, HashSet<ConfigurationFile>> _importToConfigurationFiles = [];
 
@@ -54,7 +54,7 @@ public sealed class ConfigurationFileReloader : IDisposable
         }
         else
         {
-            _importToConfigurationFiles.Add(import.ToLower(), [config]);
+            _importToConfigurationFiles[import.ToLower()] = [config];
         }
     }
 

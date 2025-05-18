@@ -3,65 +3,60 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense.Node
+namespace TailwindCSSIntellisense.Node;
+
+[Export]
+[PartCreationPolicy(CreationPolicy.Shared)]
+internal sealed class PackageJsonReader
 {
-    [Export]
-    [PartCreationPolicy(CreationPolicy.Shared)]
-    internal sealed class PackageJsonReader
+    [Import]
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
+
+    internal async Task<(bool exists, string? fileName)> ScriptExistsAsync(string configFileName, string? scriptName)
     {
-        [Import]
-        internal ConfigFileScanner ConfigFileScanner { get; set; }
-
-        [Import]
-        internal SettingsProvider SettingsProvider { get; set; }
-
-        internal async Task<(bool exists, string fileName)> ScriptExistsAsync(string configFileName, string scriptName)
+        if (scriptName is null)
         {
-            if (scriptName == null)
+            return (exists: false, fileName: null);
+        }
+
+        var settings = await SettingsProvider.GetSettingsAsync();
+        string packageJsonFileName;
+
+        if (settings.PackageConfigurationFile is not null && File.Exists(settings.PackageConfigurationFile))
+        {
+            packageJsonFileName = settings.PackageConfigurationFile;
+        }
+        else
+        {
+            if (configFileName is null)
             {
                 return (exists: false, fileName: null);
             }
 
-            var settings = await SettingsProvider.GetSettingsAsync();
-            string packageJsonFileName;
+            packageJsonFileName = Path.Combine(Path.GetDirectoryName(configFileName), "package.json");
 
-            if (settings.PackageConfigurationFile is not null && File.Exists(settings.PackageConfigurationFile))
+            if (packageJsonFileName is null || !File.Exists(packageJsonFileName))
             {
-                packageJsonFileName = settings.PackageConfigurationFile;
+                return (exists: false, fileName: null);
             }
-            else
+        }
+
+        try
+        {
+            JsonObject? file;
+
+            using (var fs = File.Open(packageJsonFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
-                if (configFileName == null)
-                {
-                    return (exists: false, fileName: null);
-                }
-
-                packageJsonFileName = Path.Combine(Path.GetDirectoryName(configFileName), "package.json");
-
-                if (packageJsonFileName == null || File.Exists(packageJsonFileName) == false)
-                {
-                    return (exists: false, fileName: null);
-                }
+                file = await JsonSerializer.DeserializeAsync<JsonObject>(fs);
             }
 
-            try
-            {
-                JsonObject file;
-
-                using (var fs = File.Open(packageJsonFileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    file = await JsonSerializer.DeserializeAsync<JsonObject>(fs);
-                }
-
-                return (exists: file["scripts"]?[scriptName] != null, fileName: packageJsonFileName);
-            }
-            catch
-            {
-                return (exists: false, fileName: packageJsonFileName);
-            }
+            return (exists: file?["scripts"]?[scriptName] is not null, fileName: packageJsonFileName);
+        }
+        catch
+        {
+            return (exists: false, fileName: packageJsonFileName);
         }
     }
 }

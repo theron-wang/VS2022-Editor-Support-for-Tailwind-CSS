@@ -69,13 +69,13 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
         if (!string.IsNullOrWhiteSpace(currentClass) && !string.IsNullOrWhiteSpace(prefix))
         {
-            if (currentClass.StartsWith(prefix))
+            if (currentClass.StartsWith(prefix!))
             {
-                currentClass = currentClass.Substring(prefix.Length);
+                currentClass = currentClass.Substring(prefix!.Length);
             }
             else if (currentClass.StartsWith($"-{prefix}"))
             {
-                currentClass = $"-{currentClass.Substring(prefix.Length + 1)}";
+                currentClass = $"-{currentClass.Substring(prefix!.Length + 1)}";
             }
         }
 
@@ -361,7 +361,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 completion.Properties.AddProperty("variant", true);
                 variantCompletions.Add(completion);
 
-                if (_projectCompletionValues.Version == TailwindVersion.V3 && description.StartsWith("&:") && description.Substring(2) == variant)
+                if (_projectCompletionValues.Version == TailwindVersion.V3 && description is not null && description.StartsWith("&:") && description.Substring(2) == variant)
                 {
                     completion = new Completion("group-" + variant + ":",
                         variantsAsString + "group-" + variant + ":",

@@ -25,13 +25,13 @@ namespace TailwindCSSIntellisense.Adornments.Directives;
 internal sealed class DirectiveCssTaggerProvider : IViewTaggerProvider
 {
     [Import]
-    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
     [Import]
-    internal ITextStructureNavigatorSelectorService TextStructureNavigatorSelector { get; set; }
+    internal ITextStructureNavigatorSelectorService TextStructureNavigatorSelector { get; set; } = null!;
 
     public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new CssDirectiveTagger(buffer, TextStructureNavigatorSelector, ProjectConfigurationManager)) as ITagger<T>;
+        return (buffer.Properties.GetOrCreateSingletonProperty(() => new CssDirectiveTagger(buffer, TextStructureNavigatorSelector, ProjectConfigurationManager)) as ITagger<T>)!;
     }
 
     /// <summary>
@@ -46,7 +46,7 @@ internal sealed class DirectiveCssTaggerProvider : IViewTaggerProvider
         private readonly ITextStructureNavigator _textStructureNavigator;
         private readonly ImageSource _tailwindLogo;
         private bool _isProcessing;
-        private General _generalOptions;
+        private General? _generalOptions;
 
         internal CssDirectiveTagger(ITextBuffer buffer, ITextStructureNavigatorSelectorService textStructureNavigatorSelector, ProjectConfigurationManager completionUtilities)
         {
@@ -85,7 +85,7 @@ internal sealed class DirectiveCssTaggerProvider : IViewTaggerProvider
             }
         }
 
-        public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+        public event EventHandler<SnapshotSpanEventArgs>? TagsChanged;
 
         public void Dispose()
         {

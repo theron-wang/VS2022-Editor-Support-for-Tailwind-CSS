@@ -49,18 +49,20 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
         var position = session.TextView.Caret.Position.BufferPosition.Position;
         var snapshot = _textBuffer.CurrentSnapshot;
         var triggerPoint = session.GetTriggerPoint(snapshot);
-        var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
 
         if (triggerPoint == null)
         {
             return;
         }
 
+        var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
+
+
         var line = triggerPoint.Value.GetContainingLine();
 
         if (!IsCaretInBlock(session, out bool isInBaseDirectiveBlock))
         {
-            if (IsUsingDirective(session, out string directive))
+            if (IsUsingDirective(session, out var directive))
             {
                 if (_projectCompletionValues.Version == TailwindVersion.V3)
                 {
@@ -334,10 +336,10 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
 
     private bool IsUsingApplyDirective(ICompletionSession session)
     {
-        return IsUsingDirective(session, out string directive) && directive == "@apply";
+        return IsUsingDirective(session, out var directive) && directive == "@apply";
     }
 
-    private bool IsUsingDirective(ICompletionSession session, out string directive)
+    private bool IsUsingDirective(ICompletionSession session, out string? directive)
     {
         var startPos = new SnapshotPoint(session.TextView.TextSnapshot, 0);
         var caretPos = session.TextView.Caret.Position.BufferPosition;

@@ -5,7 +5,7 @@ using Wacton.Unicolour;
 namespace TailwindCSSIntellisense.Helpers;
 internal static class ColorHelpers
 {
-    public static bool IsHex(object value, out string hex)
+    public static bool IsHex(object value, out string? hex)
     {
         if (value.ToString().LastIndexOf('#') != 0)
         {
@@ -37,7 +37,7 @@ internal static class ColorHelpers
     /// Converts rgb, oklch to hex
     /// Input be in the format rgb(# # #) or oklch(# # #)
     /// </summary>
-    public static string ConvertToHex(string color)
+    public static string? ConvertToHex(string color)
     {
         if (color.StartsWith("#"))
         {
@@ -102,7 +102,7 @@ internal static class ColorHelpers
     /// Converts hex, oklch to rgb
     /// Input be in the format #hex or oklch(# # #)
     /// </summary>
-    public static int[] ConvertToRgb(string color)
+    public static int[]? ConvertToRgb(string color)
     {
         if (color.StartsWith("#"))
         {

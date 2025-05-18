@@ -19,7 +19,7 @@ namespace TailwindCSSIntellisense.Configuration;
 /// </summary>
 internal static class ConfigFileParser
 {
-    internal static async Task<JsonObject> GetConfigJsonNodeAsync(string path)
+    internal static async Task<JsonObject?> GetConfigJsonNodeAsync(string path)
     {
         var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "parser.js");
 
@@ -271,7 +271,7 @@ internal static class ConfigFileParser
 
                                 var source = directiveParameter.Substring(firstQuote + 1, secondQuote - firstQuote - 1).Trim();
 
-                                source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), source);
+                                source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), source)!;
                                 content.Add(source);
                             }
                             else
@@ -344,7 +344,7 @@ internal static class ConfigFileParser
                         else
                         {
                             // @source "../src/components/legacy";
-                            var source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), inQuotes);
+                            var source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), inQuotes)!;
 
                             if (not)
                             {
@@ -406,7 +406,7 @@ internal static class ConfigFileParser
                 return new KeyValuePair<string, string>(s.Substring(0, split), s.Substring(split + 1));
             });
 
-        TailwindConfiguration imported = null;
+        TailwindConfiguration? imported = null;
 
         foreach (var import in imports)
         {
@@ -435,6 +435,7 @@ internal static class ConfigFileParser
                 imported.PluginClasses.AddRange(prev.PluginClasses);
                 imported.PluginVariants.AddRange(prev.PluginVariants);
                 imported.Imports.AddRange(prev.Imports);
+                imported.Blocklist = [.. blocklist];
                 imported.Blocklist.AddRange(blocklist);
                 DictionaryHelpers.MergeDictionaries(imported.PluginDescriptions, prev.PluginDescriptions);
                 DictionaryHelpers.MergeDictionaries(imported.PluginVariantDescriptions, prev.PluginVariantDescriptions);
@@ -489,7 +490,7 @@ internal static class ConfigFileParser
 
             if (config.OverridenValues.ContainsKey(stem))
             {
-                dict = config.OverridenValues[stem] as Dictionary<string, object>;
+                dict = (Dictionary<string, object>)config.OverridenValues[stem];
             }
             else
             {
@@ -497,7 +498,7 @@ internal static class ConfigFileParser
                 {
                     config.ExtendedValues[stem] = new Dictionary<string, object>();
                 }
-                dict = config.ExtendedValues[stem] as Dictionary<string, object>;
+                dict = (Dictionary<string, object>)config.ExtendedValues[stem];
             }
 
             dict[valueKey] = pair.Value.Trim();
@@ -519,7 +520,7 @@ internal static class ConfigFileParser
         return config;
     }
 
-    private static string GetCssVariableNamespace(string variable, TailwindVersion version)
+    private static string? GetCssVariableNamespace(string variable, TailwindVersion version)
     {
         if (variable.StartsWith("--color-"))
         {
@@ -604,7 +605,7 @@ internal static class ConfigFileParser
         return null;
     }
 
-    private static string GetConfigurationClassStemFromCssVariable(string variable, TailwindVersion version)
+    private static string? GetConfigurationClassStemFromCssVariable(string variable, TailwindVersion version)
     {
         if (variable.StartsWith("--color-"))
         {
@@ -705,7 +706,7 @@ internal static class ConfigFileParser
 
         if (obj.Count == 1 && obj.ContainsKey("default"))
         {
-            obj = obj["default"].AsObject();
+            obj = obj["default"]!.AsObject();
         }
 
         var theme = obj["theme"];
@@ -717,16 +718,16 @@ internal static class ConfigFileParser
             OverridenValues = theme is null ? [] : GetTotalValue(theme, "extend") ?? [],
             ExtendedValues = theme is null ? [] : GetTotalValue(theme["extend"]) ?? [],
             Prefix = obj["prefix"]?.ToString(),
-            ContentPaths = obj["content"] is null ? [] : JsonSerializer.Deserialize<List<string>>(obj["content"])
+            ContentPaths = obj["content"] is null ? [] : JsonSerializer.Deserialize<List<string>>(obj["content"])!
         };
 
         try
         {
-            config.PluginVariants = plugins.ContainsKey("variants") ? (List<string>)plugins["variants"] : null;
+            config.PluginVariants = plugins.ContainsKey("variants") ? (List<string>)plugins["variants"] : [];
 
+            config.PluginClasses = [];
             if (plugins.ContainsKey("classes"))
             {
-                config.PluginClasses = new List<string>();
                 var classes = (List<string>)plugins["classes"];
 
                 foreach (var item in classes)
@@ -766,14 +767,10 @@ internal static class ConfigFileParser
                     }
                 }
             }
-            else
-            {
-                config.PluginClasses = null;
-            }
 
             if (obj["plugins"]?["descriptions"] is not null)
             {
-                config.PluginDescriptions = JsonSerializer.Deserialize<Dictionary<string, string>>(obj["plugins"]["descriptions"]);
+                config.PluginDescriptions = JsonSerializer.Deserialize<Dictionary<string, string>>(obj["plugins"]!["descriptions"]!)!;
             }
         }
         catch (Exception ex)
@@ -785,7 +782,7 @@ internal static class ConfigFileParser
         {
             if (obj["blocklist"] is not null)
             {
-                config.Blocklist = JsonSerializer.Deserialize<List<string>>(obj["blocklist"]);
+                config.Blocklist = JsonSerializer.Deserialize<List<string>>(obj["blocklist"])!;
             }
         }
         catch (Exception ex)
@@ -800,14 +797,13 @@ internal static class ConfigFileParser
             {
                 if (GetValueKind(obj["corePlugins"]) == JsonValueKind.Array)
                 {
-                    config.EnabledCorePlugins = JsonSerializer.Deserialize<List<string>>(obj["corePlugins"]);
+                    config.EnabledCorePlugins = JsonSerializer.Deserialize<List<string>>(obj["corePlugins"])!;
                 }
                 else
                 {
-                    config.DisabledCorePlugins = JsonSerializer.Deserialize<Dictionary<string, bool>>(obj["corePlugins"])
+                    config.DisabledCorePlugins = [.. JsonSerializer.Deserialize<Dictionary<string, bool>>(obj["corePlugins"])!
                         .Where(kvp => !kvp.Value)
-                        .Select(kvp => kvp.Key)
-                        .ToList();
+                        .Select(kvp => kvp.Key)];
                 }
             }
         }
@@ -819,7 +815,7 @@ internal static class ConfigFileParser
         return config;
     }
 
-    private static async Task<string> GetNodeModulesFromConfigFilePathAsync(string configPath)
+    private static async Task<string?> GetNodeModulesFromConfigFilePathAsync(string configPath)
     {
         var file = await PhysicalFile.FromFileAsync(configPath);
 
@@ -852,9 +848,9 @@ internal static class ConfigFileParser
         return null;
     }
 
-    private static Dictionary<string, object> GetTotalValue(JsonNode node, string ignoreKey = null)
+    private static Dictionary<string, object>? GetTotalValue(JsonNode? node, string? ignoreKey = null)
     {
-        if (node == null)
+        if (node is null)
         {
             return null;
         }
@@ -869,18 +865,27 @@ internal static class ConfigFileParser
                 {
                     continue;
                 }
-                var valueKind = GetValueKind(node[key]);
+
+                var value = node[key];
+
+                var valueKind = GetValueKind(value);
+
+                if (valueKind == JsonValueKind.Null || value is null)
+                {
+                    continue;
+                }
+
                 if (valueKind == JsonValueKind.Object)
                 {
-                    result[key] = GetTotalValue(node[key]);
+                    result[key] = GetTotalValue(value)!;
                 }
                 else if (valueKind == JsonValueKind.Array)
                 {
-                    result[key] = node[key].AsArray().Select(n => n.ToString()).ToList();
+                    result[key] = value.AsArray().Select(n => n?.ToString()).ToList();
                 }
-                else if (valueKind != JsonValueKind.Null)
+                else
                 {
-                    result[key] = node[key].ToString().Trim();
+                    result[key] = value.ToString().Trim();
                 }
             }
         }
@@ -893,7 +898,7 @@ internal static class ConfigFileParser
         return ((IDictionary<string, JsonNode>)obj).Keys;
     }
 
-    private static JsonValueKind GetValueKind(JsonNode node)
+    private static JsonValueKind GetValueKind(JsonNode? node)
     {
         if (node is JsonObject)
         {

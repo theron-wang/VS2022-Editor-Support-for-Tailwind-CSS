@@ -48,7 +48,7 @@ public class General : BaseOptionModel<General>
     [Category("Build")]
     [DisplayName("Tailwind CLI path")]
     [Description("The absolute path to the Tailwind CLI executable for building: if empty, the default npx tailwindcss build command will run; if not, the specified Tailwind CLI will be called")]
-    public string TailwindCliPath { get; set; }
+    public string? TailwindCliPath { get; set; }
     [Category("Build")]
     [DisplayName("Build type")]
     [Description("Files can be built in five ways: Default (Tailwind JIT, on project build), Manual (once, Ctrl+1, Ctrl+2/3), OnBuild (once, on project build), OnSave (on file save), ManualJIT (same as Manual, but uses Tailwind JIT), and None (no building)")]
@@ -74,7 +74,7 @@ public class General : BaseOptionModel<General>
     [Category("Custom Build")]
     [DisplayName("Build script")]
     [Description("The name of the script to execute on build (defined in package.json); leave blank to use the default Tailwind CSS build")]
-    public string BuildScript { get; set; }
+    public string? BuildScript { get; set; }
     [Category("Custom Build")]
     [DisplayName("Override build")]
     [Description("Only runs the script defined in \"Build script\" when set to true; both run simultaneously when set to false; only the default Tailwind build will run if the package.json script is not found")]

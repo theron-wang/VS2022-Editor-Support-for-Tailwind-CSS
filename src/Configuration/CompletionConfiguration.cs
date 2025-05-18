@@ -17,24 +17,24 @@ namespace TailwindCSSIntellisense.Configuration;
 [PartCreationPolicy(CreationPolicy.Shared)]
 public sealed partial class CompletionConfiguration
 {
-    internal Action ConfigurationUpdated;
+    internal Action? ConfigurationUpdated;
 
     [Import]
-    internal ConfigurationFileReloader Reloader { get; set; }
+    internal ConfigurationFileReloader Reloader { get; set; } = null!;
 
     [Import(typeof(GeneratorAggregator))]
-    internal GeneratorAggregator DescriptionGenerator { get; set; }
+    internal GeneratorAggregator DescriptionGenerator { get; set; } = null!;
 
     [Import]
-    internal ColorIconGenerator ColorIconGenerator { get; set; }
+    internal ColorIconGenerator ColorIconGenerator { get; set; } = null!;
 
     [Import]
-    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
+    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; } = null!;
 
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
-    internal TailwindConfiguration LastConfig { get; private set; }
+    internal TailwindConfiguration? LastConfig { get; private set; }
 
     /// <summary>
     /// Shorthand for calling <see cref="ReloadCustomAttributesAsync(ConfigurationFile)"/> on all projects
@@ -146,7 +146,7 @@ public sealed partial class CompletionConfiguration
             dict = values;
             return true;
         }
-        dict = null;
+        dict = [];
         return false;
     }
 }

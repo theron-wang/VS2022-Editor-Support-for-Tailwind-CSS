@@ -24,17 +24,17 @@ namespace TailwindCSSIntellisense.Completions.Controllers;
 internal sealed class HtmlCompletionController : IVsTextViewCreationListener
 {
     [Import]
-    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; }
+    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; } = null!;
 
     [Import]
-    internal ICompletionBroker CompletionBroker { get; set; }
+    internal ICompletionBroker CompletionBroker { get; set; } = null!;
 
     [Import]
-    internal SVsServiceProvider ServiceProvider { get; set; }
+    internal SVsServiceProvider ServiceProvider { get; set; } = null!;
 
     public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
-        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
+        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter)!;
 
         if (view.TextBuffer.IsLegacyRazorEditor())
         {
@@ -47,7 +47,7 @@ internal sealed class HtmlCompletionController : IVsTextViewCreationListener
 
 internal sealed class HtmlCommandFilter : IOleCommandTarget
 {
-    private ICompletionSession _currentSession;
+    private ICompletionSession? _currentSession;
     private readonly IOleCommandTarget _next;
     private readonly ICompletionBroker _broker;
     private readonly IWpfTextView _textView;
@@ -350,7 +350,10 @@ internal sealed class HtmlCommandFilter : IOleCommandTarget
 
     private void OnSessionDismissed(object sender, EventArgs e)
     {
-        _currentSession.Dismissed -= OnSessionDismissed;
+        if (_currentSession is not null)
+        {
+            _currentSession.Dismissed -= OnSessionDismissed;
+        }
         _currentSession = null;
     }
 }

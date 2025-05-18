@@ -25,13 +25,13 @@ namespace TailwindCSSIntellisense.Build;
 internal sealed class TailwindBuildProcess : IDisposable
 {
     [Import]
-    internal ConfigFileScanner Scanner { get; set; }
+    internal ConfigFileScanner Scanner { get; set; } = null!;
     [Import]
-    internal SettingsProvider SettingsProvider { get; set; }
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
     [Import]
-    internal PackageJsonReader PackageJsonReader { get; set; }
+    internal PackageJsonReader PackageJsonReader { get; set; } = null!;
     [Import]
-    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     private Dictionary<string, string> _inputToOutputFile = [];
 
@@ -41,13 +41,13 @@ internal sealed class TailwindBuildProcess : IDisposable
 
     private bool _startingBuilds;
 
-    private readonly Dictionary<string, string> _configsToPackageJsons = [];
+    private readonly Dictionary<string, string?> _configsToPackageJsons = [];
 
     private readonly Dictionary<string, Process> _outputFileToProcesses = [];
-    private Process _secondaryProcess;
+    private Process? _secondaryProcess;
 
-    private TailwindSettings _settings;
-    private General _general;
+    private TailwindSettings _settings = null!;
+    private General _general = null!;
 
     private Guid _buildWindowGuid;
 
@@ -111,7 +111,7 @@ internal sealed class TailwindBuildProcess : IDisposable
     /// <summary>
     /// A <see cref="bool"/> representing whether or not the build process is currently active
     /// </summary>
-    private bool IsProcessActive(Process process)
+    private bool IsProcessActive(Process? process)
     {
         if (_settings?.BuildType == BuildProcessOptions.None)
         {
@@ -173,7 +173,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         }
     }
 
-    private void OnBuild(Project project = null)
+    private void OnBuild(Project? project = null)
     {
         if (_settings.BuildType != BuildProcessOptions.Manual && _settings.BuildType != BuildProcessOptions.ManualJIT)
         {
@@ -222,7 +222,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         _minify = minify;
 
         var hasScript = false;
-        var packageJsonPath = "";
+        string? packageJsonPath = null;
 
         if (!_configsToPackageJsons.ContainsKey(config.FilePath))
         {
@@ -239,14 +239,18 @@ internal sealed class TailwindBuildProcess : IDisposable
         var dir = Path.GetDirectoryName(config.FilePath);
         var configFile = Path.GetFileName(config.FilePath);
 
-        var inputFile = PathHelpers.GetRelativePath(pair.Key, dir);
-        var outputFile = PathHelpers.GetRelativePath(pair.Value, dir);
+        var inputFile = PathHelpers.GetRelativePath(pair.Key, dir)!;
+        var outputFile = PathHelpers.GetRelativePath(pair.Value, dir)!;
 
         if (_settings.BuildType == BuildProcessOptions.OnSave)
         {
             // Are all default processes active?
             #region Default process
-            if (_outputFileToProcesses.TryGetValue(outputFile, out var process) && IsProcessActive(process))
+            if (_settings.OverrideBuild && IsProcessActive(_secondaryProcess))
+            {
+                _secondaryProcess!.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+            }
+            else if (_outputFileToProcesses.TryGetValue(outputFile, out var process) && IsProcessActive(process))
             {
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
@@ -258,10 +262,6 @@ internal sealed class TailwindBuildProcess : IDisposable
                     {
                         process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
                     }
-                }
-                else if (_settings.OverrideBuild)
-                {
-                    _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
                 }
             }
             else
@@ -296,7 +296,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                 {
                     CreateAndSetAndStartSecondaryProcess(GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath)));
 
-                    _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                    _secondaryProcess!.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
 
                     PostSetupProcess(_secondaryProcess);
                 }
@@ -307,7 +307,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 if (IsProcessActive(_secondaryProcess))
                 {
-                    _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                    _secondaryProcess!.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
                 }
                 else
                 {
@@ -316,7 +316,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                     var processInfo = GetProcessStartInfo(Path.GetDirectoryName(packageJsonPath));
                     CreateAndSetAndStartSecondaryProcess(processInfo);
 
-                    _secondaryProcess.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
+                    _secondaryProcess!.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
 
                     PostSetupProcess(_secondaryProcess);
                 }
@@ -377,9 +377,9 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     CreateAndSetAndStartSecondaryProcess(processInfo);
 
-                    PostSetupProcess(_secondaryProcess);
-                    _secondaryProcess.StandardInput.Flush();
-                    _secondaryProcess.StandardInput.Close();
+                    PostSetupProcess(_secondaryProcess!);
+                    _secondaryProcess!.StandardInput.Flush();
+                    _secondaryProcess!.StandardInput.Close();
                 }
             }
 
@@ -395,10 +395,10 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                 CreateAndSetAndStartSecondaryProcess(processInfo);
 
-                PostSetupProcess(_secondaryProcess);
+                PostSetupProcess(_secondaryProcess!);
 
-                _secondaryProcess.StandardInput.Flush();
-                _secondaryProcess.StandardInput.Close();
+                _secondaryProcess!.StandardInput.Flush();
+                _secondaryProcess!.StandardInput.Close();
             }
 
             #endregion
@@ -437,7 +437,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
             // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
             // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
-            _secondaryProcess.StandardInput.WriteLine("\x3");
+            _secondaryProcess!.StandardInput.WriteLine("\x3");
             _secondaryProcess.StandardInput.Close();
             _secondaryProcess.Kill();
             _secondaryProcess = null;
@@ -457,7 +457,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                 return "npx @tailwindcss/cli";
             }
         }
-        return _settings.TailwindCliPath;
+        return _settings.TailwindCliPath!;
     }
 
     /// <summary>
@@ -595,18 +595,21 @@ internal sealed class TailwindBuildProcess : IDisposable
     {
         var windowPane = await VS.Windows.GetOutputWindowPaneAsync(Community.VisualStudio.Toolkit.Windows.VSOutputWindowPane.Build);
 
-        await windowPane.ActivateAsync();
         if (windowPane == null)
         {
             if (_buildWindowGuid != default)
             {
-                windowPane = await VS.Windows.GetOutputWindowPaneAsync(_buildWindowGuid);
+                windowPane = (await VS.Windows.GetOutputWindowPaneAsync(_buildWindowGuid))!;
             }
             else
             {
                 windowPane = await VS.Windows.CreateOutputWindowPaneAsync("Build");
                 _buildWindowGuid = windowPane.Guid;
             }
+        }
+        else
+        {
+            await windowPane.ActivateAsync();
         }
 
         await windowPane.WriteLineAsync(message);
@@ -668,7 +671,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             var proc = (Process)s;
 
             proc?.Dispose();
-            string keyToRemove = null;
+            string? keyToRemove = null;
             foreach (var kvp in _outputFileToProcesses)
             {
                 if (kvp.Value == proc)

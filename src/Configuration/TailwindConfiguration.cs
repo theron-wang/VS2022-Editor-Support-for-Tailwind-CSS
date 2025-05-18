@@ -33,7 +33,7 @@ internal class TailwindConfiguration
     /// </summary>
     public Dictionary<string, string> ThemeVariables { get; set; } = [];
 
-    public string Prefix { get; set; }
+    public string? Prefix { get; set; }
 
     public List<string> PluginClasses { get; set; } = [];
 
@@ -43,11 +43,11 @@ internal class TailwindConfiguration
 
     public Dictionary<string, string> PluginVariantDescriptions { get; set; } = [];
 
-    public List<string> Blocklist { get; set; }
+    public List<string>? Blocklist { get; set; }
 
-    public List<string> EnabledCorePlugins { get; set; }
+    public List<string>? EnabledCorePlugins { get; set; }
 
-    public List<string> DisabledCorePlugins { get; set; }
+    public List<string>? DisabledCorePlugins { get; set; }
 
     public List<string> Imports { get; set; } = [];
 }

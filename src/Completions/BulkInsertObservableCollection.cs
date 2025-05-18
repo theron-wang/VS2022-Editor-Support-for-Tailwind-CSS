@@ -6,73 +6,72 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Threading;
 
-namespace TailwindCSSIntellisense.Completions
+namespace TailwindCSSIntellisense.Completions;
+
+internal class BulkInsertObservableCollection<T> : BulkObservableCollection<T>
 {
-    internal class BulkInsertObservableCollection<T> : BulkObservableCollection<T>
+    private readonly Dispatcher _dispatcher;
+    private const string _collectionChangedDuringRangeOperation = "_collectionChangedDuringRangeOperation";
+    private delegate void AddRangeToBeginningCallback(IList<T> items);
+
+    public BulkInsertObservableCollection()
     {
-        private readonly Dispatcher _dispatcher;
-        private const string _collectionChangedDuringRangeOperation = "_collectionChangedDuringRangeOperation";
-        private delegate void AddRangeToBeginningCallback(IList<T> items);
+        _dispatcher = Dispatcher.CurrentDispatcher;
+    }
 
-        public BulkInsertObservableCollection()
+    /// <summary>
+    /// Functionally equivalent to <see cref="List{T}.InsertRange(int, IEnumerable{T})"/> where the first parameter is 0
+    /// </summary>
+    /// <param name="items">The list of items to prepend</param>
+    public void AddRangeToBeginning(IEnumerable<T> items)
+    {
+        if (items == null || !items.Any())
         {
-            _dispatcher = Dispatcher.CurrentDispatcher;
+            return;
         }
 
-        /// <summary>
-        /// Functionally equivalent to <see cref="List{T}.InsertRange(int, IEnumerable{T})"/> where the first parameter is 0
-        /// </summary>
-        /// <param name="items">The list of items to prepend</param>
-        public void AddRangeToBeginning(IEnumerable<T> items)
+        if (_dispatcher.CheckAccess())
         {
-            if (items == null || !items.Any())
+            try
             {
-                return;
-            }
-
-            if (_dispatcher.CheckAccess())
-            {
-                try
+                BeginBulkOperation();
+                SetField(_collectionChangedDuringRangeOperation, true);
+                foreach (T item in items.Reverse())
                 {
-                    BeginBulkOperation();
-                    SetField(_collectionChangedDuringRangeOperation, true);
-                    foreach (T item in items.Reverse())
-                    {
-                        Items.Insert(0, item);
-                    }
-                }
-                finally
-                {
-                    EndBulkOperation();
+                    Items.Insert(0, item);
                 }
             }
-            else
+            finally
             {
-                ThreadHelper.JoinableTaskFactory.Run(async () =>
-                {
+                EndBulkOperation();
+            }
+        }
+        else
+        {
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
 #pragma warning disable VSTHRD001 // Avoid legacy thread switching APIs
-                    await _dispatcher.BeginInvoke(DispatcherPriority.Send, new AddRangeToBeginningCallback(AddRangeToBeginning), items);
+                await _dispatcher.BeginInvoke(DispatcherPriority.Send, new AddRangeToBeginningCallback(AddRangeToBeginning), items);
 #pragma warning restore VSTHRD001 // Avoid legacy thread switching APIs
-                });
-            }
+            });
         }
+    }
 
-        // https://stackoverflow.com/questions/6961781/reflecting-a-private-field-from-a-base-class
-        private void SetField(string fieldName, object value)
+    // https://stackoverflow.com/questions/6961781/reflecting-a-private-field-from-a-base-class
+    private void SetField(string fieldName, object value)
+    {
+        Type t = GetType();
+        FieldInfo? fi = null;
+
+        while (t != null)
         {
-            Type t = GetType();
-            FieldInfo fi = null;
+            fi = t.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
 
-            while (t != null)
-            {
-                fi = t.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            if (fi != null) break;
 
-                if (fi != null) break;
-
-                t = t.BaseType;
-            }
-
-            fi.SetValue(this, value);
+            t = t.BaseType;
         }
+
+        fi?.SetValue(this, value);
     }
 }

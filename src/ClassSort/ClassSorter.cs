@@ -20,17 +20,17 @@ namespace TailwindCSSIntellisense.ClassSort;
 internal sealed class ClassSorter : IDisposable
 {
     [Import]
-    public SettingsProvider SettingsProvider { get; set; }
+    public SettingsProvider SettingsProvider { get; set; } = null!;
     [Import(typeof(SorterAggregator))]
-    public SorterAggregator Sorter { get; set; }
+    public SorterAggregator Sorter { get; set; } = null!;
     [Import]
-    public CompletionConfiguration CompletionConfiguration { get; set; }
+    public CompletionConfiguration CompletionConfiguration { get; set; } = null!;
     [Import]
-    public FileFinder FileFinder { get; set; }
+    public FileFinder FileFinder { get; set; } = null!;
 
     public bool Sorting { get; private set; }
 
-    private TailwindSettings _tailwindSettings;
+    private TailwindSettings? _tailwindSettings;
 
     private readonly HashSet<string> _sorted = [];
 

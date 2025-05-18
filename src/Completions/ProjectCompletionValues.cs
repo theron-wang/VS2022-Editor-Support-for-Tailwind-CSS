@@ -7,7 +7,7 @@ public class ProjectCompletionValues
     /// <summary>
     /// When set, set to lowercase
     /// </summary>
-    public string FilePath { get; set; }
+    public string FilePath { get; set; } = null!;
     public List<string> ApplicablePaths { get; set; } = [];
     /// <summary>
     /// V4+ only
@@ -23,7 +23,7 @@ public class ProjectCompletionValues
     internal Dictionary<string, string> VariantsToDescriptions { get; set; } = [];
     internal List<string> Screen { get; set; } = ["sm", "md", "lg", "xl", "2xl"];
 
-    internal string Prefix { get; set; }
+    internal string? Prefix { get; set; }
 
     internal Dictionary<string, string> ColorMapper { get; set; } = [];
     internal Dictionary<string, string> SpacingMapper { get; set; } = [];
@@ -70,31 +70,31 @@ public class ProjectCompletionValues
         return new ProjectCompletionValues
         {
             Initialized = Initialized,
-            Classes = Classes?.Select(c => c).ToList(),
-            Variants = Variants?.ToList(),
-            Screen = Screen?.ToList(),
+            Classes = [.. Classes.Select(c => c)],
+            Variants = [.. Variants],
+            Screen = [.. Screen],
             Prefix = Prefix,
             ColorMapper = new Dictionary<string, string>(ColorMapper),
             SpacingMapper = new Dictionary<string, string>(SpacingMapper),
-            ConfigurationValueToClassStems = ConfigurationValueToClassStems?.ToDictionary(
+            ConfigurationValueToClassStems = ConfigurationValueToClassStems.ToDictionary(
                 kvp => kvp.Key, kvp => kvp.Value.ToList()
             ),
-            CustomColorMappers = CustomColorMappers?.ToDictionary(
+            CustomColorMappers = CustomColorMappers.ToDictionary(
                 kvp => kvp.Key, kvp => new Dictionary<string, string>(kvp.Value)
             ),
-            CustomSpacingMappers = CustomSpacingMappers?.ToDictionary(
+            CustomSpacingMappers = CustomSpacingMappers.ToDictionary(
                 kvp => kvp.Key, kvp => new Dictionary<string, string>(kvp.Value)
             ),
             DescriptionMapper = new Dictionary<string, string>(DescriptionMapper),
             CustomDescriptionMapper = new Dictionary<string, string>(CustomDescriptionMapper),
-            PluginClasses = PluginClasses?.ToList(),
-            PluginVariants = PluginVariants?.ToList(),
-            Blocklist = new HashSet<string>(Blocklist),
+            PluginClasses = [.. PluginClasses],
+            PluginVariants = [.. PluginVariants],
+            Blocklist = [.. Blocklist],
             Version = Version,
-            CssVariables = CssVariables?.ToDictionary(
+            CssVariables = CssVariables.ToDictionary(
                 kvp => kvp.Key, kvp => kvp.Value
             ),
-            VariantsToDescriptions = VariantsToDescriptions?.ToDictionary(
+            VariantsToDescriptions = VariantsToDescriptions.ToDictionary(
                 kvp => kvp.Key, kvp => kvp.Value
             )
         };

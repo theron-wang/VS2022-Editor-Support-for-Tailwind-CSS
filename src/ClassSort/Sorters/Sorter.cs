@@ -10,9 +10,9 @@ namespace TailwindCSSIntellisense.ClassSort.Sorters;
 internal abstract class Sorter
 {
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
     [Import]
-    public ClassSortUtilities ClassSortUtilities { get; set; }
+    public ClassSortUtilities ClassSortUtilities { get; set; } = null!;
 
     public abstract string[] Handled { get; }
 

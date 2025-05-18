@@ -59,6 +59,7 @@ Sort Tailwind classes:
 - Manually from the **Tools** menu
 
 ![Class Sort Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/class-sort-demo.gif)
+
 ![Class Sort Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Class-Sort-2.png)
 
 ### Build Integration
@@ -68,11 +69,13 @@ The extension can build your Tailwind CSS output when you build your project (or
 - Output and errors appear in the Build output window
 
 ![Build Demo 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-1.png)
+
 ![Build Demo 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Build-Demo-2.png)
 
 To configure build and configuration files, right-click `.js`, `.ts`, or `.css` files:
 
 ![Customizability Build 1](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-1.png)
+
 ![Customizability Build 2](https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/main/art/Customizability-Build-2.png)
 
 Settings are saved in a `tailwind.extension.json` file in your project root.

@@ -26,7 +26,7 @@ internal sealed class ClassSortUtilities
         List<string> order;
         using (var fs = File.Open(Path.Combine(folder, "order.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            order = JsonSerializer.Deserialize<List<string>>(fs);
+            order = JsonSerializer.Deserialize<List<string>>(fs)!;
         }
 
         var classToOrderIndex = new Dictionary<string, int>();
@@ -50,7 +50,7 @@ internal sealed class ClassSortUtilities
         List<string> order;
         using (var fs = File.Open(Path.Combine(folder, "variantorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
         {
-            order = JsonSerializer.Deserialize<List<string>>(fs);
+            order = JsonSerializer.Deserialize<List<string>>(fs)!;
         }
 
         var variantToOrderIndex = new Dictionary<string, int>();

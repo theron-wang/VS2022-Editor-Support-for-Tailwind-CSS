@@ -18,9 +18,9 @@ internal abstract class ErrorListListener : ITextViewCreationListener, IDisposab
     protected abstract Validator GetValidator(ITextView view);
 
     [Import]
-    protected LinterUtilities _linterUtilities = null;
+    protected LinterUtilities _linterUtilities = null!;
     [Import]
-    protected ProjectConfigurationManager _projectConfigurationManager = null;
+    protected ProjectConfigurationManager _projectConfigurationManager = null!;
 
     private readonly Dictionary<ITextBuffer, ErrorListContext> _contexts = [];
 
@@ -98,7 +98,12 @@ internal abstract class ErrorListListener : ITextViewCreationListener, IDisposab
 
         if (_contexts.TryGetValue(view.TextBuffer, out var context))
         {
-            context.Validator.BufferValidated -= UpdateErrorList;
+#pragma warning disable CS8601 // Possible null reference assignment.
+            if (context.Validator.BufferValidated is not null)
+            {
+                context.Validator.BufferValidated -= UpdateErrorList;
+            }
+#pragma warning restore CS8601 // Possible null reference assignment.
 
             context.TableDataSource.CleanAllErrors();
         }
@@ -136,7 +141,12 @@ internal abstract class ErrorListListener : ITextViewCreationListener, IDisposab
     {
         foreach (var context in _contexts.Values)
         {
-            context.Validator.BufferValidated -= UpdateErrorList;
+#pragma warning disable CS8601 // Possible null reference assignment.
+            if (context.Validator.BufferValidated is not null)
+            {
+                context.Validator.BufferValidated -= UpdateErrorList;
+            }
+#pragma warning restore CS8601 // Possible null reference assignment.
 
             context.TableDataSource.CleanAllErrors();
         }

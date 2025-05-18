@@ -20,7 +20,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     private readonly ITextView _view;
     private readonly ProjectCompletionValues _projectConfigurationManager;
     private bool _isProcessing;
-    private General _generalOptions;
+    private General? _generalOptions;
 
     protected ColorTaggerBase(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)
     {
@@ -56,7 +56,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
         }
     }
 
-    public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+    public event EventHandler<SnapshotSpanEventArgs>? TagsChanged;
 
     public void Dispose()
     {
@@ -115,7 +115,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
         }
     }
 
-    private byte[] GetRgbaFromClass(string text)
+    private byte[]? GetRgbaFromClass(string text)
     {
         text = text.Split(':').Last();
 
@@ -128,11 +128,11 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
         {
             if (text.StartsWith(_projectConfigurationManager.Prefix))
             {
-                text = text.Substring(_projectConfigurationManager.Prefix.Length);
+                text = text.Substring(_projectConfigurationManager.Prefix!.Length);
             }
             else if (text.StartsWith($"-{_projectConfigurationManager.Prefix}"))
             {
-                text = text.Substring(_projectConfigurationManager.Prefix.Length + 1);
+                text = text.Substring(_projectConfigurationManager.Prefix!.Length + 1);
             }
             else
             {

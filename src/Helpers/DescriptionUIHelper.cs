@@ -220,7 +220,7 @@ internal static class DescriptionUIHelper
         var keyword = line.Contains(":") ? line.Substring(0, line.IndexOf(':')).Trim() : line;
         var value = line.Substring(line.IndexOf(':') + 1).Trim().Trim(';');
 
-        string comment = null;
+        string? comment = null;
 
         if (value.Contains("/*"))
         {
@@ -353,7 +353,7 @@ internal static class DescriptionUIHelper
             var keyword = line.Contains(":") ? line.Substring(0, line.IndexOf(':')).Trim() : line;
             var value = line.Substring(line.IndexOf(':') + 1).Trim().Trim(';');
 
-            string comment = null;
+            string? comment = null;
 
             if (value.Contains("/*"))
             {

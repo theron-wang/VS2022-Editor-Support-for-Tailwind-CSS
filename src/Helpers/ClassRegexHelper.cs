@@ -23,16 +23,16 @@ internal class ClassRegexHelper
     private static readonly Regex _razorQuotePairRegex = new(@"(?<!@\((?>\((?<c>)|[^()]+|\)(?<-c>))*(?(c)(?!)))'(?<content>(?:@\((?>\((?<c>)|[^()]+|\)(?<-c>))*(?(c)(?!))\)|(?:(?!')[^\\]|\\.))*)'", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
     private static readonly Regex _normalQuotePairRegex = new(@"'(?<content>(?:[^'\\]|\\.)*)'", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
 
-    private static List<Regex> _customRazorRegexes;
-    private static List<Regex> _customNormalRegexes;
-    private static List<Regex> _customJavaScriptRegexes;
+    private static List<Regex>? _customRazorRegexes;
+    private static List<Regex>? _customNormalRegexes;
+    private static List<Regex>? _customJavaScriptRegexes;
 
     private static bool _overrideRazor;
     private static bool _overrideNormal;
     private static bool _overrideJavaScript;
 
-    private static TailwindSettings _settingsCache;
-    public static Func<Task<TailwindSettings>> GetTailwindSettings;
+    private static TailwindSettings? _settingsCache;
+    public static Func<Task<TailwindSettings>>? GetTailwindSettings;
 
     private static void UpdateTailwindSettingsIfNeeded()
     {
@@ -48,7 +48,7 @@ internal class ClassRegexHelper
         }
     }
 
-    private static void SetCustomRegex(CustomRegexes custom)
+    private static void SetCustomRegex(CustomRegexes? custom)
     {
         if (custom is null)
         {

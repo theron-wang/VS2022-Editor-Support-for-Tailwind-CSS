@@ -13,10 +13,10 @@ namespace TailwindCSSIntellisense.QuickInfo;
 internal sealed class CssDirectiveQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
 {
     [Import]
-    public ITextStructureNavigatorSelectorService ITextStructureNavigatorSelectorService { get; set; }
+    public ITextStructureNavigatorSelectorService ITextStructureNavigatorSelectorService { get; set; } = null!;
 
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {

@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
-using System.Linq;
 using System.Windows;
 
 namespace TailwindCSSIntellisense.Completions;
@@ -20,9 +19,9 @@ namespace TailwindCSSIntellisense.Completions;
 internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Completion, ICompletionSession>
 {
     [Import]
-    private DescriptionGenerator DescriptionGenerator { get; set; }
+    private DescriptionGenerator DescriptionGenerator { get; set; } = null!;
 
-    public UIElement GetUIElement(Completion itemToRender, ICompletionSession context, UIElementType elementType)
+    public UIElement? GetUIElement(Completion itemToRender, ICompletionSession context, UIElementType elementType)
     {
         if (elementType == UIElementType.Tooltip && itemToRender.Properties.ContainsProperty("tailwind") && !itemToRender.Properties.ContainsProperty("variant"))
         {
@@ -34,8 +33,6 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
             }
 
             var project = itemToRender.Properties.GetProperty<ProjectCompletionValues>("tailwind");
-
-            var classText = fullText.Split(':').Last();
 
             var isImportant = ImportantModifierHelper.IsImportantModifier(itemToRender.DisplayText);
 

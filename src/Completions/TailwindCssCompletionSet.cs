@@ -13,12 +13,12 @@ namespace TailwindCSSIntellisense.Completions;
 /// </summary>
 internal class TailwindCssCompletionSet : CompletionSet
 {
-    private BulkInsertObservableCollection<Completion> _completions = new BulkInsertObservableCollection<Completion>();
-    private FilteredObservableCollection<Completion> _filteredCompletions;
+    private readonly BulkInsertObservableCollection<Completion> _completions = [];
+    private FilteredObservableCollection<Completion> _filteredCompletions = null!;
     private int _filterBufferTextVersionNumber;
-    private string _filterBufferText;
+    private string? _filterBufferText;
 
-    private string FilterBufferText
+    private string? FilterBufferText
     {
         get
         {
@@ -89,7 +89,7 @@ internal class TailwindCssCompletionSet : CompletionSet
             else
             {
                 var segments = c.DisplayText.Split([':'], StringSplitOptions.RemoveEmptyEntries).Last().Split('-');
-                var filterSegments = FilterBufferText.Split(':').Last().Split(['-'], StringSplitOptions.RemoveEmptyEntries);
+                var filterSegments = FilterBufferText!.Split(':').Last().Split(['-'], StringSplitOptions.RemoveEmptyEntries);
                 return filterSegments.Length == 0 || filterSegments.All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
             }
         });
@@ -98,13 +98,13 @@ internal class TailwindCssCompletionSet : CompletionSet
     /// <inheritdoc />
     public override void SelectBestMatch()
     {
-        Completion completionSelection = null;
+        Completion? completionSelection = null;
 
         if (_filteredCompletions.Count == 1)
         {
             SelectionStatus = new CompletionSelectionStatus(_filteredCompletions[0], true, true);
         }
-        else if (string.IsNullOrWhiteSpace(FilterBufferText) == false && string.IsNullOrWhiteSpace(FilterBufferText.Split(':').Last()) == false)
+        else if (string.IsNullOrWhiteSpace(FilterBufferText) == false && string.IsNullOrWhiteSpace(FilterBufferText!.Split(':').Last()) == false)
         {
             foreach (var completion in Completions)
             {

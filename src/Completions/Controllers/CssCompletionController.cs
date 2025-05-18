@@ -23,17 +23,17 @@ namespace TailwindCSSIntellisense.Completions.Controllers;
 internal sealed class CssCompletionController : IVsTextViewCreationListener
 {
     [Import]
-    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; }
+    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; } = null!;
 
     [Import]
-    internal ICompletionBroker CompletionBroker { get; set; }
+    internal ICompletionBroker CompletionBroker { get; set; } = null!;
 
     [Import]
-    internal SVsServiceProvider ServiceProvider { get; set; }
+    internal SVsServiceProvider ServiceProvider { get; set; } = null!;
 
     public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
-        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
+        var view = AdaptersFactory.GetWpfTextView(textViewAdapter)!;
 
         view.Properties.GetOrCreateSingletonProperty(() => new CssCommandFilter(view, textViewAdapter, this));
     }
@@ -41,7 +41,7 @@ internal sealed class CssCompletionController : IVsTextViewCreationListener
 
 internal sealed class CssCommandFilter : IOleCommandTarget
 {
-    private ICompletionSession _currentSession;
+    private ICompletionSession? _currentSession;
     private readonly IOleCommandTarget _next;
     private readonly ICompletionBroker _broker;
     private readonly IWpfTextView _textView;
@@ -103,7 +103,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
 
         // Is the caret in an @apply context?
         bool isInApply = IsUsingAtDirective();
-        string classText = null;
+        string? classText = null;
         if (isInApply)
         {
             // Text after @apply to caret
@@ -189,7 +189,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
                         {
                             break;
                         }
-                        if (isInApply && (_currentSession == null || classText.EndsWith("/")))
+                        if (isInApply && (_currentSession == null || (classText is not null && classText.EndsWith("/"))))
                         {
                             _currentSession?.Dismiss();
                             StartSession(true);
@@ -207,7 +207,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
         return hresult;
     }
 
-    private bool RetriggerIntellisense(string classText)
+    private bool RetriggerIntellisense(string? classText)
     {
         return classText != null && classText.EndsWith(":");
     }

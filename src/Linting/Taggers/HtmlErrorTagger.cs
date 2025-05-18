@@ -18,11 +18,11 @@ namespace TailwindCSSIntellisense.Linting.Taggers;
 internal class HtmlErrorTaggerProvider : ITaggerProvider
 {
     [Import]
-    public LinterUtilities LinterUtilities { get; set; }
+    public LinterUtilities LinterUtilities { get; set; } = null!;
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
-    public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
+    public ITagger<T>? CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
         // Handle legacy Razor editor; this completion controller is prioritized but
         // we should only use the Razor completion controller in that case

@@ -7,33 +7,32 @@ using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense
+namespace TailwindCSSIntellisense;
+
+[Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.StartBuildProcessCmdId)]
+internal sealed class StartBuildProcess : BaseCommand<StartBuildProcess>
 {
-    [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.StartBuildProcessCmdId)]
-    internal sealed class StartBuildProcess : BaseCommand<StartBuildProcess>
+    protected override async Task InitializeCompletedAsync()
     {
-        protected override async Task InitializeCompletedAsync()
-        {
-            BuildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
-            ConfigFileScanner = await VS.GetMefServiceAsync<ConfigFileScanner>();
-            SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
-        }
+        BuildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
+        ConfigFileScanner = await VS.GetMefServiceAsync<ConfigFileScanner>();
+        SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
+    }
 
-        internal TailwindBuildProcess BuildProcess { get; set; }
-        internal ConfigFileScanner ConfigFileScanner { get; set; }
-        internal SettingsProvider SettingsProvider { get; set; }
+    internal TailwindBuildProcess BuildProcess { get; set; } = null!;
+    internal ConfigFileScanner ConfigFileScanner { get; set; } = null!;
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
 
-        protected override void BeforeQueryStatus(EventArgs e)
-        {
-            var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
-            Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() == false && settings.ConfigurationFiles.Count > 0 && settings.BuildType != BuildProcessOptions.None;
-        }
+    protected override void BeforeQueryStatus(EventArgs e)
+    {
+        var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
+        Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() == false && settings.ConfigurationFiles.Count > 0 && settings.BuildType != BuildProcessOptions.None;
+    }
 
-        protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
-        {
-            await BuildProcess.InitializeAsync();
+    protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
+    {
+        await BuildProcess.InitializeAsync();
 
-            BuildProcess.BuildAll(false);
-        }
+        BuildProcess.BuildAll(false);
     }
 }

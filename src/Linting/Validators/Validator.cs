@@ -16,7 +16,7 @@ internal abstract class Validator : IDisposable
 
     protected readonly HashSet<SnapshotSpan> _checkedSpans = [];
 
-    private ITextSnapshot _snapshot;
+    private ITextSnapshot? _snapshot;
 
     private readonly object _updateLock = new();
 
@@ -25,9 +25,9 @@ internal abstract class Validator : IDisposable
     /// <summary>
     /// Sends an <see cref="IEnumerable{T}"/> of type <see cref="Span"/> of changed spans or null if the entire document was revalidated
     /// </summary>
-    public Action<IEnumerable<Span>> Validated;
+    public Action<IEnumerable<Span>?>? Validated;
 
-    public Action<ITextBuffer> BufferValidated;
+    public Action<ITextBuffer>? BufferValidated;
 
     public Validator(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities)
     {
@@ -101,7 +101,7 @@ internal abstract class Validator : IDisposable
                 _checkedSpans.Add(span.TranslateTo(e.After, SpanTrackingMode.EdgeInclusive));
             }
 
-            if (_snapshot != null && _snapshot != e.After)
+            if (_snapshot is not null && _snapshot != e.After)
             {
                 return;
             }

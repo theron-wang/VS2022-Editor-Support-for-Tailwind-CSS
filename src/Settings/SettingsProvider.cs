@@ -34,28 +34,27 @@ public sealed class SettingsProvider : IDisposable
     }
 
     [Import]
-    public FileFinder FileFinder { get; set; }
+    public FileFinder FileFinder { get; set; } = null!;
 
     [Import]
-    public ConfigFileScanner ConfigFileScanner { get; set; }
+    public ConfigFileScanner ConfigFileScanner { get; set; } = null!;
 
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     private const string ExtensionConfigFileName = "tailwind.extension.json";
 
-    private Task _fileWritingTask;
-    private TailwindSettings _cachedSettings;
-    private bool _cacheValid;
+    private Task? _fileWritingTask;
+    private TailwindSettings? _cachedSettings;
 
     /// <summary>
     /// Event that is raised when the settings are changed.
     /// </summary>
-    public Func<TailwindSettings, Task> OnSettingsChanged;
+    public Func<TailwindSettings, Task>? OnSettingsChanged;
 
     public void RefreshSettings()
     {
-        _cacheValid = false;
+        _cachedSettings = null;
     }
 
     /// <summary>
@@ -74,7 +73,7 @@ public sealed class SettingsProvider : IDisposable
     {
         TailwindSettings returnSettings;
         var changed = false;
-        if (_cacheValid)
+        if (_cachedSettings is not null)
         {
             returnSettings = _cachedSettings;
         }
@@ -100,7 +99,7 @@ public sealed class SettingsProvider : IDisposable
                 };
             }
 
-            TailwindSettingsProjectOnly projectSettings = null;
+            TailwindSettingsProjectOnly projectSettings;
 
             var path = Path.Combine(activeProjectPath, ExtensionConfigFileName);
 
@@ -120,7 +119,7 @@ public sealed class SettingsProvider : IDisposable
                 try
                 {
                     using var fs = File.Open(path, FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite);
-                    projectSettings = await JsonSerializer.DeserializeAsync<TailwindSettingsProjectOnly>(fs);
+                    projectSettings = (await JsonSerializer.DeserializeAsync<TailwindSettingsProjectOnly>(fs))!;
                 }
                 catch (Exception ex)
                 {
@@ -133,7 +132,7 @@ public sealed class SettingsProvider : IDisposable
 
                     projectSettings = new TailwindSettingsProjectOnly()
                     {
-                        ConfigurationFiles = [new() { Path = file }]
+                        ConfigurationFiles = file is null ? [] : [new() { Path = file }]
                     };
 
                     if (file != null)
@@ -148,7 +147,7 @@ public sealed class SettingsProvider : IDisposable
 
                 projectSettings = new TailwindSettingsProjectOnly()
                 {
-                    ConfigurationFiles = [new() { Path = file }]
+                    ConfigurationFiles = file is null ? [] : [new() { Path = file }]
                 };
 
                 if (file != null)
@@ -164,8 +163,10 @@ public sealed class SettingsProvider : IDisposable
                 projectSettings.BuildFiles = [
                     new BuildPair()
                     {
+#pragma warning disable CS8601 // Possible null reference assignment.
                         Input = projectSettings.InputCssFile,
                         Output = projectSettings.OutputCssFile
+#pragma warning restore CS8601 // Possible null reference assignment.
                     }
                 ];
                 projectSettings.InputCssFile = null;
@@ -189,8 +190,10 @@ public sealed class SettingsProvider : IDisposable
                 {
                     var buildPair = projectSettings.BuildFiles[i];
 
+#pragma warning disable CS8601 // Possible null reference assignment.
                     buildPair.Input = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Input?.Trim());
-                    buildPair.Output = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Output?.Trim());
+#pragma warning restore CS8601 // Possible null reference assignment.
+                    buildPair.Output = PathHelpers.GetAbsolutePath(activeProjectPath, buildPair.Output?.Trim()) ?? "";
                     if (buildPair.Input == null || File.Exists(buildPair.Input) == false || inputFiles.Contains(buildPair.Input))
                     {
                         projectSettings.BuildFiles.Remove(buildPair);
@@ -208,7 +211,10 @@ public sealed class SettingsProvider : IDisposable
                 for (int i = 0; i < projectSettings.ConfigurationFiles.Count; i++)
                 {
                     var config = projectSettings.ConfigurationFiles[i];
+
+#pragma warning disable CS8601 // Possible null reference assignment.
                     config.Path = PathHelpers.GetAbsolutePath(activeProjectPath, config.Path?.Trim());
+#pragma warning restore CS8601 // Possible null reference assignment.
 
                     if (string.IsNullOrWhiteSpace(config.Path) || File.Exists(config.Path) == false)
                     {
@@ -223,7 +229,7 @@ public sealed class SettingsProvider : IDisposable
 
                         if (projectSettings.BuildFiles is not null && !projectSettings.BuildFiles.Any(b => b.Input.Equals(config.Path, StringComparison.InvariantCultureIgnoreCase)))
                         {
-                            projectSettings.BuildFiles.Add(new() { Input = config.Path });
+                            projectSettings.BuildFiles.Add(new() { Input = config.Path! });
                         }
                         changed = true;
                     }
@@ -243,7 +249,7 @@ public sealed class SettingsProvider : IDisposable
                 PackageConfigurationFile = PathHelpers.GetAbsolutePath(activeProjectPath, projectSettings?.PackageConfigurationFile?.Trim()),
                 AutomaticallyMinify = general.AutomaticallyMinify,
                 TailwindCliPath = general.TailwindCliPath,
-                UseCli = projectSettings.UseCli,
+                UseCli = projectSettings!.UseCli,
                 SortClassesType = general.ClassSortType,
                 CustomRegexes = projectSettings.CustomRegexes
             };
@@ -251,8 +257,6 @@ public sealed class SettingsProvider : IDisposable
             await ProjectConfigurationManager.OnSettingsChangedAsync(returnSettings);
 
             _cachedSettings = returnSettings;
-
-            _cacheValid = true;
         }
 
         if (changed)
@@ -299,7 +303,7 @@ public sealed class SettingsProvider : IDisposable
         var defaultConfigFile = settings.ConfigurationFiles.FirstOrDefault()?.Path ??
             settings.ConfigurationFiles.FirstOrDefault()?.Path;
 
-        string oldDefaultConfigFile = null;
+        string? oldDefaultConfigFile = null;
         if (_cachedSettings is not null)
         {
             oldDefaultConfigFile = _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path ??
@@ -314,19 +318,20 @@ public sealed class SettingsProvider : IDisposable
         {
             copyBuildFilePair.Add(new()
             {
-                Input = PathHelpers.GetRelativePath(buildFilePair.Input, projectRoot),
-                Output = string.IsNullOrWhiteSpace(buildFilePair.Output) ? "" : PathHelpers.GetRelativePath(buildFilePair.Output, projectRoot)
+                Input = PathHelpers.GetRelativePath(buildFilePair.Input, projectRoot)!,
+                Output = string.IsNullOrWhiteSpace(buildFilePair.Output) ? "" : PathHelpers.GetRelativePath(buildFilePair.Output, projectRoot)!
             });
         }
 
         List<ConfigurationFile> configurationFiles = [..
             settings.ConfigurationFiles
-            .Where(cf => settings.BuildFiles.Any(b => !b.Input.Equals(cf.Path, StringComparison.InvariantCultureIgnoreCase)))
+            .Where(cf =>
+                settings.BuildFiles.Any(b => !b.Input.Equals(cf.Path, StringComparison.InvariantCultureIgnoreCase)))
             .Select(cf =>
             {
                 return new ConfigurationFile()
                 {
-                    Path = PathHelpers.GetRelativePath(cf.Path?.Trim(), projectRoot)
+                    Path = PathHelpers.GetRelativePath(cf.Path.Trim(), projectRoot)!
                 };
             })
         ];
@@ -335,7 +340,7 @@ public sealed class SettingsProvider : IDisposable
         {
             ConfigurationFiles = configurationFiles.Count > 0 ? configurationFiles : null,
             BuildFiles = copyBuildFilePair,
-            PackageConfigurationFile = PathHelpers.GetRelativePath(settings.PackageConfigurationFile, projectRoot),
+            PackageConfigurationFile = settings.PackageConfigurationFile is null ? null : PathHelpers.GetRelativePath(settings.PackageConfigurationFile, projectRoot),
             UseCli = settings.UseCli
         };
 
@@ -410,7 +415,7 @@ public sealed class SettingsProvider : IDisposable
         return Path.Combine(await GetTailwindProjectDirectoryAsync(), ExtensionConfigFileName);
     }
 
-    private async Task<string> GetDesiredConfigurationDirectoryAsync(string configPath)
+    private async Task<string?> GetDesiredConfigurationDirectoryAsync(string? configPath)
     {
         var projects = await VS.Solutions.GetAllProjectsAsync();
 
@@ -421,14 +426,14 @@ public sealed class SettingsProvider : IDisposable
 
         // Try to find the project that contains the config file, and return
         // its path
-        string bestMatch = null;
-        var numberOfSlashes = configPath.Replace(Path.DirectorySeparatorChar, '/').Count(c => c == '/');
+        string? bestMatch = null;
+        var numberOfSlashes = configPath!.Replace(Path.DirectorySeparatorChar, '/').Count(c => c == '/');
 
         foreach (var p in projects)
         {
             var projectRoot = Path.GetDirectoryName(p.FullPath);
 
-            var relativePath = PathHelpers.GetRelativePath(configPath, projectRoot);
+            var relativePath = PathHelpers.GetRelativePath(configPath, projectRoot)!;
 
             if (!configPath.StartsWith(".."))
             {
@@ -451,7 +456,9 @@ public sealed class SettingsProvider : IDisposable
 
         if (projects == null || projects.Any() == false)
         {
-            return await FileFinder.GetCurrentMiscellaneousProjectPathAsync();
+            var miscProjectPath = await FileFinder.GetCurrentMiscellaneousProjectPathAsync();
+
+            return miscProjectPath is null ? throw new InvalidOperationException("No projects found") : miscProjectPath;
         }
         else
         {
@@ -500,7 +507,10 @@ public sealed class SettingsProvider : IDisposable
             origSettings.TailwindCliPath = settings.TailwindCliPath;
             origSettings.SortClassesType = settings.ClassSortType;
 
-            ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
+            if (OnSettingsChanged is not null)
+            {
+                ThreadHelper.JoinableTaskFactory.Run(async () => await OnSettingsChanged(origSettings));
+            }
         }
 
         _cachedSettings = origSettings;
@@ -508,7 +518,6 @@ public sealed class SettingsProvider : IDisposable
 
     private void InvalidateCacheAndSettingsChanged(string file)
     {
-        _cacheValid = false;
         _cachedSettings = null;
         if (OnSettingsChanged != null)
         {
@@ -520,9 +529,8 @@ public sealed class SettingsProvider : IDisposable
         }
     }
 
-    private void InvalidateCacheAndSettingsChanged(Project project)
+    private void InvalidateCacheAndSettingsChanged(Project? project)
     {
-        _cacheValid = false;
         _cachedSettings = null;
         if (OnSettingsChanged != null)
         {

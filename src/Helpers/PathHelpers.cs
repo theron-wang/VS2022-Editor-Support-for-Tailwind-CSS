@@ -15,7 +15,7 @@ public static class PathHelpers
     /// A string representing the relative path of the file with respect to the folder.
     /// If the file parameter is null/empty, the method returns null.
     /// </returns>
-    public static string GetRelativePath(string file, string folder)
+    public static string? GetRelativePath(string? file, string folder)
     {
         if (string.IsNullOrEmpty(file))
         {
@@ -41,7 +41,7 @@ public static class PathHelpers
     /// A string representing the absolute path obtained by combining the base directory
     /// and the relative path. If the relative path parameter is null/empty, the method returns null.
     /// </returns>
-    public static string GetAbsolutePath(string dir, string rel)
+    public static string? GetAbsolutePath(string dir, string? rel)
     {
         if (string.IsNullOrEmpty(rel))
         {

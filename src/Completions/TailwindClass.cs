@@ -2,7 +2,7 @@
 
 internal class TailwindClass
 {
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public bool UseColors { get; set; }
 

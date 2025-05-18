@@ -16,8 +16,8 @@ internal sealed class SetAsOutputFileMenu : BaseCommand<SetAsOutputFileMenu>
         SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
     }
 
-    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
-    internal SettingsProvider SettingsProvider { get; set; }
+    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; } = null!;
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
 
     protected override void BeforeQueryStatus(EventArgs e)
     {

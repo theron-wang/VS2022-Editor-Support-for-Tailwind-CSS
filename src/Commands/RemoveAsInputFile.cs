@@ -6,51 +6,50 @@ using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindCSSIntellisense
+namespace TailwindCSSIntellisense;
+
+[Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.RemoveAsCssFileCmdId)]
+internal sealed class RemoveAsInputFile : BaseCommand<RemoveAsInputFile>
 {
-    [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.RemoveAsCssFileCmdId)]
-    internal sealed class RemoveAsInputFile : BaseCommand<RemoveAsInputFile>
+    protected override async Task InitializeCompletedAsync()
     {
-        protected override async Task InitializeCompletedAsync()
+        SolutionExplorerSelection = await VS.GetMefServiceAsync<SolutionExplorerSelectionService>();
+        SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
+        DirectoryVersionFinder = await VS.GetMefServiceAsync<DirectoryVersionFinder>();
+    }
+
+    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; } = null!;
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
+    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; } = null!;
+
+    protected override void BeforeQueryStatus(EventArgs e)
+    {
+        var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
+
+        var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
+
+        Command.Visible = settings.EnableTailwindCss && settings.BuildFiles.Any(f => f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
+
+        if (!Command.Visible)
         {
-            SolutionExplorerSelection = await VS.GetMefServiceAsync<SolutionExplorerSelectionService>();
-            SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
-            DirectoryVersionFinder = await VS.GetMefServiceAsync<DirectoryVersionFinder>();
+            return;
         }
 
-        internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
-        internal SettingsProvider SettingsProvider { get; set; }
-        internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
+        var version = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.GetTailwindVersionAsync(filePath));
 
-        protected override void BeforeQueryStatus(EventArgs e)
+        if (version >= TailwindVersion.V4)
         {
-            var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
-
-            var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
-
-            Command.Visible = settings.EnableTailwindCss && settings.BuildFiles.Any(f => f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
-
-            if (!Command.Visible)
-            {
-                return;
-            }
-
-            var version = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.GetTailwindVersionAsync(filePath));
-
-            if (version >= TailwindVersion.V4)
-            {
-                Command.Visible = false;
-            }
+            Command.Visible = false;
         }
+    }
 
-        protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
-        {
-            var settings = await SettingsProvider.GetSettingsAsync();
-            var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
+    protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
+    {
+        var settings = await SettingsProvider.GetSettingsAsync();
+        var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;
 
-            settings.BuildFiles.RemoveAll(f => f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
+        settings.BuildFiles.RemoveAll(f => f.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
 
-            await SettingsProvider.OverrideSettingsAsync(settings);
-        }
+        await SettingsProvider.OverrideSettingsAsync(settings);
     }
 }

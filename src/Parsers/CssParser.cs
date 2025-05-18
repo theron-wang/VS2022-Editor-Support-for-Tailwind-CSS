@@ -50,9 +50,9 @@ internal static class CssParser
             span = new SnapshotSpan(span.Start, end);
         }
 
-        var first = text.IndexOfAny(endings);
+        int first;
 
-        if (text is null || string.IsNullOrWhiteSpace(text.Trim(endings)) || first == -1 || string.IsNullOrWhiteSpace(text.Substring(0, first)) == false)
+        if (text is null || string.IsNullOrWhiteSpace(text.Trim(endings)) || (first = text.IndexOfAny(endings)) == -1 || string.IsNullOrWhiteSpace(text.Substring(0, first)) == false)
         {
             SnapshotPoint start = span.Start;
 

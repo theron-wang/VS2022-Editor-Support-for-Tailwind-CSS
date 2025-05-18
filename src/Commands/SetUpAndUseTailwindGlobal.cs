@@ -19,9 +19,9 @@ internal sealed class SetUpAndUseTailwindGlobal : BaseCommand<SetUpAndUseTailwin
         SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
     }
 
-    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
-    internal TailwindSetUpProcess TailwindSetUpProcess { get; set; }
-    internal SettingsProvider SettingsProvider { get; set; }
+    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; } = null!;
+    internal TailwindSetUpProcess TailwindSetUpProcess { get; set; } = null!;
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
 
     protected override void BeforeQueryStatus(EventArgs e)
     {
@@ -46,8 +46,13 @@ internal sealed class SetUpAndUseTailwindGlobal : BaseCommand<SetUpAndUseTailwin
 
             var configFile = await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, false));
 
-            settings.ConfigurationFiles.Add(new() { Path = configFile });
-            settings.BuildFiles.Add(new() { Input = configFile });
+            if (string.IsNullOrWhiteSpace(configFile) || !File.Exists(configFile))
+            {
+                return;
+            }
+
+            settings.ConfigurationFiles.Add(new() { Path = configFile! });
+            settings.BuildFiles.Add(new() { Input = configFile! });
             await SettingsProvider.OverrideSettingsAsync(settings);
 
             var file = await PhysicalFile.FromFileAsync(SolutionExplorerSelection.CurrentSelectedItemFullPath);
@@ -56,7 +61,7 @@ internal sealed class SetUpAndUseTailwindGlobal : BaseCommand<SetUpAndUseTailwin
             {
                 // tailwind.extension.json is placed in the same directory as tailwind.css
                 var tailwindExtensionJson = await SettingsProvider.GetFilePathAsync();
-                await file.ContainingProject.AddExistingFilesAsync(configFile, tailwindExtensionJson);
+                await file.ContainingProject.AddExistingFilesAsync(configFile!, tailwindExtensionJson);
             }
         }
     }

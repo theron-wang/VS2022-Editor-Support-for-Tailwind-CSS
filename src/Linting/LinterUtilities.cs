@@ -24,8 +24,8 @@ internal sealed class LinterUtilities : IDisposable
     private readonly ClassSortUtilities _classSortUtilities;
     private readonly Dictionary<ProjectCompletionValues, Dictionary<string, string>> _cacheCssAttributes = [];
 
-    private Linter _linterOptions;
-    private General _generalOptions;
+    private Linter? _linterOptions;
+    private General? _generalOptions;
 
     [ImportingConstructor]
     public LinterUtilities(ProjectConfigurationManager completionUtilities, DescriptionGenerator descriptionGenerator, ClassSortUtilities classSortUtilities)
@@ -77,7 +77,7 @@ internal sealed class LinterUtilities : IDisposable
                     _cacheCssAttributes[projectCompletionValues] = [];
                 }
 
-                _cacheCssAttributes[projectCompletionValues][classTrimmed] = string.Join(",", desc.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
+                _cacheCssAttributes[projectCompletionValues][classTrimmed] = string.Join(",", desc!.Split([';'], StringSplitOptions.RemoveEmptyEntries).Select(a => a.Split(':')[0].Trim()).OrderBy(x => x));
             }
 
             cssAttributes[c] = _cacheCssAttributes[projectCompletionValues][classTrimmed];
@@ -95,7 +95,7 @@ internal sealed class LinterUtilities : IDisposable
                         .OrderBy(c => c.Value);
 
                 // The sort order is the same as the order in which Tailwind generates classes
-                string classWithMostPrecedence = null;
+                string? classWithMostPrecedence = null;
                 if (mostPrecedencePairs.Any())
                 {
                     classWithMostPrecedence = classes.Where(e => e.Split(':').Last().Trim() == mostPrecedencePairs.First().Key)
@@ -172,7 +172,7 @@ internal sealed class LinterUtilities : IDisposable
         };
     }
 
-    public ITagSpan<IErrorTag> CreateTagSpan(SnapshotSpan span, string error, ErrorType type)
+    public ITagSpan<IErrorTag>? CreateTagSpan(SnapshotSpan span, string error, ErrorType type)
     {
         var severity = GetErrorSeverity(type);
 

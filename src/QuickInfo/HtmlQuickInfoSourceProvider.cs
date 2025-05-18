@@ -13,12 +13,12 @@ namespace TailwindCSSIntellisense.QuickInfo;
 internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
 {
     [Import]
-    public DescriptionGenerator DescriptionGenerator { get; set; }
+    public DescriptionGenerator DescriptionGenerator { get; set; } = null!;
 
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
-    public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
+    public IAsyncQuickInfoSource? TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
         // Handle legacy Razor editor; this completion controller is prioritized but
         // we should only use the Razor completion controller in that case

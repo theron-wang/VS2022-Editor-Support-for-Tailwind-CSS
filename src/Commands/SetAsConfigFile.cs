@@ -19,9 +19,9 @@ internal sealed class SetAsConfigFile : BaseCommand<SetAsConfigFile>
         DirectoryVersionFinder = await VS.GetMefServiceAsync<DirectoryVersionFinder>();
     }
 
-    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
-    internal SettingsProvider SettingsProvider { get; set; }
-    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
+    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; } = null!;
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
+    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; } = null!;
     protected override void BeforeQueryStatus(EventArgs e)
     {
         var filePath = SolutionExplorerSelection.CurrentSelectedItemFullPath;

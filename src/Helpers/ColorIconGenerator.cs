@@ -13,7 +13,7 @@ namespace TailwindCSSIntellisense.Helpers;
 internal class ColorIconGenerator
 {
     [Import]
-    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     private readonly Dictionary<ProjectCompletionValues, Dictionary<string, ImageSource>> _colorToRgbMapperCaches = [];
 

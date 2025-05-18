@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace TailwindCSSIntellisense.Completions
+namespace TailwindCSSIntellisense.Completions;
+
+internal class Subvariant
 {
-    internal class Subvariant
-    {
-        [JsonPropertyName("ss")]
-        public string Stem { get; set; }
-        [JsonPropertyName("v")]
-        public List<string> Variants { get; set; }
-    }
+    [JsonPropertyName("ss")]
+    public string Stem { get; set; } = null!;
+    [JsonPropertyName("v")]
+    public List<string> Variants { get; set; } = null!;
 }

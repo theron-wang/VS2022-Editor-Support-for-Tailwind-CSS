@@ -26,17 +26,17 @@ namespace TailwindCSSIntellisense.Completions.Controllers;
 internal sealed class RazorCompletionController : IVsTextViewCreationListener
 {
     [Import]
-    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; }
+    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; } = null!;
 
     [Import]
-    internal ICompletionBroker CompletionBroker { get; set; }
+    internal ICompletionBroker CompletionBroker { get; set; } = null!;
 
     [Import]
-    internal SVsServiceProvider ServiceProvider { get; set; }
+    internal SVsServiceProvider ServiceProvider { get; set; } = null!;
 
     public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
-        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
+        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter)!;
 
         view.Properties.GetOrCreateSingletonProperty(() => new RazorCommandFilter(view, textViewAdapter, this));
     }
@@ -44,7 +44,7 @@ internal sealed class RazorCompletionController : IVsTextViewCreationListener
 
 internal sealed class RazorCommandFilter : IOleCommandTarget
 {
-    private ICompletionSession _currentSession;
+    private ICompletionSession? _currentSession;
     private readonly IOleCommandTarget _next;
     private readonly ICompletionBroker _broker;
     private readonly IWpfTextView _textView;
@@ -284,7 +284,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
             return false;
         }
 
-        var moveOneBack = completionText.EndsWith("]");
+        var moveOneBack = completionText!.EndsWith("]");
         var moveTwoBack = completionText.EndsWith("]:");
         _currentSession.Commit();
 

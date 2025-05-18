@@ -19,11 +19,11 @@ namespace TailwindCSSIntellisense.Adornments.Colors;
 internal sealed class ColorCssTaggerProvider : IViewTaggerProvider
 {
     [Import]
-    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorCssTagger(buffer, textView, ProjectConfigurationManager)) as ITagger<T>;
+        return (ITagger<T>)buffer.Properties.GetOrCreateSingletonProperty(() => new ColorCssTagger(buffer, textView, ProjectConfigurationManager!));
     }
 
     private class ColorCssTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)

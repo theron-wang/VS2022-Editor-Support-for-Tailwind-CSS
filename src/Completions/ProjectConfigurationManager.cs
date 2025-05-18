@@ -27,23 +27,23 @@ namespace TailwindCSSIntellisense.Completions;
 public sealed class ProjectConfigurationManager
 {
     [Import]
-    internal CompletionConfiguration Configuration { get; set; }
+    internal CompletionConfiguration Configuration { get; set; } = null!;
     [Import]
-    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; }
+    internal DirectoryVersionFinder DirectoryVersionFinder { get; set; } = null!;
     [Import]
-    internal SettingsProvider SettingsProvider { get; set; }
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
 
     internal ImageSource TailwindLogo { get; private set; } = new BitmapImage(new Uri(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "tailwindlogo.png"), UriKind.Relative));
     internal bool Initialized { get; private set; }
     internal bool Initializing { get; private set; }
 
-    internal List<int> Opacity { get; set; }
+    internal List<int> Opacity { get; set; } = [];
 
     /// <summary>
     /// Completion settings for each project, keyed by configuration file paths.
     /// </summary>
     private readonly Dictionary<string, ProjectCompletionValues> _projectCompletionConfiguration = [];
-    private ProjectCompletionValues _defaultProjectCompletionConfiguration;
+    private ProjectCompletionValues? _defaultProjectCompletionConfiguration;
 
     private readonly Dictionary<TailwindVersion, ProjectCompletionValues> _unsetProjectCompletionConfigurations = [];
 
@@ -117,7 +117,7 @@ public sealed class ProjectConfigurationManager
     /// <summary>
     /// For IntelliSense; detect which configuration file this file belongs to and return the completion configuration for it.
     /// </summary>
-    public ProjectCompletionValues GetCompletionConfigurationByFilePath(string filePath)
+    public ProjectCompletionValues GetCompletionConfigurationByFilePath(string? filePath)
     {
         ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
 
@@ -210,7 +210,7 @@ public sealed class ProjectConfigurationManager
                 }
 
                 projectConfig = toCopy.Copy();
-                _projectCompletionConfiguration.Add(file.Path.ToLower(), projectConfig);
+                _projectCompletionConfiguration[file.Path.ToLower()] = projectConfig;
 
                 await CheckForUpdates.UpdateConfigFileFolderAsync(file.Path);
             }
@@ -681,6 +681,6 @@ public sealed class ProjectConfigurationManager
     {
         using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
         var data = await JsonSerializer.DeserializeAsync<T>(fs);
-        process(data);
+        process(data!);
     }
 }

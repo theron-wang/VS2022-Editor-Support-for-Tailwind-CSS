@@ -28,7 +28,7 @@ public sealed partial class CompletionConfiguration
             return;
         }
 
-        if (config.OverridenValues.ContainsKey("colors") && GetDictionary(config.OverridenValues["colors"], out Dictionary<string, object> dict))
+        if (config.OverridenValues.ContainsKey("colors") && GetDictionary(config.OverridenValues["colors"], out var dict))
         {
             var newColorToRgbMapper = GetColorMapper(dict, project.Version);
 
@@ -349,7 +349,7 @@ public sealed partial class CompletionConfiguration
                         var texts = descClasses.Where(c => project.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
                             project.DescriptionMapper[c.Name]);
 
-                        string format;
+                        string? format;
 
                         if (DescriptionGenerator.Handled(key))
                         {
@@ -388,9 +388,15 @@ public sealed partial class CompletionConfiguration
                         {
                             if (DescriptionGenerator.Handled(key))
                             {
-                                project.CustomDescriptionMapper[s] = DescriptionGenerator.GenerateDescription(key, pair.Value);
+                                var description = DescriptionGenerator.GenerateDescription(key, pair.Value);
+                                if (description is not null)
+                                {
+                                    project.CustomDescriptionMapper[s] = description;
+                                    continue;
+                                }
                             }
-                            else if (pair.Key == "DEFAULT")
+
+                            if (pair.Key == "DEFAULT")
                             {
                                 project.CustomDescriptionMapper[s] = string.Format(format, pair.Value.ToString());
                             }
@@ -550,7 +556,7 @@ public sealed partial class CompletionConfiguration
                         var texts = descClasses.Where(c => project.DescriptionMapper.ContainsKey(c.Name)).Select(c =>
                             project.DescriptionMapper[c.Name]);
 
-                        string format;
+                        string? format;
 
                         if (DescriptionGenerator.Handled(key))
                         {
@@ -588,7 +594,7 @@ public sealed partial class CompletionConfiguration
 
                         foreach (var pair in dict)
                         {
-                            string description;
+                            string? description;
 
                             if (DescriptionGenerator.Handled(key))
                             {
@@ -601,11 +607,11 @@ public sealed partial class CompletionConfiguration
 
                             if (pair.Key == "DEFAULT")
                             {
-                                project.CustomDescriptionMapper[insertStem] = description;
+                                project.CustomDescriptionMapper[insertStem] = description ?? "";
                             }
                             else
                             {
-                                project.CustomDescriptionMapper[$"{insertStem}-{pair.Key}"] = description;
+                                project.CustomDescriptionMapper[$"{insertStem}-{pair.Key}"] = description ?? "";
                             }
                         }
                     }
@@ -713,17 +719,17 @@ public sealed partial class CompletionConfiguration
                     if (!pair.Key.Contains("*"))
                     {
                         project.PluginClasses.Add(pair.Key);
-                        project.CustomDescriptionMapper.Add(pair.Key, pair.Value);
+                        project.CustomDescriptionMapper[pair.Key] = pair.Value;
                     }
                     // Case 2 (edge): no --value, but has a wildcard
                     else if (!pair.Value.Contains("--value("))
                     {
-                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{a}"), pair.Value);
-                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{f}"), pair.Value);
-                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{%}"), pair.Value);
-                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{n}"), pair.Value);
-                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{c}"), pair.Value);
-                        project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{s}"), pair.Value);
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{a}")] = pair.Value;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{f}")] = pair.Value;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{%}")] = pair.Value;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{n}")] = pair.Value;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{c}")] = pair.Value;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{s}")] = pair.Value;
                     }
                     // Case 3: --value is present
                     else
@@ -781,7 +787,7 @@ public sealed partial class CompletionConfiguration
                                 continue;
                             }
                             // Case 1: No --value
-                            else if (!attribute.Contains("--value("))
+                            else if (!attribute!.Contains("--value("))
                             {
                                 standard += attribute;
 
@@ -926,7 +932,7 @@ public sealed partial class CompletionConfiguration
                                         UseColors = true
                                     });
 
-                                    project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{c}"), desc);
+                                    project.CustomDescriptionMapper[pair.Key.Replace("*", "{c}")] = desc;
                                 }
                                 // Special case 2:
                                 // --color-red-* -> this does not do anything
@@ -939,24 +945,24 @@ public sealed partial class CompletionConfiguration
 
                                     foreach (var var in variables)
                                     {
-                                        project.CustomDescriptionMapper.Add(pair.Key.Replace("-*", var.Key.Substring(stem.Length)), desc.Replace("{0}", $"var({var.Key})"));
+                                        project.CustomDescriptionMapper[pair.Key.Replace("-*", var.Key.Substring(stem.Length))] = desc.Replace("{0}", $"var({var.Key})");
                                     }
                                 }
                             }
                             else if (type == "number" || type == "integer")
                             {
-                                project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{n}"), desc);
+                                project.CustomDescriptionMapper[pair.Key.Replace("*", "{n}")] = desc;
                             }
                             else if (type == "ratio")
                             {
-                                project.CustomDescriptionMapper.Add(pair.Key.Replace("*", "{f}"), desc);
+                                project.CustomDescriptionMapper[pair.Key.Replace("*", "{f}")] = desc;
                             }
                             else if (type.StartsWith("[") && type.EndsWith("]"))
                             {
                                 var stem = pair.Key.Replace("*", "{a}");
                                 if (!project.CustomDescriptionMapper.ContainsKey(stem))
                                 {
-                                    project.CustomDescriptionMapper.Add(stem, desc);
+                                    project.CustomDescriptionMapper[stem] = desc;
                                 }
                             }
                         }
@@ -968,7 +974,9 @@ public sealed partial class CompletionConfiguration
         }
         else
         {
-            project.CustomDescriptionMapper = config?.PluginDescriptions ?? [];
+#pragma warning disable CS8619 // Nullability of reference types in value of type 'Dictionary<string, string>' doesn't match target type 'Dictionary<string, string?>
+            project.CustomDescriptionMapper = config.PluginDescriptions ?? [];
+#pragma warning restore CS8619
             project.PluginClasses = config.PluginClasses;
         }
         project.PluginVariants = config.PluginVariants;
@@ -1001,7 +1009,7 @@ public sealed partial class CompletionConfiguration
                     newColorToRgbMapper[actual] = s;
                     continue;
                 }
-                if (ColorHelpers.IsHex(s, out string hex))
+                if (ColorHelpers.IsHex(s, out var hex))
                 {
                     var color = ColorTranslator.FromHtml($"#{hex}");
                     newColorToRgbMapper[actual] = $"{color.R},{color.G},{color.B}";

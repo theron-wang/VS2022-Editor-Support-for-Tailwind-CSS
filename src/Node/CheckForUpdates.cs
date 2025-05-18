@@ -106,13 +106,13 @@ internal static class CheckForUpdates
 
         var result = JsonSerializer.Deserialize<JsonObject>(output);
 
-        if (result.ContainsKey(module) == false)
+        if (result is null || result.ContainsKey(module) == false)
         {
             await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: {module} is up to date");
             return;
         }
 
-        OutdatedPackage relevantPackage = null;
+        OutdatedPackage? relevantPackage = null;
 
         if (result[module] is JsonArray array)
         {
@@ -120,8 +120,9 @@ internal static class CheckForUpdates
             {
                 PropertyNameCaseInsensitive = true
             }));
+
             relevantPackage = packages.FirstOrDefault(
-                p => p.Dependent.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase));
+                p => p?.Dependent?.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase) == true);
         }
         else if (result[module] is JsonObject jsonObj)
         {
@@ -130,7 +131,7 @@ internal static class CheckForUpdates
                 PropertyNameCaseInsensitive = true
             });
 
-            if (!relevantPackage.Dependent.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase))
+            if (relevantPackage?.Dependent?.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase) != true)
             {
                 relevantPackage = null;
             }
@@ -143,8 +144,8 @@ internal static class CheckForUpdates
         }
 
         // Avoid updating major versions: 3.x --> 4.x, for example
-        var currentMajor = relevantPackage.Current.Split('.')[0];
-        var newMajor = relevantPackage.Latest.Split('.')[0];
+        var currentMajor = relevantPackage.Current!.Split('.')[0];
+        var newMajor = relevantPackage.Latest!.Split('.')[0];
 
         if (currentMajor != newMajor)
         {
@@ -190,10 +191,10 @@ internal static class CheckForUpdates
 
     private class OutdatedPackage
     {
-        public string Current { get; set; }
-        public string Wanted { get; set; }
-        public string Latest { get; set; }
-        public string Dependent { get; set; }
-        public string Location { get; set; }
+        public string? Current { get; set; }
+        public string? Wanted { get; set; }
+        public string? Latest { get; set; }
+        public string? Dependent { get; set; }
+        public string? Location { get; set; }
     }
 }

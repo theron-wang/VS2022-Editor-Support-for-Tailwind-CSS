@@ -15,8 +15,8 @@ namespace TailwindCSSIntellisense.Helpers;
 internal sealed class DescriptionGenerator : IDisposable
 {
     private readonly SettingsProvider _settingsProvider;
-    private readonly Dictionary<string, string> _arbitraryDescriptionCache = [];
-    private readonly Dictionary<string, string> _colorDescriptionMapper = [];
+    private readonly Dictionary<string, string?> _arbitraryDescriptionCache = [];
+    private readonly Dictionary<string, string?> _colorDescriptionMapper = [];
 
     private readonly Regex _stemSplitter = new(@"-(?=(?:[^\[\]()]*[\[\(][^\[\]()]*[\]\)])*[^\[\]()]*$)", RegexOptions.Compiled);
 
@@ -25,7 +25,10 @@ internal sealed class DescriptionGenerator : IDisposable
     {
         _settingsProvider = settingsProvider;
 
-        _settingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
+        if (_settingsProvider.OnSettingsChanged is not null)
+        {
+            _settingsProvider.OnSettingsChanged += OnSettingsChangedAsync;
+        }
     }
 
     /// <summary>
@@ -33,7 +36,7 @@ internal sealed class DescriptionGenerator : IDisposable
     /// </summary>
     /// <param name="text">The text to format</param>
     /// <returns>The formatted CSS description</returns>
-    private string FormatDescription(string text, ProjectCompletionValues projectCompletionValues)
+    private string? FormatDescription(string text, ProjectCompletionValues projectCompletionValues)
     {
         if (text is null)
         {
@@ -64,7 +67,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 var variable = text.Substring(start, endParen - start);
                 index = semicolon;
 
-                string variableValue;
+                string? variableValue;
 
                 if (variable == "--spacing")
                 {
@@ -212,7 +215,7 @@ internal sealed class DescriptionGenerator : IDisposable
     /// <param name="className">The unprocessed text: <c>hover:bg-green-800/90</c>, <c>min-w-[10px]</c></param>
     /// <param name="shouldFormat">true iff the description should be formatted</param>
     /// <returns>The description for the given class</returns>
-    internal string GetDescription(string className, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    internal string? GetDescription(string className, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         className = className.Split(':').Last();
 
@@ -220,11 +223,11 @@ internal sealed class DescriptionGenerator : IDisposable
         {
             if (className.StartsWith(projectCompletionValues.Prefix))
             {
-                className = className.Substring(projectCompletionValues.Prefix.Length);
+                className = className.Substring(projectCompletionValues.Prefix!.Length);
             }
             else if (className.StartsWith($"-{projectCompletionValues.Prefix}"))
             {
-                className = $"-{className.Substring(projectCompletionValues.Prefix.Length + 1)}";
+                className = $"-{className.Substring(projectCompletionValues.Prefix!.Length + 1)}";
             }
             else
             {
@@ -306,7 +309,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 {
                     if (opacity != null)
                     {
-                        description = description.Replace("{0}", (projectCompletionValues.Version == TailwindVersion.V3 ? opacity.Value / 100f : opacity.Value).ToString());
+                        description = description!.Replace("{0}", (projectCompletionValues.Version == TailwindVersion.V3 ? opacity.Value / 100f : opacity.Value).ToString());
                     }
 
                     return description;
@@ -366,16 +369,16 @@ internal sealed class DescriptionGenerator : IDisposable
         if (projectCompletionValues.Version == TailwindVersion.V3)
         {
             var nonMediaVariants = variantDescriptions
-                .Where(d => !string.IsNullOrWhiteSpace(d) && !d.StartsWith("@"));
+                .Where(d => !string.IsNullOrWhiteSpace(d) && !d!.StartsWith("@"));
 
             var mediaVariants = variantDescriptions
-                .Where(d => !string.IsNullOrWhiteSpace(d) && d.StartsWith("@"));
+                .Where(d => !string.IsNullOrWhiteSpace(d) && d!.StartsWith("@"));
 
-            var strippedSelectors = nonMediaVariants.Select(s => s.TrimStart('&')).ToList();
+            var strippedSelectors = nonMediaVariants.Select(s => s!.TrimStart('&')).ToList();
 
-            var selectors = nonMediaVariants.Where(s => !s.StartsWith("@") && s.Contains(' ')).ToList();
-            var attributes = strippedSelectors.Where(s => s.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
-            var pseudoClasses = strippedSelectors.Where(s => s.Contains(':') && !s.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
+            var selectors = nonMediaVariants.Where(s => !s!.StartsWith("@") && s.Contains(' ')).ToList();
+            var attributes = strippedSelectors.Where(s => s!.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
+            var pseudoClasses = strippedSelectors.Where(s => s!.Contains(':') && !s.Contains('[') && !s.StartsWith("@") && !s.Contains(' ')).ToList();
 
             var variantTemplate = "&" + string.Join("", attributes) + string.Join("", pseudoClasses);
 
@@ -390,7 +393,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 totalVariant = variantTemplate;
             }
 
-            return [.. mediaVariants, totalVariant];
+            return [.. mediaVariants!, totalVariant];
         }
         else
         {
@@ -409,7 +412,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
     }
 
-    internal string GetVariantDescription(string variant, ProjectCompletionValues projectCompletionValues, bool trim = true)
+    internal string? GetVariantDescription(string variant, ProjectCompletionValues projectCompletionValues, bool trim = true)
     {
         if (projectCompletionValues.VariantsToDescriptions.Count > 0)
         {
@@ -429,11 +432,11 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (variant.StartsWith("peer-"))
         {
-            return $"{GetVariantDescription(variant.Substring(5), projectCompletionValues).Replace("&", ".peer")} ~ &";
+            return $"{GetVariantDescription(variant.Substring(5), projectCompletionValues)?.Replace("&", ".peer")} ~ &";
         }
         else if (variant.StartsWith("group-"))
         {
-            return $"{GetVariantDescription(variant.Substring(6), projectCompletionValues).Replace("&", ".group")} &";
+            return $"{GetVariantDescription(variant.Substring(6), projectCompletionValues)?.Replace("&", ".group")} &";
         }
         else if (variant.StartsWith("[") && variant.EndsWith("]"))
         {
@@ -567,9 +570,9 @@ internal sealed class DescriptionGenerator : IDisposable
         return $"&:{variant}";
     }
 
-    private string GetDescriptionForClassOnly(string tailwindClass, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    private string? GetDescriptionForClassOnly(string tailwindClass, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
-        string description = null;
+        string? description = null;
         if (projectCompletionValues.CustomDescriptionMapper.ContainsKey(tailwindClass))
         {
             description = projectCompletionValues.CustomDescriptionMapper[tailwindClass];
@@ -650,7 +653,7 @@ internal sealed class DescriptionGenerator : IDisposable
         return description;
     }
 
-    private string GetDescriptionForSpacingClass(string tailwindClass, string spacing, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    private string? GetDescriptionForSpacingClass(string tailwindClass, string spacing, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         var negative = tailwindClass.StartsWith("-");
         string spacingValue;
@@ -769,7 +772,7 @@ internal sealed class DescriptionGenerator : IDisposable
         return format;
     }
 
-    private string GetDescriptionForNumericClass(string tailwindClass, string numberFractionOrPercent, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    private string? GetDescriptionForNumericClass(string tailwindClass, string numberFractionOrPercent, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         if (projectCompletionValues.Version != TailwindVersion.V4)
         {
@@ -777,7 +780,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
 
         var negative = tailwindClass.StartsWith("-");
-        string value = null;
+        string? value = null;
         List<string> types = [];
 
         if (numberFractionOrPercent[0] == '[' && numberFractionOrPercent[numberFractionOrPercent.Length - 1] == ']')
@@ -875,13 +878,13 @@ internal sealed class DescriptionGenerator : IDisposable
         return null;
     }
 
-    private string GetDescriptionForColorClass(string tailwindClass, string color, bool opacity, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    private string? GetDescriptionForColorClass(string tailwindClass, string color, bool opacity, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         if (projectCompletionValues.Version == TailwindVersion.V3)
         {
             var rgbValue = new StringBuilder();
 
-            string hex;
+            string? hex;
 
             if (color[0] == '[' && color[color.Length - 1] == ']')
             {
@@ -1031,10 +1034,10 @@ internal sealed class DescriptionGenerator : IDisposable
         }
     }
 
-    private string GetDescriptionForArbitraryClass(string stem, string arbitrary, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    private string? GetDescriptionForArbitraryClass(string stem, string arbitrary, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         // i.e. length in text-[length:2px]
-        string special = null;
+        string? special = null;
 
         if (arbitrary[0] == '[' && arbitrary[arbitrary.Length - 1] == ']')
         {
@@ -1093,9 +1096,9 @@ internal sealed class DescriptionGenerator : IDisposable
 
             if (shouldFormat)
             {
-                return FormatDescription(description.Replace("{0}", arbitrary), projectCompletionValues);
+                return FormatDescription(description!.Replace("{0}", arbitrary), projectCompletionValues);
             }
-            return description.Replace("{0}", arbitrary);
+            return description!.Replace("{0}", arbitrary);
         }
 
         if (special is not null && projectCompletionValues.Version >= TailwindVersion.V4)
@@ -1189,6 +1192,11 @@ internal sealed class DescriptionGenerator : IDisposable
 
             description = _arbitraryDescriptionCache[$"{stem}-[{special}]"];
 
+            if (description is null)
+            {
+                return null;
+            }
+
             if (shouldFormat)
             {
                 return FormatDescription(description.Replace("{0}", arbitrary), projectCompletionValues);
@@ -1263,14 +1271,14 @@ internal sealed class DescriptionGenerator : IDisposable
         return description.Replace("{0}", arbitrary);
     }
 
-    private string GetDescriptionForParenthesisClass(string stem, string parenthesis, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    private string? GetDescriptionForParenthesisClass(string stem, string parenthesis, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
         if (projectCompletionValues.Version != TailwindVersion.V4)
         {
             return null;
         }
 
-        string special = null;
+        string? special = null;
         if (parenthesis[0] == '(' && parenthesis[parenthesis.Length - 1] == ')')
         {
             parenthesis = parenthesis.Substring(1, parenthesis.Length - 2);
@@ -1304,14 +1312,14 @@ internal sealed class DescriptionGenerator : IDisposable
         }
     }
 
-    private string GetColorDescription(string color, string stem, ProjectCompletionValues projectCompletionValues, bool hex = false)
+    private string? GetColorDescription(string color, string stem, ProjectCompletionValues projectCompletionValues, bool hex = false)
     {
-        string value;
-        Dictionary<string, string> dict = null;
+        string? value;
+        Dictionary<string, string>? dict = null;
 
-        if (stem != null)
+        if (stem is not null)
         {
-            if (projectCompletionValues.CustomColorMappers != null && projectCompletionValues.CustomColorMappers.TryGetValue(stem, out dict) == false)
+            if (projectCompletionValues.CustomColorMappers.TryGetValue(stem, out dict) == false)
             {
                 if (_colorDescriptionMapper.TryGetValue($"{hex}/{color}", out value))
                 {
@@ -1387,7 +1395,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
 
         var key = $"{hex}/{color}";
-        if (projectCompletionValues.CustomColorMappers.ContainsKey(stem))
+        if (stem is not null && projectCompletionValues.CustomColorMappers.ContainsKey(stem))
         {
             key = $"{hex}/{stem}/{key}";
         }
@@ -1397,7 +1405,7 @@ internal sealed class DescriptionGenerator : IDisposable
         return result;
     }
 
-    private string HandleModifier(string modifier, string stem, string desc, ProjectCompletionValues projectCompletionValues)
+    private string? HandleModifier(string? modifier, string stem, string? desc, ProjectCompletionValues projectCompletionValues)
     {
         if (projectCompletionValues.Version == TailwindVersion.V3 || string.IsNullOrWhiteSpace(modifier) || string.IsNullOrWhiteSpace(desc))
         {
@@ -1406,15 +1414,15 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (stem.StartsWith("bg-linear") || stem.StartsWith("bg-radial") || stem.StartsWith("bg-conic"))
         {
-            if (KnownModifiers.GradientModifierToDescription.TryGetValue(modifier, out var value))
+            if (KnownModifiers.GradientModifierToDescription.TryGetValue(modifier!, out var value))
             {
-                return desc.Replace("oklch", value);
+                return desc!.Replace("oklch", value);
             }
         }
         else if (KnownModifiers.IsEligibleForLineHeightModifier(stem, projectCompletionValues))
         {
             var variableToSearchFor = $"--leading-{modifier}";
-            var startOfLine = desc.IndexOf("line-height:");
+            var startOfLine = desc!.IndexOf("line-height:");
             var end = desc.IndexOf(';', startOfLine + 1);
 
             if (startOfLine == -1 || end == -1)
@@ -1439,7 +1447,7 @@ internal sealed class DescriptionGenerator : IDisposable
         return desc;
     }
 
-    private static string GetSpecialArbitraryTypeByInput(string input)
+    private static string? GetSpecialArbitraryTypeByInput(string input)
     {
         // https://developer.mozilla.org/en-US/docs/Web/CSS/background-image#formal_syntax
         if (input.Contains("gradient") || input.Contains("src") || input.Contains("url"))
@@ -1495,6 +1503,9 @@ internal sealed class DescriptionGenerator : IDisposable
 
     public void Dispose()
     {
-        _settingsProvider.OnSettingsChanged -= OnSettingsChangedAsync;
+        if (_settingsProvider.OnSettingsChanged is not null)
+        {
+            _settingsProvider.OnSettingsChanged -= OnSettingsChangedAsync;
+        }
     }
 }

@@ -24,12 +24,12 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
         {
             (var scope, var content) = GetFullScope(span);
 
-            if (string.IsNullOrWhiteSpace(content))
+            if (string.IsNullOrEmpty(scope) || string.IsNullOrWhiteSpace(content))
             {
                 yield break;
             }
 
-            List<string> classes = ClassSplitter(content).Select(c => c.Value).ToList();
+            List<string> classes = [.. ClassSplitter(content!).Select(c => c.Value)];
 
             var classesByVariants = classes.GroupBy(c =>
             {
@@ -48,7 +48,7 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
                 int index = -1;
                 foreach ((var className, var errorMessage) in _linterUtils.CheckForClassDuplicates(grouping, _projectCompletionValues))
                 {
-                    index = scope.IndexOf(className, index + 1);
+                    index = scope!.IndexOf(className, index + 1);
 
                     if (index == -1)
                     {
@@ -81,10 +81,15 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
 
     /// <summary>
     /// Gets the full scope of the class, including the content within
+    /// <br />
     /// Scope = class="class1 class2"
+    /// <br />
     /// Content = class1 class2
     /// </summary>
-    private (string scope, string content) GetFullScope(SnapshotSpan span)
+    /// <remarks>
+    /// Use instead of <seealso cref="Parsers.HtmlParser.GetClassAttributeValue(SnapshotPoint)"/> since this also gives the class= and quotation marks
+    /// </remarks>
+    private (string? scope, string? content) GetFullScope(SnapshotSpan span)
     {
         // If it already exists, do not expand scope
         var text = span.GetText();

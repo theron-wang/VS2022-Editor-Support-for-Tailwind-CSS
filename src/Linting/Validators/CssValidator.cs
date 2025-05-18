@@ -101,7 +101,7 @@ internal class CssValidator : Validator
 
             if (query.StartsWith("screen") && query.Contains('(') && string.IsNullOrWhiteSpace(query.Substring(0, query.IndexOf('('))))
             {
-                string screen;
+                string? screen;
                 try
                 {
                     screen = query.Substring(query.IndexOf('(') + 1, query.IndexOf(')') - query.IndexOf('(') - 1).Trim();
@@ -111,9 +111,9 @@ internal class CssValidator : Validator
                     screen = null;
                 }
 
-                if (string.IsNullOrEmpty(screen) == false && _projectCompletionValues.Screen.Contains(screen) == false)
+                if (!string.IsNullOrWhiteSpace(screen) && _projectCompletionValues.Screen.Contains(screen!) == false)
                 {
-                    var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(screen, text.IndexOf("screen") + 7), screen.Length);
+                    var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(screen, text.IndexOf("screen") + 7), screen!.Length);
 
                     _checkedSpans.Add(span);
                     yield return new Error(errorSpan, $"The '{screen}' screen does not exist in your theme.", ErrorType.InvalidScreen);

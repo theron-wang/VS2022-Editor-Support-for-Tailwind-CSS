@@ -6,19 +6,13 @@ using System.Linq;
 using TailwindCSSIntellisense.Linting.Validators;
 
 namespace TailwindCSSIntellisense.Linting.Taggers;
-internal abstract class ErrorTaggerBase : ITagger<IErrorTag>
+internal abstract class ErrorTaggerBase(ITextBuffer buffer, LinterUtilities linterUtils) : ITagger<IErrorTag>
 {
-    protected readonly ITextBuffer _buffer;
-    private readonly LinterUtilities _linterUtils;
-    protected Validator _errorChecker;
+    protected readonly ITextBuffer _buffer = buffer;
+    private readonly LinterUtilities _linterUtils = linterUtils;
+    protected Validator _errorChecker = null!;
 
-    protected ErrorTaggerBase(ITextBuffer buffer, LinterUtilities linterUtils)
-    {
-        _buffer = buffer;
-        _linterUtils = linterUtils;
-    }
-
-    public event EventHandler<SnapshotSpanEventArgs> TagsChanged;
+    public event EventHandler<SnapshotSpanEventArgs>? TagsChanged;
 
     public IEnumerable<ITagSpan<IErrorTag>> GetTags(NormalizedSnapshotSpanCollection spans)
     {
@@ -37,7 +31,7 @@ internal abstract class ErrorTaggerBase : ITagger<IErrorTag>
         return tags;
     }
 
-    protected void UpdateErrors(IEnumerable<Span> spans)
+    protected void UpdateErrors(IEnumerable<Span>? spans)
     {
         if (TagsChanged is not null)
         {
@@ -65,7 +59,11 @@ internal abstract class ErrorTaggerBase : ITagger<IErrorTag>
                 var errors = _errorChecker.GetErrors(scope, true);
                 foreach (var error in errors)
                 {
-                    yield return _linterUtils.CreateTagSpan(error.Span, error.ErrorMessage, error.ErrorType);
+                    var tagSpan = _linterUtils.CreateTagSpan(error.Span, error.ErrorMessage, error.ErrorType);
+                    if (tagSpan is not null)
+                    {
+                        yield return tagSpan;
+                    }
                 }
             }
         }
@@ -74,7 +72,11 @@ internal abstract class ErrorTaggerBase : ITagger<IErrorTag>
             var errors = _errorChecker.Errors.Where(e => span.IntersectsWith(e.Span));
             foreach (var error in errors)
             {
-                yield return _linterUtils.CreateTagSpan(error.Span, error.ErrorMessage, error.ErrorType);
+                var tagSpan = _linterUtils.CreateTagSpan(error.Span, error.ErrorMessage, error.ErrorType);
+                if (tagSpan is not null)
+                {
+                    yield return tagSpan;
+                }
             }
         }
     }

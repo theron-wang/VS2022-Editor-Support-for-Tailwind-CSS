@@ -28,18 +28,18 @@ internal class CssDirectiveQuickInfoSource : IAsyncQuickInfoSource
     {
     }
 
-    public Task<QuickInfoItem> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
+    public Task<QuickInfoItem?> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
     {
         if (session.Content is null || session.Content.Any() || session.State == QuickInfoSessionState.Visible || session.State == QuickInfoSessionState.Dismissed)
         {
-            return Task.FromResult<QuickInfoItem>(null);
+            return Task.FromResult<QuickInfoItem?>(null);
         }
 
         var triggerPoint = session.GetTriggerPoint(_textBuffer.CurrentSnapshot);
 
         if (triggerPoint is null)
         {
-            return Task.FromResult<QuickInfoItem>(null);
+            return Task.FromResult<QuickInfoItem?>(null);
         }
 
         var extent = _textStructureNavigator.GetExtentOfWord(triggerPoint.Value);
@@ -59,7 +59,7 @@ internal class CssDirectiveQuickInfoSource : IAsyncQuickInfoSource
             }
             else
             {
-                return Task.FromResult<QuickInfoItem>(null);
+                return Task.FromResult<QuickInfoItem?>(null);
             }
 
             var element = new ContainerElement(
@@ -73,9 +73,9 @@ internal class CssDirectiveQuickInfoSource : IAsyncQuickInfoSource
 
             var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(extent.Span, SpanTrackingMode.EdgeInclusive);
 
-            return Task.FromResult(new QuickInfoItem(span, element));
+            return Task.FromResult<QuickInfoItem?>(new QuickInfoItem(span, element));
         }
 
-        return Task.FromResult<QuickInfoItem>(null);
+        return Task.FromResult<QuickInfoItem?>(null);
     }
 }

@@ -26,17 +26,17 @@ namespace TailwindCSSIntellisense.Completions.Controllers;
 internal sealed class JavaScriptCompletionController : IVsTextViewCreationListener
 {
     [Import]
-    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; }
+    internal IVsEditorAdaptersFactoryService AdaptersFactory { get; set; } = null!;
 
     [Import]
-    internal IAsyncCompletionBroker CompletionBroker { get; set; }
+    internal IAsyncCompletionBroker CompletionBroker { get; set; } = null!;
 
     [Import]
-    internal SVsServiceProvider ServiceProvider { get; set; }
+    internal SVsServiceProvider ServiceProvider { get; set; } = null!;
 
     public void VsTextViewCreated(IVsTextView textViewAdapter)
     {
-        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter);
+        IWpfTextView view = AdaptersFactory.GetWpfTextView(textViewAdapter)!;
 
         view.Properties.GetOrCreateSingletonProperty(() => new JavaScriptCommandFilter(view, textViewAdapter, this));
     }
@@ -44,7 +44,7 @@ internal sealed class JavaScriptCompletionController : IVsTextViewCreationListen
 
 internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 {
-    private IAsyncCompletionSession _currentSession;
+    private IAsyncCompletionSession? _currentSession;
     private readonly IOleCommandTarget _next;
     private readonly IAsyncCompletionBroker _broker;
     private readonly IWpfTextView _textView;
@@ -59,14 +59,6 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
         _provider = provider;
 
         textViewAdapter.AddCommandFilter(this, out _next);
-    }
-
-    public JavaScriptCommandFilter(IWpfTextView textView, IAsyncCompletionBroker broker)
-    {
-        _currentSession = null;
-
-        _textView = textView;
-        _broker = broker;
     }
 
     private char GetTypeChar(IntPtr pvaIn)
@@ -250,7 +242,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
     /// </summary>
     bool Complete(bool force)
     {
-        var selected = _currentSession.GetComputedItems(default);
+        var selected = _currentSession?.GetComputedItems(default);
 
         if (_currentSession == null || selected == null)
         {
@@ -344,7 +336,10 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
 
     private void OnSessionDismissed(object sender, EventArgs e)
     {
-        _currentSession.Dismissed -= OnSessionDismissed;
+        if (_currentSession is not null)
+        {
+            _currentSession.Dismissed -= OnSessionDismissed;
+        }
         _currentSession = null;
     }
 }

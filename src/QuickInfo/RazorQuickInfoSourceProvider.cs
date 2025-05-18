@@ -15,10 +15,10 @@ namespace TailwindCSSIntellisense.QuickInfo;
 internal sealed class RazorQuickInfoSourceProvider : IAsyncQuickInfoSourceProvider
 {
     [Import]
-    public DescriptionGenerator DescriptionGenerator { get; set; }
+    public DescriptionGenerator DescriptionGenerator { get; set; } = null!;
 
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {

@@ -12,16 +12,16 @@ namespace TailwindCSSIntellisense.Configuration;
 [Export]
 public sealed class ConfigFileScanner
 {
-    private string _configFilePath;
+    private string? _configFilePath;
 
     [Import]
-    internal FileFinder FileFinder { get; set; }
+    internal FileFinder FileFinder { get; set; } = null!;
 
     /// <summary>
     /// Searches through the solution to find a Tailwind CSS configuration file.
     /// </summary>
     /// <returns>A <see cref="Task"/> of type <see cref="string" />, which represents the absolute path to an existing configuration file, or null if one cannot be found</returns>
-    internal async Task<string> TryFindConfigurationFileAsync()
+    internal async Task<string?> TryFindConfigurationFileAsync()
     {
         var cssFiles = await FileFinder.GetCssFilesAsync();
 
@@ -47,7 +47,7 @@ public sealed class ConfigFileScanner
 
         // Next: search all css files and scrape for @config
 
-        string cssTargetFile = null;
+        string? cssTargetFile = null;
 
         foreach (var file in cssFiles)
         {
@@ -122,9 +122,9 @@ public sealed class ConfigFileScanner
         return false;
     }
 
-    private async Task<string> ExtractConfigJsPathAsync(string filePath)
+    private async Task<string?> ExtractConfigJsPathAsync(string filePath)
     {
-        string configLine = null;
+        string? configLine = null;
         // Read up to line 15
         var lines = 0;
         using (var fs = File.OpenRead(filePath))

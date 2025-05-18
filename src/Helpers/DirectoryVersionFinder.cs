@@ -92,12 +92,12 @@ internal class DirectoryVersionFinder : IDisposable
         return TailwindVersion.V4_1;
     }
 
-    private void InvalidateCache(string _)
+    private void InvalidateCache(string? _)
     {
         _cache.Clear();
     }
 
-    private void InvalidateCache(Project _)
+    private void InvalidateCache(Project? _)
     {
         _cache.Clear();
     }

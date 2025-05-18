@@ -20,11 +20,11 @@ namespace TailwindCSSIntellisense.Adornments.Colors;
 internal sealed class ColorRazorTaggerProvider : IViewTaggerProvider
 {
     [Import]
-    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorRazorTagger(buffer, textView, ProjectConfigurationManager)) as ITagger<T>;
+        return (ITagger<T>)buffer.Properties.GetOrCreateSingletonProperty(() => new ColorRazorTagger(buffer, textView, ProjectConfigurationManager));
     }
 
     private class ColorRazorTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)

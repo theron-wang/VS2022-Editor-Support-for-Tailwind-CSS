@@ -5,38 +5,30 @@ namespace TailwindCSSIntellisense.Completions.V4;
 internal class ClassType
 {
     [JsonPropertyName("s")]
-    public string Stem { get; set; }
+    public string Stem { get; set; } = null!;
 
     [JsonPropertyName("sv")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<ClassSubType> Subvariants { get; set; }
+    public List<ClassSubType>? Subvariants { get; set; }
 
     [JsonPropertyName("dv")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string> DirectVariants { get; set; }
+    public List<string>? DirectVariants { get; set; }
 
     [JsonPropertyName("c")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? UseColors { get; set; }
 
     [JsonPropertyName("sp")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? UseSpacing { get; set; }
 
     [JsonPropertyName("p")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? UsePercent { get; set; }
 
     [JsonPropertyName("f")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? UseFractions { get; set; }
 
     [JsonPropertyName("d")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? UseNumbers { get; set; }
 
     [JsonPropertyName("n")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? HasNegative { get; set; }
 
     /// <summary>

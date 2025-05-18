@@ -20,13 +20,13 @@ namespace TailwindCSSIntellisense.Linting.Taggers;
 internal class RazorErrorTaggerProvider : ITaggerProvider
 {
     [Import]
-    public LinterUtilities LinterUtilities { get; set; }
+    public LinterUtilities LinterUtilities { get; set; } = null!;
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new RazorErrorTagger(buffer, LinterUtilities, ProjectConfigurationManager)) as ITagger<T>;
+        return (ITagger<T>)(ErrorTaggerBase)buffer.Properties.GetOrCreateSingletonProperty(() => new RazorErrorTagger(buffer, LinterUtilities, ProjectConfigurationManager));
     }
 
     internal sealed class RazorErrorTagger : ErrorTaggerBase, IDisposable

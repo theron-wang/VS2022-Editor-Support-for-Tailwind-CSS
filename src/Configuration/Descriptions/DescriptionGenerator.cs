@@ -1,9 +1,8 @@
-﻿namespace TailwindCSSIntellisense.Configuration.Descriptions
-{
-    internal abstract class DescriptionGenerator
-    {
-        public abstract string Handled { get; }
+﻿namespace TailwindCSSIntellisense.Configuration.Descriptions;
 
-        public abstract string GetDescription(object value);
-    }
+internal abstract class DescriptionGenerator
+{
+    public abstract string Handled { get; }
+
+    public abstract string? GetDescription(object value);
 }

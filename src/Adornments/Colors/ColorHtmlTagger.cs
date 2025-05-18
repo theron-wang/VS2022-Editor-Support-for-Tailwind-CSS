@@ -18,9 +18,9 @@ namespace TailwindCSSIntellisense.Adornments.Colors;
 internal sealed class ColorHtmlTaggerProvider : IViewTaggerProvider
 {
     [Import]
-    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
-    public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
+    public ITagger<T>? CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
         // Handle legacy Razor editor; this completion controller is prioritized but
         // we should only use the Razor completion controller in that case

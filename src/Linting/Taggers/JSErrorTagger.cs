@@ -19,13 +19,13 @@ namespace TailwindCSSIntellisense.Linting.Taggers;
 internal class JSErrorTaggerProvider : ITaggerProvider
 {
     [Import]
-    public LinterUtilities LinterUtilities { get; set; }
+    public LinterUtilities LinterUtilities { get; set; } = null!;
     [Import]
-    public ProjectConfigurationManager ProjectConfigurationManager { get; set; }
+    public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
     public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
     {
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new JSErrorTagger(buffer, LinterUtilities, ProjectConfigurationManager)) as ITagger<T>;
+        return (ITagger<T>)(ErrorTaggerBase)buffer.Properties.GetOrCreateSingletonProperty(() => new JSErrorTagger(buffer, LinterUtilities, ProjectConfigurationManager));
     }
 
     internal sealed class JSErrorTagger : ErrorTaggerBase, IDisposable

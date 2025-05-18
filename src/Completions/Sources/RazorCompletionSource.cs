@@ -66,7 +66,7 @@ internal class RazorCompletionSource : ClassCompletionGenerator, ICompletionSour
 
         var position = session.TextView.Caret.Position.BufferPosition.Position;
         ITextSnapshot snapshot = _textBuffer.CurrentSnapshot;
-        var triggerPoint = (SnapshotPoint)session.GetTriggerPoint(snapshot);
+        var triggerPoint = session.GetTriggerPoint(snapshot)!.Value;
 
         if (triggerPoint == null)
             return;
@@ -144,7 +144,7 @@ internal class RazorCompletionSource : ClassCompletionGenerator, ICompletionSour
     {
         var span = RazorParser.GetClassAttributeValue(triggerPoint);
         // span should not be null since this is called after we verify the cursor is in a class context
-        return snapshot.CreateTrackingSpan(new SnapshotSpan(span.Value.Start, triggerPoint), SpanTrackingMode.EdgeInclusive);
+        return snapshot.CreateTrackingSpan(new SnapshotSpan(span!.Value.Start, triggerPoint), SpanTrackingMode.EdgeInclusive);
     }
 
     public override void Dispose()

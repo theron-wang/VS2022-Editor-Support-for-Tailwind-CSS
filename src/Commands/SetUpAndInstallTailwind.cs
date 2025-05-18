@@ -19,9 +19,9 @@ internal sealed class SetUpAndInstallTailwind : BaseCommand<SetUpAndInstallTailw
         SettingsProvider = await VS.GetMefServiceAsync<SettingsProvider>();
     }
 
-    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; }
-    internal TailwindSetUpProcess TailwindSetUpProcess { get; set; }
-    internal SettingsProvider SettingsProvider { get; set; }
+    internal SolutionExplorerSelectionService SolutionExplorerSelection { get; set; } = null!;
+    internal TailwindSetUpProcess TailwindSetUpProcess { get; set; } = null!;
+    internal SettingsProvider SettingsProvider { get; set; } = null!;
 
     protected override void BeforeQueryStatus(EventArgs e)
     {
