@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.10.9 (May 18th, 2025)
+
+- `OnSave` override build should not create an infinite amount of processes
+- Fix missing descriptions for some numeric classes in projects using v4.1+
+- Null blocklist should not cause errors ([#104](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/104#issuecomment-2885719490))
+
+## 1.10.8 (May 15th, 2025)
+
+- Candidate fix for [#104](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/104#issuecomment-2861835742)
+
 ## 1.10.7 (May 2nd, 2025)
 
 - Class sorting should respect indents on new lines

@@ -774,7 +774,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
     private string? GetDescriptionForNumericClass(string tailwindClass, string numberFractionOrPercent, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
-        if (projectCompletionValues.Version != TailwindVersion.V4)
+        if (projectCompletionValues.Version < TailwindVersion.V4)
         {
             return null;
         }

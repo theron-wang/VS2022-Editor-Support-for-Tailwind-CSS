@@ -435,7 +435,7 @@ internal static class ConfigFileParser
                 imported.PluginClasses.AddRange(prev.PluginClasses);
                 imported.PluginVariants.AddRange(prev.PluginVariants);
                 imported.Imports.AddRange(prev.Imports);
-                imported.Blocklist = [.. blocklist];
+                imported.Blocklist ??= [.. blocklist];
                 imported.Blocklist.AddRange(blocklist);
                 DictionaryHelpers.MergeDictionaries(imported.PluginDescriptions, prev.PluginDescriptions);
                 DictionaryHelpers.MergeDictionaries(imported.PluginVariantDescriptions, prev.PluginVariantDescriptions);
@@ -447,7 +447,10 @@ internal static class ConfigFileParser
             imported.PluginClasses = [.. imported.PluginClasses.Distinct()];
             imported.PluginVariants = [.. imported.PluginVariants.Distinct()];
             imported.Imports = [.. imported.Imports.Distinct()];
-            imported.Blocklist = [.. imported.Blocklist.Distinct()];
+            if (imported.Blocklist is not null)
+            {
+                imported.Blocklist = [.. imported.Blocklist.Distinct()];
+            }
         }
 
         var config = new TailwindConfiguration
@@ -512,7 +515,17 @@ internal static class ConfigFileParser
             config.PluginClasses = [.. config.PluginClasses.Concat(imported.PluginClasses).Distinct()];
             config.PluginVariants = [.. config.PluginVariants.Concat(imported.PluginVariants).Distinct()];
             config.Imports = [.. config.Imports.Concat(imported.Imports).Distinct()];
-            config.Blocklist = [.. config.Blocklist.Concat(imported.Blocklist).Distinct()];
+            if (imported.Blocklist is not null)
+            {
+                if (config.Blocklist is not null)
+                {
+                    config.Blocklist = [.. config.Blocklist.Concat(imported.Blocklist).Distinct()];
+                }
+                else
+                {
+                    config.Blocklist = imported.Blocklist;
+                }
+            }
             DictionaryHelpers.MergeDictionaries(config.PluginDescriptions, imported.PluginDescriptions);
             DictionaryHelpers.MergeDictionaries(config.PluginVariantDescriptions, imported.PluginVariantDescriptions);
         }
