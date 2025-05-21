@@ -67,7 +67,7 @@ internal static class ColorHelpers
             var oklch = color.Replace("oklch(", "").Replace(")", "").Trim();
 
             var values = oklch.Split(' ')
-                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString() : x : x)
+                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString(CultureInfo.InvariantCulture) : x : x)
                 .Where(x => double.TryParse(x, NumberStyles.Float, CultureInfo.InvariantCulture, out _)).Select(num => double.Parse(num, CultureInfo.InvariantCulture)).ToList();
 
             if (values.Count != 3)
@@ -87,7 +87,7 @@ internal static class ColorHelpers
             var hsl = color.Replace("hsl(", "").Replace(")", "").Trim();
 
             var values = hsl.Split(' ')
-                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString() : x : x)
+                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString(CultureInfo.InvariantCulture) : x : x)
                 .Where(x => double.TryParse(x, NumberStyles.Float, CultureInfo.InvariantCulture, out _)).Select(num => double.Parse(num, CultureInfo.InvariantCulture)).ToList();
 
             if (values.Count != 3)
@@ -127,7 +127,7 @@ internal static class ColorHelpers
             var oklch = color.Replace("oklch(", "").Replace(")", "").Trim();
 
             var values = oklch.Split(' ')
-                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString() : x : x)
+                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString(CultureInfo.InvariantCulture) : x : x)
                 .Where(x => double.TryParse(x, NumberStyles.Float, CultureInfo.InvariantCulture, out _)).Select(num => double.Parse(num, CultureInfo.InvariantCulture)).ToList();
 
             if (values.Count != 3)
@@ -145,7 +145,7 @@ internal static class ColorHelpers
             var hsl = color.Replace("hsl(", "").Replace(")", "").Trim();
 
             var values = hsl.Split(' ')
-                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString() : x : x)
+                .Select(x => x.EndsWith("%") ? double.TryParse(x.Substring(0, x.Length - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ? (value / 100).ToString(CultureInfo.InvariantCulture) : x : x)
                 .Where(x => double.TryParse(x, NumberStyles.Float, CultureInfo.InvariantCulture, out _)).Select(num => double.Parse(num, CultureInfo.InvariantCulture)).ToList();
 
             if (values.Count != 3)

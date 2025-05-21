@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.10.1 (May 21st, 2025)
+
+- Fix missing color previews on cultures that do not use `.` as a decimal separator ([#104](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/104))
+
 ## 1.10.10 (May 20th, 2025)
 
 - Fix an error which could occur on Visual Studio startup, when no project is open
