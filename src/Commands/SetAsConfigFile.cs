@@ -28,8 +28,7 @@ internal sealed class SetAsConfigFile : BaseCommand<SetAsConfigFile>
 
         var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
 
-        Command.Visible = settings.EnableTailwindCss &&
-                !settings.ConfigurationFiles.Any(c => c.Path.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
+        Command.Visible = settings.EnableTailwindCss;
 
         if (!Command.Visible)
         {
@@ -40,11 +39,13 @@ internal sealed class SetAsConfigFile : BaseCommand<SetAsConfigFile>
 
         if (version == TailwindVersion.V3)
         {
-            Command.Visible = DefaultConfigurationFileNames.Extensions.Contains(Path.GetExtension(filePath));
+            Command.Visible = !settings.ConfigurationFiles.Any(c => c.Path.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
+                && DefaultConfigurationFileNames.Extensions.Contains(Path.GetExtension(filePath));
         }
         else
         {
-            Command.Visible = Path.GetExtension(filePath) == ".css";
+            Command.Visible = !settings.BuildFiles.Any(b => b.Input.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
+                && Path.GetExtension(filePath) == ".css";
         }
     }
 
@@ -54,11 +55,13 @@ internal sealed class SetAsConfigFile : BaseCommand<SetAsConfigFile>
 
         var path = SolutionExplorerSelection.CurrentSelectedItemFullPath;
 
-        settings.ConfigurationFiles.Add(new() { Path = path });
-
-        if (Path.GetExtension(path) == ".css" && !settings.BuildFiles.Any(f => f.Input.Equals(path, StringComparison.InvariantCultureIgnoreCase)))
+        if (Path.GetExtension(path) == ".css")
         {
             settings.BuildFiles.Add(new() { Input = path });
+        }
+        else
+        {
+            settings.ConfigurationFiles.Add(new() { Path = path });
         }
 
         await SettingsProvider.OverrideSettingsAsync(settings);
