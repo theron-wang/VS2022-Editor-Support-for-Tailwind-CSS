@@ -300,17 +300,33 @@ public sealed class SettingsProvider : IDisposable
             }
         }
 
+        for (int i = 0; i < settings.BuildFiles.Count; i++)
+        {
+            var buildPair = settings.BuildFiles[i];
+
+            if (string.IsNullOrWhiteSpace(buildPair.Input) || File.Exists(buildPair.Input) == false)
+            {
+                settings.BuildFiles.Remove(buildPair);
+                i--;
+            }
+        }
+
         var defaultConfigFile = settings.ConfigurationFiles.FirstOrDefault()?.Path ??
             settings.ConfigurationFiles.FirstOrDefault()?.Path;
 
         string? oldDefaultConfigFile = null;
         if (_cachedSettings is not null)
         {
-            oldDefaultConfigFile = _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path ??
-            _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path;
+            oldDefaultConfigFile = _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path;
         }
 
         var projectRoot = await GetTailwindProjectDirectoryAsync();
+
+        if (projectRoot is null)
+        {
+            return;
+        }
+
         var desiredProjectRoot = await GetDesiredConfigurationDirectoryAsync(defaultConfigFile);
         var copyBuildFilePair = new List<BuildPair>();
 
@@ -450,7 +466,7 @@ public sealed class SettingsProvider : IDisposable
         return bestMatch;
     }
 
-    private async Task<string> GetTailwindProjectDirectoryAsync()
+    private async Task<string?> GetTailwindProjectDirectoryAsync()
     {
         var projects = await VS.Solutions.GetAllProjectsAsync();
 
@@ -458,7 +474,7 @@ public sealed class SettingsProvider : IDisposable
         {
             var miscProjectPath = await FileFinder.GetCurrentMiscellaneousProjectPathAsync();
 
-            return miscProjectPath is null ? throw new InvalidOperationException("No projects found") : miscProjectPath;
+            return miscProjectPath;
         }
         else
         {

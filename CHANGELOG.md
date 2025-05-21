@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.10 (May 20th, 2025)
+
+- Fix an error which could occur on Visual Studio startup, when no project is open
+- Fix an error which could occur when resetting configuration files after deleting/renaming the existing one
+- Fix incorrect color previews on cultures that do not use `.` as a decimal separator ([#104](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/104))
+
 ## 1.10.9 (May 18th, 2025)
 
 - `OnSave` override build should not create an infinite amount of processes
