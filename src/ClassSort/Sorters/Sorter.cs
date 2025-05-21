@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using TailwindCSSIntellisense.Completions;
@@ -303,7 +304,7 @@ internal abstract class Sorter
                             {
                                 classToSearch = $"{stem}-{{s}}";
                             }
-                            else if (double.TryParse(ending, out _))
+                            else if (double.TryParse(ending, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
                             {
                                 classToSearch = $"{stem}-{{s}}";
 

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using TailwindCSSIntellisense.Completions;
 
@@ -645,8 +646,8 @@ public sealed partial class CompletionConfiguration
             // If base names are the same, compare the numeric part after the last hyphen (if present)
             if (xBaseName == yBaseName)
             {
-                var xIsNumeric = double.TryParse(x.Name.Substring(x.Name.LastIndexOf('-') + 1), out double xNumber);
-                var yIsNumeric = double.TryParse(y.Name.Substring(y.Name.LastIndexOf('-') + 1), out double yNumber);
+                var xIsNumeric = double.TryParse(x.Name.Substring(x.Name.LastIndexOf('-') + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double xNumber);
+                var yIsNumeric = double.TryParse(y.Name.Substring(y.Name.LastIndexOf('-') + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double yNumber);
 
                 if (xIsNumeric && yIsNumeric)
                 {

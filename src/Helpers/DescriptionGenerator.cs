@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -82,7 +83,7 @@ internal sealed class DescriptionGenerator : IDisposable
                         {
                             var multiplier = text.Substring(multiply + 1, semicolon - multiply - 1).TrimEnd(')').Trim();
 
-                            if (!double.TryParse(multiplier, out var multiplierAsDouble))
+                            if (!double.TryParse(multiplier, NumberStyles.Float, CultureInfo.InvariantCulture, out var multiplierAsDouble))
                             {
                                 multiplierAsDouble = 1;
                             }
@@ -96,7 +97,7 @@ internal sealed class DescriptionGenerator : IDisposable
                                 var numeric = spacing.Substring(0, split);
                                 var nonNumeric = spacing.Substring(split);
 
-                                if (float.TryParse(numeric, out var spacingValue))
+                                if (float.TryParse(numeric, NumberStyles.Float, CultureInfo.InvariantCulture, out var spacingValue))
                                 {
                                     if (nonNumeric == "rem")
                                     {
@@ -599,7 +600,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 var start = description.LastIndexOf(' ', remIndex) + 1;
 
-                if (!float.TryParse(description.Substring(start, remIndex - start), out var number))
+                if (!float.TryParse(description.Substring(start, remIndex - start), NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
                 {
                     index++;
                     continue;
@@ -702,7 +703,7 @@ internal sealed class DescriptionGenerator : IDisposable
         }
         else if (projectCompletionValues.Version >= TailwindVersion.V4)
         {
-            if (double.TryParse(spacing, out _))
+            if (double.TryParse(spacing, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
             {
                 spacing = $"{(negative ? "-" : "")}{spacing}";
 
@@ -736,7 +737,7 @@ internal sealed class DescriptionGenerator : IDisposable
             }
         }
 
-        if (spacingValue.EndsWith("rem") && double.TryParse(spacingValue.Replace("rem", ""), out var result))
+        if (spacingValue.EndsWith("rem") && double.TryParse(spacingValue.Replace("rem", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
         {
             spacingValue += $" /*{(negative ? -1 : 1) * result * 16}px*/";
         }
@@ -810,12 +811,12 @@ internal sealed class DescriptionGenerator : IDisposable
             types.Add("{%}");
             types.Add("{f}");
         }
-        else if (double.TryParse(numberFractionOrPercent, out _))
+        else if (double.TryParse(numberFractionOrPercent, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
         {
             value = numberFractionOrPercent;
             types.Add("{n}");
         }
-        else if (numberFractionOrPercent.EndsWith("%") && double.TryParse(numberFractionOrPercent.TrimEnd('%'), out _))
+        else if (numberFractionOrPercent.EndsWith("%") && double.TryParse(numberFractionOrPercent.TrimEnd('%'), NumberStyles.Float, CultureInfo.InvariantCulture, out _))
         {
             value = numberFractionOrPercent;
             types.Add("{%}");
@@ -826,13 +827,13 @@ internal sealed class DescriptionGenerator : IDisposable
 
             if (split.Length == 2)
             {
-                if (split.All(s => double.TryParse(s, out _)))
+                if (split.All(s => double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out _)))
                 {
                     value = numberFractionOrPercent;
                     types.Add("{f}");
                 }
                 // Possible modifier
-                else if (double.TryParse(split[0], out _))
+                else if (double.TryParse(split[0], NumberStyles.Float, CultureInfo.InvariantCulture, out _))
                 {
                     value = split[0];
                     types.Add("{n}");
@@ -1438,7 +1439,7 @@ internal sealed class DescriptionGenerator : IDisposable
             {
                 return desc.Replace(toReplace, $"var({variableToSearchFor})");
             }
-            else if (double.TryParse(modifier, out _))
+            else if (double.TryParse(modifier, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
             {
                 return desc.Replace(toReplace, $"calc(var(--spacing) * {modifier})");
             }

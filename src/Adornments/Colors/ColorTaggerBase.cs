@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.Text.Tagging;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
@@ -238,9 +239,9 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                     else if (numbers.Length == 4)
                     {
                         // decimal or percent
-                        if (!double.TryParse(numbers[3], out var alpha))
+                        if (!double.TryParse(numbers[3], NumberStyles.Float, CultureInfo.InvariantCulture, out var alpha))
                         {
-                            if (numbers[3].EndsWith("%") && double.TryParse(numbers[3].TrimEnd('%'), out alpha))
+                            if (numbers[3].EndsWith("%") && double.TryParse(numbers[3].TrimEnd('%'), NumberStyles.Float, CultureInfo.InvariantCulture, out alpha))
                             {
                                 alpha /= 100;
                             }
