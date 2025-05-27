@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.11 (May 27th, 2025)
+
+- Restart build if Tailwind build process runs out of memory ([#113](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/113))
+
 ## 1.10.10.1 (May 21st, 2025)
 
 - Fix missing color previews on cultures that do not use `.` as a decimal separator ([#104](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/104))

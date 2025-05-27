@@ -44,6 +44,7 @@ internal sealed class TailwindBuildProcess : IDisposable
     private readonly Dictionary<string, string?> _configsToPackageJsons = [];
 
     private readonly Dictionary<string, Process> _outputFileToProcesses = [];
+    private readonly Dictionary<Process, bool> _processToIsMinify = [];
     private Process? _secondaryProcess;
 
     private TailwindSettings _settings = null!;
@@ -61,7 +62,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         {
             _initialized = false;
 
-            EndProcess();
+            EndAllProcesses();
         }
 
         if (_initialized)
@@ -98,6 +99,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             process?.Dispose();
         }
         _outputFileToProcesses.Clear();
+        _processToIsMinify.Clear();
         _secondaryProcess?.Dispose();
 
         _secondaryProcess = null;
@@ -160,7 +162,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
             if (AreProcessesActive())
             {
-                EndProcess();
+                EndAllProcesses();
                 BuildAll(_settings.AutomaticallyMinify);
             }
         }
@@ -250,7 +252,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 _secondaryProcess!.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
             }
-            else if (_outputFileToProcesses.TryGetValue(outputFile, out var process) && IsProcessActive(process))
+            else if (_outputFileToProcesses.TryGetValue(pair.Value, out var process) && IsProcessActive(process))
             {
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
@@ -272,7 +274,8 @@ internal sealed class TailwindBuildProcess : IDisposable
                 }
                 else if (process is not null && !IsProcessActive(process))
                 {
-                    _outputFileToProcesses.Remove(outputFile);
+                    _outputFileToProcesses.Remove(pair.Value);
+                    _processToIsMinify.Remove(process);
                 }
 
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
@@ -290,7 +293,8 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     PostSetupProcess(process);
 
-                    _outputFileToProcesses[outputFile] = process;
+                    _outputFileToProcesses[pair.Value] = process;
+                    _processToIsMinify[process] = minify;
                 }
                 else if (_settings.OverrideBuild)
                 {
@@ -336,7 +340,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    if (_outputFileToProcesses.TryGetValue(outputFile, out var process) && IsProcessActive(process))
+                    if (_outputFileToProcesses.TryGetValue(pair.Value, out var process) && IsProcessActive(process))
                     {
                         return;
                     }
@@ -368,7 +372,8 @@ internal sealed class TailwindBuildProcess : IDisposable
                     process = CreateAndStartProcess(processInfo);
                     PostSetupProcess(process);
 
-                    _outputFileToProcesses[outputFile] = process;
+                    _outputFileToProcesses[pair.Value] = process;
+                    _processToIsMinify[process] = minify;
                 }
                 else if (_settings.OverrideBuild)
                 {
@@ -408,40 +413,59 @@ internal sealed class TailwindBuildProcess : IDisposable
     /// <summary>
     /// Ends the build process
     /// </summary>
-    internal void EndProcess()
+    internal void EndAllProcesses()
     {
-        foreach (var process in _outputFileToProcesses.Values)
-        {
-            if (IsProcessActive(process))
-            {
-                // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
-                // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
-                process.StandardInput.WriteLine("\x3");
-                process.StandardInput.Close();
-                process.Kill();
-            }
-        }
-
         var any = _outputFileToProcesses.Any();
 
+        foreach (var process in _outputFileToProcesses.Values.ToList())
+        {
+            EndProcess(process);
+        }
+
         _outputFileToProcesses.Clear();
+        _processToIsMinify.Clear();
 
         if (any)
         {
             ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Build stopped"));
         }
 
-        if (IsProcessActive(_secondaryProcess))
+        if (_secondaryProcess is not null)
         {
-            ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build script '{_settings.BuildScript}' stopped"));
+            EndProcess(_secondaryProcess);
+        }
+    }
+
+    /// <summary>
+    /// Ends the build process
+    /// </summary>
+    internal void EndProcess(Process process)
+    {
+        if (IsProcessActive(process))
+        {
+            if (process == _secondaryProcess)
+            {
+                ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build script '{_settings.BuildScript}' stopped"));
+                _secondaryProcess = null;
+            }
 
             // Tailwind --watch keeps building even with kill; use \x3 to say Ctrl+c to stop
             // https://stackoverflow.com/questions/283128/how-do-i-send-ctrlc-to-a-process-in-c
-            _secondaryProcess!.StandardInput.WriteLine("\x3");
-            _secondaryProcess.StandardInput.Close();
-            _secondaryProcess.Kill();
-            _secondaryProcess = null;
+            process.StandardInput.WriteLine("\x3");
+            process.StandardInput.Close();
+            try
+            {
+                process.Kill();
+            }
+            catch (InvalidOperationException)
+            {
+                // The process may have already exited at this point, which is why this error could occur.
+                // Do nothing with this exception since the desired result is already achieved.
+            }
         }
+
+        _outputFileToProcesses.Remove(_outputFileToProcesses.Where(p => p.Value == process).Select(p => p.Key).FirstOrDefault() ?? "");
+        _processToIsMinify.Remove(process);
     }
 
     private string GetCommand(ProjectCompletionValues project)
@@ -512,7 +536,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             _inputToOutputFile[pair.Input] = pair.Output;
         }
 
-        EndProcess();
+        EndAllProcesses();
     }
 
     private void OutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -547,7 +571,26 @@ internal sealed class TailwindBuildProcess : IDisposable
         }
         else
         {
-            if (e.Data.Contains("Error"))
+            // See https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/113
+            // On large projects, Tailwind build process may run out memory; fix is to restart it
+            if (e.Data.Contains("JavaScript heap out of memory"))
+            {
+                if (sender is Process process && _outputFileToProcesses.ContainsValue(process))
+                {
+                    ThreadHelper.JoinableTaskFactory.Run(async () =>
+                    {
+                        await WriteToBuildPaneAsync("Tailwind CSS: Build process ran out of memory; restarting...");
+                    });
+
+                    var output = _outputFileToProcesses.First(p => p.Value == process).Key;
+                    var pair = _inputToOutputFile.First(p => p.Value == output);
+                    var minify = _processToIsMinify.TryGetValue(process, out var isMinify) && isMinify;
+
+                    EndProcess(process);
+                    BuildOne(pair, minify);
+                }
+            }
+            else if (e.Data.Contains("Error"))
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
@@ -669,6 +712,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         process.Exited += (s, e) =>
         {
             var proc = (Process)s;
+            _processToIsMinify.Remove(proc);
 
             proc?.Dispose();
             string? keyToRemove = null;
