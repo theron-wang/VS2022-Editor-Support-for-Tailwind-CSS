@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Utilities;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions.Sources.JS;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Providers.JS;
@@ -30,12 +31,15 @@ internal class JavaScriptAsyncCompletionSourceProvider : IAsyncCompletionSourceP
     [Import]
     public ColorIconGenerator ColorIconGenerator { get; set; } = null!;
 
+    [Import]
+    public CompletionConfiguration CompletionConfiguration { get; set; } = null!;
+
     public IAsyncCompletionSource GetOrCreate(ITextView textView)
     {
         if (_cache.TryGetValue(textView, out var itemSource))
             return itemSource;
 
-        var source = new JavaScriptAsyncCompletionSource(textView.TextBuffer, ProjectConfigurationManager, ColorIconGenerator, DescriptionGenerator, SettingsProvider);
+        var source = new JavaScriptAsyncCompletionSource(textView.TextBuffer, ProjectConfigurationManager, ColorIconGenerator, DescriptionGenerator, SettingsProvider, CompletionConfiguration);
         textView.Closed += (o, e) => _cache.Remove(textView);
         _cache[textView] = source;
         return source;

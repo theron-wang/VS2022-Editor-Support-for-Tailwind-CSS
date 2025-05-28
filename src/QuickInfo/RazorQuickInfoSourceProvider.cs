@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
@@ -20,8 +21,11 @@ internal sealed class RazorQuickInfoSourceProvider : IAsyncQuickInfoSourceProvid
     [Import]
     public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
+    [Import]
+    public CompletionConfiguration CompletionConfiguration { get; set; } = null!;
+
     public IAsyncQuickInfoSource TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
-        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new RazorQuickInfoSource(textBuffer, DescriptionGenerator, ProjectConfigurationManager));
+        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new RazorQuickInfoSource(textBuffer, DescriptionGenerator, ProjectConfigurationManager, CompletionConfiguration));
     }
 }

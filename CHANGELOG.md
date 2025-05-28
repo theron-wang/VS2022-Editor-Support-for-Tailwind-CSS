@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.10.12 (May 27th, 2025)
+
+- Support blobs for `@source`
+- Fix incorrect configuration file parsing if `@source` contained a pattern like `/*.razor`
+- Add support for prefixes
+- Support `!important` for v4+ projects (`!` modifier is at the end, not the beginning)
+- Fix a `NullReferenceException` which could occur when having custom classes added
+- Fix sorting order for classes like `border-2`
+
 ## 1.10.11 (May 27th, 2025)
 
 - Restart build if Tailwind build process runs out of memory ([#113](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/113))

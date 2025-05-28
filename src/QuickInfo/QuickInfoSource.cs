@@ -1,10 +1,12 @@
 ﻿using Microsoft.VisualStudio.Language.Intellisense;
 using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Adornments;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
@@ -12,19 +14,30 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
 {
     protected ITextBuffer _textBuffer;
     protected DescriptionGenerator _descriptionGenerator;
-    private readonly ProjectCompletionValues _projectConfigurationManager;
+    private readonly ProjectConfigurationManager _projectConfigurationManager;
+    private readonly CompletionConfiguration _completionConfiguration;
+    private ProjectCompletionValues _projectConfigurationValues;
 
     private const string PropertyKey = "tailwindintellisensequickinfoadded";
 
-    public QuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, ProjectConfigurationManager completionUtilities)
+    public QuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator descriptionGenerator, ProjectConfigurationManager projectConfigurationManager, CompletionConfiguration completionConfiguration)
     {
         _textBuffer = textBuffer;
         _descriptionGenerator = descriptionGenerator;
-        _projectConfigurationManager = completionUtilities.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
+        _projectConfigurationManager = projectConfigurationManager;
+        _completionConfiguration = completionConfiguration;
+        _completionConfiguration.ConfigurationUpdated += OnConfigurationUpdated;
+        _projectConfigurationValues = projectConfigurationManager.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
+    }
+
+    private void OnConfigurationUpdated()
+    {
+        _projectConfigurationValues = _projectConfigurationManager.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
     }
 
     public void Dispose()
     {
+        _completionConfiguration.ConfigurationUpdated -= OnConfigurationUpdated;
     }
 
     public Task<QuickInfoItem?> GetQuickInfoItemAsync(IAsyncQuickInfoSession session, CancellationToken cancellationToken)
@@ -46,15 +59,15 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
 
             if (isImportant)
             {
-                classText = classText.TrimStart('!');
+                classText = classText.Trim('!');
             }
 
-            if (!_projectConfigurationManager.IsClassAllowed(classText))
+            if (!_projectConfigurationValues.IsClassAllowed(classText))
             {
                 return Task.FromResult<QuickInfoItem?>(null);
             }
 
-            var desc = _descriptionGenerator.GetDescription(classText, _projectConfigurationManager);
+            var desc = _descriptionGenerator.GetDescription(classText, _projectConfigurationValues);
 
             var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
 
@@ -63,12 +76,12 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 session.Properties.AddProperty(PropertyKey, true);
 
                 var totalVariant = fullText.Contains(':') ?
-                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _projectConfigurationManager) :
+                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _projectConfigurationValues) :
                     [];
 
                 ContainerElement descriptionFormatted;
 
-                if (_projectConfigurationManager.Version == TailwindVersion.V3)
+                if (_projectConfigurationValues.Version == TailwindVersion.V3)
                 {
                     descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText,
                             totalVariant.LastOrDefault(),

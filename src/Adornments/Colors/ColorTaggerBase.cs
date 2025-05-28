@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Media;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Options;
 
 namespace TailwindCSSIntellisense.Adornments.Colors;
@@ -19,17 +20,22 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 {
     private readonly ITextBuffer _buffer;
     private readonly ITextView _view;
-    private readonly ProjectCompletionValues _projectConfigurationManager;
+    private readonly ProjectConfigurationManager _projectConfigurationManager;
+    private readonly CompletionConfiguration _completionConfiguration;
+    private ProjectCompletionValues _projectConfigurationValues;
     private bool _isProcessing;
     private General? _generalOptions;
 
-    protected ColorTaggerBase(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)
+    protected ColorTaggerBase(ITextBuffer buffer, ITextView view, ProjectConfigurationManager projectConfigurationManager, CompletionConfiguration completionConfiguration)
     {
         _buffer = buffer;
         _view = view;
-        _projectConfigurationManager = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
+        _projectConfigurationManager = projectConfigurationManager;
+        _completionConfiguration = completionConfiguration;
+        _projectConfigurationValues = projectConfigurationManager.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         _buffer.Changed += OnBufferChanged;
         General.Saved += GeneralSettingsChanged;
+        _completionConfiguration.ConfigurationUpdated += ConfigurationUpdated;
     }
 
     private void OnBufferChanged(object sender, TextContentChangedEventArgs e)
@@ -62,6 +68,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     public void Dispose()
     {
         _buffer.Changed -= OnBufferChanged;
+        _completionConfiguration.ConfigurationUpdated -= ConfigurationUpdated;
         General.Saved -= GeneralSettingsChanged;
     }
 
@@ -73,6 +80,12 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
     private void GeneralSettingsChanged(General general)
     {
         _generalOptions = general;
+        TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length)));
+    }
+
+    private void ConfigurationUpdated()
+    {
+        _projectConfigurationValues = _projectConfigurationManager.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         TagsChanged?.Invoke(this, new SnapshotSpanEventArgs(new SnapshotSpan(_buffer.CurrentSnapshot, 0, _buffer.CurrentSnapshot.Length)));
     }
 
@@ -122,18 +135,18 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 
         if (ImportantModifierHelper.IsImportantModifier(text))
         {
-            text = text.TrimStart('!');
+            text = text.Trim('!');
         }
 
-        if (string.IsNullOrWhiteSpace(_projectConfigurationManager.Prefix) == false)
+        if (string.IsNullOrWhiteSpace(_projectConfigurationValues.Prefix) == false)
         {
-            if (text.StartsWith(_projectConfigurationManager.Prefix))
+            if (text.StartsWith(_projectConfigurationValues.Prefix))
             {
-                text = text.Substring(_projectConfigurationManager.Prefix!.Length);
+                text = text.Substring(_projectConfigurationValues.Prefix!.Length);
             }
-            else if (text.StartsWith($"-{_projectConfigurationManager.Prefix}"))
+            else if (text.StartsWith($"-{_projectConfigurationValues.Prefix}"))
             {
-                text = text.Substring(_projectConfigurationManager.Prefix!.Length + 1);
+                text = text.Substring(_projectConfigurationValues.Prefix!.Length + 1);
             }
             else
             {
@@ -141,7 +154,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             }
         }
 
-        if (!_projectConfigurationManager.IsClassAllowed(text))
+        if (!_projectConfigurationValues.IsClassAllowed(text))
         {
             return null;
         }
@@ -207,7 +220,7 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 
                 if (color[0] == '(' && color[color.Length - 1] == ')')
                 {
-                    if (!_projectConfigurationManager.CssVariables.TryGetValue(c, out c))
+                    if (!_projectConfigurationValues.CssVariables.TryGetValue(c, out c))
                     {
                         return null;
                     }
@@ -257,20 +270,20 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
                 return null;
             }
 
-            if (_projectConfigurationManager.DescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false && _projectConfigurationManager.CustomDescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false)
+            if (_projectConfigurationValues.DescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false && _projectConfigurationValues.CustomDescriptionMapper.ContainsKey(stem.Replace("{0}", "{c}")) == false)
             {
                 return null;
             }
 
             string value;
-            if (_projectConfigurationManager.CustomColorMappers != null && _projectConfigurationManager.CustomColorMappers.ContainsKey(stem))
+            if (_projectConfigurationValues.CustomColorMappers != null && _projectConfigurationValues.CustomColorMappers.ContainsKey(stem))
             {
-                if (_projectConfigurationManager.CustomColorMappers[stem].TryGetValue(color, out value) == false)
+                if (_projectConfigurationValues.CustomColorMappers[stem].TryGetValue(color, out value) == false)
                 {
                     return null;
                 }
             }
-            else if (_projectConfigurationManager.ColorMapper.TryGetValue(color, out value) == false)
+            else if (_projectConfigurationValues.ColorMapper.TryGetValue(color, out value) == false)
             {
                 return null;
             }

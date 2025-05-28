@@ -180,7 +180,7 @@ internal abstract class Sorter
             {
                 if (ImportantModifierHelper.IsImportantModifier(className))
                 {
-                    className = className.TrimStart('!');
+                    className = className.Trim('!');
                 }
 
                 var classToSearch = className;

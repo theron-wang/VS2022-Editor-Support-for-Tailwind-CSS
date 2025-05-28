@@ -141,6 +141,11 @@ public sealed class ProjectConfigurationManager
 
         foreach (var k in _projectCompletionConfiguration.Values)
         {
+            if (k.FilePath.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return k;
+            }
+
             if (k.Version >= TailwindVersion.V4)
             {
                 if (k.NotApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
@@ -153,12 +158,10 @@ public sealed class ProjectConfigurationManager
                     return k;
                 }
             }
-            else
+
+            if (k.ApplicablePaths.Any(p => PathHelpers.PathMatchesGlob(filePath, p)))
             {
-                if (k.ApplicablePaths.Any(p => PathHelpers.PathMatchesGlob(filePath, p)))
-                {
-                    return k;
-                }
+                return k;
             }
         }
 
@@ -227,6 +230,15 @@ public sealed class ProjectConfigurationManager
 
         if (settings.ConfigurationFiles.Count > 0)
         {
+            foreach (var config in settings.ConfigurationFiles)
+            {
+                if (_projectCompletionConfiguration[config.Path.ToLower()].ApplicablePaths.Count > 0)
+                {
+                    _defaultProjectCompletionConfiguration = _projectCompletionConfiguration[settings.ConfigurationFiles.First().Path.ToLower()];
+                    break;
+                }
+            }
+
             _defaultProjectCompletionConfiguration ??= _projectCompletionConfiguration[settings.ConfigurationFiles.First().Path.ToLower()];
         }
 

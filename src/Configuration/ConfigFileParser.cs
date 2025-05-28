@@ -164,11 +164,13 @@ internal static class ConfigFileParser
         var directiveParameter = "";
         var buildingDirectiveParameter = false;
 
+        var prefix = "";
+
         for (int i = 0; i < fullText.Length; i++)
         {
             var current = fullText[i];
 
-            if (current == '/')
+            if (current == '/' && (!buildingDirectiveParameter || !(directiveParameter.Count(p => p == '\'') == 1 || directiveParameter.Count(p => p == '"') == 1)))
             {
                 if (i + 1 < fullText.Length && fullText[i + 1] == '*')
                 {
@@ -251,7 +253,7 @@ internal static class ConfigFileParser
                             import = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import);
                             imports.Add($"@import{import}");
                         }
-                        // Handle @import "tailwindcss" source(...)
+                        // Handle @import "tailwindcss" source(...) and prefix(...)
                         else if (import == "tailwindcss")
                         {
                             if (directiveParameter.IndexOf("source(", secondQuote) is int index && index != -1)
@@ -273,6 +275,17 @@ internal static class ConfigFileParser
 
                                 source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), source)!;
                                 content.Add(source);
+                            }
+                            else if (directiveParameter.IndexOf("prefix(", secondQuote) is int prefixIndex && prefixIndex != -1)
+                            {
+                                var endParen = directiveParameter.IndexOf(')', prefixIndex);
+
+                                if (endParen == -1)
+                                {
+                                    continue;
+                                }
+
+                                prefix = directiveParameter.Substring(prefixIndex + 7, endParen - prefixIndex - 7).Trim();
                             }
                             else
                             {
@@ -364,6 +377,7 @@ internal static class ConfigFileParser
                 {
                     directiveParameter = directiveParameter.Trim();
                     buildingDirectiveParameter = false;
+                    level++;
                 }
                 else
                 {
@@ -403,7 +417,7 @@ internal static class ConfigFileParser
             .Select(s =>
             {
                 var split = s.IndexOf(':');
-                return new KeyValuePair<string, string>(s.Substring(0, split), s.Substring(split + 1));
+                return new KeyValuePair<string, string>(s.Substring(0, split).Trim(), s.Substring(split + 1).Trim());
             });
 
         TailwindConfiguration? imported = null;
@@ -466,7 +480,8 @@ internal static class ConfigFileParser
                 string.Join(" ", v.Value.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries))),
             Imports = [.. imports.Select(i => i.Replace("@import", "").Replace("@config", ""))],
             ContentPaths = content,
-            Blocklist = blocklist
+            Blocklist = blocklist,
+            Prefix = string.IsNullOrWhiteSpace(prefix) ? null : prefix.Trim()
         };
 
         foreach (var pair in themeValuePairs)

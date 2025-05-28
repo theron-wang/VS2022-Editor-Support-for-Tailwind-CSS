@@ -68,19 +68,73 @@ public static class PathHelpers
     /// <returns>True if the path matches the pattern, otherwise false.</returns>
     public static bool PathMatchesGlob(string path, string pattern)
     {
-        // Normalize path separators
-        path = path.Replace('\\', '/');
-        pattern = pattern.Replace('\\', '/');
+        if (path == null || pattern == null)
+            return false;
 
-        // Handle ** for recursive matching
-        pattern = Regex.Escape(pattern)
-            .Replace(@"\*\*", ".*")
-            .Replace(@"\*", "[^/]*")
-            .Replace(@"\{", "(")
-            .Replace("}", ")")
-            .Replace(@",", "|");
+        // Normalize path separators for consistency
+        path = path.ToLower().Replace('\\', '/');
+        pattern = pattern.ToLower().Replace('\\', '/');
 
-        var regex = new Regex($"^{pattern}$", RegexOptions.Compiled);
-        return regex.IsMatch(path);
+        string regexPattern = "^" + GlobToRegex(pattern) + "$";
+        return Regex.IsMatch(path, regexPattern);
+    }
+
+    private static string GlobToRegex(string pattern)
+    {
+        var regex = new System.Text.StringBuilder();
+        var i = 0;
+        while (i < pattern.Length)
+        {
+            char c = pattern[i];
+            if (c == '*')
+            {
+                if (i + 1 < pattern.Length && pattern[i + 1] == '*')
+                {
+                    // ** => match any characters including slashes
+                    regex.Append(".*");
+                    i += 2;
+                }
+                else
+                {
+                    // * => match any characters except slash
+                    regex.Append("[^/]*");
+                    i++;
+                }
+            }
+            else if (c == '?')
+            {
+                regex.Append("."); // match any single character
+                i++;
+            }
+            else if (c == '{')
+            {
+                // handle {a,b,c}
+                int end = pattern.IndexOf('}', i);
+                if (end == -1)
+                {
+                    regex.Append("\\{");
+                    i++;
+                }
+                else
+                {
+                    string group = pattern.Substring(i + 1, end - i - 1);
+                    string[] options = group.Split(',');
+                    regex.Append("(?:");
+                    regex.Append(string.Join("|", options));
+                    regex.Append(")");
+                    i = end + 1;
+                }
+            }
+            else
+            {
+                // Escape regex special characters
+                if ("\\.[]{}()+-^$|".IndexOf(c) >= 0)
+                    regex.Append('\\');
+                regex.Append(c);
+                i++;
+            }
+        }
+
+        return regex.ToString();
     }
 }

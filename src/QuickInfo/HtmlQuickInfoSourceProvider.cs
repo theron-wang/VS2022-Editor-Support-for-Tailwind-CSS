@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.QuickInfo;
 
@@ -18,6 +19,9 @@ internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvide
     [Import]
     public ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
+    [Import]
+    public CompletionConfiguration CompletionConfiguration { get; set; } = null!;
+
     public IAsyncQuickInfoSource? TryCreateQuickInfoSource(ITextBuffer textBuffer)
     {
         // Handle legacy Razor editor; this completion controller is prioritized but
@@ -26,6 +30,6 @@ internal sealed class HtmlQuickInfoSourceProvider : IAsyncQuickInfoSourceProvide
         {
             return null;
         }
-        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, DescriptionGenerator, ProjectConfigurationManager));
+        return textBuffer.Properties.GetOrCreateSingletonProperty(() => new HtmlQuickInfoSource(textBuffer, DescriptionGenerator, ProjectConfigurationManager, CompletionConfiguration));
     }
 }

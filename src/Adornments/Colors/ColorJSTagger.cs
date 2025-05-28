@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Utilities;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Parsers;
 
 namespace TailwindCSSIntellisense.Adornments.Colors;
@@ -20,14 +21,16 @@ internal sealed class ColorJSTaggerProvider : IViewTaggerProvider
 {
     [Import]
     internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
+    [Import]
+    public CompletionConfiguration CompletionConfiguration { get; set; } = null!;
 
     public ITagger<T> CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
-        return (ITagger<T>)buffer.Properties.GetOrCreateSingletonProperty(() => new ColorJSTagger(buffer, textView, ProjectConfigurationManager));
+        return (ITagger<T>)buffer.Properties.GetOrCreateSingletonProperty(() => new ColorJSTagger(buffer, textView, ProjectConfigurationManager, CompletionConfiguration));
     }
 
-    private class ColorJSTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)
-        : ColorTaggerBase(buffer, view, completionUtilities)
+    private class ColorJSTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities, CompletionConfiguration completionConfiguration)
+        : ColorTaggerBase(buffer, view, completionUtilities, completionConfiguration)
     {
         protected override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot)
         {

@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Parsers;
 using TailwindCSSIntellisense.Settings;
 
@@ -21,8 +22,8 @@ internal class RazorCompletionSource : ClassCompletionGenerator, ICompletionSour
     private readonly IAsyncCompletionBroker _asyncCompletionBroker;
     private readonly ICompletionBroker _completionBroker;
 
-    public RazorCompletionSource(ITextBuffer textBuffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker)
-        : base(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider)
+    public RazorCompletionSource(ITextBuffer textBuffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, IAsyncCompletionBroker asyncCompletionBroker, ICompletionBroker completionBroker, CompletionConfiguration completionConfiguration)
+        : base(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider, completionConfiguration)
     {
         _asyncCompletionBroker = asyncCompletionBroker;
         _completionBroker = completionBroker;

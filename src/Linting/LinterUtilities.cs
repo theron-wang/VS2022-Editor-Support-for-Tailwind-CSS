@@ -58,7 +58,7 @@ internal sealed class LinterUtilities : IDisposable
 
             if (ImportantModifierHelper.IsImportantModifier(classTrimmed))
             {
-                classTrimmed = classTrimmed.TrimStart('!');
+                classTrimmed = classTrimmed.Trim('!');
             }
 
             // Do not handle prefix here; DescriptionGenerator.GetDescription already does

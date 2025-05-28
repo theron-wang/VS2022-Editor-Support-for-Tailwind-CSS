@@ -238,7 +238,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (ImportantModifierHelper.IsImportantModifier(className))
         {
-            className = className.TrimStart('!');
+            className = className.Trim('!');
         }
 
         var description = GetDescriptionForClassOnly(className, projectCompletionValues, shouldFormat: shouldFormat);

@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Utilities;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Parsers;
 
 namespace TailwindCSSIntellisense.Adornments.Colors;
@@ -19,6 +20,8 @@ internal sealed class ColorHtmlTaggerProvider : IViewTaggerProvider
 {
     [Import]
     internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
+    [Import]
+    public CompletionConfiguration CompletionConfiguration { get; set; } = null!;
 
     public ITagger<T>? CreateTagger<T>(ITextView textView, ITextBuffer buffer) where T : ITag
     {
@@ -28,11 +31,11 @@ internal sealed class ColorHtmlTaggerProvider : IViewTaggerProvider
         {
             return null;
         }
-        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorHtmlTagger(buffer, textView, ProjectConfigurationManager)) as ITagger<T>;
+        return buffer.Properties.GetOrCreateSingletonProperty(() => new ColorHtmlTagger(buffer, textView, ProjectConfigurationManager, CompletionConfiguration)) as ITagger<T>;
     }
 
-    private class ColorHtmlTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities)
-        : ColorTaggerBase(buffer, view, completionUtilities)
+    private class ColorHtmlTagger(ITextBuffer buffer, ITextView view, ProjectConfigurationManager completionUtilities, CompletionConfiguration completionConfiguration)
+        : ColorTaggerBase(buffer, view, completionUtilities, completionConfiguration)
     {
         protected override IEnumerable<SnapshotSpan> GetScopes(SnapshotSpan span, ITextSnapshot snapshot)
         {

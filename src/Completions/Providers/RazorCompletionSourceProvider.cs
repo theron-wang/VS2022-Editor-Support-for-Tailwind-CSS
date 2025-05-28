@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.Text.Classification;
 using Microsoft.VisualStudio.Utilities;
 using System.ComponentModel.Composition;
 using TailwindCSSIntellisense.Completions.Sources;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Providers;
@@ -33,9 +34,11 @@ internal class RazorCompletionSourceProvider : ICompletionSourceProvider
     internal DescriptionGenerator DescriptionGenerator { get; set; } = null!;
     [Import]
     internal ColorIconGenerator ColorIconGenerator { get; set; } = null!;
+    [Import]
+    public CompletionConfiguration CompletionConfiguration { get; set; } = null!;
 
     public ICompletionSource TryCreateCompletionSource(ITextBuffer textBuffer)
     {
-        return new RazorCompletionSource(textBuffer, CompletionUtils, ColorIconGenerator, DescriptionGenerator, SettingsProvider, AsyncCompletionBroker, CompletionBroker);
+        return new RazorCompletionSource(textBuffer, CompletionUtils, ColorIconGenerator, DescriptionGenerator, SettingsProvider, AsyncCompletionBroker, CompletionBroker, CompletionConfiguration);
     }
 }

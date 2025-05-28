@@ -12,7 +12,7 @@ internal abstract class Validator : IDisposable
     protected readonly ITextBuffer _buffer;
     protected readonly LinterUtilities _linterUtils;
     protected readonly ProjectConfigurationManager _projectConfigurationManager;
-    protected readonly ProjectCompletionValues _projectCompletionValues;
+    protected ProjectCompletionValues _projectCompletionValues;
 
     protected readonly HashSet<SnapshotSpan> _checkedSpans = [];
 
@@ -29,12 +29,12 @@ internal abstract class Validator : IDisposable
 
     public Action<ITextBuffer>? BufferValidated;
 
-    public Validator(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager completionUtilities)
+    public Validator(ITextBuffer buffer, LinterUtilities linterUtils, ProjectConfigurationManager projectConfigurationManager)
     {
         _buffer = buffer;
         _linterUtils = linterUtils;
-        _projectConfigurationManager = completionUtilities;
-        _projectCompletionValues = completionUtilities.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
+        _projectConfigurationManager = projectConfigurationManager;
+        _projectCompletionValues = projectConfigurationManager.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         _buffer.ChangedHighPriority += OnBufferChange;
         Linter.Saved += LinterOptionsChanged;
         _projectConfigurationManager.Configuration.ConfigurationUpdated += ConfigurationUpdated;
@@ -144,6 +144,7 @@ internal abstract class Validator : IDisposable
 
     private void ConfigurationUpdated()
     {
+        _projectCompletionValues = _projectConfigurationManager.GetCompletionConfigurationByFilePath(_buffer.GetFileName());
         StartUpdate();
     }
 

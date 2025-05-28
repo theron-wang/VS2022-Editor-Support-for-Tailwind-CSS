@@ -619,56 +619,34 @@ public sealed partial class CompletionConfiguration
                 }
             }
         }
-        project.Classes.AddRange(classesToAdd);
-
-        // fix order
 
         // Order by ending number, if applicable, then any text after
         // i.e. inherit, 10, 20, 30, 40, 5, 50 -> 5, 10, 20, 30, 40, 50, inherit
-
-        project.Classes.Sort((x, y) =>
-        {
-            if (!x.Name.Contains('-') || !y.Name.Contains('-'))
+        project.Classes = [.. project.Classes.Concat(classesToAdd)
+            .OrderBy(x =>
             {
-                return x.Name.CompareTo(y.Name);
-            }
+                if (!x.Name.Contains('-'))
+                {
+                    return x.Name;
+                }
 
-            // Compare the base names (before the hyphen)
-            var xBaseName = x.Name.Substring(0, x.Name.LastIndexOf('-'));
-            var yBaseName = y.Name.Substring(0, y.Name.LastIndexOf('-'));
+                // Compare the base names (before the last hyphen)
+                var xBaseName = x.Name.Substring(0, x.Name.LastIndexOf('-'));
 
-            var baseNameComparison = xBaseName.CompareTo(yBaseName);
-            if (baseNameComparison != 0)
+                return xBaseName;
+            })
+            .ThenBy(x =>
             {
-                return baseNameComparison; // If base names are different, return comparison
-            }
+                var last = x.Name.Substring(x.Name.LastIndexOf('-') + 1);
+                var xIsNumeric = double.TryParse(last, NumberStyles.Float, CultureInfo.InvariantCulture, out double xNumber);
 
-            // If base names are the same, compare the numeric part after the last hyphen (if present)
-            if (xBaseName == yBaseName)
-            {
-                var xIsNumeric = double.TryParse(x.Name.Substring(x.Name.LastIndexOf('-') + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double xNumber);
-                var yIsNumeric = double.TryParse(y.Name.Substring(y.Name.LastIndexOf('-') + 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double yNumber);
+                if (!xIsNumeric)
+                {
+                    return 0;
+                }
 
-                if (xIsNumeric && yIsNumeric)
-                {
-                    // Compare numerically if both are valid numbers
-                    return xNumber.CompareTo(yNumber);
-                }
-                else if (xIsNumeric)
-                {
-                    // If only x is numeric, x comes before y
-                    return -1;
-                }
-                else if (yIsNumeric)
-                {
-                    // If only y is numeric, y comes before x
-                    return 1;
-                }
-            }
-
-            // If either has no numeric part or neither can be parsed as a number, compare lexicographically
-            return string.Join(x.Name).CompareTo(y.Name);
-        });
+                return xNumber;
+            })];
     }
 
     /// <summary>

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Completions.Sources;
@@ -15,11 +16,12 @@ internal abstract class ClassCompletionGenerator : IDisposable
     protected readonly ColorIconGenerator _colorIconGenerator;
     protected readonly DescriptionGenerator _descriptionGenerator;
     protected readonly SettingsProvider _settingsProvider;
+    private readonly CompletionConfiguration _completionConfiguration;
     protected readonly ITextBuffer _textBuffer;
 
     protected bool? _showAutocomplete;
 
-    protected ClassCompletionGenerator(ITextBuffer textBuffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider)
+    protected ClassCompletionGenerator(ITextBuffer textBuffer, ProjectConfigurationManager completionUtils, ColorIconGenerator colorIconGenerator, DescriptionGenerator descriptionGenerator, SettingsProvider settingsProvider, CompletionConfiguration completionConfiguration)
     {
         _textBuffer = textBuffer;
         _completionUtils = completionUtils;
@@ -27,8 +29,9 @@ internal abstract class ClassCompletionGenerator : IDisposable
         _colorIconGenerator = colorIconGenerator;
         _descriptionGenerator = descriptionGenerator;
         _settingsProvider = settingsProvider;
-
+        _completionConfiguration = completionConfiguration;
         _settingsProvider.OnSettingsChanged += SettingsChangedAsync;
+        _completionConfiguration.ConfigurationUpdated += ConfigurationChanged;
     }
 
     /// <summary>
@@ -449,6 +452,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
     public virtual void Dispose()
     {
         _settingsProvider.OnSettingsChanged -= SettingsChangedAsync;
+        _completionConfiguration.ConfigurationUpdated -= ConfigurationChanged;
     }
 
     private Task SettingsChangedAsync(TailwindSettings settings)
@@ -458,5 +462,10 @@ internal abstract class ClassCompletionGenerator : IDisposable
         _projectCompletionValues = _completionUtils.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
 
         return Task.CompletedTask;
+    }
+
+    private void ConfigurationChanged()
+    {
+        _projectCompletionValues = _completionUtils.GetCompletionConfigurationByFilePath(_textBuffer.GetFileName());
     }
 }
