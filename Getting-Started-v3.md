@@ -56,7 +56,7 @@ Settings for this extension can be updated in **Tools > Options > Tailwind CSS I
 | Show color previews | General | Color previews for color classes | `true` |
 | Minify builds | Build | Use of `--minify` when building | `false` |
 | Default output file name | Build | Output file name template to be used when not specificially specified. Use `{0}` to reference the original input file's name. | `{0}.output.css` |
-| Build type | Build | <ul><li>`Default`: Tailwind `--watch`, on project build</li><li>`Manual`: once, Ctrl+1, Ctrl+2/3</li><li>`OnBuild`: once, on project build</li><li>`OnSave`: once, on file save</li><li>`ManualJIT`: Tailwind `--watch`, Ctrl+1, Ctrl+2/3</li><li>`None`</li></ul> | `Default` |
+| Build type | Build | <ul><li>`Default`: Tailwind `--watch`, on project build</li><li>`Manual`: once, Ctrl+1, Ctrl+1/2/3</li><li>`OnBuild`: once, on project build</li><li>`OnSave`: once, on file save</li><li>`ManualJIT`: Tailwind `--watch`, Ctrl+1, Ctrl+2/3</li><li>`None`</li></ul> | `Default` |
 | OnSave trigger: file extensions | Build | File extensions which will trigger the OnSave build event. Only takes effect when \"Build type\" is set to OnSave. | `.css;.html;.cshtml;.razor;.js` |
 | Tailwind CLI path | Build | The path to the standalone Tailwind CLI. If `UseCli` is set to `true` in a project, building will use this file instead of `npx`. | |
 | Verbose build | Build | Shows full build log | `false` |

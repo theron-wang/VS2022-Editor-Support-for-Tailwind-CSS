@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.13.1 (June 5h, 2025)
+
+- Add Ctrl+1, Ctrl+1 shortcut for default build
+
 ## 1.10.13 (June 5th, 2025)
 
 - Allow for build `--minify` to be specified on a per-file basis ([#115](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/115))
