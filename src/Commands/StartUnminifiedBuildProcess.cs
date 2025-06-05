@@ -9,8 +9,8 @@ using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense;
 
-[Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.StartBuildProcessCmdId)]
-internal sealed class StartBuildProcess : BaseCommand<StartBuildProcess>
+[Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.StartUnminifyBuildProcessCmdId)]
+internal sealed class StartUnminifiedBuildProcess : BaseCommand<StartUnminifiedBuildProcess>
 {
     protected override async Task InitializeCompletedAsync()
     {
@@ -33,6 +33,6 @@ internal sealed class StartBuildProcess : BaseCommand<StartBuildProcess>
     {
         await BuildProcess.InitializeAsync();
 
-        BuildProcess.BuildAll(BuildBehavior.Default);
+        BuildProcess.BuildAll(BuildBehavior.Unminified);
     }
 }

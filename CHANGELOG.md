@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.10.13 (June 5th, 2025)
+
+- Allow for build `--minify` to be specified on a per-file basis ([#115](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/115))
+
 ## 1.10.12 (May 27th, 2025)
 
 - Support blobs for `@source`

@@ -82,6 +82,7 @@ Settings for this extension can be updated in **Tools > Options > Tailwind CSS I
 - **`BuildFiles`**: List of relative input file paths to build with the project.
   - **`Input`**: Input CSS file (one output per input).
   - **`Output`**: Output CSS file.
+  - **`Behavior`**: How the input file should be built; `Default` uses global extension settings (valid values: `Default`, `Minified`, `Unminified`)
 - **`PackageConfigurationFile`**: Relative path to `package.json`, used to determine custom build scripts defined in extension settings.
 - **`UseCli`**: If `true`, uses the Tailwind CLI (if installed and configured) instead of `npx @tailwindcss/cli`.
 - **`CustomRegexes`**: Custom regexes for completions, sorting, linting, etc., with separate options for Razor, HTML, and JS.

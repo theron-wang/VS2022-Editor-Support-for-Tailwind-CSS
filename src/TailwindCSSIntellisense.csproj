@@ -83,6 +83,7 @@
     <Compile Include="Commands\SetUpAndUseTailwindCli.cs" />
     <Compile Include="Commands\SetUpTailwindWs.cs" />
     <Compile Include="Commands\SetUpAndInstallTailwind.cs" />
+    <Compile Include="Commands\StartUnminifiedBuildProcess.cs" />
     <Compile Include="Commands\StartMinifyBuildProcess.cs" />
     <Compile Include="Commands\StopBuildProcess.cs" />
     <Compile Include="Commands\StartBuildProcess.cs" />
@@ -171,6 +172,7 @@
     <Compile Include="QuickInfo\CssQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\HtmlQuickInfoSourceProvider.cs" />
     <Compile Include="QuickInfo\QuickInfoSource.cs" />
+    <Compile Include="Settings\BuildBehavior.cs" />
     <Compile Include="Settings\BuildPair.cs" />
     <Compile Include="Settings\ConfigurationFile.cs" />
     <Compile Include="Settings\CustomRegexes.cs" />

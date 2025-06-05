@@ -33,11 +33,10 @@ internal sealed class TailwindBuildProcess : IDisposable
     [Import]
     internal ProjectConfigurationManager ProjectConfigurationManager { get; set; } = null!;
 
-    private Dictionary<string, string> _inputToOutputFile = [];
+    private Dictionary<string, BuildSettings> _inputFileToBuildInfo = [];
 
     private bool _initialized;
     private bool _subscribed;
-    private bool _minify;
 
     private bool _startingBuilds;
 
@@ -137,7 +136,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         // Restart process since SetFilePathsAsync stops the process
         if (processActive)
         {
-            BuildAll(_minify);
+            BuildAll(BuildBehavior.Default);
         }
     }
 
@@ -163,7 +162,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             if (AreProcessesActive())
             {
                 EndAllProcesses();
-                BuildAll(_settings.AutomaticallyMinify);
+                BuildAll(BuildBehavior.Default);
             }
         }
 
@@ -171,7 +170,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         if (_settings.BuildType == BuildProcessOptions.OnSave && _settings.OnSaveTriggerFileExtensions.Contains(extension))
         {
             ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync("Tailwind CSS: Building..."));
-            BuildAll(_settings.AutomaticallyMinify);
+            BuildAll(BuildBehavior.Default);
         }
     }
 
@@ -179,16 +178,16 @@ internal sealed class TailwindBuildProcess : IDisposable
     {
         if (_settings.BuildType != BuildProcessOptions.Manual && _settings.BuildType != BuildProcessOptions.ManualJIT)
         {
-            BuildAll(_settings.AutomaticallyMinify);
+            BuildAll(BuildBehavior.Default);
         }
     }
 
     /// <summary>
     /// Starts the build process
     /// </summary>
-    internal void BuildAll(bool minify = false)
+    internal void BuildAll(BuildBehavior buildBehavior)
     {
-        if (_settings.ConfigurationFiles.Count == 0 || _inputToOutputFile == null || _inputToOutputFile.Count == 0 || _settings.BuildType == BuildProcessOptions.None)
+        if (_settings.ConfigurationFiles.Count == 0 || _inputFileToBuildInfo == null || _inputFileToBuildInfo.Count == 0 || _settings.BuildType == BuildProcessOptions.None)
         {
             return;
         }
@@ -197,9 +196,19 @@ internal sealed class TailwindBuildProcess : IDisposable
 
         try
         {
-            foreach (var pair in _inputToOutputFile)
+            foreach (var pair in _inputFileToBuildInfo)
             {
-                BuildOne(pair, minify);
+                BuildOne(pair.Key, pair.Value.Output, buildBehavior switch
+                {
+                    BuildBehavior.Minified => true,
+                    BuildBehavior.Unminified => false,
+                    BuildBehavior.Default or _ => pair.Value.Behavior switch
+                    {
+                        BuildBehavior.Minified => true,
+                        BuildBehavior.Unminified => false,
+                        BuildBehavior.Default or _ => _settings.AutomaticallyMinify
+                    },
+                });
             }
         }
         finally
@@ -208,20 +217,18 @@ internal sealed class TailwindBuildProcess : IDisposable
         }
     }
 
-    private void BuildOne(KeyValuePair<string, string> pair, bool minify = false)
+    private void BuildOne(string input, string output, bool minify = false)
     {
         ProjectCompletionValues config;
         try
         {
             // V4
-            config = ProjectConfigurationManager.GetCompletionConfigurationByConfigFilePath(pair.Key);
+            config = ProjectConfigurationManager.GetCompletionConfigurationByConfigFilePath(input);
         }
         catch
         {
-            config = ProjectConfigurationManager.GetCompletionConfigurationByFilePath(pair.Key);
+            config = ProjectConfigurationManager.GetCompletionConfigurationByFilePath(input);
         }
-
-        _minify = minify;
 
         var hasScript = false;
         string? packageJsonPath = null;
@@ -241,8 +248,8 @@ internal sealed class TailwindBuildProcess : IDisposable
         var dir = Path.GetDirectoryName(config.FilePath);
         var configFile = Path.GetFileName(config.FilePath);
 
-        var inputFile = PathHelpers.GetRelativePath(pair.Key, dir)!;
-        var outputFile = PathHelpers.GetRelativePath(pair.Value, dir)!;
+        var inputFile = PathHelpers.GetRelativePath(input, dir)!;
+        var outputFile = PathHelpers.GetRelativePath(output, dir)!;
 
         if (_settings.BuildType == BuildProcessOptions.OnSave)
         {
@@ -252,7 +259,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             {
                 _secondaryProcess!.StandardInput.WriteLine($"npm run {_settings.BuildScript}");
             }
-            else if (_outputFileToProcesses.TryGetValue(pair.Value, out var process) && IsProcessActive(process))
+            else if (_outputFileToProcesses.TryGetValue(output, out var process) && IsProcessActive(process))
             {
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
@@ -274,7 +281,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                 }
                 else if (process is not null && !IsProcessActive(process))
                 {
-                    _outputFileToProcesses.Remove(pair.Value);
+                    _outputFileToProcesses.Remove(output);
                     _processToIsMinify.Remove(process);
                 }
 
@@ -293,7 +300,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     PostSetupProcess(process);
 
-                    _outputFileToProcesses[pair.Value] = process;
+                    _outputFileToProcesses[output] = process;
                     _processToIsMinify[process] = minify;
                 }
                 else if (_settings.OverrideBuild)
@@ -340,7 +347,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                 if (_settings.OverrideBuild == false || !hasScript || string.IsNullOrWhiteSpace(_settings.BuildScript))
                 {
-                    if (_outputFileToProcesses.TryGetValue(pair.Value, out var process) && IsProcessActive(process))
+                    if (_outputFileToProcesses.TryGetValue(output, out var process) && IsProcessActive(process))
                     {
                         return;
                     }
@@ -372,7 +379,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                     process = CreateAndStartProcess(processInfo);
                     PostSetupProcess(process);
 
-                    _outputFileToProcesses[pair.Value] = process;
+                    _outputFileToProcesses[output] = process;
                     _processToIsMinify[process] = minify;
                 }
                 else if (_settings.OverrideBuild)
@@ -517,7 +524,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         }
         else
         {
-            buildFiles = buildFiles.Select(b => new BuildPair() { Input = b.Input, Output = b.Output }).ToList();
+            buildFiles = buildFiles.Select(b => new BuildPair() { Input = b.Input, Output = b.Output, Behavior = b.Behavior }).ToList();
         }
 
         var buildFilesFiltered = buildFiles
@@ -529,11 +536,15 @@ internal sealed class TailwindBuildProcess : IDisposable
                 return f;
             });
 
-        _inputToOutputFile = [];
+        _inputFileToBuildInfo = [];
 
         foreach (var pair in buildFilesFiltered)
         {
-            _inputToOutputFile[pair.Input] = pair.Output;
+            _inputFileToBuildInfo[pair.Input] = new()
+            {
+                Behavior = pair.Behavior,
+                Output = pair.Output
+            };
         }
 
         EndAllProcesses();
@@ -583,11 +594,11 @@ internal sealed class TailwindBuildProcess : IDisposable
                     });
 
                     var output = _outputFileToProcesses.First(p => p.Value == process).Key;
-                    var pair = _inputToOutputFile.First(p => p.Value == output);
+                    var pair = _inputFileToBuildInfo.First(p => p.Value.Output == output);
                     var minify = _processToIsMinify.TryGetValue(process, out var isMinify) && isMinify;
 
                     EndProcess(process);
-                    BuildOne(pair, minify);
+                    BuildOne(pair.Key, pair.Value.Output, minify);
                 }
             }
             else if (e.Data.Contains("Error"))
@@ -745,5 +756,11 @@ internal sealed class TailwindBuildProcess : IDisposable
         process.BeginErrorReadLine();
         process.OutputDataReceived += OutputDataReceived;
         process.ErrorDataReceived += OutputDataReceived;
+    }
+
+    private class BuildSettings
+    {
+        public string Output { get; set; } = "";
+        public BuildBehavior Behavior { get; set; } = BuildBehavior.Default;
     }
 }

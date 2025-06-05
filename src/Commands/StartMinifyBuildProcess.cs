@@ -33,6 +33,6 @@ internal sealed class StartMinifyBuildProcess : BaseCommand<StartMinifyBuildProc
     {
         await BuildProcess.InitializeAsync();
 
-        BuildProcess.BuildAll(true);
+        BuildProcess.BuildAll(BuildBehavior.Minified);
     }
 }

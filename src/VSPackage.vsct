@@ -139,11 +139,20 @@
 				<CommandFlag>DynamicVisibility</CommandFlag>
 				<CommandFlag>DefaultInvisible</CommandFlag>
 				<Strings>
-					<ButtonText>Build and minify Tailwind CSS</ButtonText>
+					<ButtonText>Build Tailwind CSS and minify all</ButtonText>
+				</Strings>
+			</Button>
+			
+			<Button guid="guidVSPackageCmdSet" id="StartUnminifyBuildProcessCmdId" priority="0x0102" type="Button">
+				<Parent guid="guidVSPackageCmdSet" id="BuildMenuGroup"/>
+				<CommandFlag>DynamicVisibility</CommandFlag>
+				<CommandFlag>DefaultInvisible</CommandFlag>
+				<Strings>
+					<ButtonText>Build Tailwind CSS and unminify all</ButtonText>
 				</Strings>
 			</Button>
 
-			<Button guid="guidVSPackageCmdSet" id="StopBuildProcessCmdId" priority="0x0102" type="Button">
+			<Button guid="guidVSPackageCmdSet" id="StopBuildProcessCmdId" priority="0x0103" type="Button">
 				<Parent guid="guidVSPackageCmdSet" id="BuildMenuGroup"/>
 				<Icon guid="ImageCatalogGuid" id="CancelBuild" />
 				<CommandFlag>IconIsMoniker</CommandFlag>
@@ -176,16 +185,6 @@
 				<Parent guid="guidVSPackageCmdSet" id="SetupMenuGroup"/>
 				<Strings>
 					<ButtonText>Set up using global NPM installation</ButtonText>
-				</Strings>
-			</Button>
-			
-			<Button guid="guidVSPackageCmdSet" id="UpgradeTailwindCssCmdId" priority="0x0101" type="Button">
-				<Parent guid="guidVSPackageCmdSet" id="ProjMenuGroup"/>
-				<Icon guid="guidImages" id="tailwindLogo" />
-				<CommandFlag>DynamicVisibility</CommandFlag>
-				<CommandFlag>DefaultInvisible</CommandFlag>
-				<Strings>
-					<ButtonText>Upgrade Tailwind CSS to v4.0</ButtonText>
 				</Strings>
 			</Button>
 			
@@ -269,7 +268,7 @@
 			<Bitmap guid="guidImages" href="Resources\tailwindlogo.png" usedList="tailwindLogo"/>
 		</Bitmaps>
 	</Commands>
-
+	
 	<KeyBindings>
 		<KeyBinding guid="guidVSPackageCmdSet" id="StartBuildProcessCmdId" editor="guidVSStd97" key1="1" mod1="CONTROL" key2="2" mod2="CONTROL" />
 		<KeyBinding guid="guidVSPackageCmdSet" id="StartMinifyBuildProcessCmdId" editor="guidVSStd97" key1="1" mod1="CONTROL" key2="3" mod2="CONTROL" />
@@ -288,8 +287,9 @@
 			<IDSymbol name="BuildMenuGroup" value="0x1030" />
 			<IDSymbol name="ProjMenuGroup" value="0x1040" />
 			<IDSymbol name="ToolsMenuGroup" value="0x1050" />
-			<IDSymbol name="OutputMenuGroup" value="0x01060" />
-			<IDSymbol name="SetupMenuGroup" value="0x01070" />
+			<IDSymbol name="OutputMenuGroup" value="0x1060" />
+			<IDSymbol name="SetupMenuGroup" value="0x1070" />
+			
 			<IDSymbol name="SetAsConfigFileCmdId" value="0x0100" />
 			<IDSymbol name="SetAsCssFileCmdId" value="0x0101" />
 			<IDSymbol name="RemoveAsConfigFileCmdId" value="0x0103" />
@@ -297,22 +297,21 @@
 			<IDSymbol name="RemoveAsOutputCssFileCmdId" value="0x0105" />
 			<IDSymbol name="StartBuildProcessCmdId" value="0x0106" />
 			<IDSymbol name="StartMinifyBuildProcessCmdId" value="0x0107" />
-			<IDSymbol name="StopBuildProcessCmdId" value="0x0108" />
+			<IDSymbol name="StartUnminifyBuildProcessCmdId" value="0x0108" />
+			<IDSymbol name="StopBuildProcessCmdId" value="0x0109" />
 			
-			<IDSymbol name="SetUpTailwindMenu" value="0x0109" />
-			<IDSymbol name="SetUpAndInstallTailwindCmdId" value="0x0110" />
-			<IDSymbol name="SetUpTailwindCliCmdId" value="0x0111" />
-			<IDSymbol name="SetUpTailwindWsCmdId" value="0x0112" />
-			<IDSymbol name="SetUpTailwindGlobalCmdId" value="0x0113" />
+			<IDSymbol name="SetUpTailwindMenu" value="0x0110" />
+			<IDSymbol name="SetUpAndInstallTailwindCmdId" value="0x0111" />
+			<IDSymbol name="SetUpTailwindCliCmdId" value="0x0112" />
+			<IDSymbol name="SetUpTailwindWsCmdId" value="0x0113" />
+			<IDSymbol name="SetUpTailwindGlobalCmdId" value="0x0114" />
 			
-			<IDSymbol name="SortInOpenFileCmdId" value="0x0114" />
-			<IDSymbol name="SortEntireSolutionCmdId" value="0x0115" />
-			<IDSymbol name="SetAsPackageConfigFileCmdId" value="0x0116" />
-			<IDSymbol name="RemoveAsPackageConfigFileCmdId" value="0x0117" />
-			<IDSymbol name="SetAsOutputCssFileMenu" value="0x0118" />
+			<IDSymbol name="SortInOpenFileCmdId" value="0x0115" />
+			<IDSymbol name="SortEntireSolutionCmdId" value="0x0116" />
+			<IDSymbol name="SetAsPackageConfigFileCmdId" value="0x0117" />
+			<IDSymbol name="RemoveAsPackageConfigFileCmdId" value="0x0118" />
+			<IDSymbol name="SetAsOutputCssFileMenu" value="0x0119" />
 			<IDSymbol name="SetAsOutputCssFileCmdId" value="0x0200" />
-			
-			<IDSymbol name="UpgradeTailwindCssCmdId" value="0x0119" />
 		</GuidSymbol>
 
 		<GuidSymbol name="guidImages" value="{2320d8cb-5f2f-4c20-af58-1877e2b1d14a}" >

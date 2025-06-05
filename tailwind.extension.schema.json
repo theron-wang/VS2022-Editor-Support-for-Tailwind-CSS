@@ -42,13 +42,18 @@
 					"Output": {
 						"type": "string",
 						"description": "The output file for the build."
+					},
+					"Behavior": {
+						"type": "string",
+						"enum": [ "Default", "Minified", "Unminified" ],
+            "description": "The --minify behavior for the build file."
 					}
 				},
 				"required": [ "Input", "Output" ]
 			}
 		},
 		"PackageConfigurationFile": {
-			"type": "string",
+			"type": [ "string", "null" ],
 			"description": "The path to the package configuration file."
 		},
 		"CustomRegexes": {
