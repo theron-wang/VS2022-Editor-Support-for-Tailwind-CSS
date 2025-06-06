@@ -53,21 +53,13 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
         if (triggerPoint != null && IsInClassScope(session, out var classSpan) && classSpan != null)
         {
             var fullText = classSpan.Value.GetText();
-            var classText = fullText.Split(':').Last();
 
-            var isImportant = ImportantModifierHelper.IsImportantModifier(classText);
-
-            if (isImportant)
-            {
-                classText = classText.Trim('!');
-            }
-
-            if (!_projectConfigurationValues.IsClassAllowed(classText))
+            if (!_projectConfigurationValues.IsClassAllowed(fullText))
             {
                 return Task.FromResult<QuickInfoItem?>(null);
             }
 
-            var desc = _descriptionGenerator.GetDescription(classText, _projectConfigurationValues);
+            var desc = _descriptionGenerator.GetDescription(fullText, _projectConfigurationValues);
 
             var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
 
@@ -76,7 +68,7 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 session.Properties.AddProperty(PropertyKey, true);
 
                 var totalVariant = fullText.Contains(':') ?
-                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.Length - classText.Length - 1), _projectConfigurationValues) :
+                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.LastIndexOf(':')), _projectConfigurationValues) :
                     [];
 
                 ContainerElement descriptionFormatted;
@@ -85,12 +77,12 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
                 {
                     descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormatted(fullText,
                             totalVariant.LastOrDefault(),
-                            totalVariant.Length > 1 ? totalVariant.Take(totalVariant.Length - 1).ToArray() : [],
-                            desc!, isImportant);
+                            totalVariant.Length > 1 ? [.. totalVariant.Take(totalVariant.Length - 1)] : [],
+                            desc!);
                 }
                 else
                 {
-                    descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormattedV4(fullText, totalVariant.FirstOrDefault(), desc!, isImportant);
+                    descriptionFormatted = DescriptionUIHelper.GetDescriptionAsUIFormattedV4(fullText, totalVariant.FirstOrDefault(), desc!);
                 }
 
                 return Task.FromResult<QuickInfoItem?>(new QuickInfoItem(span, descriptionFormatted));

@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.10.13.1 (June 5h, 2025)
+## 1.10.14 (June 6th, 2025)
+
+- Handle v4 prefixes that go in the very beginning, separated with a colon
+- Bug fixes for classes with the important modifier
+- Properly handle arbitrary classes with parenthesis (i.e. `border-x-(--my-var)`)
+
+## 1.10.13.1 (June 5th, 2025)
 
 - Add Ctrl+1, Ctrl+1 shortcut for default build
 

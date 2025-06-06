@@ -216,11 +216,23 @@ internal sealed class DescriptionGenerator : IDisposable
     /// <param name="className">The unprocessed text: <c>hover:bg-green-800/90</c>, <c>min-w-[10px]</c></param>
     /// <param name="shouldFormat">true iff the description should be formatted</param>
     /// <returns>The description for the given class</returns>
-    internal string? GetDescription(string className, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
+    internal string? GetDescription(string className, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true, bool ignorePrefix = false)
     {
+        if (!ignorePrefix && projectCompletionValues.Version >= TailwindVersion.V4 && string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
+        {
+            if (className.StartsWith(projectCompletionValues.Prefix))
+            {
+                className = className.Substring(projectCompletionValues.Prefix!.Length);
+            }
+            else
+            {
+                return "";
+            }
+        }
+
         className = className.Split(':').Last();
 
-        if (string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
+        if (!ignorePrefix && projectCompletionValues.Version == TailwindVersion.V3 && string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
         {
             if (className.StartsWith(projectCompletionValues.Prefix))
             {
@@ -746,7 +758,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (!projectCompletionValues.DescriptionMapper.TryGetValue(key, out var description))
         {
-            if (!negative || projectCompletionValues.Version != TailwindVersion.V4)
+            if (!negative || projectCompletionValues.Version < TailwindVersion.V4)
             {
                 return null;
             }
@@ -852,7 +864,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
             if (!projectCompletionValues.DescriptionMapper.TryGetValue(key, out var description) && !projectCompletionValues.CustomDescriptionMapper.TryGetValue(key, out description))
             {
-                if (!negative || projectCompletionValues.Version != TailwindVersion.V4)
+                if (!negative || projectCompletionValues.Version < TailwindVersion.V4)
                 {
                     continue;
                 }
@@ -1274,7 +1286,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
     private string? GetDescriptionForParenthesisClass(string stem, string parenthesis, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
-        if (projectCompletionValues.Version != TailwindVersion.V4)
+        if (projectCompletionValues.Version < TailwindVersion.V4)
         {
             return null;
         }
@@ -1305,11 +1317,11 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (special is null)
         {
-            return GetDescriptionForArbitraryClass(stem, parenthesis, projectCompletionValues, shouldFormat);
+            return GetDescriptionForArbitraryClass(stem, $"[{parenthesis}]", projectCompletionValues, shouldFormat);
         }
         else
         {
-            return GetDescriptionForArbitraryClass(stem, $"{special}:{parenthesis}", projectCompletionValues, shouldFormat);
+            return GetDescriptionForArbitraryClass(stem, $"[{special}:{parenthesis}]", projectCompletionValues, shouldFormat);
         }
     }
 

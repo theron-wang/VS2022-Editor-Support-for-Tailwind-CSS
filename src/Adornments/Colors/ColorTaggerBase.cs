@@ -131,6 +131,21 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
 
     private byte[]? GetRgbaFromClass(string text)
     {
+        // V4
+        var v4Removed = false;
+        if (string.IsNullOrWhiteSpace(_projectConfigurationValues.Prefix) == false)
+        {
+            if (text.StartsWith(_projectConfigurationValues.Prefix))
+            {
+                text = text.Substring(_projectConfigurationValues.Prefix!.Length);
+                v4Removed = true;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
         text = text.Split(':').Last();
 
         if (ImportantModifierHelper.IsImportantModifier(text))
@@ -138,7 +153,8 @@ internal abstract class ColorTaggerBase : ITagger<IntraTextAdornmentTag>, IDispo
             text = text.Trim('!');
         }
 
-        if (string.IsNullOrWhiteSpace(_projectConfigurationValues.Prefix) == false)
+        // V3
+        if (!v4Removed && string.IsNullOrWhiteSpace(_projectConfigurationValues.Prefix) == false)
         {
             if (text.StartsWith(_projectConfigurationValues.Prefix))
             {

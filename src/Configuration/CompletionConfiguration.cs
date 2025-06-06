@@ -119,7 +119,14 @@ public sealed partial class CompletionConfiguration
                 projectCompletionValues.NotApplicablePaths = [.. config.ContentPaths.Where(c => c.StartsWith("!")).Select(c => c.Trim('!'))];
 
                 LastConfig = config;
-                projectCompletionValues.Prefix = config.Prefix;
+                if (version >= TailwindVersion.V4 && !string.IsNullOrWhiteSpace(config.Prefix))
+                {
+                    projectCompletionValues.Prefix = $"{config.Prefix}:";
+                }
+                else
+                {
+                    projectCompletionValues.Prefix = config.Prefix;
+                }
                 LoadGlobalConfiguration(projectCompletionValues, config);
                 projectCompletionValues.Variants = [.. projectCompletionValues.Variants.Distinct()];
 

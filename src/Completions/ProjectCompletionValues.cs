@@ -62,6 +62,23 @@ public class ProjectCompletionValues
     /// <param name="className">The class to check</param>
     public bool IsClassAllowed(string className)
     {
+        if (Version == TailwindVersion.V3)
+        {
+            className = className.Trim('!').Split(':').Last();
+
+            if (!string.IsNullOrWhiteSpace(Prefix))
+            {
+                if (className.StartsWith(Prefix))
+                {
+                    className = className.Substring(Prefix!.Length);
+                }
+                else if (className.StartsWith($"-{Prefix}"))
+                {
+                    className = className.Substring(Prefix!.Length + 1);
+                }
+            }
+        }
+
         return !Blocklist.Contains(className);
     }
 

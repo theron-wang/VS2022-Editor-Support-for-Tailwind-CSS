@@ -173,7 +173,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                 {
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
                         var character = GetTypeChar(pvaIn);
-                        if (_currentSession == null || character == ' ' || character == '/')
+                        if (_currentSession == null || character == ' ' || character == '/' || (!string.IsNullOrWhiteSpace(classText) && character == '!'))
                         {
                             _currentSession?.Dismiss();
                             StartSession();
@@ -193,7 +193,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                         {
                             break;
                         }
-                        if (_currentSession == null || classText.EndsWith("/"))
+                        if (_currentSession == null || classText.EndsWith("/") || classText.Trim() == "!")
                         {
                             _currentSession?.Dismiss();
                             StartSession();

@@ -37,7 +37,7 @@ internal class CompletionTooltipCustomizationProvider : IUIElementProvider<Compl
             var isImportant = ImportantModifierHelper.IsImportantModifier(itemToRender.DisplayText);
 
             // Description property contains the class text parameter for GetDescription
-            var desc = DescriptionGenerator.GetDescription(itemToRender.Description, project);
+            var desc = DescriptionGenerator.GetDescription(itemToRender.Description, project, ignorePrefix: true);
 
             if (desc is null)
             {

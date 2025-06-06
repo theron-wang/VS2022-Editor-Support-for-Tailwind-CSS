@@ -27,9 +27,8 @@ internal static class DescriptionUIHelper
     /// <param name="variantTotal">The full variant adjustment, i.e. &amp;[open]:hover</param>
     /// <param name="mediaQueries">A list of media queries</param>
     /// <param name="desc">The description, already formatted via DescriptionGenerator</param>
-    /// <param name="isImportant">!important or not</param>
     /// <returns></returns>
-    internal static ContainerElement GetDescriptionAsUIFormatted(string fullClass, string variantTotal, string[] mediaQueries, string desc, bool isImportant)
+    internal static ContainerElement GetDescriptionAsUIFormatted(string fullClass, string variantTotal, string[] mediaQueries, string desc)
     {
         variantTotal ??= "&";
         var mediaQueryElements = new List<ClassifiedTextElement>();
@@ -57,7 +56,7 @@ internal static class DescriptionUIHelper
 
         foreach (var l in desc.Split('\n'))
         {
-            descriptionLines.Add(FormatKeyValuePair(l, totalIndent, isImportant));
+            descriptionLines.Add(FormatKeyValuePair(l, totalIndent, ImportantModifierHelper.IsImportantModifier(fullClass)));
         }
 
         var descriptionElement = new ContainerElement(
@@ -95,7 +94,7 @@ internal static class DescriptionUIHelper
     /// <param name="desc">The description, already formatted via DescriptionGenerator</param>
     /// <param name="isImportant">!important or not</param>
     /// <returns></returns>
-    internal static ContainerElement GetDescriptionAsUIFormattedV4(string fullClass, string variantTotal, string desc, bool isImportant)
+    internal static ContainerElement GetDescriptionAsUIFormattedV4(string fullClass, string variantTotal, string desc)
     {
         variantTotal ??= "";
 
@@ -131,7 +130,7 @@ internal static class DescriptionUIHelper
 
                 var keyValuePair = $"{parts[0].Trim()};";
 
-                descriptionLines.Add(FormatKeyValuePair(keyValuePair, totalIndent, isImportant));
+                descriptionLines.Add(FormatKeyValuePair(keyValuePair, totalIndent, ImportantModifierHelper.IsImportantModifier(fullClass)));
 
                 trimmed = trimmed.Replace(keyValuePair, "").Trim();
             }
@@ -190,7 +189,7 @@ internal static class DescriptionUIHelper
                 trimmed = trimmed.TrimStart('}').Trim();
             }
 
-            descriptionLines.Add(FormatKeyValuePair(trimmed, totalIndent, isImportant));
+            descriptionLines.Add(FormatKeyValuePair(trimmed, totalIndent, ImportantModifierHelper.IsImportantModifier(fullClass)));
         }
 
 

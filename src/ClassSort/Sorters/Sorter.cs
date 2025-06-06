@@ -115,6 +115,14 @@ internal abstract class Sorter
             })
             .ThenBy(className =>
             {
+                if (projectCompletionValues.Version >= TailwindVersion.V4)
+                {
+                    if (!string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) && className.StartsWith(projectCompletionValues.Prefix))
+                    {
+                        className = className.Substring(projectCompletionValues.Prefix!.Length);
+                    }
+                }
+
                 if (className.Contains(':'))
                 {
                     var variants = className.Split(':');
@@ -185,7 +193,15 @@ internal abstract class Sorter
 
                 var classToSearch = className;
 
-                if (string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
+                if (projectCompletionValues.Version >= TailwindVersion.V4)
+                {
+                    if (!string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) && className.StartsWith(projectCompletionValues.Prefix))
+                    {
+                        classToSearch = className.Substring(projectCompletionValues.Prefix!.Length);
+                    }
+                }
+
+                if (projectCompletionValues.Version == TailwindVersion.V3 && string.IsNullOrWhiteSpace(projectCompletionValues.Prefix) == false)
                 {
                     classToSearch = classToSearch
                         .TrimPrefix(projectCompletionValues.Prefix, StringComparison.InvariantCultureIgnoreCase)
@@ -202,6 +218,8 @@ internal abstract class Sorter
                         return -1;
                     }
                 }
+
+                classToSearch = classToSearch.Split(':').Last();
 
                 if (classToSearch.Contains('-'))
                 {

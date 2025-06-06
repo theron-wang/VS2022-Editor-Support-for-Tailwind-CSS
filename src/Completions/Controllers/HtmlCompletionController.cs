@@ -171,7 +171,7 @@ internal sealed class HtmlCommandFilter : IOleCommandTarget
                 {
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
                         var character = GetTypeChar(pvaIn);
-                        if (_currentSession == null || character == ' ' || character == '/')
+                        if (_currentSession == null || character == ' ' || character == '/' || (!string.IsNullOrWhiteSpace(classText?.Split(' ')?.Last()) && character == '!'))
                         {
                             _currentSession?.Dismiss();
                             StartSession();
@@ -192,7 +192,7 @@ internal sealed class HtmlCommandFilter : IOleCommandTarget
                         {
                             break;
                         }
-                        if (_currentSession == null || classText.EndsWith("/"))
+                        if (_currentSession == null || classText.EndsWith("/") || (classText.EndsWith("!") && !string.IsNullOrWhiteSpace(classText.Split(' ').Last())))
                         {
                             _currentSession?.Dismiss();
                             StartSession();
