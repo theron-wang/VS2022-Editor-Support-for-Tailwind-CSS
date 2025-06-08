@@ -89,7 +89,7 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
                             break;
                         case "@media":
                             completions = [];
-                            foreach (var screen in _projectCompletionValues.Screen)
+                            foreach (var screen in _projectCompletionValues.Breakpoints)
                             {
                                 completions.Add(new($"screen({screen})", $"screen({screen})", $"screen({screen})", _completionUtils.TailwindLogo, null));
                             }

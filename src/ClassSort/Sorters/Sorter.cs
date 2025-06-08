@@ -135,6 +135,26 @@ internal abstract class Sorter
                             {
                                 max = Math.Max(max, index);
                             }
+
+                            var potentialBreakpointOrContainer = variant.Split('-').Last().Trim('@');
+
+                            if (projectCompletionValues.Breakpoints.TryGetValue(potentialBreakpointOrContainer, out var breakpoint) &&
+                                variantOrder.TryGetValue(variant.Replace(potentialBreakpointOrContainer, "{b}"), out index))
+                            {
+                                max = Math.Max(max, index + projectCompletionValues.Breakpoints.Count(b => CssSizeConverter.CssSizeToPixels(b.Value) < CssSizeConverter.CssSizeToPixels(breakpoint)));
+                            }
+
+                            if (projectCompletionValues.Containers.TryGetValue(potentialBreakpointOrContainer, out var container) &&
+                                variantOrder.TryGetValue(variant.Replace(potentialBreakpointOrContainer, "{c}"), out index))
+                            {
+                                max = Math.Max(max, index + projectCompletionValues.Containers.Count(c => CssSizeConverter.CssSizeToPixels(c.Value) < CssSizeConverter.CssSizeToPixels(breakpoint)));
+                            }
+
+                            if (potentialBreakpointOrContainer.StartsWith("[") && potentialBreakpointOrContainer.EndsWith("]") &&
+                                variantOrder.TryGetValue(variant.Replace(potentialBreakpointOrContainer, "{a}"), out index))
+                            {
+                                max = Math.Max(max, index);
+                            }
                         }
 
                         if (max > -1)
@@ -167,9 +187,9 @@ internal abstract class Sorter
                                     num = variantOrder.Count * 2 + index;
                                 }
                             }
-                            else if (projectCompletionValues.Screen.Contains(variant) == true)
+                            else if (projectCompletionValues.Breakpoints.TryGetValue(variant, out var breakpoint))
                             {
-                                num = variantOrder.Count * 3 + projectCompletionValues.Screen.IndexOf(variant);
+                                num = variantOrder.Count * 3 + projectCompletionValues.Breakpoints.Count(b => CssSizeConverter.CssSizeToPixels(b.Value) < CssSizeConverter.CssSizeToPixels(breakpoint));
                             }
 
                             max = Math.Max(max, num);

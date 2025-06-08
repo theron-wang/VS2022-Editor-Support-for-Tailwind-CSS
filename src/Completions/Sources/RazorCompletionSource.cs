@@ -78,7 +78,7 @@ internal class RazorCompletionSource : ClassCompletionGenerator, ICompletionSour
         var applicableTo = GetApplicableTo(triggerPoint, snapshot);
         var currentClassTotal = classAttributeValueUpToPosition.Split(' ').Last();
 
-        var completions = GetCompletions(applicableTo.GetText(snapshot));
+        var completions = GetCompletions(applicableTo.GetText(snapshot), isRazor: true);
 
         if (completionSets.Count == 1)
         {

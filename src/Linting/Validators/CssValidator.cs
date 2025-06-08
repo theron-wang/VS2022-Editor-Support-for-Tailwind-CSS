@@ -85,7 +85,7 @@ internal class CssValidator : Validator
 
             var screen = text.Replace("@screen", "").Trim().TrimEnd('{').TrimEnd();
 
-            if (_projectCompletionValues.Screen.Contains(screen) == false)
+            if (_projectCompletionValues.Breakpoints.ContainsKey(screen) == false)
             {
                 var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(screen, text.IndexOf("@screen") + 7), screen.Length);
 
@@ -111,7 +111,7 @@ internal class CssValidator : Validator
                     screen = null;
                 }
 
-                if (!string.IsNullOrWhiteSpace(screen) && _projectCompletionValues.Screen.Contains(screen!) == false)
+                if (!string.IsNullOrWhiteSpace(screen) && _projectCompletionValues.Breakpoints.ContainsKey(screen!) == false)
                 {
                     var errorSpan = new SnapshotSpan(_buffer.CurrentSnapshot, span.Span.Start + text.IndexOf(screen, text.IndexOf("screen") + 7), screen!.Length);
 
@@ -193,7 +193,7 @@ internal class CssValidator : Validator
             }
             else if (segments[0] == "screens")
             {
-                error = !_projectCompletionValues.Screen.Contains(string.Join("-", segments.Skip(1)));
+                error = !_projectCompletionValues.Breakpoints.ContainsKey(string.Join("-", segments.Skip(1)));
             }
             else if (_projectConfigurationManager.Configuration.LastConfig is not null)
             {

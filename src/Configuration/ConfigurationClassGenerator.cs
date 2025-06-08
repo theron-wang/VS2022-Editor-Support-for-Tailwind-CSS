@@ -17,11 +17,12 @@ public sealed partial class CompletionConfiguration
         var original = ProjectConfigurationManager.GetUnsetCompletionConfiguration(project.Version);
 
         project.SpacingMapper = original.SpacingMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
-        project.Screen = [.. original.Screen];
+        project.Breakpoints = original.Breakpoints.ToDictionary(p => p.Key, p => p.Value);
+        project.Containers = original.Containers.ToDictionary(p => p.Key, p => p.Value);
         project.ColorMapper = original.ColorMapper.ToDictionary(pair => pair.Key, pair => pair.Value);
         ColorIconGenerator.ClearCache(project);
-        project.Blocklist = new HashSet<string>(config?.Blocklist ?? []);
-        project.CssVariables = original.CssVariables;
+        project.Blocklist = [.. config?.Blocklist ?? []];
+        project.CssVariables = original.CssVariables.ToDictionary(p => p.Key, p => p.Value);
 
         if (config is null)
         {
@@ -46,11 +47,37 @@ public sealed partial class CompletionConfiguration
 
         if (config.OverridenValues.ContainsKey("screens") && GetDictionary(config.OverridenValues["screens"], out dict))
         {
-            project.Screen = dict.Keys.ToList();
+            project.Breakpoints = [];
+
+            foreach (var pair in dict)
+            {
+                project.Breakpoints[pair.Key] = pair.Value.ToString();
+            }
         }
+
         if (config.ExtendedValues.ContainsKey("screens") && GetDictionary(config.ExtendedValues["screens"], out dict))
         {
-            project.Screen.AddRange(dict.Keys.Where(k => project.Screen.Contains(k) == false));
+            foreach (var pair in dict)
+            {
+                project.Breakpoints[pair.Key] = pair.Value.ToString();
+            }
+        }
+
+        if (config.OverridenValues.ContainsKey("v4-container") && GetDictionary(config.OverridenValues["v4-container"], out dict))
+        {
+            project.Containers = [];
+
+            foreach (var pair in dict)
+            {
+                project.Containers[pair.Key] = pair.Value.ToString();
+            }
+        }
+        if (config.ExtendedValues.ContainsKey("v4-container") && GetDictionary(config.ExtendedValues["v4-container"], out dict))
+        {
+            foreach (var pair in dict)
+            {
+                project.Containers[pair.Key] = pair.Value.ToString();
+            }
         }
 
         if (config.OverridenValues.ContainsKey("spacing") && GetDictionary(config.OverridenValues["spacing"], out dict))
@@ -662,7 +689,7 @@ public sealed partial class CompletionConfiguration
             if (config.PluginVariantDescriptions is not null)
             {
                 project.VariantsToDescriptions =
-                    ProjectConfigurationManager.GetUnsetCompletionConfiguration(TailwindVersion.V4).VariantsToDescriptions
+                    ProjectConfigurationManager.GetUnsetCompletionConfiguration(project.Version).VariantsToDescriptions
                     .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
                 foreach (var pair in config.PluginVariantDescriptions)

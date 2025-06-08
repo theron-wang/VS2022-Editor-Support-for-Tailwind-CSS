@@ -21,4 +21,9 @@ internal class RazorQuickInfoSource(ITextBuffer textBuffer, DescriptionGenerator
         span = RazorParser.GetClassAttributeValue(searchPos.Value);
         return span.HasValue;
     }
+
+    protected override string UnescapeClass(string input)
+    {
+        return input.Replace("@@", "@").Replace("@(\"@\")", "@");
+    }
 }

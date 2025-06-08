@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.11.0 (June 8th, 2025)
+
+- Add support for breakpoints and containers
+- Fix razor parsing for functions with the ternary conditional operator ([#116](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/116))
+- Fix razor parsing for functions with string parameters (i.e. `@Foo("bar")`)
+- Properly handle `@@` or `@("@")` escaping in razor, for classes like `@@sm:bg-red-500`
+- Fix an error in v3 projects with a configuration file with no `content` property
+- Fix `.ts` file support for v3 projects
+
 ## 1.10.14 (June 6th, 2025)
 
 - Handle v4 prefixes that go in the very beginning, separated with a colon

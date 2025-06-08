@@ -21,7 +21,8 @@ public class ProjectCompletionValues
     /// V4 and above
     /// </summary>
     internal Dictionary<string, string> VariantsToDescriptions { get; set; } = [];
-    internal List<string> Screen { get; set; } = ["sm", "md", "lg", "xl", "2xl"];
+    internal Dictionary<string, string> Breakpoints { get; set; } = [];
+    internal Dictionary<string, string> Containers { get; set; } = [];
 
     internal string? Prefix { get; set; }
 
@@ -89,7 +90,7 @@ public class ProjectCompletionValues
             Initialized = Initialized,
             Classes = [.. Classes.Select(c => c)],
             Variants = [.. Variants],
-            Screen = [.. Screen],
+            Breakpoints = Breakpoints.ToDictionary(p => p.Key, p => p.Value),
             Prefix = Prefix,
             ColorMapper = new Dictionary<string, string>(ColorMapper),
             SpacingMapper = new Dictionary<string, string>(SpacingMapper),

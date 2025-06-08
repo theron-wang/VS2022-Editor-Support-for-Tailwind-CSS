@@ -118,6 +118,7 @@
     <Compile Include="Configuration\Descriptions\FontSizeDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\GeneratorAggregator.cs" />
     <Compile Include="Helpers\BraceExpander.cs" />
+    <Compile Include="Helpers\CssSizeConverter.cs" />
     <Compile Include="Helpers\KnownModifiers.cs" />
     <Compile Include="Helpers\ClassRegexHelper.cs" />
     <Compile Include="Helpers\ColorHelpers.cs" />

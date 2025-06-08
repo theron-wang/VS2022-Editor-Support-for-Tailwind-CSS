@@ -4,7 +4,7 @@ namespace TailwindCSSIntellisense.Helpers;
 internal class DictionaryHelpers
 {
     /// <summary>
-    /// Merges dict1 into dict2. dict1 values take precedence.
+    /// Merges dict2 into dict1. dict1 values take precedence.
     /// </summary>
     public static void MergeDictionaries<TKey, TValue>(Dictionary<TKey, TValue> dict1, Dictionary<TKey, TValue> dict2)
     {

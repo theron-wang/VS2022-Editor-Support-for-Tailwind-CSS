@@ -440,6 +440,54 @@ internal sealed class DescriptionGenerator : IDisposable
                     return description;
                 }
             }
+
+            var potentialBreakpointOrContainer = variant.Split('-').Last().Trim('@');
+
+            if (projectCompletionValues.Breakpoints.TryGetValue(potentialBreakpointOrContainer, out var breakpoint) &&
+                projectCompletionValues.VariantsToDescriptions.TryGetValue(variant.Replace(potentialBreakpointOrContainer, "{b}"), out description))
+            {
+                if (trim)
+                {
+                    return description
+                        .Replace("{1}", breakpoint)
+                        .Replace("{ {0} }", "").Replace(" {0}", "");
+                }
+                else
+                {
+                    return description.Replace("{1}", breakpoint);
+                }
+            }
+
+            if (projectCompletionValues.Containers.TryGetValue(potentialBreakpointOrContainer, out var container) &&
+                projectCompletionValues.VariantsToDescriptions.TryGetValue(variant.Replace(potentialBreakpointOrContainer, "{c}"), out description))
+            {
+                if (trim)
+                {
+                    return description
+                        .Replace("{1}", container)
+                        .Replace("{ {0} }", "").Replace(" {0}", "");
+                }
+                else
+                {
+                    return description.Replace("{1}", container);
+                }
+            }
+
+            if (potentialBreakpointOrContainer.StartsWith("[") && potentialBreakpointOrContainer.EndsWith("]") &&
+                projectCompletionValues.VariantsToDescriptions.TryGetValue(variant.Replace(potentialBreakpointOrContainer, "{a}"), out description))
+            {
+                if (trim)
+                {
+                    return description
+                        .Replace("{1}", potentialBreakpointOrContainer.Trim('[', ']'))
+                        .Replace("{ {0} }", "").Replace(" {0}", "");
+                }
+                else
+                {
+                    return description.Replace("{1}", potentialBreakpointOrContainer);
+                }
+            }
+
             return null;
         }
 
@@ -574,8 +622,9 @@ internal sealed class DescriptionGenerator : IDisposable
 
             return "";
         }
-        else if (projectCompletionValues.Screen.Contains(variant) || projectCompletionValues.Screen.Contains($"max-{variant}"))
+        else if (projectCompletionValues.Breakpoints.ContainsKey(variant) || projectCompletionValues.Breakpoints.ContainsKey($"max-{variant}"))
         {
+#warning dont forget about v3 and v4 (v4.1 done)
             // TODO: handle screens
             return "";
         }

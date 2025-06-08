@@ -58,7 +58,7 @@ internal class RazorSorter : Sorter
             foreach ((var token, var index) in ClassRegexHelper.SplitRazorClasses(classContent).Select((m, i) => (m, i)))
             {
                 tokens.Add(token.Value);
-                if (token.Value.StartsWith("@"))
+                if (!token.Value.StartsWith("@@") && !token.Value.StartsWith("@(\"@\")") && token.Value.StartsWith("@"))
                 {
                     razorIndices.Add(index);
                 }
@@ -97,10 +97,25 @@ internal class RazorSorter : Sorter
 
     private IEnumerable<string> SortRazorSegment(List<string> classes, HashSet<int> razorIndices, string file)
     {
+        Dictionary<string, string> unescapedToEscaped = [];
+
+        foreach (var c in classes)
+        {
+            unescapedToEscaped[c.Replace("@@", "@").Replace("@(\"@\")", "@")] = c;
+        }
+
         var sorted = Sort(classes
-            .Select((v, i) => (v, i))
-            .Where(v => !razorIndices.Contains(v.i))
-            .Select(v => v.v), file);
+                .Select((v, i) => (v: v.Replace("@@", "@").Replace("@(\"@\")", "@"), i))
+                .Where(v => !razorIndices.Contains(v.i))
+                .Select(v => v.v), file
+            ).Select(c =>
+            {
+                if (unescapedToEscaped.ContainsKey(c))
+                {
+                    return unescapedToEscaped[c];
+                }
+                return c;
+            });
 
         int lastIndex = -1;
         int start = 0;

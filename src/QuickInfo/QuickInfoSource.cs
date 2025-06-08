@@ -53,13 +53,14 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
         if (triggerPoint != null && IsInClassScope(session, out var classSpan) && classSpan != null)
         {
             var fullText = classSpan.Value.GetText();
+            var unescapedFullText = UnescapeClass(fullText);
 
-            if (!_projectConfigurationValues.IsClassAllowed(fullText))
+            if (!_projectConfigurationValues.IsClassAllowed(unescapedFullText))
             {
                 return Task.FromResult<QuickInfoItem?>(null);
             }
 
-            var desc = _descriptionGenerator.GetDescription(fullText, _projectConfigurationValues);
+            var desc = _descriptionGenerator.GetDescription(unescapedFullText, _projectConfigurationValues);
 
             var span = _textBuffer.CurrentSnapshot.CreateTrackingSpan(classSpan.Value, SpanTrackingMode.EdgeInclusive);
 
@@ -67,8 +68,8 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
             {
                 session.Properties.AddProperty(PropertyKey, true);
 
-                var totalVariant = fullText.Contains(':') ?
-                    _descriptionGenerator.GetTotalVariantDescription(fullText.Substring(0, fullText.LastIndexOf(':')), _projectConfigurationValues) :
+                var totalVariant = unescapedFullText.Contains(':') ?
+                    _descriptionGenerator.GetTotalVariantDescription(unescapedFullText.Substring(0, unescapedFullText.LastIndexOf(':')), _projectConfigurationValues) :
                     [];
 
                 ContainerElement descriptionFormatted;
@@ -93,4 +94,9 @@ internal abstract class QuickInfoSource : IAsyncQuickInfoSource
     }
 
     protected abstract bool IsInClassScope(IAsyncQuickInfoSession session, out SnapshotSpan? span);
+
+    protected virtual string UnescapeClass(string input)
+    {
+        return input;
+    }
 }

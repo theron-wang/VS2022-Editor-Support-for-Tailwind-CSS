@@ -80,6 +80,8 @@ internal class TailwindCssCompletionSet : CompletionSet
             return;
         }
 
+        var filterText = FilterBufferText!.Replace("@@", "@").Replace("@(\"@\")", "@");
+
         _filteredCompletions.Filter(c =>
         {
             if (string.IsNullOrWhiteSpace(c.DisplayText))
@@ -89,7 +91,7 @@ internal class TailwindCssCompletionSet : CompletionSet
             else
             {
                 var segments = c.DisplayText.Split([':'], StringSplitOptions.RemoveEmptyEntries).Last().Split('-');
-                var filterSegments = FilterBufferText!.Split(':').Last().Split(['-'], StringSplitOptions.RemoveEmptyEntries);
+                var filterSegments = filterText!.Split(':').Last().Split(['-'], StringSplitOptions.RemoveEmptyEntries);
                 return filterSegments.Length == 0 || filterSegments.All(s => segments.Contains(s) || segments.Any(s2 => s2.StartsWith(s)));
             }
         });

@@ -456,6 +456,15 @@ public sealed class ProjectConfigurationManager
             }
         }
 
+        project.Breakpoints = new Dictionary<string, string>
+        {
+            { "sm", "640px" },
+            { "md", "768px" },
+            { "lg", "1024px" },
+            { "xl", "1280px" },
+            { "2xl", "1536px" }
+        };
+
         _unsetProjectCompletionConfigurations[TailwindVersion.V3] = project;
     }
 
@@ -684,6 +693,18 @@ public sealed class ProjectConfigurationManager
 
                 project.Classes.AddRange(negativeClasses);
             }
+        }
+
+        foreach (var breakpoints in project.CssVariables.Where(v => v.Key.StartsWith("--breakpoint-")))
+        {
+            var breakpointName = breakpoints.Key.Replace("--breakpoint-", "");
+            project.Breakpoints[breakpointName] = breakpoints.Value;
+        }
+
+        foreach (var containers in project.CssVariables.Where(v => v.Key.StartsWith("--container-")))
+        {
+            var breakpointName = containers.Key.Replace("--container-", "");
+            project.Containers[breakpointName] = containers.Value;
         }
 
         _unsetProjectCompletionConfigurations[version] = project;

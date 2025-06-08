@@ -56,7 +56,8 @@ internal sealed class ClassSortUtilities
         var variantToOrderIndex = new Dictionary<string, int>();
         for (int i = 0; i < order.Count; i++)
         {
-            variantToOrderIndex[order[i]] = i;
+            // Multiply by 100 so that containers/breakpoints have flexibility
+            variantToOrderIndex[order[i]] = i * 100;
         }
 
         _variantOrders[version] = variantToOrderIndex;

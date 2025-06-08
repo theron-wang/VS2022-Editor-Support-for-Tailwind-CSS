@@ -113,12 +113,47 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
         var truncatedClassSpan = new SnapshotSpan(classSpan.Value.Start, _textView.Caret.Position.BufferPosition);
         var classText = truncatedClassSpan.GetText();
 
-        if (string.IsNullOrWhiteSpace(classText) == false && classText.Split(' ').Last().StartsWith("@"))
+        var last = classText.Split(' ').Last();
+
+        bool handled = false;
+
+        if (pguidCmdGroup == VSConstants.VSStd2K)
+        {
+            if (nCmdID == (uint)VSConstants.VSStd2KCmdID.TYPECHAR)
+            {
+                var character = GetTypeChar(pvaIn);
+
+                var newText = last + character;
+
+                if (newText.StartsWith("@") && !(newText.StartsWith("@@") || newText.StartsWith("@(\"@\")")))
+                {
+                    _currentSession?.Dismiss();
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                }
+
+                handled = true;
+            }
+            else if (nCmdID == (uint)VSConstants.VSStd2KCmdID.BACKSPACE &&
+                !string.IsNullOrEmpty(last) && last.Length >= 1)
+            {
+                var newText = last.Substring(0, last.Length - 1);
+
+                if (newText.StartsWith("@") && !(newText.StartsWith("@@") || newText.StartsWith("@(\"@\")")))
+                {
+                    _currentSession?.Dismiss();
+                    return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+                }
+
+                handled = true;
+            }
+        }
+
+        if (!handled && last.StartsWith("@") && !(last.StartsWith("@@") || last.StartsWith("@(\"@\")")))
         {
             return _next.Exec(pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         }
 
-        bool handled = false;
+        handled = false;
         bool retrigger = false;
         int hresult = VSConstants.S_OK;
 
@@ -173,7 +208,11 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                 {
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
                         var character = GetTypeChar(pvaIn);
-                        if (_currentSession == null || character == ' ' || character == '/' || (!string.IsNullOrWhiteSpace(classText) && character == '!'))
+
+                        var newText = last + character;
+
+                        if (_currentSession == null || character == ' ' || character == '/' || (!string.IsNullOrWhiteSpace(classText) && character == '!') ||
+                            newText.StartsWith("@@") || newText.StartsWith("@(\"@\")"))
                         {
                             _currentSession?.Dismiss();
                             StartSession();

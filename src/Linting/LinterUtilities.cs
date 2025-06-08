@@ -54,7 +54,7 @@ internal sealed class LinterUtilities : IDisposable
         var cssAttributes = new Dictionary<string, string>();
         foreach (var c in classes)
         {
-            var classTrimmed = c.Split(':').Last().Trim();
+            var classTrimmed = c.Split(':').Last().Trim().Replace("@@", "@").Replace("@(\"@\")", "@");
 
             if (ImportantModifierHelper.IsImportantModifier(classTrimmed))
             {

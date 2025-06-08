@@ -33,13 +33,15 @@ internal abstract class HtmlLikeValidator(ITextBuffer buffer, LinterUtilities li
 
             var classesByVariants = classes.GroupBy(c =>
             {
-                var index = c.LastIndexOf(':');
+                var unescaped = c.Replace("@@", "@").Replace("@(\"@\")", "@");
+
+                var index = unescaped.LastIndexOf(':');
 
                 if (index == -1)
                 {
                     return "";
                 }
-                return string.Join(":", c.Substring(0, index).Split(':').OrderBy(x => x));
+                return string.Join(":", unescaped.Substring(0, index).Split(':').OrderBy(x => x));
             });
 
             foreach (var grouping in classesByVariants)
