@@ -12,6 +12,8 @@ If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJ
    To set manually, right-click the file → **Set as Tailwind CSS configuration file**.  
    Features are only enabled when a config file is found or set.
 
+   **If using a TypeScript file, ensure you have `tsc` installed globally (`npm install -g typescript`).**
+
    ![Customizability Build 1](art/Customizability-Build-1.png)
 
 ## New Projects
