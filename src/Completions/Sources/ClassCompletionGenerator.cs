@@ -327,7 +327,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                 if (currentClass.Contains('/'))
                 {
-                    if (currentClass.StartsWith("bg-linear") || currentClass.StartsWith("bg-radial") || currentClass.StartsWith("bg-conic"))
+                    if (className.StartsWith("bg-linear") || className.StartsWith("bg-radial") || className.StartsWith("bg-conic"))
                     {
                         foreach (var modifier in KnownModifiers.GradientModifierToDescription.Keys)
                         {
@@ -354,7 +354,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                                        _completionUtils.TailwindLogo,
                                                        null));
                     }
-                    else if (KnownModifiers.IsEligibleForLineHeightModifier(currentClass, _projectCompletionValues))
+                    else if (KnownModifiers.IsEligibleForLineHeightModifier(className, _projectCompletionValues))
                     {
                         var lineHeightModifiers = _projectCompletionValues.CssVariables.Where(v => v.Key.StartsWith("--leading-")).Select(v => v.Key.Replace("--leading-", ""));
                         foreach (var modifier in lineHeightModifiers)

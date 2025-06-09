@@ -81,7 +81,15 @@ internal sealed class DescriptionGenerator : IDisposable
                         }
                         else
                         {
-                            var multiplier = text.Substring(multiply + 1, semicolon - multiply - 1).TrimEnd(')').Trim();
+                            endParen = text.IndexOf(')', multiply);
+
+                            if (endParen == -1)
+                            {
+                                index++;
+                                continue;
+                            }
+
+                            var multiplier = text.Substring(multiply + 1, endParen - multiply - 1).TrimEnd(')').Trim();
 
                             if (!double.TryParse(multiplier, NumberStyles.Float, CultureInfo.InvariantCulture, out var multiplierAsDouble))
                             {
@@ -166,7 +174,7 @@ internal sealed class DescriptionGenerator : IDisposable
                 if (variableValue is not null)
                 {
                     var insert = $" /* {variableValue} */";
-                    resultText.Insert(semicolon + offset, insert);
+                    resultText.Insert(endParen + 1 + offset, insert);
                     offset += insert.Length;
                     index = endParen;
                 }
@@ -202,6 +210,13 @@ internal sealed class DescriptionGenerator : IDisposable
             else if (line.Contains('}') && (line.IndexOf("{0}") == -1 || line.IndexOf("{0}") != line.IndexOf('}') - 2))
             {
                 output.AppendLine("}");
+
+                // Yes, this is really annoying how sometimes these lines start with a leading whitespace
+                if (!string.IsNullOrWhiteSpace(line.Trim().Trim('}').Trim()))
+                {
+                    output.AppendLine($"{line.Trim().Trim('}').Trim()};");
+                }
+
                 continue;
             }
 
@@ -609,24 +624,25 @@ internal sealed class DescriptionGenerator : IDisposable
         {
             return "@media print";
         }
-        else if (variant.StartsWith("min-"))
+        else if (variant.StartsWith("min-["))
         {
             return $"@media (min-width: {variant.Substring(5).TrimEnd(']')})";
         }
         else if (variant.StartsWith("max-["))
         {
-            if (variant.EndsWith("]"))
-            {
-                return $"@media (min-width: {variant.Substring(5).TrimEnd(']')})";
-            }
-
-            return "";
+            return $"@media (min-width: {variant.Substring(5).TrimEnd(']')})";
         }
-        else if (projectCompletionValues.Breakpoints.ContainsKey(variant) || projectCompletionValues.Breakpoints.ContainsKey($"max-{variant}"))
+        else if (
+            projectCompletionValues.Breakpoints.TryGetValue(variant.Split('-').Last(), out var breakpoint))
         {
-#warning dont forget about v3 and v4 (v4.1 done)
-            // TODO: handle screens
-            return "";
+            if (variant.StartsWith("max-"))
+            {
+                return $"@media not all and (min-width: {breakpoint})";
+            }
+            else if (variant == variant.Split('-').Last())
+            {
+                return $"@media (min-width: {breakpoint})";
+            }
         }
 
         return $"&:{variant}";
@@ -1066,9 +1082,9 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 colorAttributeValue = $"var({c})";
             }
-            else if (projectCompletionValues.ColorMapper.ContainsKey(color))
+            else if (projectCompletionValues.ColorMapper.TryGetValue(color, out var colorDesc))
             {
-                colorAttributeValue = $"var(--color-{color})";
+                colorAttributeValue = ((IEnumerable<string>)["transparent", "current", "inherit"]).Contains(color) ? colorDesc : $"var(--color-{color})";
             }
             else
             {
@@ -1478,7 +1494,7 @@ internal sealed class DescriptionGenerator : IDisposable
         {
             if (KnownModifiers.GradientModifierToDescription.TryGetValue(modifier!, out var value))
             {
-                return desc!.Replace("oklch", value);
+                return desc!.Replace("oklab", value);
             }
         }
         else if (KnownModifiers.IsEligibleForLineHeightModifier(stem, projectCompletionValues))

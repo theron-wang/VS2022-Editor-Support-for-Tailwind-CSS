@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.11.1 (June 9th, 2025)
+
+- Add missing utilities for all color classes: (`{utility}-inherit`, `{utility}-current`, `{utility}-transparent`)
+- Put variable values/comments directly after they are referenced in class descriptions
+- Prevent all classes from generating (though hidden) in the completion menu when using a modifier on `text-` and bg gradient classes
+- Fix descriptions being truncated when there is more css after a closing brace
+
 ## 1.11.0 (June 8th, 2025)
 
 - Add support for breakpoints and containers

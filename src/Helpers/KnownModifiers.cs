@@ -19,6 +19,6 @@ internal static class KnownModifiers
 
     public static bool IsEligibleForLineHeightModifier(string className, ProjectCompletionValues project)
     {
-        return className.StartsWith("text-") && project.CssVariables.ContainsKey($"--{className.Split('/')[0]}");
+        return className.StartsWith("text-") && !className.StartsWith("text-shadow") && project.CssVariables.ContainsKey($"--{className.Split('/')[0]}");
     }
 }

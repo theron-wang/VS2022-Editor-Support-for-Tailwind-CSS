@@ -219,12 +219,24 @@ internal static class DescriptionUIHelper
         var keyword = line.Contains(":") ? line.Substring(0, line.IndexOf(':')).Trim() : line;
         var value = line.Substring(line.IndexOf(':') + 1).Trim().Trim(';');
 
+        string? after = null;
         string? comment = null;
 
         if (value.Contains("/*"))
         {
-            comment = value.Substring(value.IndexOf("/*")).Trim();
-            value = value.Substring(0, value.IndexOf("/*")).Trim();
+            var start = value.IndexOf("/*");
+
+            if (start != -1)
+            {
+                var end = value.IndexOf("*/", start);
+
+                if (end != -1)
+                {
+                    comment = value.Substring(start, end - start + 2).Trim();
+                    after = value.Substring(end + 2).Trim();
+                    value = value.Substring(0, start).Trim();
+                }
+            }
         }
 
         List<ClassifiedTextRun> runs = [
@@ -234,9 +246,14 @@ internal static class DescriptionUIHelper
             new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttributeValue, value + (isImportant ? " !important" : ""), ClassifiedTextRunStyle.UseClassificationFont)
         ];
 
-        if (comment is not null)
+        if (!string.IsNullOrWhiteSpace(comment))
         {
             runs.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Comment, $" {comment}", ClassifiedTextRunStyle.UseClassificationFont));
+        }
+
+        if (!string.IsNullOrWhiteSpace(after))
+        {
+            runs.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.MarkupAttributeValue, $" {after}", ClassifiedTextRunStyle.UseClassificationFont));
         }
 
         runs.Add(new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, ";", ClassifiedTextRunStyle.UseClassificationFont));
