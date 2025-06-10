@@ -15,7 +15,7 @@ internal class ClassRegexHelper
     private static readonly Regex _classRegex = new(@"[cC]lass\s*=\s*(['""])\s*(?<content>(?:\n.|(?!\1).)*)?\s*(\1|$)", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
     private static readonly Regex _javaScriptClassRegex = new(@"[cC]lassName\s*=\s*(['""])\s*(?<content>(?:\n.|(?!\1).)*)?\s*(\1|$)", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
     private static readonly Regex _razorClassRegex = new(@"[cC]lass(?:es)?\s*=\s*([""'])(?<content>(?:[^""'\\@]|\\.|@(?:[a-zA-Z0-9.]+)?\((?>\((?<c>)|[^()]+|\)(?<-c>))*(?(c)(?!))\)|(?:(?!\1)[^\\]|\\$|\\.)|\([^)]*\))*)(\1|$)", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-    private static readonly Regex _razorSplitClassRegex = new(@"(?:@@|@\(""@""\)|[^\s@()])+|@\(""@""\)[^\s@()]+|@\((?>\((?<c>)|[^()]+|\)(?<-c>))*(?(c)(?!))\)|@[\w.]+\([^()]*?\)|@[\w.]+", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+    private static readonly Regex _razorSplitClassRegex = new(@"(?:(?:@@|@\(""@""\)|[^\s@])+|@[\w.]*\((?>\((?<c>)|[^()]+|\)(?<-c>))*(?(c)(?!))\)|@[\w.]+)+", RegexOptions.Compiled, TimeSpan.FromSeconds(1));
     private static readonly Regex _splitClassRegex = new(@"([^\s]+)", RegexOptions.Compiled);
 
     // For use on the content capture group of class regexes. No match if there are no single quote pairs.

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.11.1.1 (June 9th, 2025)
+
+- Fix razor parsing regex to correctly match `bg-(--var)` Tailwind classes
+- Fix razor parsing regex to correctly match complex classes like `text-@(error ? "red-700" : "green-900")`
+
 ## 1.11.1 (June 9th, 2025)
 
 - Add missing utilities for all color classes: (`{utility}-inherit`, `{utility}-current`, `{utility}-transparent`)
