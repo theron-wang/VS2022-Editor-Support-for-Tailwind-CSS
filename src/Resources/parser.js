@@ -39,8 +39,6 @@
         return originalRequire.apply(this, arguments);
     };
 
-    var configuration;
-
     let filePath = process.argv[2];
 
     if (!path.isAbsolute(filePath)) {
