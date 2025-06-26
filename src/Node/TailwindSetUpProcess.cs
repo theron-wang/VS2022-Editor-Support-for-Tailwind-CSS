@@ -17,11 +17,14 @@ internal sealed class TailwindSetUpProcess
 {
     public bool IsSettingUp { get; private set; }
 
+    [Import]
+    public DirectoryVersionFinder DirectoryVersionFinder { get; set; } = null!;
+
     /// <summary>
-    /// Starts a process to install Tailwind in the specified directory (uses npm)
+    /// Starts a process to install Tailwind in the specified directory (uses npm), if needInstall = true. Otherwise, it just creates a tailwind.css file with the import statement.
     /// </summary>
     /// <param name="directory">The directory to install in</param>
-    public async Task<string?> RunAsync(string directory, bool needInstall, string? cliPath = null)
+    public async Task<string?> RunAsync(string directory, bool needInstall, bool shouldCreateTailwindDotCss)
     {
         IsSettingUp = true;
         var processInfo = new ProcessStartInfo()
@@ -50,26 +53,33 @@ internal sealed class TailwindSetUpProcess
                 process.ErrorDataReceived += ErrorDataReceived;
 
                 await process.WaitForExitAsync();
+
+                DirectoryVersionFinder.ClearCacheForDirectory(directory);
             }
 
-            string fileName;
-
-            if (File.Exists(Path.Combine(directory, "tailwind.css")))
+            if (shouldCreateTailwindDotCss)
             {
-                fileName = $"tailwind-{Guid.NewGuid().ToString().Substring(0, 8)}.css";
-            }
-            else
-            {
-                fileName = "tailwind.css";
+                string fileName;
+
+                if (File.Exists(Path.Combine(directory, "tailwind.css")))
+                {
+                    fileName = $"tailwind-{Guid.NewGuid().ToString().Substring(0, 8)}.css";
+                }
+                else
+                {
+                    fileName = "tailwind.css";
+                }
+
+                using (var fileStream = new FileStream(Path.Combine(directory, fileName), FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite))
+                {
+                    using var streamWriter = new StreamWriter(fileStream);
+                    await streamWriter.WriteLineAsync("@import \"tailwindcss\";");
+                }
+
+                return Path.Combine(directory, fileName);
             }
 
-            using (var fileStream = new FileStream(Path.Combine(directory, fileName), FileMode.CreateNew, FileAccess.Write, FileShare.ReadWrite))
-            {
-                using var streamWriter = new StreamWriter(fileStream);
-                await streamWriter.WriteLineAsync("@import \"tailwindcss\";");
-            }
-
-            return Path.Combine(directory, fileName);
+            return null;
         }
         catch (Exception ex)
         {

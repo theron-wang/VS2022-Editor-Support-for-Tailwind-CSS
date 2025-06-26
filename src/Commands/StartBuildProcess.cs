@@ -26,6 +26,7 @@ internal sealed class StartBuildProcess : BaseCommand<StartBuildProcess>
     protected override void BeforeQueryStatus(EventArgs e)
     {
         var settings = ThreadHelper.JoinableTaskFactory.Run(SettingsProvider.GetSettingsAsync);
+
         Command.Visible = settings.EnableTailwindCss && BuildProcess.AreProcessesActive() == false && settings.ConfigurationFiles.Count > 0 && settings.BuildType != BuildProcessOptions.None;
     }
 

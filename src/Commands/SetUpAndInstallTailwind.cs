@@ -39,13 +39,10 @@ internal sealed class SetUpAndInstallTailwind : BaseCommand<SetUpAndInstallTailw
             SettingsProvider.RefreshSettings();
             var settings = await SettingsProvider.GetSettingsAsync();
 
-            if (settings.ConfigurationFiles.Count > 0 && settings.ConfigurationFiles.Any(c =>
-                !string.IsNullOrWhiteSpace(c.Path) && File.Exists(c.Path)))
-            {
-                return;
-            }
+            var hasConfig = settings.ConfigurationFiles.Count > 0 && settings.ConfigurationFiles.Any(c =>
+                !string.IsNullOrWhiteSpace(c.Path) && File.Exists(c.Path));
 
-            var configFile = await ThreadHelper.JoinableTaskFactory.RunAsync(() => TailwindSetUpProcess.RunAsync(directory, true));
+            var configFile = await TailwindSetUpProcess.RunAsync(directory, true, !hasConfig);
 
             if (configFile is null)
             {

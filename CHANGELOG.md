@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.11.2 (June 26th, 2025)
+
+- Show powershell build command in build output when verbose build is toggled
+- Show `Set up Tailwind CSS` command in the Solution Explorer context menu when no installation is found (either locally or globally) and no valid standalone CLI configuration is provided, regardless of whether configuration files have already been defined via `tailwind.extension.json`
+- Fix an error which could occur when unloading and reloading projects while having a file open
+- Fix error "`Identifier 'configuration' has already been declared` in parser.js" ([#117](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/117))
+
 ## 1.11.1.1 (June 9th, 2025)
 
 - Fix razor parsing regex to correctly match `bg-(--var)` Tailwind classes
