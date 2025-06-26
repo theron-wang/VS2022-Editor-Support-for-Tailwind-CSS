@@ -377,6 +377,9 @@ internal sealed class TailwindBuildProcess : IDisposable
                     }
 
                     process = CreateAndStartProcess(processInfo);
+
+                    OutputDataReceived(process, $"Build started with `powershell {processInfo.Arguments}`");
+
                     PostSetupProcess(process);
 
                     _outputFileToProcesses[output] = process;
@@ -557,26 +560,37 @@ internal sealed class TailwindBuildProcess : IDisposable
             return;
         }
 
+        OutputDataReceived(sender, e.Data);
+    }
+
+
+    private void OutputDataReceived(object sender, string data)
+    {
+        if (data == null)
+        {
+            return;
+        }
+
         if (_settings.OverrideBuild || sender == _secondaryProcess)
         {
-            if (sender is Process process && e.Data.TrimEnd(' ', '>', '\\') == process.StartInfo.WorkingDirectory.TrimEnd('\\'))
+            if (sender is Process process && data.TrimEnd(' ', '>', '\\') == process.StartInfo.WorkingDirectory.TrimEnd('\\'))
             {
                 ThreadHelper.JoinableTaskFactory.Run(() => WriteToBuildPaneAsync($"Tailwind CSS: Build script '{_settings.BuildScript}' finished"));
             }
-            if (e.Data.ToLower().Contains("error") || e.Data.Contains("ERR!"))
+            if (data.ToLower().Contains("error") || data.Contains("ERR!"))
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
-                    await LogErrorAsync("Tailwind CSS: " + e.Data);
+                    await LogErrorAsync("Tailwind CSS: " + data);
                 });
             }
             // usually messages with backslashes (path) and > are the lines where the command is being written to the command prompt
-            else if (string.IsNullOrWhiteSpace(e.Data) == false && e.Data.Contains("Microsoft") == false && (e.Data.Contains('>') == false || e.Data.Contains('\\') == false))
+            else if (string.IsNullOrWhiteSpace(data) == false && data.Contains("Microsoft") == false && (data.Contains('>') == false || data.Contains('\\') == false))
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
-                    await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: {e.Data}");
-                    await WriteToBuildPaneAsync($"Tailwind CSS: {e.Data}");
+                    await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: {data}");
+                    await WriteToBuildPaneAsync($"Tailwind CSS: {data}");
                 });
             }
         }
@@ -584,7 +598,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         {
             // See https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/113
             // On large projects, Tailwind build process may run out memory; fix is to restart it
-            if (e.Data.Contains("JavaScript heap out of memory"))
+            if (data.Contains("JavaScript heap out of memory"))
             {
                 if (sender is Process process && _outputFileToProcesses.ContainsValue(process))
                 {
@@ -601,28 +615,28 @@ internal sealed class TailwindBuildProcess : IDisposable
                     BuildOne(pair.Key, pair.Value.Output, minify);
                 }
             }
-            else if (e.Data.Contains("Error"))
+            else if (data.Contains("Error"))
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
-                    await LogErrorAsync("Tailwind CSS: " + e.Data);
+                    await LogErrorAsync("Tailwind CSS: " + data);
                 });
             }
-            else if (e.Data.Contains("Done in"))
+            else if (data.Contains("Done in"))
             {
                 ThreadHelper.JoinableTaskFactory.Run(async () =>
                 {
-                    await LogSuccessAsync(e.Data.Replace("Done in", "").Trim().Trim('.'));
+                    await LogSuccessAsync(data.Replace("Done in", "").Trim().Trim('.'));
                 });
             }
             else if (_general.VerboseBuild)
             {
-                if (string.IsNullOrWhiteSpace(e.Data) == false && e.Data.Contains("Microsoft") == false)
+                if (string.IsNullOrWhiteSpace(data) == false && data.Contains("Microsoft") == false)
                 {
                     // Regex: remove ANSI escape codes
                     ThreadHelper.JoinableTaskFactory.Run(async () =>
                     {
-                        await WriteToBuildPaneAsync($"Tailwind CSS: {Regex.Replace(e.Data.Trim(), @"\x1B\[[0-9;]*[mK]", "")}");
+                        await WriteToBuildPaneAsync($"Tailwind CSS: {Regex.Replace(data.Trim(), @"\x1B\[[0-9;]*[mK]", "")}");
                     });
                 }
             }
