@@ -63,6 +63,23 @@ internal abstract class ErrorListListener : ITextViewCreationListener, IDisposab
     {
         if (_contexts.TryGetValue(buffer, out var context))
         {
+            // Fix exception when a project is unloaded then reloaded
+            try
+            {
+                _ = context.Project.Name;
+            }
+            catch (ObjectDisposedException)
+            {
+                var project = ThreadHelper.JoinableTaskFactory.Run(() => PhysicalFile.FromFileAsync(context.File))?.ContainingProject;
+
+                if (project is null)
+                {
+                    return;
+                }
+
+                context.Project = project;
+            }
+
             var errorListItems = context.Validator.Errors.Where(e =>
                     _linterUtilities.GetErrorSeverity(e.ErrorType) != ErrorSeverity.None)
                 .Select(e =>
