@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.11.3 (July 3rd, 2025)
+
+- Add missing `bg-gradient-to-*` classes
+- Properly sort `group-`, `peer-`, breakpoints after all other variants in v3 projects
+- Fix incorrect detection of configuration files if they contain a newline before `@import "tailwindcss"`
+- Fix certain descriptions not showing up for custom classes
+- Add description support for `--text-*--line-height`, `--text-*--font-weight`, and `--text-*--letter-spacing`
+
 ## 1.11.2 (June 26th, 2025)
 
 - Show powershell build command in build output when verbose build is toggled

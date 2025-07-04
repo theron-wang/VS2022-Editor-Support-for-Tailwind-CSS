@@ -66,7 +66,11 @@ internal sealed class DescriptionGenerator : IDisposable
                 var start = varIndex + 4;
 
                 var variable = text.Substring(start, endParen - start);
-                index = semicolon;
+
+                if (!variable.Contains("var(--"))
+                {
+                    index = semicolon;
+                }
 
                 string? variableValue;
 
@@ -166,7 +170,19 @@ internal sealed class DescriptionGenerator : IDisposable
                         variableValue = null;
                     }
                 }
-                else if (!projectCompletionValues.CssVariables.TryGetValue(variable, out variableValue))
+                else if (projectCompletionValues.CssVariables.TryGetValue(variable, out variableValue))
+                {
+                    if (variableValue.EndsWith("rem"))
+                    {
+                        var rems = variableValue.Substring(0, variableValue.Length - 3);
+
+                        if (float.TryParse(rems, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+                        {
+                            variableValue = $"{rems}rem = {value * 16}px";
+                        }
+                    }
+                }
+                else
                 {
                     variableValue = null;
                 }

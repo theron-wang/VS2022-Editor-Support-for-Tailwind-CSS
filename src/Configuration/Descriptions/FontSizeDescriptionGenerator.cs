@@ -42,6 +42,25 @@ internal class FontSizeDescriptionGenerator : DescriptionGenerator
                     return $"font-size: {fontSize};line-height: {lineHeight};";
                 }
             }
+            else if (value is object[] tuple && tuple.Length == 2 && tuple[0] is string fontSize && tuple[1] is Dictionary<string, string> dict)
+            {
+                var result = $"font-size: {fontSize};";
+
+                if (dict.ContainsKey("lineHeight"))
+                {
+                    result += $"line-height: var(--tw-leading, {dict["lineHeight"]});";
+                }
+                if (dict.ContainsKey("letterSpacing"))
+                {
+                    result += $"letter-spacing: var(--tw-tracking, {dict["letterSpacing"]});";
+                }
+                if (dict.ContainsKey("fontWeight"))
+                {
+                    result += $"font-weight: var(--tw-font-weight, {dict["fontWeight"]});";
+                }
+
+                return result;
+            }
         }
         catch (Exception ex)
         {

@@ -255,8 +255,9 @@ public sealed partial class CompletionConfiguration
         var classesToRemove = new List<TailwindClass>();
         var classesToAdd = new List<TailwindClass>();
 
-        project.CustomSpacingMappers = new Dictionary<string, Dictionary<string, string>>();
-        project.CustomColorMappers = new Dictionary<string, Dictionary<string, string>>();
+        project.CustomSpacingMappers = [];
+        project.CustomColorMappers = [];
+        project.CustomDescriptionMapper = [];
 
         foreach (var key in applicable)
         {
@@ -705,7 +706,6 @@ public sealed partial class CompletionConfiguration
             if (config.PluginDescriptions is not null)
             {
                 project.PluginClasses = [];
-                project.CustomDescriptionMapper = [];
                 var classesToAdd = new List<TailwindClass>();
 
                 foreach (var pair in config.PluginDescriptions)

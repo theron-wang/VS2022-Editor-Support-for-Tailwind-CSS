@@ -484,6 +484,8 @@ internal static class ConfigFileParser
             Prefix = string.IsNullOrWhiteSpace(prefix) ? null : prefix.Trim()
         };
 
+        var fontSizeCandidates = new Dictionary<string, Dictionary<string, object>>();
+
         foreach (var pair in themeValuePairs)
         {
             var stem = GetConfigurationClassStemFromCssVariable(pair.Key, version);
@@ -519,7 +521,84 @@ internal static class ConfigFileParser
                 dict = (Dictionary<string, object>)config.ExtendedValues[stem];
             }
 
+            // Special case
+            // --text-tiny--line-height: 1.5rem; 
+            // --text-tiny: 0.625rem;
+            // --text-tiny--letter-spacing: 0.125rem; 
+            // --text-tiny--font-weight: 500; 
+            if (namespaceStem == "--text-")
+            {
+                var doubleDashIndex = valueKey.IndexOf("--");
+                var value = doubleDashIndex == -1 ? valueKey : valueKey.Substring(0, doubleDashIndex);
+
+                config.ThemeVariables[pair.Key.Trim()] = pair.Value.Trim();
+
+                if (doubleDashIndex == -1)
+                {
+                    fontSizeCandidates.Remove(value);
+
+                    if (dict.TryGetValue(value, out var obj1) && obj1 is object[] tuple && tuple.Length == 2)
+                    {
+                        tuple[0] = $"var({pair.Key.Trim()})";
+                    }
+                    else
+                    {
+                        dict[valueKey] = $"var({pair.Key.Trim()})";
+                    }
+
+                    continue;
+                }
+
+                Dictionary<string, string> fontSizeDict;
+                if (dict.TryGetValue(value, out var obj))
+                {
+                    if (obj is object[] tuple && tuple.Length == 2 && tuple[1] is Dictionary<string, string> dictionary)
+                    {
+                        fontSizeDict = dictionary;
+                    }
+                    else if (obj is string val)
+                    {
+                        fontSizeDict = [];
+
+                        dict[value] = new object[] { val, fontSizeDict };
+                    }
+                    else
+                    {
+                        continue;
+                    }
+                }
+                else
+                {
+                    fontSizeDict = [];
+                    dict[value] = new object[] { "", fontSizeDict };
+
+                    // At this point, we're uncertain if the fontSize class exists.
+                    // What if the user defined --text-tiny--line-height but never defined --text-tiny?
+                    fontSizeCandidates[value] = dict;
+                }
+
+                if (valueKey.EndsWith("--line-height"))
+                {
+                    fontSizeDict["lineHeight"] = $"var({pair.Key})";
+                }
+                else if (valueKey.EndsWith("--letter-spacing"))
+                {
+                    fontSizeDict["letterSpacing"] = $"var({pair.Key})";
+                }
+                else if (valueKey.EndsWith("-font-weight"))
+                {
+                    fontSizeDict["fontWeight"] = $"var({pair.Key})";
+                }
+
+                continue;
+            }
+
             dict[valueKey] = pair.Value.Trim();
+        }
+
+        foreach (var candidate in fontSizeCandidates)
+        {
+            candidate.Value.Remove(candidate.Key);
         }
 
         if (imported is not null)
