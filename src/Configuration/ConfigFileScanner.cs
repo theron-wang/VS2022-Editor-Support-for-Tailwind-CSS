@@ -81,7 +81,7 @@ public sealed class ConfigFileScanner
         {
             var line = await reader.ReadLineAsync();
 
-            if (string.IsNullOrWhiteSpace(line))
+            if (line is null)
             {
                 break;
             }
@@ -108,7 +108,7 @@ public sealed class ConfigFileScanner
         {
             var line = await reader.ReadLineAsync();
 
-            if (string.IsNullOrWhiteSpace(line))
+            if (line is null)
             {
                 break;
             }
