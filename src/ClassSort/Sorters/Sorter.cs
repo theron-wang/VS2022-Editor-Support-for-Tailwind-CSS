@@ -147,7 +147,7 @@ internal abstract class Sorter
                             if (projectCompletionValues.Containers.TryGetValue(potentialBreakpointOrContainer, out var container) &&
                                 variantOrder.TryGetValue(variant.Replace(potentialBreakpointOrContainer, "{c}"), out index))
                             {
-                                max = Math.Max(max, index + projectCompletionValues.Containers.Count(c => CssSizeConverter.CssSizeToPixels(c.Value) < CssSizeConverter.CssSizeToPixels(breakpoint)));
+                                max = Math.Max(max, index + projectCompletionValues.Containers.Count(c => CssSizeConverter.CssSizeToPixels(c.Value) < CssSizeConverter.CssSizeToPixels(container)));
                             }
 
                             if (potentialBreakpointOrContainer.StartsWith("[") && potentialBreakpointOrContainer.EndsWith("]") &&
@@ -180,16 +180,16 @@ internal abstract class Sorter
                             {
                                 if (variant.StartsWith("group-"))
                                 {
-                                    num = variantOrder.Count + index;
+                                    num = variantOrder.Count * 1000 + index;
                                 }
                                 else if (variant.StartsWith("peer-"))
                                 {
-                                    num = variantOrder.Count * 2 + index;
+                                    num = variantOrder.Count * 2000 + index;
                                 }
                             }
                             else if (projectCompletionValues.Breakpoints.TryGetValue(variant, out var breakpoint))
                             {
-                                num = variantOrder.Count * 3 + projectCompletionValues.Breakpoints.Count(b => CssSizeConverter.CssSizeToPixels(b.Value) < CssSizeConverter.CssSizeToPixels(breakpoint));
+                                num = variantOrder.Count * 3000 + projectCompletionValues.Breakpoints.Count(b => CssSizeConverter.CssSizeToPixels(b.Value) < CssSizeConverter.CssSizeToPixels(breakpoint));
                             }
 
                             max = Math.Max(max, num);
