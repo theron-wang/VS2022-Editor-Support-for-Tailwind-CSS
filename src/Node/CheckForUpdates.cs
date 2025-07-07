@@ -39,7 +39,7 @@ internal static class CheckForUpdates
             return;
         }
 
-        if (folder.EndsWith(Path.DirectorySeparatorChar.ToString()) == false)
+        if (folder!.EndsWith(Path.DirectorySeparatorChar.ToString()) == false)
         {
             folder += Path.DirectorySeparatorChar;
         }
