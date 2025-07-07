@@ -18,6 +18,7 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
     ClassCompletionGenerator(textBuffer, completionUtils, colorIconGenerator, descriptionGenerator, settingsProvider, completionConfiguration), ICompletionSource
 {
     private bool _initializeSuccess = true;
+    private readonly ProjectConfigurationManager _projectConfigurationManager = completionUtils;
 
     /// <summary>
     /// Provides relevant TailwindCSS completions
@@ -58,10 +59,9 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
 
         var applicableTo = GetApplicableTo(triggerPoint.Value, snapshot);
 
-
         var line = triggerPoint.Value.GetContainingLine();
 
-        if (!IsCaretInBlock(session, out bool isInBaseDirectiveBlock))
+        if (!IsCaretInBlock(session, out bool isInBaseDirectiveBlock, "@media", "@layer", "@theme"))
         {
             if (IsUsingDirective(session, out var directive))
             {
@@ -83,8 +83,8 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
                             completions =
                             [
                                 new("base", "base", "base", _completionUtils.TailwindLogo, null),
-                            new("components", "components", "components", _completionUtils.TailwindLogo, null),
-                            new("utilities", "utilities", "utilities", _completionUtils.TailwindLogo, null)
+                                new("components", "components", "components", _completionUtils.TailwindLogo, null),
+                                new("utilities", "utilities", "utilities", _completionUtils.TailwindLogo, null)
                             ];
                             break;
                         case "@media":
@@ -168,6 +168,21 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
                 ];
             }
         }
+        else if (IsCaretInBlock(session, out _, "@theme") && _projectCompletionValues.Version >= TailwindVersion.V4)
+        {
+            var text = line.GetText();
+
+            if (text is null || text.Contains(':'))
+            {
+                return;
+            }
+
+            completions =
+                [.._projectConfigurationManager.GetUnsetCompletionConfiguration(_projectCompletionValues.Version).ThemeStems
+                .Select(t =>
+                    new Completion(t, t, "", _completionUtils.TailwindLogo, null)
+                )];
+        }
 
         if (completionSets.Count == 1)
         {
@@ -241,7 +256,7 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
         return snapshot.CreateTrackingSpan(new SnapshotSpan(start, end), SpanTrackingMode.EdgeInclusive);
     }
 
-    private bool IsCaretInBlock(ICompletionSession session, out bool isInBaseDirectiveBlock)
+    private bool IsCaretInBlock(ICompletionSession session, out bool isInBaseDirectiveBlock, params string[] directives)
     {
         var startPos = new SnapshotPoint(session.TextView.TextSnapshot, 0);
         var caretPos = session.TextView.Caret.Position.BufferPosition;
@@ -252,7 +267,7 @@ internal class CssCompletionSource(ITextBuffer textBuffer, ProjectConfigurationM
         var lastIndexOfOpenBrace = text.LastIndexOf('{');
         var lastIndexOfCloseBrace = text.LastIndexOf('}');
 
-        var lastIndexOfCloserDirective = Math.Max(text.LastIndexOf("@media"), text.LastIndexOf("@layer"));
+        var lastIndexOfCloserDirective = directives.Max(text.LastIndexOf);
 
         // If no open brace ('{') is found or close brace ('{') is closer to caret than open brace
         // AND also there are no @media or @layer directives

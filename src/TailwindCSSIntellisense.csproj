@@ -117,6 +117,7 @@
     <Compile Include="Configuration\Descriptions\FontFamilyDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\FontSizeDescriptionGenerator.cs" />
     <Compile Include="Configuration\Descriptions\GeneratorAggregator.cs" />
+    <Compile Include="Configuration\UnsetProjectCompletionValues.cs" />
     <Compile Include="Helpers\BraceExpander.cs" />
     <Compile Include="Helpers\CliUsageValidator.cs" />
     <Compile Include="Helpers\CssSizeConverter.cs" />

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.0 (July 7th, 2025)
+
+- Add completion support for `@theme` variables
+- Fix missing descriptions for classes using arbitrary values containing spacing units (i.e. `font-[inherit]!` contains `in`)
+
 ## 1.11.4 (July 6th, 2025)
 
 - Fix potential NREs when updating Tailwind on project load ([#119](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/119))

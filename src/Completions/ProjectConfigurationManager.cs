@@ -45,7 +45,7 @@ public sealed class ProjectConfigurationManager
     private readonly Dictionary<string, ProjectCompletionValues> _projectCompletionConfiguration = [];
     private ProjectCompletionValues? _defaultProjectCompletionConfiguration;
 
-    private readonly Dictionary<TailwindVersion, ProjectCompletionValues> _unsetProjectCompletionConfigurations = [];
+    private readonly Dictionary<TailwindVersion, UnsetProjectCompletionValues> _unsetProjectCompletionConfigurations = [];
 
     /// <summary>
     /// Initializes the necessary utilities to provide completion
@@ -92,7 +92,7 @@ public sealed class ProjectConfigurationManager
         }
     }
 
-    public ProjectCompletionValues GetUnsetCompletionConfiguration(TailwindVersion version)
+    public UnsetProjectCompletionValues GetUnsetCompletionConfiguration(TailwindVersion version)
     {
         ThreadHelper.JoinableTaskFactory.Run(InitializeAsync);
 
@@ -262,7 +262,7 @@ public sealed class ProjectConfigurationManager
             return;
         }
 
-        var project = new ProjectCompletionValues
+        var project = new UnsetProjectCompletionValues
         {
             Version = TailwindVersion.V3
         };
@@ -482,7 +482,7 @@ public sealed class ProjectConfigurationManager
             return;
         }
 
-        var project = new ProjectCompletionValues
+        var project = new UnsetProjectCompletionValues
         {
             Version = version
         };
@@ -707,6 +707,52 @@ public sealed class ProjectConfigurationManager
             var breakpointName = containers.Key.Replace("--container-", "");
             project.Containers[breakpointName] = containers.Value;
         }
+
+        var keys = project.CssVariables.Keys.OrderBy(k => k).ToList();
+
+        HashSet<string> stems = ["--color-"];
+
+        for (int i = 0; i < keys.Count; i++)
+        {
+            var key = keys[i];
+
+            if (key.StartsWith("--default"))
+            {
+                stems.Add(key);
+                continue;
+            }
+
+            if (i + 1 == keys.Count || key.LastIndexOf('-') == 1)
+            {
+                stems.Add(key);
+            }
+
+            var best = key;
+            var bestMatches = 0;
+
+            key = key.TrimStart('-');
+
+            while (key.Contains('-'))
+            {
+                key = key.Substring(0, key.LastIndexOf('-'));
+
+                var searchKey = $"--{key}-";
+                var matches = keys.Count(k => k.StartsWith(searchKey));
+
+                if (matches <= bestMatches)
+                {
+                    break;
+                }
+
+                bestMatches = matches;
+                best = searchKey;
+            }
+
+            stems.Add(best);
+            i += Math.Max(0, bestMatches - 1);
+        }
+
+        project.ThemeStems = [.. stems.OrderBy(s => s)];
 
         _unsetProjectCompletionConfigurations[version] = project;
     }
