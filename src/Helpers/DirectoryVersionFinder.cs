@@ -178,6 +178,11 @@ internal class DirectoryVersionFinder : IDisposable
 
     public void ClearCacheForDirectory(string directory, bool recursive = true)
     {
+        if (directory is null)
+        {
+            return;
+        }
+
         directory = directory.ToLower();
 
         if (recursive)

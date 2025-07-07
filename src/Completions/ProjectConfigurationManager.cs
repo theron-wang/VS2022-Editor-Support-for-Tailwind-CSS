@@ -216,7 +216,7 @@ public sealed class ProjectConfigurationManager
                 _projectCompletionConfiguration[file.Path.ToLower()] = projectConfig;
 
                 await CheckForUpdates.UpdateConfigFileFolderAsync(file.Path);
-                DirectoryVersionFinder.ClearCacheForDirectory(Path.GetDirectoryName(file.Path)!);
+                DirectoryVersionFinder.ClearCacheForDirectory(Path.GetDirectoryName(file.Path));
             }
 
             projectConfig.FilePath = file.Path.ToLower();

@@ -25,11 +25,16 @@ internal static class CheckForUpdates
     /// <param name="folder">The file to update</param>
     public static async Task UpdateConfigFileFolderAsync(string config)
     {
-        var folder = Path.GetDirectoryName(config).ToLower();
+        if (string.IsNullOrWhiteSpace(config))
+        {
+            return;
+        }
+
+        var folder = Path.GetDirectoryName(config)?.ToLower();
 
         var general = await General.GetLiveInstanceAsync();
 
-        if (!general.UseTailwindCss || !general.AutomaticallyUpdateLibrary || !File.Exists(config))
+        if (!general.UseTailwindCss || !general.AutomaticallyUpdateLibrary || !File.Exists(config) || string.IsNullOrWhiteSpace(folder))
         {
             return;
         }
@@ -62,6 +67,13 @@ internal static class CheckForUpdates
 
     private static async Task UpdateModuleAsync(string folder, string module)
     {
+        var workingDir = Path.GetDirectoryName(folder);
+
+        if (string.IsNullOrEmpty(workingDir))
+        {
+            return;
+        }
+
         var processInfo = new ProcessStartInfo()
         {
             UseShellExecute = false,
@@ -69,7 +81,7 @@ internal static class CheckForUpdates
             CreateNoWindow = true,
             FileName = "cmd",
             Arguments = $"/C npm outdated {module} --json",
-            WorkingDirectory = Path.GetDirectoryName(folder)
+            WorkingDirectory = workingDir
         };
 
         string output;
@@ -137,15 +149,15 @@ internal static class CheckForUpdates
             }
         }
 
-        if (relevantPackage is null)
+        if (relevantPackage is null || relevantPackage.Current is null || relevantPackage.Latest is null || relevantPackage.Wanted is null)
         {
             await VS.StatusBar.ShowMessageAsync($"Tailwind CSS: {module} is up to date");
             return;
         }
 
         // Avoid updating major versions: 3.x --> 4.x, for example
-        var currentMajor = relevantPackage.Current!.Split('.')[0];
-        var newMajor = relevantPackage.Latest!.Split('.')[0];
+        var currentMajor = relevantPackage.Current.Split('.')[0];
+        var newMajor = relevantPackage.Latest.Split('.')[0];
 
         if (currentMajor != newMajor)
         {

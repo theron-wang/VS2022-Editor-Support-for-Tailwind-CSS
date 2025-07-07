@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.11.4 (July 6th, 2025)
+
+- Fix potential NREs when updating Tailwind on project load ([#119](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/119))
+
 ## 1.11.3 (July 3rd, 2025)
 
 - Add missing `bg-gradient-to-*` classes
