@@ -1080,7 +1080,7 @@ internal sealed class DescriptionGenerator : IDisposable
             {
                 var c = color.Substring(1, color.Length - 2);
 
-                if (string.IsNullOrWhiteSpace(c) || GetSpecialArbitraryTypeByInput(c) == "length")
+                if (string.IsNullOrWhiteSpace(c) || GetSpecialArbitraryTypeByInput(c) != "color")
                 {
                     return null;
                 }
@@ -1572,10 +1572,25 @@ internal sealed class DescriptionGenerator : IDisposable
             "ex", "ch", "lh", "rlh", "fr"
         ];
 
-        foreach (var unit in units)
+        // Contains any of the units above, but only if it's bounded by the string or non-letter characters
+        // This is to ensure that "in" does not match for "inherit", which is not a length unit
+        for (int i = 0; i < input.Length; i++)
         {
-            if (input.Contains(unit))
+            foreach (var unit in units)
+            {
+                if (i + unit.Length > input.Length) continue;
+
+                // Check if substring matches the unit
+                if (input.Substring(i, unit.Length) != unit) continue;
+
+                // Check preceding character (if it exists)
+                if (i > 0 && char.IsLetter(input[i - 1])) continue;
+
+                // Check following character (if it exists)
+                if (i + unit.Length < input.Length && char.IsLetter(input[i + unit.Length])) continue;
+
                 return "length";
+            }
         }
 
         if (input.Contains(',') || input.Contains('_'))
