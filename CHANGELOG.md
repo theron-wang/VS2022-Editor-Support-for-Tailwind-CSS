@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.1 (July 12th, 2025)
+
+- Add completions for certain missing classes (`max-w-{fraction}`, `min-w-{fraction}`, `mask-{...}-{from|to}-{number or percent}`)
+
 ## 1.12.0 (July 7th, 2025)
 
 - Add completion support for `@theme` variables

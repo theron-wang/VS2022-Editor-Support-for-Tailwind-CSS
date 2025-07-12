@@ -517,6 +517,13 @@ public sealed class ProjectConfigurationManager
 
         project.Classes = [];
 
+        var fractions = new[] { 2, 3, 4, 6, 12 }
+            .SelectMany(d => Enumerable.Range(1, d - 1)
+            .Select(n => new { Numerator = n, Denominator = d }))
+            .Where(f => f.Numerator < 12)
+            .Select(f => $"{f.Numerator}/{f.Denominator}")
+            .ToList();
+
         foreach (var classType in classTypes)
         {
             var classes = new List<TailwindClass>();
@@ -574,6 +581,15 @@ public sealed class ProjectConfigurationManager
                                 Name = classType.Stem + "-" + v.Replace("{f}", "{0}"),
                                 UseFractions = true
                             });
+
+                            // Auto-generate fractions
+                            classes.AddRange(fractions.Select(f =>
+                            {
+                                return new TailwindClass()
+                                {
+                                    Name = classType.Stem + "-" + v.Replace("{f}", f)
+                                };
+                            }));
                         }
                         else
                         {
