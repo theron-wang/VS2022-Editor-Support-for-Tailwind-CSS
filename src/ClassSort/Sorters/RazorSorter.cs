@@ -51,9 +51,9 @@ internal class RazorSorter : Sorter
             var tokens = new List<string>();
             var razorIndices = new HashSet<int>();
 
-            // A list of numbers that represent where a new line should be inserted;
+            // A dictionary of numbers to strings that represent where a new line + indent should be inserted;
             // each number represents a text token in tokens
-            var newLines = new HashSet<int>();
+            var newLines = new Dictionary<int, string>();
 
             foreach ((var token, var index) in ClassRegexHelper.SplitRazorClasses(classContent).Select((m, i) => (m, i)))
             {
@@ -62,12 +62,14 @@ internal class RazorSorter : Sorter
                 {
                     razorIndices.Add(index);
                 }
-                if ((token.Index + token.Length < match.Value.Length && match.Value[token.Index + token.Length] == '\n') ||
+                if ((token.Index + token.Length < classContent.Length && classContent[token.Index + token.Length] == '\n') ||
                     // first case handles \n, second case handles \r\n
-                    token.Index + token.Length + 1 < match.Value.Length && match.Value[token.Index + token.Length + 1] == '\n')
+                    token.Index + token.Length + 1 < classContent.Length && classContent[token.Index + token.Length + 1] == '\n')
                 {
                     // This means that after this current token, there should be a newline
-                    newLines.Add(index);
+                    var indent = new string([.. classContent.Substring(classContent.IndexOf('\n', token.Index + token.Length) + 1).TakeWhile(char.IsWhiteSpace)]);
+
+                    newLines[index] = indent;
                 }
             }
 
@@ -78,9 +80,9 @@ internal class RazorSorter : Sorter
             foreach ((var i, var token) in sorted.Select((v, i) => (i, v)))
             {
                 text.Append(token);
-                if (newLines.Contains(i))
+                if (newLines.ContainsKey(i))
                 {
-                    text.AppendLine();
+                    text.AppendLine().Append(newLines[i]);
                 }
                 else
                 {

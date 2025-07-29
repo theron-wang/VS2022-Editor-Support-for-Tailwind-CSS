@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.2 (July 28th, 2025)
+
+- Make razor class sorting respect indents and newlines (based on token count, not character count)
+
 ## 1.12.1 (July 12th, 2025)
 
 - Add completions for certain missing classes (`max-w-{fraction}`, `min-w-{fraction}`, `mask-{...}-{from|to}-{number or percent}`)
