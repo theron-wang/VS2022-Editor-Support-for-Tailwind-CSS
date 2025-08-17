@@ -41,19 +41,11 @@ public sealed partial class CompletionConfiguration
     /// </summary>
     public async Task ReloadCustomAttributesAsync(TailwindSettings settings)
     {
-        await ReloadCustomAttributesAsync(settings.ConfigurationFiles);
-    }
-
-    /// <summary>
-    /// Shorthand for calling <see cref="ReloadCustomAttributesAsync(ConfigurationFile)"/> on all specified projects
-    /// </summary>
-    public async Task ReloadCustomAttributesAsync(List<ConfigurationFile> configurationFiles)
-    {
         var failed = false;
 
-        foreach (var configurationFile in configurationFiles)
+        foreach (var configurationFile in settings.ConfigurationFiles)
         {
-            var success = await ReloadCustomAttributesImplAsync(configurationFile);
+            var success = await ReloadCustomAttributesImplAsync(configurationFile, settings);
 
             if (!success)
             {
@@ -66,7 +58,7 @@ public sealed partial class CompletionConfiguration
             ConfigurationUpdated();
         }
 
-        if (!failed && configurationFiles.Count > 0)
+        if (!failed && settings.ConfigurationFiles.Count > 0)
         {
             await VS.StatusBar.ShowMessageAsync("Successfully reloaded Tailwind CSS configuration");
         }
@@ -75,9 +67,9 @@ public sealed partial class CompletionConfiguration
     /// <summary>
     /// Adjusts classes to match a change in the configuration file
     /// </summary>
-    public async Task ReloadCustomAttributesAsync(ConfigurationFile configurationFile)
+    public async Task ReloadCustomAttributesAsync(ConfigurationFile configurationFile, TailwindSettings settings)
     {
-        var success = await ReloadCustomAttributesImplAsync(configurationFile);
+        var success = await ReloadCustomAttributesImplAsync(configurationFile, settings);
 
         if (ConfigurationUpdated is not null)
         {
@@ -96,7 +88,7 @@ public sealed partial class CompletionConfiguration
     /// <returns>
     /// True if run successfully, false if an error occurred
     /// </returns>
-    private async Task<bool> ReloadCustomAttributesImplAsync(ConfigurationFile configurationFile)
+    private async Task<bool> ReloadCustomAttributesImplAsync(ConfigurationFile configurationFile, TailwindSettings settings)
     {
         if (ProjectConfigurationManager is not null)
         {
@@ -104,7 +96,7 @@ public sealed partial class CompletionConfiguration
 
             try
             {
-                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(configurationFile.Path);
+                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(configurationFile.Path, settings);
 
                 var config = await ConfigFileParser.GetConfigurationAsync(configurationFile.Path, version);
 

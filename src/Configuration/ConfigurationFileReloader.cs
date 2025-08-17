@@ -76,7 +76,7 @@ public sealed class ConfigurationFileReloader : IDisposable
 
         foreach (var config in configFiles)
         {
-            ThreadHelper.JoinableTaskFactory.RunAsync(() => CompletionConfiguration.ReloadCustomAttributesAsync(config)).FireAndForget();
+            ThreadHelper.JoinableTaskFactory.RunAsync(() => CompletionConfiguration.ReloadCustomAttributesAsync(config, _settings)).FireAndForget();
         }
     }
 

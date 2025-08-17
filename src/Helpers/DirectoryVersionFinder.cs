@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense.Helpers;
 
@@ -15,6 +16,8 @@ namespace TailwindCSSIntellisense.Helpers;
 [PartCreationPolicy(CreationPolicy.Shared)]
 internal class DirectoryVersionFinder : IDisposable
 {
+    // It is unsafe to import SettingsProvider in this class. First, importing it here will cause a circular dependency;
+    // second, it will cause infinite recursion if you try to get settings in any of these methods.
     public DirectoryVersionFinder()
     {
         VS.Events.SolutionEvents.OnAfterOpenFolder += InvalidateCache;
@@ -27,8 +30,13 @@ internal class DirectoryVersionFinder : IDisposable
     /// <summary>
     /// Gets the tailwind version for the directory of the given file. Caches the result, until a new project is opened.
     /// </summary>
-    public async Task<bool> IsTailwindInstalledAsync(string? directory)
+    public async Task<bool> IsTailwindInstalledAsync(string? directory, TailwindSettings settings)
     {
+        if (settings.UseCli && !string.IsNullOrWhiteSpace(settings.TailwindCliPath))
+        {
+            return true;
+        }
+
         if (string.IsNullOrWhiteSpace(directory) || !Directory.Exists(directory))
         {
             return false;
@@ -109,7 +117,7 @@ internal class DirectoryVersionFinder : IDisposable
     /// <summary>
     /// Gets the tailwind version for the directory of the given file. Caches the result, until a new project is opened.
     /// </summary>
-    public async Task<TailwindVersion> GetTailwindVersionAsync(string file)
+    public async Task<TailwindVersion> GetTailwindVersionAsync(string file, TailwindSettings settings)
     {
         var directory = Path.GetDirectoryName(file).ToLower();
 
@@ -118,13 +126,15 @@ internal class DirectoryVersionFinder : IDisposable
             return version;
         }
 
+        var isCli = settings.UseCli && !string.IsNullOrWhiteSpace(settings.TailwindCliPath);
+
         var processInfo = new ProcessStartInfo()
         {
             UseShellExecute = false,
             RedirectStandardOutput = true,
             CreateNoWindow = true,
             FileName = "cmd",
-            Arguments = "/C npm list tailwindcss --depth=0",
+            Arguments = isCli ? $"/C \"{settings.TailwindCliPath}\" --help" : "/C npm list tailwindcss --depth=0",
             WorkingDirectory = directory
         };
 
@@ -138,7 +148,7 @@ internal class DirectoryVersionFinder : IDisposable
         }
 
         // If not found locally, default to global
-        if (string.IsNullOrWhiteSpace(output) || !output.Contains("tailwindcss"))
+        if (!isCli && (string.IsNullOrWhiteSpace(output) || !output.Contains("tailwindcss")))
         {
             processInfo = new ProcessStartInfo()
             {
@@ -160,12 +170,12 @@ internal class DirectoryVersionFinder : IDisposable
         // Sample output: `-- tailwindcss@4.0.0
         if (!string.IsNullOrWhiteSpace(output))
         {
-            if (output.Contains("@3"))
+            if (output.Contains("@3") || output.Contains("v3"))
             {
                 _cache[directory] = TailwindVersion.V3;
                 return TailwindVersion.V3;
             }
-            else if (output.Contains("@4.0"))
+            else if (output.Contains("@4.0") || output.Contains("v4.0"))
             {
                 _cache[directory] = TailwindVersion.V4;
                 return TailwindVersion.V4;

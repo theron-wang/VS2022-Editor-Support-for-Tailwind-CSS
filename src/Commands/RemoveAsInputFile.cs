@@ -35,7 +35,7 @@ internal sealed class RemoveAsInputFile : BaseCommand<RemoveAsInputFile>
             return;
         }
 
-        var version = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.GetTailwindVersionAsync(filePath));
+        var version = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.GetTailwindVersionAsync(filePath, settings));
 
         if (version >= TailwindVersion.V4)
         {

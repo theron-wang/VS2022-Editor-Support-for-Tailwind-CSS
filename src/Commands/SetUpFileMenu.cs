@@ -45,7 +45,7 @@ internal sealed class SetUpFileMenu : BaseCommand<SetUpFileMenu>
 
         var directory = Path.GetDirectoryName(SolutionExplorerSelection.CurrentSelectedItemFullPath);
 
-        var isInstalled = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.IsTailwindInstalledAsync(directory!));
+        var isInstalled = ThreadHelper.JoinableTaskFactory.Run(() => DirectoryVersionFinder.IsTailwindInstalledAsync(directory!, settings));
 
         if (isInstalled)
         {

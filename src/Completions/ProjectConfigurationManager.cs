@@ -191,7 +191,7 @@ public sealed class ProjectConfigurationManager
         {
             if (settings.ConfigurationFiles.All(cf => !cf.Path.Equals(buildFile.Input, StringComparison.InvariantCultureIgnoreCase)))
             {
-                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(buildFile.Input);
+                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(buildFile.Input, settings);
 
                 if (version >= TailwindVersion.V4)
                 {
@@ -204,7 +204,7 @@ public sealed class ProjectConfigurationManager
         {
             if (!_projectCompletionConfiguration.TryGetValue(file.Path.ToLower(), out var projectConfig))
             {
-                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(file.Path);
+                var version = await DirectoryVersionFinder.GetTailwindVersionAsync(file.Path, settings);
 
                 if (!_unsetProjectCompletionConfigurations.TryGetValue(version, out var toCopy))
                 {
@@ -215,7 +215,10 @@ public sealed class ProjectConfigurationManager
                 projectConfig = toCopy.Copy();
                 _projectCompletionConfiguration[file.Path.ToLower()] = projectConfig;
 
-                await CheckForUpdates.UpdateConfigFileFolderAsync(file.Path);
+                if (!settings.UseCli || string.IsNullOrWhiteSpace(settings.TailwindCliPath))
+                {
+                    await CheckForUpdates.UpdateConfigFileFolderAsync(file.Path);
+                }
                 DirectoryVersionFinder.ClearCacheForDirectory(Path.GetDirectoryName(file.Path));
             }
 
