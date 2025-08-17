@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Wacton.Unicolour;
@@ -49,11 +50,22 @@ internal static class ColorHelpers
         {
             var rgb = color.Replace("rgb(", "").Replace(")", "").Trim();
 
-            var values = rgb.Split(' ')
+
+            byte[] values;
+            if (rgb.Contains(','))
+            {
+                values = [..rgb.Split(',')
                 .Take(3)
                 .Where(v => byte.TryParse(v, out _))
-                .Select(byte.Parse)
-                .ToArray();
+                .Select(byte.Parse)];
+            }
+            else
+            {
+                values = [..rgb.Split(' ')
+                .Take(3)
+                .Where(v => byte.TryParse(v, out _))
+                .Select(byte.Parse)];
+            }
 
             if (values.Length != 3)
             {
@@ -156,6 +168,30 @@ internal static class ColorHelpers
             var unicolour = new Unicolour(ColourSpace.Hsl, values[0], values[1], values[2]);
 
             return [unicolour.Rgb.Byte255.ConstrainedR, unicolour.Rgb.Byte255.ConstrainedG, unicolour.Rgb.Byte255.ConstrainedB];
+        }
+
+        if (color.StartsWith("rgb"))
+        {
+            var rgb = color.Replace("rgb(", "").Replace(")", "").Trim();
+
+            List<byte> values;
+            if (rgb.Contains(','))
+            {
+                values = [..rgb.Split(',')
+                    .Where(x => byte.TryParse(x, out _))
+                    .Select(x => byte.Parse(x))];
+            }
+            else
+            {
+                values = [..rgb.Split(' ')
+                    .Where(x => byte.TryParse(x, out _))
+                    .Select(x => byte.Parse(x))];
+            }
+
+            if (values.Count >= 3)
+            {
+                return [values[0], values[1], values[2]];
+            }
         }
 
         return null;

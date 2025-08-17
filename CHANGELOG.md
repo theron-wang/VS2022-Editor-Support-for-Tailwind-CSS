@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.12.3 (August 17t, 2025)
+
+- Fix `PSSecurityException` by running `npx @tailwindcss/cli` with `-ExecutionPolicy Unrestricted` if powershell has a security restriction ([#120](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/120), [#125](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/125), see also [npm/cli#7280](https://github.com/npm/cli/issues/7280))
+- If a project uses the Tailwind standalone CLI, find the version of that instead of trying to find a local/global npm tailwind installation
+- Fix missing color tooltips for `rgb` with commas
+- Fix incorrect color description if changing its value in a configuration file
+- Fix Tailwind CSS updating with npm even if a standalone CLI is configured
+
 ## 1.12.2 (July 28th, 2025)
 
 - Make razor class sorting respect indents and newlines (based on token count, not character count)

@@ -142,15 +142,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
                     if (projectCompletionValues.ColorMapper.TryGetValue(color, out var value))
                     {
-                        // If defined in config file, the extension converts to r,g,b format
-                        var potentialRgbs = value.Split(',');
-
-                        if (potentialRgbs.Length == 3 && potentialRgbs.All(val => int.TryParse(val, out _)))
-                        {
-                            value = $"rgb({string.Join(" ", potentialRgbs)})";
-                        }
-
-                        if (!_colorDescriptionMapper.TryGetValue(color, out var hex))
+                        if (!_colorDescriptionMapper.TryGetValue(value, out var hex))
                         {
                             hex = ColorHelpers.ConvertToHex(value);
                             _colorDescriptionMapper[color] = hex;
