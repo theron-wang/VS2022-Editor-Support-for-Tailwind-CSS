@@ -40,6 +40,10 @@ internal sealed class TailwindBuildProcess : IDisposable
 
     private bool _startingBuilds;
 
+    // http://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/120
+    // If we encounter a security error from powershell in running npx, use -ExecutionPolicy Unrestricted
+    private bool _encounteredSecurityError;
+
     private readonly Dictionary<string, string?> _configsToPackageJsons = [];
 
     private readonly Dictionary<string, Process> _outputFileToProcesses = [];
@@ -265,11 +269,11 @@ internal sealed class TailwindBuildProcess : IDisposable
                 {
                     if (config.Version == TailwindVersion.V3)
                     {
-                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}"));
                     }
                     else
                     {
-                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}"));
                     }
                 }
             }
@@ -291,11 +295,11 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     if (config.Version == TailwindVersion.V3)
                     {
-                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}");
+                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}"));
                     }
                     else
                     {
-                        process.StandardInput.WriteLine($"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}");
+                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}"));
                     }
 
                     PostSetupProcess(process);
@@ -354,12 +358,14 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     ProcessStartInfo processInfo;
 
+                    var watch = _settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT;
                     // We need powershell to run --watch, otherwise the output file will not update.
                     // https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/111
-                    if (_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT)
+                    if (watch)
                     {
                         processInfo = GetProcessStartInfo(dir, true);
-                        processInfo.Arguments = "-Command ";
+                        // If we encountered a security error, use -ExecutionPolicy Unrestricted
+                        processInfo.Arguments = $"{(_encounteredSecurityError ? "-ExecutionPolicy Unrestricted" : "")} -Command ";
                     }
                     else
                     {
@@ -369,16 +375,16 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     if (config.Version == TailwindVersion.V3)
                     {
-                        processInfo.Arguments += $"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")} {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "& exit")}";
+                        processInfo.Arguments += GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")} {(watch ? "--watch" : "")}", !watch, watch);
                     }
                     else
                     {
-                        processInfo.Arguments += $"{GetCommand(config)} -i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")} {(_settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT ? "--watch" : "& exit")}";
+                        processInfo.Arguments += GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")} {(watch ? "--watch" : "")}", !watch, watch);
                     }
 
                     process = CreateAndStartProcess(processInfo);
 
-                    OutputDataReceived(process, $"Build started with `powershell {processInfo.Arguments}`");
+                    OutputDataReceived(process, $"Build started with `{(watch ? "powershell" : "cmd")} {processInfo.Arguments} {(watch ? "" : "& exit")}`");
 
                     PostSetupProcess(process);
 
@@ -478,20 +484,21 @@ internal sealed class TailwindBuildProcess : IDisposable
         _processToIsMinify.Remove(process);
     }
 
-    private string GetCommand(ProjectCompletionValues project)
+    private string GetCommand(ProjectCompletionValues project, string args, bool exit = false, bool powershell = false)
     {
-        if (string.IsNullOrWhiteSpace(_settings.TailwindCliPath))
+        var suffix = exit ? " & exit" : "";
+        if (string.IsNullOrWhiteSpace(_settings.TailwindCliPath) || !_settings.UseCli)
         {
             if (project.Version == TailwindVersion.V3)
             {
-                return "npx tailwindcss";
+                return $"npx tailwindcss {args}{suffix}";
             }
             else
             {
-                return "npx @tailwindcss/cli";
+                return $"npx @tailwindcss/cli {args}{suffix}";
             }
         }
-        return _settings.TailwindCliPath!;
+        return powershell ? $"\"& '{_settings.TailwindCliPath}' {args.Replace('\"', '\'')}\"{suffix}" : $"\"{_settings.TailwindCliPath}\" {args}{suffix}";
     }
 
     /// <summary>
@@ -569,6 +576,25 @@ internal sealed class TailwindBuildProcess : IDisposable
         if (data == null)
         {
             return;
+        }
+
+        if (data.Contains("PSSecurityException") && !_encounteredSecurityError)
+        {
+            _encounteredSecurityError = true;
+            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            {
+                await WriteToBuildPaneAsync("Tailwind CSS: Encountered a PSSecurityException, trying again with -ExecutionPolicy Unrestricted: see https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/120");
+            });
+
+            foreach (var process in _outputFileToProcesses.Values)
+            {
+                var output = _outputFileToProcesses.First(p => p.Value == process).Key;
+                var pair = _inputFileToBuildInfo.First(p => p.Value.Output == output);
+                var minify = _processToIsMinify.TryGetValue(process, out var isMinify) && isMinify;
+
+                EndProcess(process);
+                BuildOne(pair.Key, pair.Value.Output, minify);
+            }
         }
 
         if (_settings.OverrideBuild || sender == _secondaryProcess)
