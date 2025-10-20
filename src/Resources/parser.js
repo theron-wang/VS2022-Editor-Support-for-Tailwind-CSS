@@ -183,11 +183,25 @@
             defaultThemeValue = defaultThemeValue({ theme: theme, colors: colors });
         }
 
-        const output = {
-            ...defaultThemeValue,
-            ...getValueByKeyBracket(custom.theme, key),
-            ...getValueByKeyBracket(custom.theme.extend, key)
-        };
+        // In order of least to most precedence: default overridden by theme, theme overridden by extend
+        const candidates = [
+            defaultThemeValue,
+            getValueByKeyBracket(custom.theme, key),
+            getValueByKeyBracket(custom.theme.extend, key)
+        ].filter(v => Boolean(v));
+
+        let output;
+        if (candidates.every(c => typeof c !== "object")) {
+            output = candidates[0];
+        } else {
+            // Is there ever a case where candidates are mixed in string/object/etc?
+            // For now, assume not
+            output = {
+                ...candidates
+                    .filter(c => typeof c === "object")
+                    .reduce((acc, cur) => ({ ...acc, ...cur }), {})
+            };
+        }
 
         return (!output || Object.keys(output).length === 0) ? defaultValue : output;
     }

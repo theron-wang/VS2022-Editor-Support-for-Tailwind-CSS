@@ -161,8 +161,9 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 foreach (var color in colors)
                 {
                     var className = string.Format(twClass.Name, color);
+                    var classNameRaw = className;
 
-                    if (_projectCompletionValues.Version == TailwindVersion.V3)
+                    if (_projectCompletionValues.Version == TailwindVersion.V3 && !string.IsNullOrWhiteSpace(prefix))
                     {
                         if (className.StartsWith("-"))
                         {
@@ -184,7 +185,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     completions.Add(
                                 new Completion(className + suffix,
                                                     insert,
-                                                    className,
+                                                    classNameRaw,
                                                     _colorIconGenerator.GetImageFromColor(_projectCompletionValues, twClass.Name, color, color == "transparent" ? 0 : 100),
                                                     null));
 
@@ -235,8 +236,9 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 foreach (var spacing in spacings)
                 {
                     var className = string.IsNullOrWhiteSpace(spacing) ? twClass.Name.Replace("-{0}", "") : string.Format(twClass.Name, spacing);
+                    var classNameRaw = className;
 
-                    if (_projectCompletionValues.Version == TailwindVersion.V3)
+                    if (_projectCompletionValues.Version == TailwindVersion.V3 && !string.IsNullOrWhiteSpace(prefix))
                     {
                         if (className.StartsWith("-"))
                         {
@@ -257,7 +259,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     completions.Add(
                         new Completion(className + suffix,
                                             insert,
-                                            className,
+                                            classNameRaw,
                                             _completionUtils.TailwindLogo,
                                             null));
                 }
@@ -265,8 +267,9 @@ internal abstract class ClassCompletionGenerator : IDisposable
             else if (twClass.HasArbitrary)
             {
                 var className = twClass.Name;
+                var classNameRaw = className;
 
-                if (_projectCompletionValues.Version == TailwindVersion.V3)
+                if (_projectCompletionValues.Version == TailwindVersion.V3 && !string.IsNullOrWhiteSpace(prefix))
                 {
                     if (className.StartsWith("-"))
                     {
@@ -287,7 +290,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 completions.Add(
                 new Completion(className + "[]" + suffix,
                                     insert,
-                                    className + "[]",
+                                    classNameRaw + "[]",
                                     _completionUtils.TailwindLogo,
                                     null));
             }
@@ -300,7 +303,9 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     continue;
                 }
 
-                if (_projectCompletionValues.Version == TailwindVersion.V3)
+                var classNameRaw = className;
+
+                if (_projectCompletionValues.Version == TailwindVersion.V3 && !string.IsNullOrWhiteSpace(prefix))
                 {
                     if (className.StartsWith("-"))
                     {
@@ -321,13 +326,13 @@ internal abstract class ClassCompletionGenerator : IDisposable
                 completions.Add(
                 new Completion(className + suffix,
                                     insert,
-                                    className,
+                                    classNameRaw,
                                     _completionUtils.TailwindLogo,
                                     null));
 
                 if (currentClass.Contains('/'))
                 {
-                    if (className.StartsWith("bg-linear") || className.StartsWith("bg-radial") || className.StartsWith("bg-conic"))
+                    if (classNameRaw.StartsWith("bg-linear") || classNameRaw.StartsWith("bg-radial") || classNameRaw.StartsWith("bg-conic"))
                     {
                         foreach (var modifier in KnownModifiers.GradientModifierToDescription.Keys)
                         {
@@ -341,7 +346,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                             completions.Add(
                                     new Completion($"{className}/{modifier}{suffix}",
                                                         insert,
-                                                        $"{className}/{modifier}",
+                                                        $"{classNameRaw}/{modifier}",
                                                         _completionUtils.TailwindLogo,
                                                         null));
                         }
@@ -350,7 +355,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         completions.Add(
                                     new Completion(className + "/[]" + suffix,
                                                        insert,
-                                                       className + "/[]",
+                                                       classNameRaw + "/[]",
                                                        _completionUtils.TailwindLogo,
                                                        null));
                     }
@@ -368,7 +373,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                             completions.Add(
                                     new Completion($"{className}/{modifier}{suffix}",
                                                         insert,
-                                                        $"{className}/{modifier}",
+                                                        $"{classNameRaw}/{modifier}",
                                                         _completionUtils.TailwindLogo,
                                                         null));
                         }
@@ -377,7 +382,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         completions.Add(
                                     new Completion(className + "/[]" + suffix,
                                                         insert,
-                                                        className + "/[]",
+                                                        classNameRaw + "/[]",
                                                         _completionUtils.TailwindLogo,
                                                         null));
                     }

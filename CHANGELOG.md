@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.12.3 (August 17t, 2025)
+## 1.12.4 (October 20th, 2025)
+
+- Fix `tailwind.extension.json` being deleted in v3 projects ([#129](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/129))
+- Fix some parsing errors in JS Tailwind plugins
+- Fix missing description tooltips for completions when using prefixes in v3 projects
+
+## 1.12.3 (August 17th, 2025)
 
 - Fix `PSSecurityException` by running `npx @tailwindcss/cli` with `-ExecutionPolicy Unrestricted` if powershell has a security restriction ([#120](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/120), [#125](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/125), see also [npm/cli#7280](https://github.com/npm/cli/issues/7280))
 - If a project uses the Tailwind standalone CLI, find the version of that instead of trying to find a local/global npm tailwind installation

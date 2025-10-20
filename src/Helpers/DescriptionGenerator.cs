@@ -238,6 +238,7 @@ internal sealed class DescriptionGenerator : IDisposable
     /// </summary>
     /// <param name="className">The unprocessed text: <c>hover:bg-green-800/90</c>, <c>min-w-[10px]</c></param>
     /// <param name="shouldFormat">true iff the description should be formatted</param>
+    /// <param name="ignorePrefix">Set to true if className is guaranteed to not have a prefix</param>
     /// <returns>The description for the given class</returns>
     internal string? GetDescription(string className, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true, bool ignorePrefix = false)
     {
