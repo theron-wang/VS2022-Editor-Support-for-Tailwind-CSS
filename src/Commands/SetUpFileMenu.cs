@@ -9,6 +9,9 @@ using TailwindCSSIntellisense.Settings;
 
 namespace TailwindCSSIntellisense;
 
+/// <summary>
+/// The menu for all set up Tailwind commands
+/// </summary>
 [Command(PackageGuids.guidVSPackageCmdSetString, PackageIds.SetUpTailwindMenu)]
 internal sealed class SetUpFileMenu : BaseCommand<SetUpFileMenu>
 {

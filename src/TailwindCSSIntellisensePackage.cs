@@ -55,6 +55,8 @@ public sealed class TailwindCSSIntellisensePackage : AsyncPackage, IDisposable
     private ProjectConfigurationManager _completionUtils = null!;
     private ClassSorter _classSorter = null!;
 
+    private readonly SemaphoreSlim _initializeLock = new(1, 1);
+
     /// <summary>
     /// Initialization of the package; this method is called right after the package is sited, so this is the place
     /// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -68,7 +70,7 @@ public sealed class TailwindCSSIntellisensePackage : AsyncPackage, IDisposable
 
         // When initialized asynchronously, the current thread may be a background thread at this point.
         // Do any initialization that requires the UI thread after switching to the UI thread.
-        await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+        await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
 
         _buildProcess = await VS.GetMefServiceAsync<TailwindBuildProcess>();
         _completionUtils = await VS.GetMefServiceAsync<ProjectConfigurationManager>();
@@ -82,13 +84,7 @@ public sealed class TailwindCSSIntellisensePackage : AsyncPackage, IDisposable
 
         if (await VS.Solutions.IsOpenAsync())
         {
-            JoinableTaskFactory.RunAsync(async () =>
-            {
-                await _buildProcess.InitializeAsync(true);
-                await _completionUtils.InitializeAsync();
-                await _completionUtils.Configuration.Reloader.InitializeAsync();
-                _classSorter.Initialize();
-            }).FireAndForget();
+            FolderOpened();
         }
     }
 
@@ -109,18 +105,34 @@ public sealed class TailwindCSSIntellisensePackage : AsyncPackage, IDisposable
     {
         try
         {
-            JoinableTaskFactory.RunAsync(async () =>
-            {
-                await _buildProcess.InitializeAsync(true);
-                await _completionUtils.InitializeAsync();
-                await _completionUtils.Configuration.Reloader.InitializeAsync();
-                _classSorter.Initialize();
-            }).FireAndForget();
+            JoinableTaskFactory.RunAsync(BeginInitializationAsync).FireAndForget();
         }
         catch (Exception ex)
         {
             JoinableTaskFactory.Run(() => VS.StatusBar.ShowMessageAsync("Tailwind CSS: An error occurred while loading in this project"));
             ex.Log();
+        }
+    }
+
+    private async Task BeginInitializationAsync()
+    {
+        // Ensure only ONE initialize method is running at a time. If this method is called multiple times in
+        // quick succession, this method is only run once.
+        if (!await _initializeLock.WaitAsync(0))
+        {
+            return;
+        }
+
+        try
+        {
+            await _buildProcess.InitializeAsync(true);
+            await _completionUtils.InitializeAsync();
+            await _completionUtils.Configuration.Reloader.InitializeAsync();
+            _classSorter.Initialize();
+        }
+        finally
+        {
+            _initializeLock.Release();
         }
     }
 

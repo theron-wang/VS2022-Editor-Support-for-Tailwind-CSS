@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.5 (November 26th, 2025)
+
+- Fix incorrect display of `Set up Tailwind CSS` command in Solution Explorer context menu when Tailwind is already installed correctly
+- Solution startup performance optimizations ([#130](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/130))
+
 ## 1.12.4 (October 20th, 2025)
 
 - Fix `tailwind.extension.json` being deleted in v3 projects ([#129](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/129))

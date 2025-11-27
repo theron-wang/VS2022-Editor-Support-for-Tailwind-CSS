@@ -44,13 +44,19 @@ public sealed class FileFinder
 
         var solution = await vsSolution.ToSolutionItemAsync();
 
-        if (solution is null)
+        if (solution?.FullPath is null)
         {
             return null;
         }
 
-        var path = solution.FullPath;
-        // Path can be given without the end trailing \, so we must add it on
+        var path = solution.FullPath!.TrimEnd(Path.DirectorySeparatorChar);
+
+        // There is also a chance that the path is a solution path
+        if (path.EndsWith(".sln"))
+        {
+            path = Path.GetDirectoryName(path);
+        }
+
         return path + Path.DirectorySeparatorChar;
     }
 
@@ -78,14 +84,14 @@ public sealed class FileFinder
                 .EnumerateFiles(miscPath, "*.*", SearchOption.AllDirectories)
                 .Where(file => extensions.Contains(Path.GetExtension(file).ToLower()) &&
                                !file.Split(Path.DirectorySeparatorChar).Contains("node_modules"));
-            return files.ToList();
+            return [.. files];
         }
 
         var projectItems = new List<SolutionItem>();
 
         foreach (var project in projects)
         {
-            projectItems.AddRange(GetProjectItems([.. project.Children], extensions));
+            projectItems.AddRange(GetProjectItems([.. project.Children.Where(c => c is not null).Select(c => c!)], extensions));
         }
 
         return [.. projectItems.Select(i => i.Name)];
@@ -102,7 +108,7 @@ public sealed class FileFinder
             }
             else if (item.Type == SolutionItemType.PhysicalFolder)
             {
-                list.AddRange(GetProjectItems([.. item.Children], extensions));
+                list.AddRange(GetProjectItems([.. item.Children.Where(c => c is not null).Select(c => c!)], extensions));
             }
         }
 

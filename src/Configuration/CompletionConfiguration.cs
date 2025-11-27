@@ -1,4 +1,6 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -96,9 +98,14 @@ public sealed partial class CompletionConfiguration
 
             try
             {
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+                // These two methods MUST be called on the UI thread
                 var version = await DirectoryVersionFinder.GetTailwindVersionAsync(configurationFile.Path, settings);
 
                 var config = await ConfigFileParser.GetConfigurationAsync(configurationFile.Path, version);
+
+                // Run remaining on background threads
+                await TaskScheduler.Default;
 
                 foreach (var imports in config.Imports)
                 {

@@ -6,6 +6,7 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
@@ -46,6 +47,10 @@ public sealed class SettingsProvider : IDisposable
 
     private Task? _fileWritingTask;
     private TailwindSettings? _cachedSettings;
+
+    private DateTime _lastInvalidateTime = DateTime.MinValue;
+    private readonly TimeSpan _invalidationInterval = TimeSpan.FromSeconds(10);
+    private readonly SemaphoreSlim _invalidationLock = new(1, 1);
 
     /// <summary>
     /// Event that is raised when the settings are changed.
@@ -535,27 +540,38 @@ public sealed class SettingsProvider : IDisposable
 
     private void InvalidateCacheAndSettingsChanged(string file)
     {
-        _cachedSettings = null;
-        if (OnSettingsChanged != null)
-        {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
-            {
-                var settings = await GetSettingsAsync();
-                await OnSettingsChanged(settings);
-            });
-        }
+        ThreadHelper.JoinableTaskFactory.Run(InvalidateCacheAndSettingsChangedImplAsync);
     }
 
     private void InvalidateCacheAndSettingsChanged(Project? project)
     {
+        ThreadHelper.JoinableTaskFactory.Run(InvalidateCacheAndSettingsChangedImplAsync);
+    }
+
+    private async Task InvalidateCacheAndSettingsChangedImplAsync()
+    {
         _cachedSettings = null;
-        if (OnSettingsChanged != null)
+        if (OnSettingsChanged == null || !await _invalidationLock.WaitAsync(0))
         {
-            ThreadHelper.JoinableTaskFactory.Run(async () =>
+            return;
+        }
+
+        try
+        {
+            // Debounce
+            var timeSinceLast = DateTime.UtcNow - _lastInvalidateTime;
+            _lastInvalidateTime = DateTime.UtcNow;
+
+            if (timeSinceLast < _invalidationInterval)
             {
-                var settings = await GetSettingsAsync();
-                await OnSettingsChanged(settings);
-            });
+                return;
+            }
+
+            await OnSettingsChanged(await GetSettingsAsync());
+        }
+        finally
+        {
+            _invalidationLock.Release();
         }
     }
 
