@@ -474,7 +474,7 @@ public sealed class SettingsProvider : IDisposable
 
     private async Task<string?> GetTailwindProjectDirectoryAsync()
     {
-        var projects = await VS.Solutions.GetAllProjectsAsync();
+        var projects = await VS.Solutions.GetAllProjectsAsync(ProjectStateFilter.All);
 
         if (projects == null || projects.Any() == false)
         {

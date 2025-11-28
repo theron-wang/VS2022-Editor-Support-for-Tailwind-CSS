@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.7 (November 28th, 2025)
+
+- Fix incorrect result when tabbing through completion menu when a modifier and class are added in the same session
+- Fix additional `tailwind.extension.json` file being added to solution root
+
 ## 1.12.6 (November 28th, 2025)
 
 - Run build processes in the directory of the input file, not of the configuration file (affects v3 only) --> remove use of `-c` to let Tailwind find the correct config file ([#131](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/131))

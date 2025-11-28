@@ -49,15 +49,14 @@ public sealed class FileFinder
             return null;
         }
 
-        var path = solution.FullPath!.TrimEnd(Path.DirectorySeparatorChar);
-
-        // There is also a chance that the path is a solution path
-        if (path.EndsWith(".sln") || path.EndsWith(".slnx"))
+        // If a solution is present, this project is not miscellaneous; just not loaded yet.
+        // Return null to make the caller look elsewhere.
+        if (solution.FullPath!.EndsWith(".sln") || solution.FullPath!.EndsWith(".slnx"))
         {
-            path = Path.GetDirectoryName(path);
+            return null;
         }
 
-        return path + Path.DirectorySeparatorChar;
+        return solution.FullPath;
     }
 
     private Task<List<string>> FindAllFilesAsync(params string[] extensions)
