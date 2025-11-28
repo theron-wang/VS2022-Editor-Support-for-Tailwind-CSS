@@ -139,6 +139,62 @@ public sealed class ProjectConfigurationManager
             }
         }
 
+        ProjectCompletionValues? closest = null;
+        var minDist = int.MaxValue;
+
+        var inputFileDirectories = Path.GetDirectoryName(filePath).ToLower().Split(Path.DirectorySeparatorChar);
+
+        foreach (var k in _projectCompletionConfiguration.Values)
+        {
+            if (k.FilePath.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return k;
+            }
+
+            if (k.Version >= TailwindVersion.V4)
+            {
+                if (k.NotApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    continue;
+                }
+
+                if (k.ApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    return k;
+                }
+            }
+
+            if (k.ApplicablePaths.Any(p => PathHelpers.PathMatchesGlob(filePath, p)))
+            {
+                return k;
+            }
+
+            // Find the distance from this configuration file to filePath.
+            // i.e., find the number of subdirectories that differ between the two paths
+            var configurationFileDirectories = Path.GetDirectoryName(k.FilePath).ToLower().Split(Path.DirectorySeparatorChar);
+
+            int inCommon = 0;
+
+            while (inCommon < Math.Min(inputFileDirectories.Length, configurationFileDirectories.Length) && inputFileDirectories[inCommon] == configurationFileDirectories[inCommon])
+            {
+                inCommon++;
+            }
+
+            int distance = inputFileDirectories.Length + configurationFileDirectories.Length - 2 * inCommon;
+
+            if (distance < minDist)
+            {
+                minDist = distance;
+                closest = k;
+            }
+        }
+
+        // Find the closest one, if possible
+        if (closest is not null)
+        {
+            return closest;
+        }
+
         foreach (var k in _projectCompletionConfiguration.Values)
         {
             if (k.FilePath.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
@@ -165,11 +221,7 @@ public sealed class ProjectConfigurationManager
             }
         }
 
-        if (_defaultProjectCompletionConfiguration is not null)
-        {
-            return _defaultProjectCompletionConfiguration;
-        }
-        else if (_unsetProjectCompletionConfigurations.Any())
+        if (_unsetProjectCompletionConfigurations.Any())
         {
             return _unsetProjectCompletionConfigurations.First().Value;
         }

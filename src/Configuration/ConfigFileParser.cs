@@ -1,4 +1,5 @@
 ﻿using Community.VisualStudio.Toolkit;
+using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
@@ -926,6 +927,8 @@ internal static class ConfigFileParser
     {
         var file = await PhysicalFile.FromFileAsync(configPath);
 
+        await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+        // ContainingProject must be called on the UI thread
         if (file?.ContainingProject is null)
         {
             return null;

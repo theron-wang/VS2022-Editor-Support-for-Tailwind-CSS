@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.12.6 (November 28th, 2025)
+
+- Run build processes in the directory of the input file, not of the configuration file (affects v3 only) --> remove use of `-c` to let Tailwind find the correct config file ([#131](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/131))
+- Use closest configuration file instead of default configuration file when a file is not explicitly included in a configuration file
+- Moved additional solution startup code to the background to improve performance
+
 ## 1.12.5 (November 26th, 2025)
 
 - Fix incorrect display of `Set up Tailwind CSS` command in Solution Explorer context menu when Tailwind is already installed correctly

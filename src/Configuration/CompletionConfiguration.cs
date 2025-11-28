@@ -85,7 +85,8 @@ public sealed partial class CompletionConfiguration
     }
 
     /// <summary>
-    /// Implementation for <see cref="ReloadCustomAttributesAsync(ConfigurationFile)"/>
+    /// Implementation for <see cref="ReloadCustomAttributesAsync(ConfigurationFile)"/>. Runs on a background thread, as this
+    /// can be expensive.
     /// </summary>
     /// <returns>
     /// True if run successfully, false if an error occurred
@@ -98,14 +99,11 @@ public sealed partial class CompletionConfiguration
 
             try
             {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                // These two methods MUST be called on the UI thread
+                // Switch to background thread
+                await TaskScheduler.Default;
                 var version = await DirectoryVersionFinder.GetTailwindVersionAsync(configurationFile.Path, settings);
 
                 var config = await ConfigFileParser.GetConfigurationAsync(configurationFile.Path, version);
-
-                // Run remaining on background threads
-                await TaskScheduler.Default;
 
                 foreach (var imports in config.Imports)
                 {

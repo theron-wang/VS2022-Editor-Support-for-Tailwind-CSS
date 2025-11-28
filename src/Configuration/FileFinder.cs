@@ -52,7 +52,7 @@ public sealed class FileFinder
         var path = solution.FullPath!.TrimEnd(Path.DirectorySeparatorChar);
 
         // There is also a chance that the path is a solution path
-        if (path.EndsWith(".sln"))
+        if (path.EndsWith(".sln") || path.EndsWith(".slnx"))
         {
             path = Path.GetDirectoryName(path);
         }

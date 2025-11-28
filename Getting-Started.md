@@ -1,10 +1,10 @@
 ﻿# Getting Started (Tailwind v4+)
 
-> The following guide is for projects using Tailwind v4 and above. For Tailwind v3 projects, use the [v3 Getting Started guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started-v3.md).
+The following guide is for projects using Tailwind v4 and above. For Tailwind v3 projects, use the [v3 Getting Started guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started-v3.md).
 
 ## Video
 
-> To get started in most projects, you can view a "Getting Started" video guide [here](https://www.youtube.com/watch?v=TZ_c424SIRc).
+To get started in most projects, you can view a "Getting Started" video guide [here](https://www.youtube.com/watch?v=TZ_c424SIRc).
 
 ## Existing Projects
 

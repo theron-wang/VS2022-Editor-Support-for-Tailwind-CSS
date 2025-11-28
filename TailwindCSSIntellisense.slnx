@@ -1,0 +1,39 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="arm64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="CHANGELOG.md" />
+    <File Path="Getting-Started-v3.md" />
+    <File Path="Getting-Started.md" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+    <File Path="tailwind.extension.schema.json" />
+    <File Path="Upgrade-Guide.md" />
+  </Folder>
+  <Folder Name="/Solution Items/art/">
+    <File Path="art/Build-Demo-1.png" />
+    <File Path="art/Build-Demo-2.png" />
+    <File Path="art/Class-Sort-2.png" />
+    <File Path="art/class-sort-demo.gif" />
+    <File Path="art/Customizability-Build-1.png" />
+    <File Path="art/Customizability-Build-2.png" />
+    <File Path="art/IntelliSense-Demo-1.gif" />
+    <File Path="art/IntelliSense-Demo-2-Configuration.png" />
+    <File Path="art/IntelliSense-Demo-3.png" />
+    <File Path="art/Linter.png" />
+    <File Path="art/NPM-package-json.png" />
+    <File Path="art/NPM-Shortcuts-1.png" />
+    <File Path="art/Troubleshooting-Build.png" />
+  </Folder>
+  <Folder Name="/Solution Items/art/getting-started/">
+    <File Path="art/getting-started/ide-install.png" />
+  </Folder>
+  <Project Path="src/TailwindCSSIntellisense.csproj" Id="43b6c233-e6f5-43fc-bd66-f1cab9a46730">
+    <Platform Solution="*|arm64" Project="arm64" />
+    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+</Solution>
