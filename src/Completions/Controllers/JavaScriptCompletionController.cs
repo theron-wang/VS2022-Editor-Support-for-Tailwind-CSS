@@ -168,7 +168,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
                 {
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
                         var character = GetTypeChar(pvaIn);
-                        if (_currentSession == null || character == ' ' || character == '/')
+                        if (_currentSession == null || character == ' ' || character == ':' || character == '/')
                         {
                             _currentSession?.Dismiss();
                             StartSession();
@@ -188,7 +188,7 @@ internal sealed class JavaScriptCommandFilter : IOleCommandTarget
                         {
                             break;
                         }
-                        if (_currentSession == null || classText.EndsWith("/"))
+                        if (_currentSession == null || classText.EndsWith("/") || classText.EndsWith(":"))
                         {
                             _currentSession?.Dismiss();
                             StartSession();

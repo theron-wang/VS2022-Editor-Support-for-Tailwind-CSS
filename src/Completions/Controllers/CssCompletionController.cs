@@ -168,7 +168,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
                 {
                     case VSConstants.VSStd2KCmdID.TYPECHAR:
                         var character = GetTypeChar(pvaIn);
-                        if (character == ' ' || (isInApply && (_currentSession == null || character == '/')))
+                        if (character == ' ' || character == ':' || (isInApply && (_currentSession == null || character == '/')))
                         {
                             _currentSession?.Dismiss();
                             StartSession(true);
@@ -189,7 +189,7 @@ internal sealed class CssCommandFilter : IOleCommandTarget
                         {
                             break;
                         }
-                        if (isInApply && (_currentSession == null || (classText is not null && classText.EndsWith("/"))))
+                        if (isInApply && (_currentSession == null || (classText is not null && (classText.EndsWith("/") || classText.EndsWith(":")))))
                         {
                             _currentSession?.Dismiss();
                             StartSession(true);

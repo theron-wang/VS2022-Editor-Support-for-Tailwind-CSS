@@ -211,7 +211,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
 
                         var newText = last + character;
 
-                        if (_currentSession == null || character == ' ' || character == '/' || (!string.IsNullOrWhiteSpace(classText) && character == '!') ||
+                        if (_currentSession == null || character == ' ' || character == '/' || character == ':' || (!string.IsNullOrWhiteSpace(classText) && character == '!') ||
                             newText.StartsWith("@@") || newText.StartsWith("@(\"@\")"))
                         {
                             _currentSession?.Dismiss();
@@ -232,7 +232,7 @@ internal sealed class RazorCommandFilter : IOleCommandTarget
                         {
                             break;
                         }
-                        if (_currentSession == null || classText.EndsWith("/") || classText.Trim() == "!")
+                        if (_currentSession == null || classText.EndsWith("/") || classText.EndsWith(":") || classText.Trim() == "!")
                         {
                             _currentSession?.Dismiss();
                             StartSession();
