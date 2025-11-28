@@ -18,18 +18,20 @@ If you prefer a video tutorial, [click here](https://www.youtube.com/watch?v=guJ
 
 ## New Projects
 
-1. Right-click the project in the Solution Explorer → **Set up Tailwind CSS**:  
-   - Installs `tailwindcss`, if needed
-   - Creates `tailwind.config.js`
+1. Install Tailwind CSS v3 **manually** and set it up:
 
-   ![Set up TailwindCSS](art/NPM-Shortcuts-1.png)
+```
+npm install tailwindcss@3.4.18
+npx tailwindcss init
+```
 
-2. Using the standalone Tailwind CSS CLI:
-   - Set path: Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path  
-   - Then use **Set up Tailwind CSS (use CLI)** 
-   - Toggle CLI usage via `UseCli` in `tailwind.extension.json`
+2. Restart Visual Studio.
 
-3. Theme setup: follow the [official guide](https://v3.tailwindcss.com/docs/installation).
+3. If using the standalone Tailwind CSS CLI:
+   - Set path: Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path
+   - Set `UseCli` to `true` in `tailwind.extension.json`
+
+4. Theme setup: follow the [official guide](https://v3.tailwindcss.com/docs/installation).
 
 ## Setting Up the Extension
 
