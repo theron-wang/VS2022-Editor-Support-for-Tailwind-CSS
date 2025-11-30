@@ -8,6 +8,7 @@ using System.Text;
 using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.ClassSort.Sorters;
+
 internal abstract class Sorter
 {
     [Import]
@@ -88,7 +89,7 @@ internal abstract class Sorter
 
         if (shouldMoveImportant)
         {
-            sortedSegment.Append("!important");
+            sortedSegment.Append(" !important");
         }
 
         return sortedSegment.ToString().Trim();

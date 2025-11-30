@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.12.8 (November 29th, 2025)
+
+- Fix the space before `!important` being removed when sorting classes ([#132](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/132))
+
 ## 1.12.7 (November 28th, 2025)
 
 - Fix incorrect result when tabbing through completion menu when a modifier and class are added in the same session
