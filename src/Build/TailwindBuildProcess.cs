@@ -250,10 +250,11 @@ internal sealed class TailwindBuildProcess : IDisposable
 
         var needOtherProcess = _settings.OverrideBuild == false && hasScript && string.IsNullOrWhiteSpace(_settings.BuildScript) == false;
         // Run from the directory of the input file so Tailwind can find the configuration file, not us
-        var dir = Path.GetDirectoryName(input);
+        var dir = Path.GetDirectoryName(config.FilePath);
 
-        var inputFile = Path.GetFileName(input);
+        var inputFile = PathHelpers.GetRelativePath(input, dir)!;
         var outputFile = PathHelpers.GetRelativePath(output, dir)!;
+        var configFile = Path.GetFileName(config.FilePath);
 
         if (_settings.BuildType == BuildProcessOptions.OnSave)
         {
@@ -269,7 +270,7 @@ internal sealed class TailwindBuildProcess : IDisposable
                 {
                     if (config.Version == TailwindVersion.V3)
                     {
-                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}"));
+                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}"));
                     }
                     else
                     {
@@ -295,7 +296,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     if (config.Version == TailwindVersion.V3)
                     {
-                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")}"));
+                        process.StandardInput.WriteLine(GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")}"));
                     }
                     else
                     {
@@ -375,7 +376,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     if (config.Version == TailwindVersion.V3)
                     {
-                        processInfo.Arguments += GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" {(minify ? "--minify" : "")} {(watch ? "--watch" : "")}", !watch, watch);
+                        processInfo.Arguments += GetCommand(config, $"-i \"{inputFile}\" -o \"{outputFile}\" -c \"{configFile}\" {(minify ? "--minify" : "")} {(watch ? "--watch" : "")}", !watch, watch);
                     }
                     else
                     {
@@ -384,7 +385,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     process = CreateAndStartProcess(processInfo);
 
-                    OutputDataReceived(process, $"Build started with `{(watch ? "powershell" : "cmd")} {processInfo.Arguments} {(watch ? "" : "& exit")}`");
+                    OutputDataReceived(process, $"Build started in {processInfo.WorkingDirectory}: `{(watch ? "powershell" : "cmd")} {processInfo.Arguments} {(watch ? "" : "& exit")}`");
 
                     PostSetupProcess(process);
 

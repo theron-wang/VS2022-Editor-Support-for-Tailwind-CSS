@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.12.9 (December 2nd, 2025)
+
+- Revert `-c` removal from 1.12.6
+- Improve verbose build logs to include working directory
+
 ## 1.12.8 (November 29th, 2025)
 
 - Fix the space before `!important` being removed when sorting classes ([#132](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/132))
