@@ -420,6 +420,28 @@ internal static class ConfigFileParser
 
                     variants[directiveParameter] += current.ToString();
                 }
+                else if (directive == "plugin")
+                {
+                    var plugin = directiveParameter.Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
+
+                    var pluginAbsPath = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), plugin);
+
+                    // If this path exists, then it is not a package name. If not, then we must resolve the package
+                    if (!File.Exists(pluginAbsPath))
+                    {
+                        var resolvedPath = await ResolveFilePathFromNPMPackageNameAsync(path, plugin);
+                        if (resolvedPath is not null)
+                        {
+                            imports.Add($"@plugin{resolvedPath}");
+                        }
+                    }
+                    else
+                    {
+                        imports.Add($"@plugin{pluginAbsPath}");
+                    }
+
+                    continue;
+                }
             }
         }
 

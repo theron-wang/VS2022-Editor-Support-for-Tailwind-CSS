@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.13.1 (January 12th, 2026)
+
+- Allow `{` after `@plugin` in addition to `;`
+
 ## 1.13.0 (January 12th, 2026)
 
 - Re-add support for legacy JavaScript plugins in v4 projects ([#133](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/133))
