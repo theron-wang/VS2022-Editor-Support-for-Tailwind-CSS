@@ -40,6 +40,7 @@
     };
 
     let filePath = process.argv[2];
+    const isPlugin = process.argv.includes('--plugin');
 
     if (!path.isAbsolute(filePath)) {
         filePath = path.join(process.cwd(), filePath);
@@ -82,6 +83,13 @@
         if (configuration.default) {
             configuration = configuration.default;
         }
+    }
+
+    if (isPlugin) {
+        // Support v4 @plugin plugins: this way we don't have to rewrite this whole script
+        // This is mainly so methods get passed in when parsing (preventing errors for
+        // `addUtilities` is not a method, and so on)
+        configuration = { plugins: [configuration] };
     }
 
     function getValueByKeyBracket(object, key) {

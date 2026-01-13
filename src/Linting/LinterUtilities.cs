@@ -67,7 +67,7 @@ internal sealed class LinterUtilities : IDisposable
             {
                 var desc = _descriptionGenerator.GetDescription(classTrimmed, projectCompletionValues, shouldFormat: false);
 
-                if (string.IsNullOrWhiteSpace(desc))
+                if (string.IsNullOrWhiteSpace(desc) || desc == ";")
                 {
                     continue;
                 }

@@ -20,7 +20,19 @@ namespace TailwindCSSIntellisense.Configuration;
 /// </summary>
 internal static class ConfigFileParser
 {
-    internal static async Task<JsonObject?> GetConfigJsonNodeAsync(string path)
+    /// <summary>
+    /// Asynchronously parses a configuration file using a Node.js script and returns its contents as a JSON object.
+    /// </summary>
+    /// <remarks>This method relies on an external Node.js script to perform the parsing. Ensure that Node.js
+    /// is installed and accessible in the system environment. The method reads both standard output and error streams
+    /// from the process to capture results and errors.</remarks>
+    /// <param name="path">The full file system path to the configuration file to be parsed. Cannot be null or empty.</param>
+    /// <param name="isAPlugin">A value indicating whether the configuration file represents a plugin. This may affect how the file is
+    /// processed.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a JsonObject representing the parsed
+    /// configuration file, or null if the file is empty or cannot be deserialized.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if an error occurs while parsing the configuration file.</exception>
+    private static async Task<JsonObject?> GetConfigJsonNodeAsync(string path, bool isAPlugin)
     {
         var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "parser.js");
 
@@ -32,37 +44,12 @@ internal static class ConfigFileParser
             RedirectStandardError = true,
             CreateNoWindow = true,
             FileName = "cmd",
-            Arguments = $"/c node \"{scriptLocation}\" \"{Path.GetFileName(path)}\"",
+            Arguments = $"/c node \"{scriptLocation}\" \"{Path.GetFileName(path)}\" {(isAPlugin ? "--plugin" : "")}",
             WorkingDirectory = Path.GetDirectoryName(path)
         };
 
-        var nodePath = await GetNodeModulesFromConfigFilePathAsync(path);
-
-        var globalPath = await GetGlobalPackageLocationAsync();
-
-        var nodePathEnvironmentVariable = processInfo.EnvironmentVariables["NODE_PATH"];
-
-        if (!string.IsNullOrWhiteSpace(nodePathEnvironmentVariable))
-        {
-            nodePathEnvironmentVariable += ";";
-        }
-
-        if (nodePath is not null && Directory.Exists(nodePath))
-        {
-            nodePathEnvironmentVariable += nodePath + ";";
-        }
-
-        if (!string.IsNullOrWhiteSpace(globalPath))
-        {
-            nodePathEnvironmentVariable += globalPath + ";";
-        }
-
-        if (!string.IsNullOrWhiteSpace(nodePathEnvironmentVariable))
-        {
-            nodePathEnvironmentVariable = nodePathEnvironmentVariable.TrimEnd(';');
-        }
-
-        processInfo.EnvironmentVariables["NODE_PATH"] = nodePathEnvironmentVariable;
+        var localNodePath = await GetNodeModulesFromConfigFilePathAsync(path);
+        await SetupNodeProcessAsync(processInfo, localNodePath);
 
         using var process = Process.Start(processInfo);
         process.BeginOutputReadLine();
@@ -303,6 +290,28 @@ internal static class ConfigFileParser
                         imports.Add($"@config{import}");
                         continue;
                     }
+                    else if (directive == "plugin")
+                    {
+                        var plugin = directiveParameter.Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
+
+                        var pluginAbsPath = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), plugin);
+
+                        // If this path exists, then it is not a package name. If not, then we must resolve the package
+                        if (!File.Exists(pluginAbsPath))
+                        {
+                            var resolvedPath = await ResolveFilePathFromNPMPackageNameAsync(path, plugin);
+                            if (resolvedPath is not null)
+                            {
+                                imports.Add($"@plugin{resolvedPath}");
+                            }
+                        }
+                        else
+                        {
+                            imports.Add($"@plugin{pluginAbsPath}");
+                        }
+
+                        continue;
+                    }
                     // Handle short-hand:
                     // @custom-variant pointer-coarse (@media (pointer: coarse))
                     else if (directive == "custom-variant")
@@ -436,6 +445,10 @@ internal static class ConfigFileParser
             else if (import.StartsWith("@config"))
             {
                 imported = await GetJavaScriptConfigurationAsync(importPath);
+            }
+            else if (import.StartsWith("@plugin"))
+            {
+                imported = await GetJavaScriptConfigurationAsync(importPath, true);
             }
             else
             {
@@ -799,9 +812,9 @@ internal static class ConfigFileParser
         return null;
     }
 
-    private static async Task<TailwindConfiguration> GetJavaScriptConfigurationAsync(string path)
+    private static async Task<TailwindConfiguration> GetJavaScriptConfigurationAsync(string path, bool isAPlugin = false)
     {
-        var obj = await GetConfigJsonNodeAsync(path);
+        var obj = await GetConfigJsonNodeAsync(path, isAPlugin);
 
         if (obj is null)
         {
@@ -956,6 +969,95 @@ internal static class ConfigFileParser
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Resolves the absolute file path to the main entry point of an installed npm package.
+    /// </summary>.
+    /// <param name="workingDir">The directory in which to execute the Node.js process. This should be the root directory where the npm package
+    /// is installed.</param>
+    /// <param name="package">The name of the npm package to resolve. Must be a valid package name installed in the specified working
+    /// directory.</param>
+    /// <returns>A string containing the absolute file path to the main entry point of the specified npm package if resolution is
+    /// successful; otherwise, null.</returns>
+    private static async Task<string?> ResolveFilePathFromNPMPackageNameAsync(string configFileLocation, string package)
+    {
+        // Do a basic check to ensure the package name is valid (very very crude security measure)
+        // Based roughly on ChatGPT and this: https://npm.io/package/validate-npm-package-name
+        foreach (char c in package)
+        {
+            if ((!char.IsLetterOrDigit(c) && c != '-' && c != '_' && c != '/' && c != '@' && c != '.') || char.IsUpper(c))
+            {
+                return null;
+            }
+        }
+
+        var processInfo = new ProcessStartInfo()
+        {
+            UseShellExecute = false,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            CreateNoWindow = true,
+            FileName = "cmd",
+            Arguments = $"/c node -e \"console.log(require.resolve('{package}'))\"",
+            WorkingDirectory = Path.GetDirectoryName(configFileLocation)!
+        };
+
+        var localNodePath = await GetNodeModulesFromConfigFilePathAsync(configFileLocation);
+        await SetupNodeProcessAsync(processInfo, localNodePath);
+
+        using var process = Process.Start(processInfo);
+        await process.WaitForExitAsync();
+
+        var path = (await process.StandardOutput.ReadToEndAsync()).Trim();
+
+        // Check to see if the resolution worked; if not, then this will return false since
+        // the output is not a path
+        if (Uri.TryCreate(path, UriKind.Absolute, out _))
+        {
+            return path;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Configures the NODE_PATH environment variable for the specified Node.js process start information, including
+    /// local and global package paths as appropriate.
+    /// </summary>
+    /// <remarks>This method appends the local and global package paths to the NODE_PATH environment variable
+    /// if they are available. Existing values in NODE_PATH are preserved and extended as needed.</remarks>
+    /// <param name="nodeProcess">The process start information for the Node.js process. The method updates its NODE_PATH environment variable.</param>
+    /// <param name="localNodePath">The local directory path to include in the NODE_PATH environment variable. Can be null; if specified and the
+    /// directory exists, it is added to NODE_PATH.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    private static async Task SetupNodeProcessAsync(ProcessStartInfo nodeProcess, string? localNodePath)
+    {
+        var globalPath = await GetGlobalPackageLocationAsync();
+
+        var nodePathEnvironmentVariable = nodeProcess.EnvironmentVariables["NODE_PATH"];
+
+        if (!string.IsNullOrWhiteSpace(nodePathEnvironmentVariable))
+        {
+            nodePathEnvironmentVariable += ";";
+        }
+
+        if (localNodePath is not null && Directory.Exists(localNodePath))
+        {
+            nodePathEnvironmentVariable += localNodePath + ";";
+        }
+
+        if (!string.IsNullOrWhiteSpace(globalPath))
+        {
+            nodePathEnvironmentVariable += globalPath + ";";
+        }
+
+        if (!string.IsNullOrWhiteSpace(nodePathEnvironmentVariable))
+        {
+            nodePathEnvironmentVariable = nodePathEnvironmentVariable.TrimEnd(';');
+        }
+
+        nodeProcess.EnvironmentVariables["NODE_PATH"] = nodePathEnvironmentVariable;
     }
 
     private static Dictionary<string, object>? GetTotalValue(JsonNode? node, string? ignoreKey = null)
