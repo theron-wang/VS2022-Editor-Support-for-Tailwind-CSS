@@ -44,22 +44,20 @@ internal sealed class DescriptionGenerator : IDisposable
             return null;
         }
 
-        var index = 0;
-
         if (projectCompletionValues.Version >= TailwindVersion.V4)
         {
             var resultText = new StringBuilder(text);
             int offset = 0;
-            int varIndex;
+            int varIndex = 0;
 
-            while ((varIndex = text.IndexOf("var(--", index)) != -1)
+            while ((varIndex = text.IndexOf("var(--", varIndex)) != -1)
             {
                 var endParen = text.IndexOf(')', varIndex);
                 var semicolon = text.IndexOf(';', varIndex);
 
                 if (endParen == -1 || semicolon == -1)
                 {
-                    index++;
+                    varIndex++;
                     continue;
                 }
 
@@ -69,7 +67,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
                 if (!variable.Contains("var(--"))
                 {
-                    index = semicolon;
+                    varIndex = semicolon;
                 }
 
                 string? variableValue;
@@ -89,7 +87,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
                             if (endParen == -1)
                             {
-                                index++;
+                                varIndex++;
                                 continue;
                             }
 
@@ -184,53 +182,23 @@ internal sealed class DescriptionGenerator : IDisposable
                     var insert = $" /* {variableValue} */";
                     resultText.Insert(endParen + 1 + offset, insert);
                     offset += insert.Length;
-                    index = endParen;
+                    varIndex = endParen;
                 }
                 else
                 {
-                    index++;
+                    varIndex++;
                 }
             }
             text = resultText.ToString();
         }
 
-        var lines = text.Split([';'], StringSplitOptions.RemoveEmptyEntries);
-
-        var output = new StringBuilder();
-        foreach (var line in lines)
-        {
-            // {0} handle for opacity
-            if (line.Contains('{') && line.IndexOf("{0}") != line.IndexOf('{'))
-            {
-                var trimmed = line.Trim();
-
-                if (trimmed.StartsWith("}"))
-                {
-                    output.AppendLine("}");
-                    trimmed = trimmed.TrimStart('}').Trim();
-                }
-
-                var beforeBraces = trimmed.Split('{')[0];
-                output.AppendLine($"{beforeBraces.Trim()} {{");
-                output.AppendLine($"{trimmed.Substring(beforeBraces.Length + 1).Trim()};");
-                continue;
-            }
-            else if (line.Contains('}') && (line.IndexOf("{0}") == -1 || line.IndexOf("{0}") != line.IndexOf('}') - 2))
-            {
-                output.AppendLine("}");
-
-                // Yes, this is really annoying how sometimes these lines start with a leading whitespace
-                if (!string.IsNullOrWhiteSpace(line.Trim().Trim('}').Trim()))
-                {
-                    output.AppendLine($"{line.Trim().Trim('}').Trim()};");
-                }
-
-                continue;
-            }
-
-            output.AppendLine($"{line.Trim()};");
-        }
-        return output.ToString().Trim();
+        return string.Join("\n",
+            text.Replace(";", ";\n")
+                .Replace("}", "}\n")
+                .Replace("{", "{\n")
+                .Replace("{\n0}\n", "{0}")
+                .Split(['\n'], StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim()));
     }
 
     /// <summary>

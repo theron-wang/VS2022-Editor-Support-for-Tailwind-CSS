@@ -117,13 +117,13 @@
     }
 
     if (configuration.plugins) {
-        var pluginTheme = { theme: configuration.theme };
-        var pluginCorePlugins = {};
-        var newPlugins = [];
+        let pluginTheme = { theme: configuration.theme };
+        let pluginCorePlugins = {};
+        let newPlugins = [];
         configuration.plugins.reverse().forEach(function (plugin) {
             if (typeof plugin === 'function') {
                 try {
-                    var evaluated = plugin({});
+                    let evaluated = plugin({});
 
                     if (evaluated && evaluated.handler && evaluated.config) {
                         plugin = evaluated;
@@ -195,7 +195,7 @@
         const candidates = [
             defaultThemeValue,
             getValueByKeyBracket(custom.theme, key),
-            getValueByKeyBracket(custom.theme.extend, key)
+            getValueByKeyBracket(custom.theme?.extend, key)
         ].filter(v => Boolean(v));
 
         let output;
@@ -223,12 +223,161 @@
             .toLowerCase();
     }
 
-    var parsed = JSON.stringify(configuration,
+    function formatDescriptionAsString(description) {
+        // description itself is an object; if any values are also an object, then it is a nested rule. For example,
+        // if a key is @layer a and the value is { color: "blue" }, then color is nested within @layer a
+
+        let result = "";
+
+        for (const [key, value] of Object.entries(description)) {
+            if (typeof value === 'object' && value) {
+                result += `${key} { ${formatDescriptionAsString(value)} } `;
+            } else {
+                result += `${camelToKebab(key)}: ${value}; `;
+            }
+        }
+
+        return result.trim();
+    }
+
+    // Handle evaluated match objects (i.e., the result of a matchComponents or matchUtilities call)
+    function handleEvaluatedMatchObject(evaluatedObject) {
+        // See https://github.com/tailwindlabs/tailwindcss-aspect-ratio/blob/master/src/index.js#L39
+        // I think the first object is always the description? Subsequent are for children
+        // i.e., for .aspect-ratio, first is for itself, second could be for .aspect-ratio > *
+        return Object.fromEntries(Object.entries(Array.isArray(evaluatedObject) ? evaluatedObject[0] : evaluatedObject));
+    }
+
+    // A valid class starts with a period, followed by a combination of letters, numbers, hyphens, underscores, Unicode characters,
+    // and all else escaped.
+    function isValidClass(className) {
+        if (!className.startsWith('.')) {
+            return false;
+        }
+        
+        for (let i = 1; i < className.length; i++) {
+            const char = className[i];
+
+            // Check if non-ASCII: https://stackoverflow.com/questions/14313183/javascript-regex-how-do-i-check-if-the-string-is-ascii-only
+            // If so, this is allowed
+            if (/[^\x00-\x7F]/.test(char)) {
+                continue;
+            }
+
+            // Check if alphanumeric, hyphen, or underscore
+            if (/[a-zA-Z0-9\-\_]/.test(char)) {
+                continue;
+            }
+
+            // All else must be escaped with a backslash
+            // Note: this is a heuristic; there will be invalid cases with this approach
+            // i.e., .hello\\\world is not valid, but most people won't be doing this
+            if (char === '\\') {
+                continue;
+            } else if (className[i - 1] === '\\') {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    let parsed = JSON.stringify(configuration,
         (key, value) => {
             if (key === 'plugins') {
-                var classes = [];
-                var variants = [];
-                var customDescripts = [];
+                let classes = new Set();
+                let variants = new Set();
+                let customDescripts = new Map();
+
+                function addClasses(classesToAdd) {
+                    if (!Array.isArray(classesToAdd)) {
+                        classesToAdd = [classesToAdd];
+                    }
+
+                    while (classesToAdd.length > 0) {
+                        const className = classesToAdd.pop();
+                        if (className.includes(' ')) {
+                            // Each may be comma separated
+                            classesToAdd.push(...className.split(' ').map(c => c.endsWith(',') ? c.slice(0, -1) : c));
+                            continue;
+                        }
+
+                        if (!isValidClass(className)) {
+                            continue;
+                        }
+
+                        classes.add(className);
+                    }
+                }
+
+                // Object.entries() of class name (with leading .) and description object
+                // Therefore, it must be an array with an array (i.e., [['.class-name', { color: 'red' }], ...])
+                function addDescriptions(descsToAdd) {
+                    while (descsToAdd.length > 0) {
+                        const [className, desc] = descsToAdd.pop();
+
+                        if (className.includes(' ')) {
+                            // Each may be comma separated
+                            descsToAdd.push(...className.split(' ').map(c => c.endsWith(',') ? c.slice(0, -1) : c).map(c => [c, desc]));
+                        }
+
+                        if (!isValidClass(className)) {
+                            continue;
+                        }
+
+                        const existing = customDescripts.get(className);
+
+                        if (existing) {
+                            customDescripts.set(className, {...existing, ...desc});
+                        } else {
+                            customDescripts.set(className, desc);
+                        }
+                    }
+                }
+
+                // Base of matchUtilities and matchComponents
+                function matchImpl(compsOrUtils, { values, supportsNegativeValues } = null) {
+                    if (compsOrUtils) {
+                        if (values) {
+                            for (const v of Object.entries(values)) {
+                                for (const template of Object.entries(compsOrUtils)) {
+                                    let input = `.${template[0]}-${v[0]}`.replace('-DEFAULT', '');
+
+                                    addClasses(input);
+
+                                    addDescriptions([[input, handleEvaluatedMatchObject(template[1](v[1]))]]);
+
+                                    if (supportsNegativeValues === true) {
+                                        let negativeValue = null;
+                                        if (typeof v[1] === "number") {
+                                            negativeValue = -v[1];
+                                        } else if (typeof value === 'string' && /\d/.test(value)) {
+                                            negativeValue = value.replace(/(?:^|\s)\d/, (match) => {
+                                                const num = parseInt(match, 10);
+                                                return -num;
+                                            });
+                                        }
+
+                                        if (negativeValue !== null) {
+                                            addClasses(`-${input}`);
+                                            addDescriptions([[input, handleEvaluatedMatchObject(template[1](negativeValue))]]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        for (const u of Object.entries(compsOrUtils)) {
+                            addClasses(`${u[0]}-[]`);
+                            if (supportsNegativeValues === true) {
+                                addClasses(`-${u[0]}-[]`);
+                            }
+                        }
+                    }
+                }
+
                 value.forEach(function (p) {
                     p({
                         theme: theme,
@@ -239,130 +388,35 @@
                             if (utilities) {
                                 if (typeof utilities[Symbol.iterator] === 'function') {
                                     utilities.forEach(function (u) {
-                                        classes.push(...Object.keys(u));
-                                        customDescripts.push(...Object.entries(u));
+                                        addClasses(Object.keys(u));
+                                        addDescriptions(Object.entries(u));
                                     });
                                 } else {
-                                    classes.push(...Object.keys(utilities));
-                                    customDescripts.push(...Object.entries(utilities));
+                                    addClasses(Object.keys(utilities));
+                                    addDescriptions(Object.entries(utilities));
                                 }
                             }
                         },
-                        matchUtilities: (utilities, { values, supportsNegativeValues } = null) => {
-                            if (utilities) {
-                                if (values) {
-                                    for (const v of Object.entries(values)) {
-                                        for (const u of Object.entries(utilities)) {
-                                            var input = `${u[0]}-${v[0]}`.replace('-DEFAULT', '');
-                                            classes.push(input);
-                                            customDescripts[input] = u[1](v[1], {});
-                                            if (supportsNegativeValues === true) {
-                                                classes.push(`-${input}`);
-                                                let negated = { ...u[1](v[1]) };
-
-                                                for (const [key, value] of Object.entries(negated)) {
-                                                    if (typeof value === 'number') {
-                                                        negated[key] = -Math.abs(value);
-                                                    } else if (typeof value === 'string' && /\d/.test(value)) {
-                                                        negated[key] = value.replace(/(?:^|\s)\d/, (match) => {
-                                                            const num = parseInt(match, 10);
-                                                            return -Math.abs(num);
-                                                        });
-                                                    }
-                                                }
-
-                                                customDescripts[`-${input}`] = negated;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                for (const u of Object.entries(utilities)) {
-                                    classes.push(`${u[0]}-[]`);
-                                    if (supportsNegativeValues === true) {
-                                        classes.push(`-${u[0]}-[]`);
-                                    }
-                                }
-                            }
-                        },
+                        matchUtilities: matchImpl,
                         addComponents: (components, options = null) => {
                             if (components) {
                                 if (typeof components[Symbol.iterator] === 'function') {
                                     components.forEach(function (c) {
-                                        classes.push(...Object.keys(c));
-                                        customDescripts.push(...
-                                            Object.entries(c)
-                                                .map(([key, val]) => [
-                                                    camelToKebab(key),
-                                                    Object.fromEntries(Object.entries(val)
-                                                        .filter(([_, v]) => typeof v === 'string' || typeof v === 'number'))
-                                                ]
-                                                ));
+                                        addClasses(Object.keys(c));
+                                        addDescriptions(Object.entries(c));
                                     })
                                 } else {
-                                    classes.push(...Object.keys(components));
-                                    customDescripts.push(...
-                                        Object.entries(components)
-                                            .map(([key, val]) => [
-                                                camelToKebab(key),
-                                                Object.fromEntries(Object.entries(val)
-                                                    .filter(([_, v]) => typeof v === 'string' || typeof v === 'number'))
-                                            ]
-                                            ));
+                                    addClasses(Object.keys(components));
+                                    addDescriptions(Object.entries(components));
                                 }
                             }
                         },
-                        matchComponents: (components, { values, supportsNegativeValues } = null) => {
-                            if (components) {
-                                if (values) {
-                                    for (const v of Object.entries(values)) {
-                                        for (const u of Object.entries(components)) {
-                                            var input = `${u[0]}-${v[0]}`.replace('-DEFAULT', '');
-                                            classes.push(input);
-
-                                            let convertedToKebab = Object.fromEntries(Object.entries(u[1](v[1]))
-                                                .filter(([_, v]) => typeof v === 'string' || typeof v === 'number')
-                                                .map(([key, val]) => [
-                                                    camelToKebab(key),
-                                                    val
-                                                ]));
-
-                                            customDescripts[input] = convertedToKebab;
-                                            if (supportsNegativeValues === true) {
-                                                classes.push(`-${input}`);
-
-                                                let negated = { ...convertedToKebab };
-
-                                                for (const [key, value] of Object.entries(negated)) {
-                                                    if (typeof value === 'number') {
-                                                        negated[key] = -Math.abs(value);
-                                                    } else if (typeof value === 'string' && /\d/.test(value)) {
-                                                        negated[key] = value.replace(/(?:^|\s)\d/, (match) => {
-                                                            const num = parseInt(match, 10);
-                                                            return -Math.abs(num);
-                                                        });
-                                                    }
-                                                }
-
-                                                customDescripts[`-${input}`] = negated;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                for (const u of Object.entries(components)) {
-                                    classes.push(`${u[0]}-[]`);
-                                    if (supportsNegativeValues === true) {
-                                        classes.push(`-${u[0]}-[]`);
-                                    }
-                                }
-                            }
-                        },
+                        matchComponents: matchImpl,
                         addBase: (base) => {
                             return;
                         },
                         addVariant: (name, value) => {
-                            variants.push(name)
+                            variants.add(name)
                         },
                         matchVariant: (name, cb, { values } = null) => {
                             if (name !== '@') {
@@ -370,11 +424,11 @@
                             }
                             if (values) {
                                 for (const v of Object.entries(values)) {
-                                    variants.push(`${name}${v[0].replace('DEFAULT', '')}`);
+                                    variants.add(`${name}${v[0].replace('DEFAULT', '')}`);
                                 }
                             }
 
-                            variants.push(`${name}[]`);
+                            variants.add(`${name}[]`);
                         },
                         corePlugins: (path) => {
                             return configuration.corePlugins[path] !== false;
@@ -391,32 +445,20 @@
                     });
                 });
 
+                // Remove any non-classes (may be :where(...) or @keyframes)
+                classes = [...classes].filter(c => c.startsWith('.'));
+
+                // Ensure that there are no descriptions that have an unmatched class, and format
+                // the descriptions
                 customDescripts = Object.fromEntries(
-                    Object.entries(customDescripts).map(([key, value]) => {
-                        return Array.isArray(value) ?
-                            [
-                                value[0].replace(".", ""),
-                                Object.entries(value[1]).map(item => {
-                                    return typeof item === 'string'
-                                        ? item
-                                        : `${item[0]}: ${item[1]}`
-                                }
-                                ).join('; ') + ";"
-                            ] : [
-                                key,
-                                typeof value === 'string'
-                                    ? value
-                                    : Object.entries(value)
-                                        .filter(([_, v]) => v && Object.keys(v).length !== 0)
-                                        .map(([k, v]) => `${k}: ${v}`)
-                                        .join('; ') + ";"
-                            ]
-                    })
+                    Array.from(customDescripts)
+                        .filter(([className]) => classes.includes(className))
+                        .map(([className, desc]) => [className.replace(".", ""), formatDescriptionAsString(desc)])
                 );
 
                 return {
                     'classes': classes,
-                    'variants': variants,
+                    'variants': [...variants],
                     'descriptions': customDescripts,
                     'content': configuration.content
                 };

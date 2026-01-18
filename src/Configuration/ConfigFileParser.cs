@@ -51,9 +51,8 @@ internal static class ConfigFileParser
         var localNodePath = await GetNodeModulesFromConfigFilePathAsync(path);
         await SetupNodeProcessAsync(processInfo, localNodePath);
 
-        using var process = Process.Start(processInfo);
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
+        using var process = new Process();
+        process.StartInfo = processInfo;
 
         var file = new StringBuilder();
 
@@ -74,6 +73,12 @@ internal static class ConfigFileParser
                 error.AppendLine(e.Data);
             }
         };
+
+        process.Start();
+
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+
         await process.WaitForExitAsync();
 
         if (hasError)
@@ -137,7 +142,7 @@ internal static class ConfigFileParser
         // We need this because there may be multiple blocks on one line
         var themeTrimmed = new StringBuilder();
 
-        var imports = new List<string>();
+        var imports = new HashSet<string>();
         var utilities = new Dictionary<string, string>();
         var variants = new Dictionary<string, string>();
         var content = new List<string>();
@@ -385,6 +390,30 @@ internal static class ConfigFileParser
                 }
                 else if (current == '{' && !(directiveParameter.Count(p => p == '\'') == 1 || directiveParameter.Count(p => p == '"') == 1))
                 {
+                    // { is also a terminator for @plugin, so we'll handle that here
+                    if (directive == "plugin")
+                    {
+                        var plugin = directiveParameter.Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
+
+                        var pluginAbsPath = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), plugin);
+
+                        // If this path exists, then it is not a package name. If not, then we must resolve the package
+                        if (!File.Exists(pluginAbsPath))
+                        {
+                            var resolvedPath = await ResolveFilePathFromNPMPackageNameAsync(path, plugin);
+                            if (resolvedPath is not null)
+                            {
+                                imports.Add($"@plugin{resolvedPath}");
+                            }
+                        }
+                        else
+                        {
+                            imports.Add($"@plugin{pluginAbsPath}");
+                        }
+
+                        continue;
+                    }
+
                     directiveParameter = directiveParameter.Trim();
                     buildingDirectiveParameter = false;
                     level++;
@@ -419,28 +448,6 @@ internal static class ConfigFileParser
                     }
 
                     variants[directiveParameter] += current.ToString();
-                }
-                else if (directive == "plugin")
-                {
-                    var plugin = directiveParameter.Replace("\"", "").Replace("'", "").TrimEnd(';').Trim();
-
-                    var pluginAbsPath = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), plugin);
-
-                    // If this path exists, then it is not a package name. If not, then we must resolve the package
-                    if (!File.Exists(pluginAbsPath))
-                    {
-                        var resolvedPath = await ResolveFilePathFromNPMPackageNameAsync(path, plugin);
-                        if (resolvedPath is not null)
-                        {
-                            imports.Add($"@plugin{resolvedPath}");
-                        }
-                    }
-                    else
-                    {
-                        imports.Add($"@plugin{pluginAbsPath}");
-                    }
-
-                    continue;
                 }
             }
         }

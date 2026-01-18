@@ -708,8 +708,12 @@ public sealed partial class CompletionConfiguration
                 project.PluginClasses = [];
                 var classesToAdd = new List<TailwindClass>();
 
+                // Descriptions may contain a \n from the plugin, which would have been converted to an 
+                // actual newline with JsonDeserialize, so we need to undo that change
                 foreach (var pair in config.PluginDescriptions)
                 {
+                    var validDesc = string.Join(" ", pair.Value.Split('\n').Select(x => x.Trim()));
+
                     // Case 1: Simple/complex utilities
                     /* 
                     @utility content-auto {
@@ -725,17 +729,17 @@ public sealed partial class CompletionConfiguration
                     if (!pair.Key.Contains("*"))
                     {
                         project.PluginClasses.Add(pair.Key);
-                        project.CustomDescriptionMapper[pair.Key] = pair.Value;
+                        project.CustomDescriptionMapper[pair.Key] = validDesc;
                     }
                     // Case 2 (edge): no --value, but has a wildcard
                     else if (!pair.Value.Contains("--value("))
                     {
-                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{a}")] = pair.Value;
-                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{f}")] = pair.Value;
-                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{%}")] = pair.Value;
-                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{n}")] = pair.Value;
-                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{c}")] = pair.Value;
-                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{s}")] = pair.Value;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{a}")] = validDesc;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{f}")] = validDesc;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{%}")] = validDesc;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{n}")] = validDesc;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{c}")] = validDesc;
+                        project.CustomDescriptionMapper[pair.Key.Replace("*", "{s}")] = validDesc;
                     }
                     // Case 3: --value is present
                     else
@@ -743,7 +747,7 @@ public sealed partial class CompletionConfiguration
                         // Split based on --value type
                         var valueToDescription = new Dictionary<string, string>();
 
-                        var description = pair.Value.Trim();
+                        var description = validDesc.Trim();
                         var splitBySemicolon = CssConfigSplitter.Split(description);
 
                         var standard = "";
@@ -1012,6 +1016,11 @@ public sealed partial class CompletionConfiguration
             {
                 if (version >= TailwindVersion.V4)
                 {
+                    // This is a possibility with some plugins, which provides no useful information, so we ignore
+                    if (s == $"var(--color-{actual})")
+                    {
+                        continue;
+                    }
                     newColorToRgbMapper[actual] = s;
                     continue;
                 }

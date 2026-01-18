@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.2 (January 17th, 2026)
+
+- Fix performance and reliability issues with initial `@plugin` support ([#133](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/133))
+- Fix missing descriptions for plugin classes
+- Fix incorrect CSS syntax in quick info tooltips
+
 ## 1.13.1 (January 12th, 2026)
 
 - Allow `{` after `@plugin` in addition to `;`

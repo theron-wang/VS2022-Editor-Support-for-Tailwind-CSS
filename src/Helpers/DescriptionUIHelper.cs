@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 
 namespace TailwindCSSIntellisense.Helpers;
+
 internal static class DescriptionUIHelper
 {
     private static string CssEscape(string input)
@@ -155,17 +156,31 @@ internal static class DescriptionUIHelper
         {
             var trimmed = l.Trim();
 
+            if (trimmed.StartsWith("}"))
+            {
+                totalIndent = totalIndent.Substring(2);
+                descriptionLines.Add(new ClassifiedTextElement(
+                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, totalIndent + "}", ClassifiedTextRunStyle.UseClassificationFont)
+                ));
+                trimmed = trimmed.TrimStart('}').Trim();
+
+                if (string.IsNullOrWhiteSpace(trimmed))
+                {
+                    continue;
+                }
+            }
+
             if (trimmed.EndsWith("{"))
             {
-                if (trimmed.Contains('@'))
+                if (trimmed.StartsWith("@"))
                 {
-                    descriptionLines.Add(FormatMediaQuery(trimmed, totalIndent));
+                    descriptionLines.Add(FormatMediaQuery(trimmed.TrimEnd('{').Trim(), totalIndent));
                 }
                 else
                 {
                     descriptionLines.Add(new ClassifiedTextElement(
                        new ClassifiedTextRun(PredefinedClassificationTypeNames.WhiteSpace, totalIndent, ClassifiedTextRunStyle.UseClassificationFont),
-                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Literal, l.Trim(), ClassifiedTextRunStyle.UseClassificationFont)
+                            new ClassifiedTextRun(PredefinedClassificationTypeNames.Literal, trimmed, ClassifiedTextRunStyle.UseClassificationFont)
                         )
                     );
                 }
@@ -179,14 +194,6 @@ internal static class DescriptionUIHelper
                     new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, totalIndent + "}", ClassifiedTextRunStyle.UseClassificationFont)
                 ));
                 continue;
-            }
-            else if (trimmed.StartsWith("}"))
-            {
-                totalIndent = totalIndent.Substring(2);
-                descriptionLines.Add(new ClassifiedTextElement(
-                    new ClassifiedTextRun(PredefinedClassificationTypeNames.Identifier, totalIndent + "}", ClassifiedTextRunStyle.UseClassificationFont)
-                ));
-                trimmed = trimmed.TrimStart('}').Trim();
             }
 
             descriptionLines.Add(FormatKeyValuePair(trimmed, totalIndent, ImportantModifierHelper.IsImportantModifier(fullClass)));
