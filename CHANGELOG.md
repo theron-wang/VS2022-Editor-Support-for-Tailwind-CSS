@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.13.3 (January 25th, 2026)
+
+- Fix missing utilities for custom colors from plugins ([#133](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/133))
+
 ## 1.13.2 (January 17th, 2026)
 
 - Fix performance and reliability issues with initial `@plugin` support ([#133](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/133))

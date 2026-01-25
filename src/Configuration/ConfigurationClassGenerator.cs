@@ -1016,11 +1016,6 @@ public sealed partial class CompletionConfiguration
             {
                 if (version >= TailwindVersion.V4)
                 {
-                    // This is a possibility with some plugins, which provides no useful information, so we ignore
-                    if (s == $"var(--color-{actual})")
-                    {
-                        continue;
-                    }
                     newColorToRgbMapper[actual] = s;
                     continue;
                 }

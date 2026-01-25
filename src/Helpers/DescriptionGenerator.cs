@@ -177,7 +177,11 @@ internal sealed class DescriptionGenerator : IDisposable
                     variableValue = null;
                 }
 
-                if (variableValue is not null)
+                // Mainly an issue with plugins, we don't want to provide redundant information
+                // i.e., with DaisyUI, the `primary` color is set to var(--color-primary), so
+                // it would be useless for a reference in a description to var(--color-primary) to
+                // then have /* var(--color-primary) */ afterwards
+                if (variableValue is not null && variableValue != $"var({variable})")
                 {
                     var insert = $" /* {variableValue} */";
                     resultText.Insert(endParen + 1 + offset, insert);
