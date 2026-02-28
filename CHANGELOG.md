@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.13.4 (February 23rd, 2026)
+## 1.13.4 (February 28th, 2026)
 
 - Add support for v4.2
 - Fix missing `caret-*` and `placeholder-*` classes
