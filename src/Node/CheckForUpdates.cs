@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -80,7 +79,7 @@ internal static class CheckForUpdates
             RedirectStandardOutput = true,
             CreateNoWindow = true,
             FileName = "cmd",
-            Arguments = $"/C npm outdated {module} --json",
+            Arguments = $"/C npm outdated --json",
             WorkingDirectory = workingDir
         };
 
@@ -92,23 +91,20 @@ internal static class CheckForUpdates
              * Sample output:
 
              {
-              "tailwindcss": [
-                {
-                  "current": "3.4.1",
-                  "wanted": "4.0.3",
-                  "latest": "4.0.3",
-                  "dependent": "@tailwindcss/container-queries",
-                  "location": "path/to/folder"
-                },
-                {
-                  "current": "3.4.1",
-                  "wanted": "3.4.17",
-                  "latest": "4.0.3",
-                  "dependent": "Test",
-                  "location": "path/to/folder"
-                }
-              ]
-            }
+              "@tailwindcss/cli": {
+                "current": "4.1.12",
+                "wanted": "4.2.1",
+                "latest": "4.2.1",
+                "dependent": "project_name",
+                "location": "path/to/project_name"
+              },
+              "tailwindcss": {
+                "current": "4.1.12",
+                "wanted": "4.2.1",
+                "latest": "4.2.1",
+                "dependent": "project_name",
+                "location": "path/to/project_name"
+              }
 
             */
             output = await process.StandardOutput.ReadToEndAsync();
@@ -126,27 +122,12 @@ internal static class CheckForUpdates
 
         OutdatedPackage? relevantPackage = null;
 
-        if (result[module] is JsonArray array)
-        {
-            var packages = array.Select(obj => obj.Deserialize<OutdatedPackage>(new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            }));
-
-            relevantPackage = packages.FirstOrDefault(
-                p => p?.Dependent?.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase) == true);
-        }
-        else if (result[module] is JsonObject jsonObj)
+        if (result[module] is JsonObject jsonObj)
         {
             relevantPackage = jsonObj.Deserialize<OutdatedPackage>(new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             });
-
-            if (relevantPackage?.Dependent?.Equals(Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar)), StringComparison.InvariantCultureIgnoreCase) != true)
-            {
-                relevantPackage = null;
-            }
         }
 
         if (relevantPackage is null || relevantPackage.Current is null || relevantPackage.Latest is null || relevantPackage.Wanted is null)
@@ -159,6 +140,8 @@ internal static class CheckForUpdates
         var currentMajor = relevantPackage.Current.Split('.')[0];
         var newMajor = relevantPackage.Latest.Split('.')[0];
 
+        // If the current version is v3.x, then Wanted will be the latest v3.x version, and Latest will be the latest v4.x version.
+        // In this case, we want to notify the user about the new major version, but not automatically update, since that could cause breaking changes.
         if (currentMajor != newMajor)
         {
             await VS.StatusBar.ShowMessageAsync($"A major Tailwind update is available: {relevantPackage.Latest}. If you would like to update, please manually run npm install {module}@latest.");
