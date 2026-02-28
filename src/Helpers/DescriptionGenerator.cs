@@ -804,7 +804,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
         if (!projectCompletionValues.DescriptionMapper.TryGetValue(key, out var description))
         {
-            if (!negative || projectCompletionValues.Version < TailwindVersion.V4)
+            if (!negative || projectCompletionValues.Version == TailwindVersion.V3)
             {
                 return null;
             }
@@ -833,7 +833,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
     private string? GetDescriptionForNumericClass(string tailwindClass, string numberFractionOrPercent, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
-        if (projectCompletionValues.Version < TailwindVersion.V4)
+        if (projectCompletionValues.Version == TailwindVersion.V3)
         {
             return null;
         }
@@ -910,7 +910,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
             if (!projectCompletionValues.DescriptionMapper.TryGetValue(key, out var description) && !projectCompletionValues.CustomDescriptionMapper.TryGetValue(key, out description))
             {
-                if (!negative || projectCompletionValues.Version < TailwindVersion.V4)
+                if (!negative || projectCompletionValues.Version == TailwindVersion.V3)
                 {
                     continue;
                 }
@@ -1332,7 +1332,7 @@ internal sealed class DescriptionGenerator : IDisposable
 
     private string? GetDescriptionForParenthesisClass(string stem, string parenthesis, ProjectCompletionValues projectCompletionValues, bool shouldFormat = true)
     {
-        if (projectCompletionValues.Version < TailwindVersion.V4)
+        if (projectCompletionValues.Version == TailwindVersion.V3)
         {
             return null;
         }

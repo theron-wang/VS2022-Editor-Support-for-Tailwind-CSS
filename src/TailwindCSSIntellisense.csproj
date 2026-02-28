@@ -293,6 +293,27 @@
     <Content Include="..\LICENSE">
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <Content Include="Resources\V4_2\classes.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\V4_2\colors.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\V4_2\descriptions.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\V4_2\order.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\V4_2\theme.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\V4_2\variantorder.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
+    <Content Include="Resources\V4_2\variants.json">
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
@@ -315,38 +336,14 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.545" ExcludeAssets="Runtime">
+    <PackageReference Include="Community.VisualStudio.Toolkit.17" Version="17.0.549" ExcludeAssets="Runtime">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="MessagePack">
-      <Version>2.5.192</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces">
-      <Version>8.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Buffers">
-      <Version>4.5.1</Version>
-    </PackageReference>
-    <PackageReference Include="System.Memory">
-      <Version>4.5.5</Version>
-    </PackageReference>
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
-      <Version>6.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Text.Encodings.Web">
-      <Version>8.0.0</Version>
     </PackageReference>
     <PackageReference Include="System.Text.Json">
       <Version>6.0.10</Version>
     </PackageReference>
-    <PackageReference Include="System.Threading.Tasks.Extensions">
-      <Version>4.5.4</Version>
-    </PackageReference>
-    <PackageReference Include="System.ValueTuple">
-      <Version>4.5.0</Version>
-    </PackageReference>
     <PackageReference Include="Wacton.Unicolour">
-      <Version>6.3.0</Version>
+      <Version>6.4.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup />
@@ -359,21 +356,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <Target Name="CopyNuGetDlls" AfterTargets="Build">
-    <ItemGroup>
-      <NuGetAssemblies Include="$(NuGetPackageRoot)\Microsoft.Bcl.AsyncInterfaces\**\Microsoft.Bcl.AsyncInterfaces.dll" />
-      <NuGetAssemblies Include="$(NuGetPackageRoot)\System.Buffers\**\System.Buffers.dll" />
-      <NuGetAssemblies Include="$(NuGetPackageRoot)\System.Memory\**\System.Memory.dll" />
-      <NuGetAssemblies Include="$(NuGetPackageRoot)\System.Runtime.CompilerServices.Unsafe\**\System.Runtime.CompilerServices.Unsafe.dll" />
-      <NuGetAssemblies Include="$(NuGetPackageRoot)\System.Text.Encodings.Web\**\System.Text.Encodings.Web.dll" />
-      <NuGetAssemblies Include="$(NuGetPackageRoot)\System.Threading.Tasks.Extensions\**\System.Threading.Tasks.Extensions.dll" />
-      <NuGetAssemblies Include="$(NuGetPackageRoot)\System.ValueTuple\**\System.ValueTuple.dll" />
-    </ItemGroup>
-    <Copy SourceFiles="@(NuGetAssemblies)" DestinationFolder="$(MSBuildProjectDirectory)" />
-  </Target>
-  <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties resources_4v4_4theme_1json__JsonSchema="" />
-    </VisualStudio>
-  </ProjectExtensions>
 </Project>

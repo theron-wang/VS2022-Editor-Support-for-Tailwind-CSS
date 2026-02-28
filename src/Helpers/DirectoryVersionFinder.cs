@@ -180,10 +180,15 @@ internal class DirectoryVersionFinder : IDisposable
                 _cache[directory] = TailwindVersion.V4;
                 return TailwindVersion.V4;
             }
+            else if (output.Contains("@4.1") || output.Contains("v4.1"))
+            {
+                _cache[directory] = TailwindVersion.V4_1;
+                return TailwindVersion.V4_1;
+            }
         }
 
-        _cache[directory] = TailwindVersion.V4_1;
-        return TailwindVersion.V4_1;
+        _cache[directory] = TailwindVersion.V4_2;
+        return TailwindVersion.V4_2;
     }
 
     public void ClearCacheForDirectory(string directory, bool recursive = true)

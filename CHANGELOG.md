@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.13.4 (February 23rd, 2026)
+
+- Add support for v4.2
+- Fix missing `caret-*` and `placeholder-*` classes
+- Fix automatic updater
+- Remove unnecessary DLLs
+
 ## 1.13.3 (January 25th, 2026)
 
 - Fix missing utilities for custom colors from plugins ([#133](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/133))
