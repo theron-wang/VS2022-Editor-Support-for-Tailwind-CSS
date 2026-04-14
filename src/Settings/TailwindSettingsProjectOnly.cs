@@ -6,7 +6,7 @@ namespace TailwindCSSIntellisense.Settings;
 
 internal class TailwindSettingsProjectOnly
 {
-    private const string Schema = "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json";
+    private const string Schema = "https://raw.githubusercontent.com/theron-wang/Tailwind-CSS-for-Visual-Studio/refs/heads/main/tailwind.extension.schema.json";
 
     [JsonPropertyName("$schema")]
     public string SchemaProperty => Schema;

@@ -1,62 +1,62 @@
 ﻿# Getting Started (Tailwind v4+)
 
-The following guide is for projects using Tailwind v4 and above. For Tailwind v3 projects, use the [v3 Getting Started guide](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/Getting-Started-v3.md).
+This guide is for projects using Tailwind v4 and above. For Tailwind v3 projects, use the [v3 Getting Started guide](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/blob/main/Getting-Started-v3.md).
 
 ## Video
 
-To get started in most projects, you can view a "Getting Started" video guide [here](https://www.youtube.com/watch?v=TZ_c424SIRc).
+For a quick walkthrough, watch the [Getting Started video guide](https://www.youtube.com/watch?v=TZ_c424SIRc).
 
 ## Existing Projects
 
-1. The extension auto-detects CSS files containing `@import "tailwindcss"`.  
-   To set manually, right-click the file → **Set as Tailwind CSS configuration file**.  
-   Features are only enabled when a config file is found or set.
+1. The extension automatically detects CSS files that contain `@import "tailwindcss"`.  
+   If needed, right-click the file and select **Set as Tailwind CSS configuration file**.  
+   Features are enabled only after a configuration file is detected or set manually.
 
-  ![Customizability Build 1](art/Customizability-Build-1.png)
+   ![Customizability Build 1](art/Customizability-Build-1.png)
 
 ## New Projects
 
-1. Right-click the project in the Solution Explorer → **Set up Tailwind CSS**:  
-  - Installs `tailwindcss`, `@tailwindcss/cli` (if needed)
-  - Creates `tailwind.css` with `@import "tailwindcss"`
+1. Right-click the project in Solution Explorer and select **Set up Tailwind CSS**:
+   - Installs `tailwindcss` and `@tailwindcss/cli` if needed
+   - Creates `tailwind.css` with `@import "tailwindcss"`
 
-  ![Set up TailwindCSS](art/NPM-Shortcuts-1.png)
+   ![Set up TailwindCSS](art/NPM-Shortcuts-1.png)
 
-2. Using the standalone Tailwind CSS CLI:
-  - Set path: Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path  
-  - Then use **Set up Tailwind CSS (use CLI)**  
-  - Toggle CLI usage via `UseCli` in `tailwind.extension.json`
+2. If you use the standalone Tailwind CSS CLI:
+   - Set the path in Tools > Options > Tailwind CSS IntelliSense > Tailwind CLI path  
+   - Then use **Set up Tailwind CSS (use CLI)**  
+   - Toggle CLI usage with `UseCli` in `tailwind.extension.json`
 
-3. Theme setup: follow the [official guide](https://tailwindcss.com/docs/installation/tailwind-cli).
+3. For theme setup, follow the [official guide](https://tailwindcss.com/docs/installation/tailwind-cli).
   
-  For basic files with no theme values:
+   For simple files with no theme values:
 
-  ```css
-  @import "tailwindcss";
-  ```
+   ```css
+   @import "tailwindcss";
+   ```
 
-  Project root is not the same directory as the one which contains your input css file:
+   If your project root is different from the folder containing your input CSS file:
 
-  ```css
-  @import "tailwindcss" source("../path/to/source");
-  ```
+   ```css
+   @import "tailwindcss" source("../path/to/source");
+   ```
 
 ## Setting Up the Extension
 
-1. The default output is `{input}.output.css`, which can be set in global extension settings (see below).
+1. The default output is `{input}.output.css`, which can be changed in the global extension settings.
 
-  To change it, right-click the file → **Link as Tailwind CSS output file** and pick a config.
+   To change it, right-click the file and select **Link as Tailwind CSS output file**.
 
-  ![Input and output CSS files](art/Customizability-Build-2.png)
+   ![Input and output CSS files](art/Customizability-Build-2.png)
 
-2. IntelliSense works in `.html`, `.css`, `.cshtml`, `.razor`, etc.
-  Configuration contexts are based on [Tailwind's file detection](https://tailwindcss.com/docs/detecting-classes-in-source-files).
+2. IntelliSense works in `.html`, `.css`, `.cshtml`, `.razor`, and similar files.
+   Configuration contexts follow [Tailwind's file detection](https://tailwindcss.com/docs/detecting-classes-in-source-files).
 
-  ![IntelliSense](art/IntelliSense-Demo-1.gif)
+   ![IntelliSense](art/IntelliSense-Demo-1.gif)
 
-3. Tailwind builds automatically on project build, or manually via **Build > Build Tailwind CSS**.
+3. Tailwind builds automatically when the project builds, or manually via **Build > Build Tailwind CSS**.
 
-  ![Build process](art/Build-Demo-1.png)
+   ![Build process](art/Build-Demo-1.png)
 
 ## Extension Configuration
 Settings for this extension can be updated in **Tools > Options > Tailwind CSS IntelliSense**.
@@ -67,13 +67,13 @@ Settings for this extension can be updated in **Tools > Options > Tailwind CSS I
 | Automatically apply library updates | General | `tailwindcss` and `@tailwindcss/cli` update on project open. The extension works best with the most recent update of each major version, so this setting is recommended. | `true` |
 | Show color previews | General | Color previews for color classes | `true` |
 | Minify builds | Build | Use of `--minify` when building | `false` |
-| Default output file name | Build | Output file name template to be used when not specificially specified. Use `{0}` to reference the original input file's name. | `{0}.output.css` |
+| Default output file name | Build | Output file name template used when not specifically specified. Use `{0}` to reference the original input file name. | `{0}.output.css` |
 | Build type | Build | <ul><li>`Default`: Tailwind `--watch`, on project build</li><li>`Manual`: once, Ctrl+1, Ctrl+2/3</li><li>`OnBuild`: once, on project build</li><li>`OnSave`: once, on file save</li><li>`ManualJIT`: Tailwind `--watch`, Ctrl+1, Ctrl+1/2/3</li><li>`None`</li></ul> | `Default` |
-| OnSave trigger: file extensions | Build | File extensions which will trigger the OnSave build event. Only takes effect when \"Build type\" is set to OnSave. | `.css;.html;.cshtml;.razor;.js` |
-| Tailwind CLI path | Build | The path to the standalone Tailwind CLI. If `UseCli` is set to `true` in a project, building will use this file instead of `npx`. | |
+| OnSave trigger: file extensions | Build | File extensions that trigger the OnSave build event. Only takes effect when "Build type" is set to OnSave. | `.css;.html;.cshtml;.razor;.js` |
+| Tailwind CLI path | Build | The path to the standalone Tailwind CLI. If `UseCli` is set to `true` in a project, building uses this file instead of `npx`. | |
 | Verbose build | Build | Shows full build log | `false` |
 | Build script | Custom Build | The name of the script to execute on build (defined in package.json), optional | |
-| Override build | Custom Build | Run the script defined in "Build script" exclusively or in conjunction with the default build process | `false` |
+| Override build | Custom Build | Run the script defined in "Build script" exclusively or together with the default build process | `false` |
 | Tailwind CSS completions before all | Completions | Tailwind completions show up before or after default completions | `true` |
 | Class sort type | Class Sort | <ul><li>`OnSave`: sort open file on save</li><li>`OnBuild`: sort updated files in the entire solution on build</li><li>`Manual`: sort through Tools > Sort Tailwind classes</li><li>`None`</li></ul> | `OnSave` |
   
@@ -108,7 +108,8 @@ Settings for this extension can be updated in **Tools > Options > Tailwind CSS I
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json","BuildFiles": [
+  "$schema": "https://raw.githubusercontent.com/theron-wang/Tailwind-CSS-for-Visual-Studio/refs/heads/main/tailwind.extension.schema.json",
+  "BuildFiles": [
     {
       "Input": "..\\Client\\tailwind.css",
       "Output": "..\\Client\\tailwind.output.css",

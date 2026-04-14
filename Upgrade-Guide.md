@@ -21,7 +21,7 @@ Sample:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/refs/heads/main/tailwind.extension.schema.json",
+  "$schema": "https://raw.githubusercontent.com/theron-wang/Tailwind-CSS-for-Visual-Studio/refs/heads/main/tailwind.extension.schema.json",
   "ConfigurationFiles": [
     {
       "Path": "tailwind.css",
@@ -63,4 +63,4 @@ If you still require the use of a JavaScript configuration file, simply add it t
 
 After making these changes, the extension should now work with v4. Please note: **A project reload/VS restart may be required to load all changes.**
 
-A list of all supported v4 features (and those whose support will be added later) can be found in the `1.10.0` section of the [changelog](https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/blob/main/CHANGELOG.md).
+A list of all supported v4 features (and those whose support will be added later) can be found in the `1.10.0` section of the [changelog](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/blob/main/CHANGELOG.md).

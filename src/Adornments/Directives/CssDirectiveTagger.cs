@@ -38,7 +38,7 @@ internal sealed class DirectiveCssTaggerProvider : IViewTaggerProvider
     /// Adds adornments to CSS directives, like @apply, to prevent confusion when squiggles are present.
     /// If/when VS adds support to intercept these warnings, remove this class.
     /// </summary>
-    /// <remarks>See <a href="https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/105">https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/105</a></remarks>
+    /// <remarks>See <a href="https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/105">https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/105</a></remarks>
     private class CssDirectiveTagger : ITagger<IntraTextAdornmentTag>, IDisposable
     {
         private readonly ITextBuffer _buffer;

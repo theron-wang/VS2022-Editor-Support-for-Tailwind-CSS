@@ -40,7 +40,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
     private bool _startingBuilds;
 
-    // http://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/120
+    // http://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/120
     // If we encounter a security error from powershell in running npx, use -ExecutionPolicy Unrestricted
     private bool _encounteredSecurityError;
 
@@ -361,7 +361,7 @@ internal sealed class TailwindBuildProcess : IDisposable
 
                     var watch = _settings.BuildType == BuildProcessOptions.Default || _settings.BuildType == BuildProcessOptions.ManualJIT;
                     // We need powershell to run --watch, otherwise the output file will not update.
-                    // https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/111
+                    // https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/111
                     if (watch)
                     {
                         processInfo = GetProcessStartInfo(dir, true);
@@ -584,7 +584,7 @@ internal sealed class TailwindBuildProcess : IDisposable
             _encounteredSecurityError = true;
             ThreadHelper.JoinableTaskFactory.Run(async () =>
             {
-                await WriteToBuildPaneAsync("Tailwind CSS: Encountered a PSSecurityException, trying again with -ExecutionPolicy Unrestricted: see https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/120");
+                await WriteToBuildPaneAsync("Tailwind CSS: Encountered a PSSecurityException, trying again with -ExecutionPolicy Unrestricted: see https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/120");
             });
 
             foreach (var process in _outputFileToProcesses.Values)
@@ -623,7 +623,7 @@ internal sealed class TailwindBuildProcess : IDisposable
         }
         else
         {
-            // See https://github.com/theron-wang/VS2022-Editor-Support-for-Tailwind-CSS/issues/113
+            // See https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/113
             // On large projects, Tailwind build process may run out memory; fix is to restart it
             if (data.Contains("JavaScript heap out of memory"))
             {
