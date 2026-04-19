@@ -103,9 +103,15 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
         // If this is in v4+, also contains the prefix
         var variantsAsString = string.Join(":", variants);
+        var prefixInsert = "";
         if (string.IsNullOrWhiteSpace(variantsAsString) == false)
         {
             variantsAsString += ":";
+        }
+
+        if (string.IsNullOrWhiteSpace(variantsAsString) || !variantsAsString.StartsWith(prefix))
+        {
+            prefixInsert += prefix;
         }
 
         // For use to check if it matches part of the blocklist
@@ -180,7 +186,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         continue;
                     }
 
-                    var insert = variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + suffix;
+                    var insert = prefixInsert + variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + suffix;
 
                     completions.Add(
                                 new Completion(className + suffix,
@@ -198,7 +204,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                 continue;
                             }
 
-                            insert = $"{variantsAsString}{(isRazor ? className.Replace("@", "@@") : className)}/{opacity}{suffix}";
+                            insert = $"{prefixInsert}{variantsAsString}{(isRazor ? className.Replace("@", "@@") : className)}/{opacity}{suffix}";
 
                             completions.Add(
                                     new Completion($"{className}/{opacity}{suffix}",
@@ -208,7 +214,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                                         null));
                         }
 
-                        insert = variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "/[]" + suffix;
+                        insert = prefixInsert + variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "/[]" + suffix;
                         completions.Add(
                                     new Completion(className + "/[]" + suffix,
                                                         insert,
@@ -255,7 +261,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                         continue;
                     }
 
-                    var insert = variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + suffix;
+                    var insert = prefixInsert + variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + suffix;
                     completions.Add(
                         new Completion(className + suffix,
                                             insert,
@@ -286,7 +292,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     continue;
                 }
 
-                var insert = variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "[]" + suffix;
+                var insert = prefixInsert + variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "[]" + suffix;
                 completions.Add(
                 new Completion(className + "[]" + suffix,
                                     insert,
@@ -322,7 +328,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     continue;
                 }
 
-                var insert = variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + suffix;
+                var insert = prefixInsert + variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + suffix;
                 completions.Add(
                 new Completion(className + suffix,
                                     insert,
@@ -341,7 +347,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                 continue;
                             }
 
-                            insert = $"{variantsAsString}{(isRazor ? className.Replace("@", "@@") : className)}/{modifier}{suffix}";
+                            insert = $"{prefixInsert}{variantsAsString}{(isRazor ? className.Replace("@", "@@") : className)}/{modifier}{suffix}";
 
                             completions.Add(
                                     new Completion($"{className}/{modifier}{suffix}",
@@ -351,7 +357,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                                         null));
                         }
 
-                        insert = variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "/[]" + suffix;
+                        insert = prefixInsert + variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "/[]" + suffix;
                         completions.Add(
                                     new Completion(className + "/[]" + suffix,
                                                        insert,
@@ -369,7 +375,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                 continue;
                             }
 
-                            insert = $"{variantsAsString}{(isRazor ? className.Replace("@", "@@") : className)}/{modifier}{suffix}";
+                            insert = $"{prefixInsert}{variantsAsString}{(isRazor ? className.Replace("@", "@@") : className)}/{modifier}{suffix}";
                             completions.Add(
                                     new Completion($"{className}/{modifier}{suffix}",
                                                         insert,
@@ -378,7 +384,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                                                         null));
                         }
 
-                        insert = variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "/[]" + suffix;
+                        insert = prefixInsert + variantsAsString + (isRazor ? className.Replace("@", "@@") : className) + "/[]" + suffix;
                         completions.Add(
                                     new Completion(className + "/[]" + suffix,
                                                         insert,
@@ -399,7 +405,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     continue;
                 }
 
-                var insert = variantsAsString + prefix + (isRazor ? pluginClass.Replace("@", "@@") : pluginClass).TrimStart('.') + suffix;
+                var insert = prefixInsert + variantsAsString + prefix + (isRazor ? pluginClass.Replace("@", "@@") : pluginClass).TrimStart('.') + suffix;
 
                 completions.Add(
                     new Completion(pluginClass.TrimStart('.'),
@@ -437,7 +443,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
             if (variants.Contains(variant) == false)
             {
-                var insert = variantsAsString + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
+                var insert = prefixInsert + variantsAsString + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
 
                 var completion = new Completion(variant + ":",
                     insert,
@@ -450,7 +456,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                 if (_projectCompletionValues.Version == TailwindVersion.V3 && description is not null && description.StartsWith("&:") && description.Substring(2) == variant)
                 {
-                    insert = variantsAsString + "group-" + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
+                    insert = prefixInsert + variantsAsString + "group-" + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
 
                     completion = new Completion("group-" + variant + ":",
                         insert,
@@ -460,7 +466,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
                     completion.Properties.AddProperty("variant", true);
                     variantCompletionsToAddToEnd.Add(completion);
 
-                    insert = variantsAsString + "peer-" + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
+                    insert = prefixInsert + variantsAsString + "peer-" + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
                     completion = new Completion("peer-" + variant + ":",
                         insert,
                         _descriptionGenerator.GetVariantDescription("peer-" + variant, _projectCompletionValues),
@@ -478,7 +484,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
             {
                 if (variants.Contains(variant) == false)
                 {
-                    var insert = variantsAsString + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
+                    var insert = prefixInsert + variantsAsString + (isRazor ? variant.Replace("@", "@@") : variant) + ":";
                     var completion = new Completion(variant + ":",
                                             insert,
                                             _projectCompletionValues.Version >= TailwindVersion.V4 ?
@@ -498,7 +504,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
             {
                 if (variants.Contains(screen) == false)
                 {
-                    var insert = variantsAsString + (isRazor ? screen.Replace("@", "@@") : screen) + ":";
+                    var insert = prefixInsert + variantsAsString + (isRazor ? screen.Replace("@", "@@") : screen) + ":";
 
                     var completion = new Completion(screen + ":",
                                             insert,
@@ -511,7 +517,7 @@ internal abstract class ClassCompletionGenerator : IDisposable
 
                     if (_projectCompletionValues.Version == TailwindVersion.V3)
                     {
-                        insert = variantsAsString + "max-" + (isRazor ? screen.Replace("@", "@@") : screen) + ":";
+                        insert = prefixInsert + variantsAsString + "max-" + (isRazor ? screen.Replace("@", "@@") : screen) + ":";
 
                         completion = new Completion("max-" + screen + ":",
                                                 insert,

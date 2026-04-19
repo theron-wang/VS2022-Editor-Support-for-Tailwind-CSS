@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.5 (April 18th, 2026)
+
+- Correctly match best configuration file (based on content paths) to the file being viewed
+- Allow `prefix()` to be placed in the same `@import "tailwindcss"` line as `source()`
+- Automatically add prefix (if specified) when tabbing the completion menu
+
 ## 1.13.4.1 (April 13th, 2026)
 
 - Update extension name from `Tailwind CSS VS2022 Editor Support` to `Tailwind CSS for Visual Studio` ([#134](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/134))

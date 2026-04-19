@@ -269,7 +269,13 @@ internal static class ConfigFileParser
                                 source = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), source)!;
                                 content.Add(source);
                             }
-                            else if (directiveParameter.IndexOf("prefix(", secondQuote) is int prefixIndex && prefixIndex != -1)
+                            else
+                            {
+                                // If unset, the source path is the directory of the configuration file
+                                content.Add(Path.GetDirectoryName(path));
+                            }
+
+                            if (directiveParameter.IndexOf("prefix(", secondQuote) is int prefixIndex && prefixIndex != -1)
                             {
                                 var endParen = directiveParameter.IndexOf(')', prefixIndex);
 
@@ -279,10 +285,6 @@ internal static class ConfigFileParser
                                 }
 
                                 prefix = directiveParameter.Substring(prefixIndex + 7, endParen - prefixIndex - 7).Trim();
-                            }
-                            else
-                            {
-                                content.Add(Path.GetDirectoryName(path));
                             }
                         }
                         continue;

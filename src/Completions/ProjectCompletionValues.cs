@@ -2,12 +2,17 @@
 using System.Linq;
 
 namespace TailwindCSSIntellisense.Completions;
+
 public class ProjectCompletionValues
 {
     /// <summary>
     /// When set, set to lowercase
     /// </summary>
     public string FilePath { get; set; } = null!;
+
+    /// <summary>
+    /// Glob format for v3, base folders for v4.
+    /// </summary>
     public List<string> ApplicablePaths { get; set; } = [];
     /// <summary>
     /// V4+ only

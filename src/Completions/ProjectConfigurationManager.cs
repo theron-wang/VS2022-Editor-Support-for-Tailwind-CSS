@@ -146,6 +146,11 @@ public sealed class ProjectConfigurationManager
 
         foreach (var k in _projectCompletionConfiguration.Values)
         {
+            if (!k.ApplicablePaths.Any())
+            {
+                continue;
+            }
+
             if (k.FilePath.Equals(filePath, StringComparison.InvariantCultureIgnoreCase))
             {
                 return k;
@@ -157,30 +162,27 @@ public sealed class ProjectConfigurationManager
                 {
                     continue;
                 }
-
-                if (k.ApplicablePaths.Any(p => filePath.StartsWith(p, StringComparison.InvariantCultureIgnoreCase)))
-                {
-                    return k;
-                }
             }
-
-            if (k.ApplicablePaths.Any(p => PathHelpers.PathMatchesGlob(filePath, p)))
+            else if (k.ApplicablePaths.Any(p => PathHelpers.PathMatchesGlob(filePath, p)))
             {
                 return k;
             }
 
-            // Find the distance from this configuration file to filePath.
-            // i.e., find the number of subdirectories that differ between the two paths
-            var configurationFileDirectories = Path.GetDirectoryName(k.FilePath).ToLower().Split(Path.DirectorySeparatorChar);
-
-            int inCommon = 0;
-
-            while (inCommon < Math.Min(inputFileDirectories.Length, configurationFileDirectories.Length) && inputFileDirectories[inCommon] == configurationFileDirectories[inCommon])
+            var distance = k.ApplicablePaths.Min(path =>
             {
-                inCommon++;
-            }
+                // Find the distance from this configuration file to filePath.
+                // i.e., find the number of subdirectories that differ between the two paths
+                var applicablePathDirectories = Path.GetDirectoryName(path).ToLower().Split(Path.DirectorySeparatorChar);
 
-            int distance = inputFileDirectories.Length + configurationFileDirectories.Length - 2 * inCommon;
+                int inCommon = 0;
+
+                while (inCommon < Math.Min(inputFileDirectories.Length, applicablePathDirectories.Length) && inputFileDirectories[inCommon].Equals(applicablePathDirectories[inCommon], StringComparison.InvariantCultureIgnoreCase))
+                {
+                    inCommon++;
+                }
+
+                return inputFileDirectories.Length + applicablePathDirectories.Length - 2 * inCommon;
+            });
 
             if (distance < minDist)
             {
