@@ -3,13 +3,24 @@ using TailwindCSSIntellisense.Helpers;
 
 namespace TailwindExtension.Tests.IntegrationTests;
 
-public class IntelliSenseAndDetectionIntegrationTests
+public class IntelliSenseAndDetectionIntegrationTests : IDisposable
 {
+    private readonly Func<Task<TailwindCSSIntellisense.Settings.TailwindSettings>>? _originalSettingsDelegate;
+
+    public IntelliSenseAndDetectionIntegrationTests()
+    {
+        _originalSettingsDelegate = ClassRegexHelper.GetTailwindSettings;
+        ClassRegexHelper.GetTailwindSettings = null;
+    }
+
+    public void Dispose()
+    {
+        ClassRegexHelper.GetTailwindSettings = _originalSettingsDelegate;
+    }
+
     [Fact]
     public void ClassDetectionAndFiltering_HandlesMixedLanguagesAndBlocklist()
     {
-        ClassRegexHelper.GetTailwindSettings = null;
-
         var values = new ProjectCompletionValues
         {
             Version = TailwindVersion.V3,

@@ -4,11 +4,19 @@ using TailwindCSSIntellisense.Settings;
 
 namespace TailwindExtension.Tests.UnitTests;
 
-public class ClassRegexHelperTests
+public class ClassRegexHelperTests : IDisposable
 {
+    private readonly Func<Task<TailwindSettings>>? _originalSettingsDelegate;
+
     public ClassRegexHelperTests()
     {
+        _originalSettingsDelegate = ClassRegexHelper.GetTailwindSettings;
         ClassRegexHelper.GetTailwindSettings = null;
+    }
+
+    public void Dispose()
+    {
+        ClassRegexHelper.GetTailwindSettings = _originalSettingsDelegate;
     }
 
     [Fact]

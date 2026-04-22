@@ -9,7 +9,7 @@ public class SortingIntegrationTests
     [Fact]
     public void SortSegment_OrdersClassesByVariantAndClassOrder()
     {
-        var sorter = CreateSorter();
+        var sorter = CreateTestSorter();
 
         var sorted = sorter.SortSegmentPublic("hover:font-bold text-red-500 p-4", "index.html");
 
@@ -19,7 +19,7 @@ public class SortingIntegrationTests
     [Fact]
     public void Sort_UpdatesOnlyClassSegmentAndPreservesMarkup()
     {
-        var sorter = CreateSorter();
+        var sorter = CreateTestSorter();
         const string input = "<div class=\"text-red-500 p-4\">hello</div>";
 
         var sorted = sorter.SortContent("index.html", input);
@@ -30,7 +30,7 @@ public class SortingIntegrationTests
     [Fact]
     public void GetNextIndexOfClass_PicksNearestQuoteVariant()
     {
-        var sorter = CreateSorter();
+        var sorter = CreateTestSorter();
         const string content = "<div class='a b' data-x=\"y\" class=\"c d\"></div>";
 
         var first = sorter.GetNextIndex(content, 0);
@@ -41,7 +41,94 @@ public class SortingIntegrationTests
         Assert.True(second.index > first.index);
     }
 
-    private static TestSorter CreateSorter()
+    [Fact]
+    public void RazorSorter_PreservesRazorTokensAndSortsNonRazorClasses()
+    {
+        var razorSorter = CreateRazorSorter();
+        const string input = "<div class=\"text-red-500 @(isActive ? 'font-bold' : 'font-light') p-4\"></div>";
+
+        var sorted = razorSorter.Sort("page.razor", input);
+
+        Assert.Equal("<div class=\"p-4 @(isActive ? 'font-bold' : 'font-light') text-red-500\"></div>", sorted);
+    }
+
+    [Fact]
+    public void RazorSorter_KeepsEscapedAtSignsAndMultilineIndentation()
+    {
+        var razorSorter = CreateRazorSorter();
+        const string input = "<div class=\"text-red-500 @@container\n    p-4\"></div>";
+
+        var sorted = razorSorter.Sort("page.razor", input);
+
+        Assert.Equal("<div class=\"p-4 text-red-500\n    @@container\"></div>", sorted);
+    }
+
+    [Fact]
+    public void Sorter_UsesVersionSpecificOrderMappings()
+    {
+        var v3Values = new ProjectCompletionValues
+        {
+            Version = TailwindVersion.V3,
+            SpacingMapper = { ["4"] = "1rem" },
+            ColorMapper = { ["red-500"] = "#f00" }
+        };
+        var v4Values = new ProjectCompletionValues
+        {
+            Version = TailwindVersion.V4,
+            SpacingMapper = { ["4"] = "1rem" },
+            ColorMapper = { ["red-500"] = "#f00" }
+        };
+
+        var projectManager = new ProjectConfigurationManager();
+        projectManager.Seed("v3.html", v3Values);
+        projectManager.Seed("v4.html", v4Values);
+        projectManager.SeedDefault(v3Values);
+
+        var classSortUtilities = new ClassSortUtilities(
+            classOrders: new Dictionary<TailwindVersion, Dictionary<string, int>>
+            {
+                [TailwindVersion.V3] = new() { ["p-{s}"] = 1, ["text-{c}"] = 2 },
+                [TailwindVersion.V4] = new() { ["text-{c}"] = 1, ["p-{s}"] = 2 }
+            },
+            variantOrders: new Dictionary<TailwindVersion, Dictionary<string, int>>
+            {
+                [TailwindVersion.V3] = new(),
+                [TailwindVersion.V4] = new()
+            });
+
+        var sorter = new TestSorter
+        {
+            ProjectConfigurationManager = projectManager,
+            ClassSortUtilities = classSortUtilities
+        };
+
+        Assert.Equal("p-4 text-red-500", sorter.SortSegmentPublic("text-red-500 p-4", "v3.html"));
+        Assert.Equal("text-red-500 p-4", sorter.SortSegmentPublic("text-red-500 p-4", "v4.html"));
+    }
+
+    private static TestSorter CreateTestSorter()
+    {
+        var (projectManager, classSortUtilities) = CreateSharedDependencies();
+
+        return new TestSorter
+        {
+            ProjectConfigurationManager = projectManager,
+            ClassSortUtilities = classSortUtilities
+        };
+    }
+
+    private static RazorSorter CreateRazorSorter()
+    {
+        var (projectManager, classSortUtilities) = CreateSharedDependencies();
+
+        return new RazorSorter
+        {
+            ProjectConfigurationManager = projectManager,
+            ClassSortUtilities = classSortUtilities
+        };
+    }
+
+    private static (ProjectConfigurationManager projectManager, ClassSortUtilities classSortUtilities) CreateSharedDependencies()
     {
         var values = new ProjectCompletionValues
         {
@@ -60,25 +147,33 @@ public class SortingIntegrationTests
             }
         };
 
-        var projectManager = new ProjectConfigurationManager(values);
+        var projectManager = new ProjectConfigurationManager();
+        projectManager.SeedDefault(values);
+        projectManager.Seed("index.html", values);
+        projectManager.Seed("page.razor", values);
+
         var classSortUtilities = new ClassSortUtilities(
-            classOrder: new Dictionary<string, int>
+            classOrders: new Dictionary<TailwindVersion, Dictionary<string, int>>
             {
-                ["p-{s}"] = 1,
-                ["text-{c}"] = 2,
-                ["font-bold"] = 3
+                [TailwindVersion.V3] = new Dictionary<string, int>
+                {
+                    ["p-{s}"] = 1,
+                    ["text-{c}"] = 2,
+                    ["font-bold"] = 3,
+                    ["font-light"] = 4,
+                    ["@container"] = 5
+                }
             },
-            variantOrder: new Dictionary<string, int>
+            variantOrders: new Dictionary<TailwindVersion, Dictionary<string, int>>
             {
-                ["hover"] = 10,
-                ["sm"] = 20
+                [TailwindVersion.V3] = new Dictionary<string, int>
+                {
+                    ["hover"] = 10,
+                    ["sm"] = 20
+                }
             });
 
-        return new TestSorter
-        {
-            ProjectConfigurationManager = projectManager,
-            ClassSortUtilities = classSortUtilities
-        };
+        return (projectManager, classSortUtilities);
     }
 
     private sealed class TestSorter : Sorter
