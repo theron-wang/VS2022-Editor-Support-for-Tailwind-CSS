@@ -1,0 +1,49 @@
+using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Helpers;
+
+namespace TailwindExtension.Tests.IntegrationTests;
+
+public class IntelliSenseAndDetectionIntegrationTests
+{
+    [Fact]
+    public void ClassDetectionAndFiltering_HandlesMixedLanguagesAndBlocklist()
+    {
+        var values = new ProjectCompletionValues
+        {
+            Version = TailwindVersion.V3,
+            Blocklist = ["text-red-500"]
+        };
+
+        const string html = "<div class=\"text-red-500 p-4\"></div>";
+        const string jsx = "<button className=\"hover:text-blue-500 text-red-500\"></button>";
+
+        var htmlTokens = ClassRegexHelper.GetClassesNormal(html, html)
+            .SelectMany(m => ClassRegexHelper.SplitNonRazorClasses(ClassRegexHelper.GetClassTextGroup(m).Value))
+            .Select(m => m.Value);
+
+        var jsTokens = ClassRegexHelper.GetClassesJavaScript(jsx, jsx)
+            .SelectMany(m => ClassRegexHelper.SplitNonRazorClasses(ClassRegexHelper.GetClassTextGroup(m).Value))
+            .Select(m => m.Value);
+
+        var allowed = htmlTokens.Concat(jsTokens).Where(values.IsClassAllowed).ToList();
+
+        Assert.Contains("p-4", allowed);
+        Assert.Contains("hover:text-blue-500", allowed);
+        Assert.DoesNotContain("text-red-500", allowed);
+    }
+
+    [Fact]
+    public void KnownModifierEligibility_UsesCssVariablesForLineHeightSuggestions()
+    {
+        var values = new ProjectCompletionValues
+        {
+            CssVariables =
+            {
+                ["--text-sm"] = "14px"
+            }
+        };
+
+        Assert.True(KnownModifiers.IsEligibleForLineHeightModifier("text-sm", values));
+        Assert.False(KnownModifiers.IsEligibleForLineHeightModifier("text-shadow-md", values));
+    }
+}
