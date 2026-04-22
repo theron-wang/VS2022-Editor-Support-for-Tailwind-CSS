@@ -125,6 +125,12 @@ namespace Microsoft.VisualStudio.Text
         PropertyCollection Properties { get; }
     }
 
+    public sealed class FakeTextBuffer(string text) : ITextBuffer
+    {
+        public ITextSnapshot CurrentSnapshot { get; } = new StringTextSnapshot(text);
+        public PropertyCollection Properties { get; } = new();
+    }
+
     public sealed class PropertyCollection : IEnumerable<KeyValuePair<object, object>>
     {
         private readonly Dictionary<object, object> _values = [];

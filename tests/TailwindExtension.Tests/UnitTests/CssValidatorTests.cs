@@ -1,5 +1,7 @@
 using System.Reflection;
-using System.Runtime.Serialization;
+using Microsoft.VisualStudio.Text;
+using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Linting;
 using TailwindCSSIntellisense.Linting.Validators;
 
 namespace TailwindExtension.Tests.UnitTests;
@@ -34,9 +36,18 @@ public class CssValidatorTests
 
     private static CssValidator CreateUninitializedValidator()
     {
-#pragma warning disable SYSLIB0050
-        return (CssValidator)FormatterServices.GetUninitializedObject(typeof(CssValidator));
-#pragma warning restore SYSLIB0050
+        var ctor = typeof(CssValidator).GetConstructors(BindingFlags.Instance | BindingFlags.NonPublic).SingleOrDefault();
+        Assert.NotNull(ctor);
+
+        var projectManager = new ProjectConfigurationManager();
+        projectManager.SeedDefault(new ProjectCompletionValues());
+
+        return (CssValidator)ctor!.Invoke(
+        [
+            new FakeTextBuffer("@tailwind utilities;"),
+            new LinterUtilities(),
+            projectManager
+        ]);
     }
 
     private static T InvokePrivate<T>(object instance, string methodName, params object[] args)

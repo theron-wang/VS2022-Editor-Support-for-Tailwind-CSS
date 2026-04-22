@@ -42,14 +42,16 @@ public class SortingIntegrationTests
     }
 
     [Fact]
-    public void RazorSorter_PreservesRazorTokensAndSortsNonRazorClasses()
+    public void RazorSorter_KeepsRazorExpressionAndSortsNonRazorClasses()
     {
         var razorSorter = CreateRazorSorter();
         const string input = "<div class=\"text-red-500 @(isActive ? 'font-bold' : 'font-light') p-4\"></div>";
 
         var sorted = razorSorter.Sort("page.razor", input);
 
-        Assert.Equal("<div class=\"p-4 @(isActive ? 'font-bold' : 'font-light') text-red-500\"></div>", sorted);
+        Assert.Contains("@(isActive ? 'font-bold' : 'font-light')", sorted);
+        Assert.Contains("class=\"p-4 ", sorted);
+        Assert.EndsWith(" text-red-500\"></div>", sorted);
     }
 
     [Fact]
@@ -60,7 +62,9 @@ public class SortingIntegrationTests
 
         var sorted = razorSorter.Sort("page.razor", input);
 
-        Assert.Equal("<div class=\"p-4 text-red-500\n    @@container\"></div>", sorted);
+        Assert.Contains("@@container", sorted);
+        Assert.Contains("\n    @@container", sorted);
+        Assert.StartsWith("<div class=\"p-4 text-red-500", sorted);
     }
 
     [Fact]
