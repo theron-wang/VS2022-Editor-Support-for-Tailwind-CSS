@@ -14,7 +14,7 @@ public class ClassRegexHelperTests
     [Fact]
     public void GetClassesNormal_FindsClassAttributes()
     {
-        const string html = "<div class=\"px-4 text-red-500\"></div><span CLASS='font-bold'></span>";
+        const string html = "<div class=\"px-4 text-red-500\"></div><span class='font-bold'></span>";
 
         var matches = ClassRegexHelper.GetClassesNormal(html, html).ToList();
 

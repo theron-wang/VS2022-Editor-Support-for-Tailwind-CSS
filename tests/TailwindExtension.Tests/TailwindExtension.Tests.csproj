@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="System.ComponentModel.Composition" Version="9.0.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
@@ -19,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="../../src/Usings.cs" Link="Source/Usings.cs" />
     <Compile Include="../../src/Helpers/BraceExpander.cs" Link="Source/Helpers/BraceExpander.cs" />
     <Compile Include="../../src/Helpers/ClassRegexHelper.cs" Link="Source/Helpers/ClassRegexHelper.cs" />
     <Compile Include="../../src/Helpers/CliUsageValidator.cs" Link="Source/Helpers/CliUsageValidator.cs" />

@@ -8,6 +8,8 @@ public class IntelliSenseAndDetectionIntegrationTests
     [Fact]
     public void ClassDetectionAndFiltering_HandlesMixedLanguagesAndBlocklist()
     {
+        ClassRegexHelper.GetTailwindSettings = null;
+
         var values = new ProjectCompletionValues
         {
             Version = TailwindVersion.V3,
