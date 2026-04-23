@@ -36,7 +36,7 @@ internal sealed class TailwindSetUpProcess
             CreateNoWindow = true,
             FileName = "cmd",
             WorkingDirectory = directory,
-            Arguments = "/C npm install tailwindcss @tailwindcss/cli",
+            Arguments = "/C npm install -D tailwindcss @tailwindcss/cli",
         };
 
         try

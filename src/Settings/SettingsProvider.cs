@@ -276,7 +276,9 @@ public sealed class SettingsProvider : IDisposable
     /// Overrides the TailwindCSSIntellisense settings asynchronously.
     /// </summary>
     /// <param name="settings">The settings to override with.</param>
-    public async Task OverrideSettingsAsync(TailwindSettings settings)
+    /// <param name="preferredSaveDirectory">The preferred save directory of the file. Only use this if setting up Tailwind, so that
+    /// the file is generated in the project that the user right-clicked.</param>
+    public async Task OverrideSettingsAsync(TailwindSettings settings, string? preferredSaveDirectory = null)
     {
         // Prevents two tasks from writing to the same file at the same time
         if (_fileWritingTask != null)
@@ -325,7 +327,7 @@ public sealed class SettingsProvider : IDisposable
             oldDefaultConfigFile = _cachedSettings.ConfigurationFiles.FirstOrDefault()?.Path;
         }
 
-        var projectRoot = await GetTailwindProjectDirectoryAsync();
+        var projectRoot = preferredSaveDirectory ?? await GetTailwindProjectDirectoryAsync();
 
         if (projectRoot is null)
         {
@@ -472,6 +474,9 @@ public sealed class SettingsProvider : IDisposable
         return bestMatch;
     }
 
+    /// <summary>
+    /// Finds the directory of the tailwind.extension.json file.
+    /// </summary>
     private async Task<string?> GetTailwindProjectDirectoryAsync()
     {
         var projects = await VS.Solutions.GetAllProjectsAsync(ProjectStateFilter.All);
