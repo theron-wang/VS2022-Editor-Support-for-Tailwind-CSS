@@ -350,7 +350,7 @@ public sealed class SettingsProvider : IDisposable
         List<ConfigurationFile> configurationFiles = [..
             settings.ConfigurationFiles
             .Where(cf =>
-                settings.BuildFiles.Count == 0 || settings.BuildFiles.Any(b => !b.Input.Equals(cf.Path, StringComparison.InvariantCultureIgnoreCase)))
+                settings.BuildFiles.Count == 0 || settings.BuildFiles.All(b => !b.Input.Equals(cf.Path, StringComparison.InvariantCultureIgnoreCase)))
             .Select(cf =>
             {
                 return new ConfigurationFile()
