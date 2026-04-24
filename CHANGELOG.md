@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.13.6 (April 22nd, 2026)
+## 1.13.6 (April 23rd, 2026)
 
 - `tailwind.extension.json` should be generated in the project the user right-clicks to set up Tailwind in
 - Do not save to `ConfigurationFiles` in v4 projects as expected

@@ -7,11 +7,10 @@ namespace TailwindCSSIntellisense.Node;
 internal class NpmHelpers
 {
     /// <summary>
-    /// Asynchronously retrieves the global npm root directory for the specified working directory.
+    /// Asynchronously retrieves the global npm root directory.
     /// </summary>
-    /// <remarks>The npm root directory is where globally installed npm packages are stored for the specified
-    /// working directory. This method requires that npm is installed and available in the system's PATH.</remarks>
-    /// <param name="workingDir">The path to the working directory in which to execute the npm command. Cannot be null or empty.</param>
+    /// <remarks>The npm root directory is where globally installed npm packages are stored.
+    /// This method requires that npm is installed and available in the system's PATH.</remarks>
     /// <returns>A task that represents the asynchronous operation. The task result contains the full path to the global npm root
     /// directory.</returns>
     public static async Task<string> GetGlobalNpmRootAsync()

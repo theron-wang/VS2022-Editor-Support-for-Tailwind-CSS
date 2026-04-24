@@ -47,10 +47,7 @@
     <Compile Include="../../src/Linting/ErrorType.cs" Link="Source/Linting/ErrorType.cs" />
     <Compile Include="../../src/Linting/ErrorSeverity.cs" Link="Source/Linting/ErrorSeverity.cs" />
     <Compile Include="../../src/Linting/Validators/CssValidator.cs" Link="Source/Linting/CssValidator.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\TailwindCSSIntellisense.csproj" />
+	<Compile Include="../../src/Node/NpmHelpers.cs" Link="Source/Node/NpmHelpers.cs" />
   </ItemGroup>
 
 </Project>
