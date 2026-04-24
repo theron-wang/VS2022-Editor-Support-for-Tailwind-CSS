@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Node;
 
 namespace TailwindCSSIntellisense.Configuration;
 
@@ -89,26 +90,6 @@ internal static class ConfigFileParser
         var fileText = file.ToString().Trim();
 
         return JsonSerializer.Deserialize<JsonObject>(fileText);
-    }
-
-    private static async Task<string> GetGlobalPackageLocationAsync()
-    {
-        ProcessStartInfo processStartInfo = new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = "/C npm root -g",
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using Process process = Process.Start(processStartInfo);
-
-        var output = await process.StandardOutput.ReadToEndAsync();
-
-        await process.WaitForExitAsync();
-
-        return output.Trim();
     }
 
     /// <summary>
@@ -240,13 +221,24 @@ internal static class ConfigFileParser
 
                         // Handle these cases:
                         // @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
-                        // @import "tailwindcss";
+                        // @import "some-plugin";
                         if (import != "tailwindcss" && !directiveParameter.StartsWith("url"))
                         {
-                            import = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import);
-                            imports.Add($"@import{import}");
+                            var importPath = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import.EndsWith(".css") ? import : import + ".css");
+
+                            if (File.Exists(importPath))
+                            {
+                                imports.Add($"@import{importPath}");
+                            }
+                            else
+                            {
+                                // Look in node_modules
+                                var importPathFromPackage = await NpmHelpers.GetCssPluginMainFileAsync(Path.GetDirectoryName(path), import);
+                                // Use importPath in case the package CSS file cannot be found, so an exception will be thrown later down the line
+                                imports.Add($"@import{(string.IsNullOrEmpty(importPathFromPackage) ? importPath : importPathFromPackage)}");
+                            }
                         }
-                        // Handle @import "tailwindcss" source(...) and prefix(...)
+                        // Handle @import "tailwindcss" plus optional source(...) and prefix(...)
                         else if (import == "tailwindcss")
                         {
                             if (directiveParameter.IndexOf("source(", secondQuote) is int index && index != -1)
@@ -440,7 +432,7 @@ internal static class ConfigFileParser
                         utilities[directiveParameter] = "";
                     }
 
-                    utilities[directiveParameter] += current.ToString();
+                    utilities[directiveParameter] += current.ToString().Trim();
                 }
                 else if (directive == "custom-variant")
                 {
@@ -455,6 +447,12 @@ internal static class ConfigFileParser
         }
 
         var themeValuePairs = CssConfigSplitter.Split(themeTrimmed.ToString())
+            .Where(s =>
+            {
+                // Possible that there is a keyframes somewhere here, in that case ignore
+                var split = s.IndexOf(':');
+                return split != -1 && s.Trim().StartsWith("--");
+            })
             .Select(s =>
             {
                 var split = s.IndexOf(':');
@@ -1064,7 +1062,7 @@ internal static class ConfigFileParser
     /// <returns>A task that represents the asynchronous operation.</returns>
     private static async Task SetupNodeProcessAsync(ProcessStartInfo nodeProcess, string? localNodePath)
     {
-        var globalPath = await GetGlobalPackageLocationAsync();
+        var globalPath = await NpmHelpers.GetGlobalNpmRootAsync();
 
         var nodePathEnvironmentVariable = nodeProcess.EnvironmentVariables["NODE_PATH"];
 

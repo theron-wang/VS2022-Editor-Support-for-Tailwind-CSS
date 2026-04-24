@@ -156,6 +156,7 @@
     <Compile Include="Linting\ErrorType.cs" />
     <Compile Include="Linting\Taggers\HtmlErrorTagger.cs" />
     <Compile Include="Linting\LinterUtilities.cs" />
+    <Compile Include="Node\NpmHelpers.cs" />
     <Compile Include="Node\PackageJsonReader.cs" />
     <Compile Include="Node\TailwindSetUpProcess.cs" />
     <Compile Include="Node\CheckForUpdates.cs" />
