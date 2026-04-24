@@ -2,7 +2,7 @@ using TailwindCSSIntellisense.Configuration;
 using TailwindCSSIntellisense.Helpers;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindExtension.Tests.UnitTests;
+namespace TailwindCSSIntellisense.Tests.UnitTests;
 
 public class UtilityHelpersTests
 {

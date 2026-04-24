@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using TailwindCSSIntellisense;
 
@@ -31,3 +32,5 @@ using TailwindCSSIntellisense;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion(Vsix.Version)]
 [assembly: AssemblyFileVersion(Vsix.Version)]
+
+[assembly: InternalsVisibleTo("TailwindCSSIntellisense.Tests")]

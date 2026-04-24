@@ -5,6 +5,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Folder Name="/Solution Items/">
+    <File Path=".github/workflows/tests.yml" />
     <File Path=".gitignore" />
     <File Path="CHANGELOG.md" />
     <File Path="Getting-Started-v3.md" />
@@ -36,5 +37,5 @@
     <Platform Solution="*|arm64" Project="arm64" />
     <Platform Solution="*|x86" Project="x86" />
   </Project>
-  <Project Path="tests/TailwindExtension.Tests/TailwindExtension.Tests.csproj" Id="e3844e8f-3f1f-49ff-a8f2-9468c06dd376" />
+  <Project Path="tests/TailwindExtension.Tests/TailwindCSSIntellisense.Tests.csproj" Id="e3844e8f-3f1f-49ff-a8f2-9468c06dd376" />
 </Solution>

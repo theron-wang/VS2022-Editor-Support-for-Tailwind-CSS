@@ -25,4 +25,4 @@ jobs:
             10.0.x
 
       - name: Run tests
-        run: dotnet test tests/TailwindExtension.Tests/TailwindExtension.Tests.csproj --configuration Release --verbosity normal
+        run: dotnet test tests/TailwindCSSIntellisense.Tests/TailwindCSSIntellisense.Tests.csproj --configuration Release --verbosity normal

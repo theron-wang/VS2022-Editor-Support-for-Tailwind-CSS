@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.13.6 (April 23rd, 2026)
+
+- `tailwind.extension.json` should be generated in the project the user right-clicks to set up Tailwind in
+- Do not save to `ConfigurationFiles` in v4 projects as expected
+- Support CSS plugins using `@import` ([#139](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/139))
+
 ## 1.13.5 (April 18th, 2026)
 
 - Correctly match best configuration file (based on content paths) to the file being viewed

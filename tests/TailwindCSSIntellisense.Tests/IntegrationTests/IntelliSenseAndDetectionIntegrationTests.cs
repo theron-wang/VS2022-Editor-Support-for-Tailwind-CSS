@@ -1,8 +1,8 @@
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Helpers;
 
-namespace TailwindExtension.Tests.IntegrationTests;
+namespace TailwindCSSIntellisense.Tests.IntegrationTests;
 
+[Collection("Non-Parallel Tests")]
 public class IntelliSenseAndDetectionIntegrationTests : IDisposable
 {
     private readonly Func<Task<TailwindCSSIntellisense.Settings.TailwindSettings>>? _originalSettingsDelegate;

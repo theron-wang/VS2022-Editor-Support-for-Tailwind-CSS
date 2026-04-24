@@ -1,7 +1,7 @@
 
 ## Testing
 
-Automated tests are in `tests/TailwindExtension.Tests`.
+Automated tests are in `tests/TailwindCSSIntellisense.Tests`.
 
 ### What is covered
 
@@ -16,7 +16,7 @@ Automated tests are in `tests/TailwindExtension.Tests`.
 From the repository root:
 
 ```bash
-dotnet test tests/TailwindExtension.Tests/TailwindExtension.Tests.csproj
+dotnet test tests/TailwindCSSIntellisense.Tests/TailwindCSSIntellisense.Tests.csproj
 ```
 
 ### Add new tests

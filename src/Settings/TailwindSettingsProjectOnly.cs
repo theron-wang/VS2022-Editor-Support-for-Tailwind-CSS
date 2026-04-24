@@ -29,6 +29,10 @@ internal class TailwindSettingsProjectOnly
     /// Maintained for backwards compatibility: use <see cref="BuildFiles"/> instead.
     /// </summary>
     public string? OutputCssFile { get; set; }
+    /// <summary>
+    /// For v4 projects, CSS configuration files that are already tracked via <see cref="BuildFiles"/>
+    /// should not be persisted in this list to avoid duplication.
+    /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public List<ConfigurationFile>? ConfigurationFiles { get; set; } = [];
     public List<BuildPair> BuildFiles { get; set; } = [];

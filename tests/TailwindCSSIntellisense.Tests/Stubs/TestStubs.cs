@@ -1,11 +1,6 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
-using TailwindCSSIntellisense.Linting;
 
 namespace Community.VisualStudio.Toolkit
 {
@@ -54,6 +49,16 @@ namespace Community.VisualStudio.Toolkit
     public sealed class Project
     {
         public string FullPath { get; init; } = string.Empty;
+    }
+
+    public class BaseOptionModel<T>
+    {
+
+    }
+
+    public class BaseOptionPage<T>
+    {
+
     }
 }
 
@@ -187,29 +192,6 @@ namespace Microsoft.VisualStudio.Text
         public override int GetHashCode()
         {
             return HashCode.Combine(Snapshot, Span.Start, Span.Length);
-        }
-    }
-}
-
-namespace TailwindCSSIntellisense.Settings
-{
-    public class TailwindSettings
-    {
-        public bool UseCli { get; set; }
-        public string? TailwindCliPath { get; set; }
-        public CustomRegexes? CustomRegexes { get; set; } = new();
-    }
-
-    public class CustomRegexes
-    {
-        public CustomRegex Razor { get; set; } = new();
-        public CustomRegex HTML { get; set; } = new();
-        public CustomRegex JavaScript { get; set; } = new();
-
-        public class CustomRegex
-        {
-            public bool Override { get; set; }
-            public List<string> Values { get; set; } = [];
         }
     }
 }
@@ -362,6 +344,30 @@ namespace TailwindCSSIntellisense.ClassSort.Sorters
         protected override IEnumerable<string> GetSegments(string filePath, string input)
         {
             yield return input;
+        }
+    }
+}
+
+namespace TailwindCSSIntellisense.Settings
+{
+
+    public sealed class TailwindSettings
+    {
+        public bool UseCli { get; set; }
+        public string? TailwindCliPath { get; set; }
+        public CustomRegexes CustomRegexes { get; set; } = new();
+    }
+
+    public sealed class CustomRegexes
+    {
+        public CustomRegex Razor { get; set; } = new();
+        public CustomRegex HTML { get; set; } = new();
+        public CustomRegex JavaScript { get; set; } = new();
+
+        public class CustomRegex
+        {
+            public bool Override { get; set; } = false;
+            public List<string> Values { get; set; } = [];
         }
     }
 }
