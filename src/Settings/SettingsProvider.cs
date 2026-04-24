@@ -349,8 +349,7 @@ public sealed class SettingsProvider : IDisposable
         // Build list of config files not used as build inputs, with paths made relative to project root.
         List<ConfigurationFile> configurationFiles = [..
             settings.ConfigurationFiles
-            .Where(cf =>
-                settings.BuildFiles.Count == 0 || settings.BuildFiles.All(b => !b.Input.Equals(cf.Path, StringComparison.InvariantCultureIgnoreCase)))
+            .Where(cf => settings.BuildFiles.All(b => !b.Input.Equals(cf.Path, StringComparison.InvariantCultureIgnoreCase)))
             .Select(cf =>
             {
                 return new ConfigurationFile()
@@ -390,7 +389,7 @@ public sealed class SettingsProvider : IDisposable
             // If the configuration file is not located in the same project as the configuration file,
             // move it there. If the configuration file has not been changed, however, respect the user's
             // decision to keep it where it is.
-            if (desiredProjectRoot != null && desiredProjectRoot != projectRoot &&
+            if (preferredSaveDirectory is null && desiredProjectRoot != null && desiredProjectRoot != projectRoot &&
                 (_cachedSettings is null || (defaultConfigFile is not null && defaultConfigFile != oldDefaultConfigFile)))
             {
                 if (File.Exists(Path.Combine(projectRoot, ExtensionConfigFileName)))

@@ -2,6 +2,7 @@ using TailwindCSSIntellisense.Completions;
 
 namespace TailwindCSSIntellisense.Tests.IntegrationTests;
 
+[Collection("Non-Parallel Tests")]
 public class IntelliSenseAndDetectionIntegrationTests : IDisposable
 {
     private readonly Func<Task<TailwindCSSIntellisense.Settings.TailwindSettings>>? _originalSettingsDelegate;

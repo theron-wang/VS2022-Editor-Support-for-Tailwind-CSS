@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace TailwindCSSIntellisense.Node;
 
-internal class NpmHelpers
+internal static class NpmHelpers
 {
     /// <summary>
     /// Asynchronously retrieves the global npm root directory.
@@ -90,6 +90,7 @@ internal class NpmHelpers
             FileName = "cmd.exe",
             Arguments = $"/C {command}",
             RedirectStandardOutput = true,
+            RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };

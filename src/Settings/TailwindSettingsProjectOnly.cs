@@ -30,7 +30,8 @@ internal class TailwindSettingsProjectOnly
     /// </summary>
     public string? OutputCssFile { get; set; }
     /// <summary>
-    /// When saving for v4 projects, do not save css configuration files included in BuildFiles here.
+    /// For v4 projects, CSS configuration files that are already tracked via <see cref="BuildFiles"/>
+    /// should not be persisted in this list to avoid duplication.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public List<ConfigurationFile>? ConfigurationFiles { get; set; } = [];

@@ -35,7 +35,7 @@ internal static class ConfigFileParser
     /// <exception cref="InvalidOperationException">Thrown if an error occurs while parsing the configuration file.</exception>
     private static async Task<JsonObject?> GetConfigJsonNodeAsync(string path, bool isAPlugin)
     {
-        var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "parser.js");
+        var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Resources", "parser.js");
 
         var processInfo = new ProcessStartInfo()
         {
@@ -432,7 +432,7 @@ internal static class ConfigFileParser
                         utilities[directiveParameter] = "";
                     }
 
-                    utilities[directiveParameter] += current.ToString().Trim();
+                    utilities[directiveParameter] += current.ToString();
                 }
                 else if (directive == "custom-variant")
                 {
@@ -517,7 +517,7 @@ internal static class ConfigFileParser
             ThemeVariables = [],
             PluginClasses = [.. utilities.Keys],
             PluginVariants = [.. variants.Keys],
-            PluginDescriptions = utilities,
+            PluginDescriptions = utilities.ToDictionary(v => v.Key, v => v.Value.Trim()),
             // For variants, put everything on the same line so it looks fine in completion tooltip
             PluginVariantDescriptions = variants.ToDictionary(v => v.Key, v =>
                 string.Join(" ", v.Value.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries))),

@@ -86,6 +86,3 @@ public class ClassRegexHelperTests : IDisposable
         }
     }
 }
-
-[CollectionDefinition("Non-Parallel Tests", DisableParallelization = true)]
-public class NonParallelCollectionDefinition { }

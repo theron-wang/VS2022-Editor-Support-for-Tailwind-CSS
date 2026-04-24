@@ -34,12 +34,4 @@ internal sealed class SortClassesInSolution : BaseCommand<SortClassesInSolution>
             await ClassSorter.SortAllAsync();
         }
     }
-
-    //protected override void Execute(object sender, EventArgs e)
-    //{
-    //    if (!ClassSorter.Sorting)
-    //    {
-    //        ThreadHelper.JoinableTaskFactory.RunAsync(ClassSorter.SortAllAsync).FireAndForget();
-    //    }
-    //}
 }
