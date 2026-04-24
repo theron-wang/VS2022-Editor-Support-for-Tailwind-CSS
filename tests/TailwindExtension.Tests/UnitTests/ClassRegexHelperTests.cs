@@ -1,9 +1,8 @@
-using System.Linq;
-using TailwindCSSIntellisense.Helpers;
 using TailwindCSSIntellisense.Settings;
 
-namespace TailwindExtension.Tests.UnitTests;
+namespace TailwindCSSIntellisense.Tests.UnitTests;
 
+[Collection("Non-Parallel Tests")]
 public class ClassRegexHelperTests : IDisposable
 {
     private readonly Func<Task<TailwindSettings>>? _originalSettingsDelegate;
@@ -73,9 +72,20 @@ public class ClassRegexHelperTests : IDisposable
 
         const string html = "<div tw=\"p-4 text-sm\" class=\"ignored\"></div>";
 
-        var matches = ClassRegexHelper.GetClassesNormal(html, html).ToList();
+        try
+        {
+            var matches = ClassRegexHelper.GetClassesNormal(html, html).ToList();
 
-        Assert.Single(matches);
-        Assert.Equal("p-4 text-sm", ClassRegexHelper.GetClassTextGroup(matches[0]).Value);
+            Assert.Single(matches);
+            Assert.Equal("p-4 text-sm", ClassRegexHelper.GetClassTextGroup(matches[0]).Value);
+        }
+        finally
+        {
+            ClassRegexHelper.GetTailwindSettings = () => Task.FromResult(new TailwindSettings());
+            ClassRegexHelper.GetClassesNormal(html, html).ToList(); // Trigger reset of custom regex
+        }
     }
 }
+
+[CollectionDefinition("Non-Parallel Tests", DisableParallelization = true)]
+public class NonParallelCollectionDefinition { }

@@ -2,7 +2,7 @@ using TailwindCSSIntellisense.ClassSort;
 using TailwindCSSIntellisense.ClassSort.Sorters;
 using TailwindCSSIntellisense.Completions;
 
-namespace TailwindExtension.Tests.IntegrationTests;
+namespace TailwindCSSIntellisense.Tests.IntegrationTests;
 
 public class SortingIntegrationTests
 {

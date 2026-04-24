@@ -4,7 +4,7 @@ using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Linting;
 using TailwindCSSIntellisense.Linting.Validators;
 
-namespace TailwindExtension.Tests.UnitTests;
+namespace TailwindCSSIntellisense.Tests.UnitTests;
 
 public class CssValidatorTests
 {

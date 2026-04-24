@@ -1,7 +1,7 @@
 using TailwindCSSIntellisense.Completions;
 using TailwindCSSIntellisense.Configuration;
 
-namespace TailwindExtension.Tests.UnitTests;
+namespace TailwindCSSIntellisense.Tests.UnitTests;
 
 public class ConfigFileParserTests
 {

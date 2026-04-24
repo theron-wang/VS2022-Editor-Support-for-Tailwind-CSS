@@ -1,7 +1,6 @@
 using TailwindCSSIntellisense.Completions;
-using TailwindCSSIntellisense.Helpers;
 
-namespace TailwindExtension.Tests.IntegrationTests;
+namespace TailwindCSSIntellisense.Tests.IntegrationTests;
 
 public class IntelliSenseAndDetectionIntegrationTests : IDisposable
 {
