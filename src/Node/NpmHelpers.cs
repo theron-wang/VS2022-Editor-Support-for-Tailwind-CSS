@@ -90,7 +90,6 @@ internal static class NpmHelpers
             FileName = "cmd.exe",
             Arguments = $"/C {command}",
             RedirectStandardOutput = true,
-            RedirectStandardError = true,
             UseShellExecute = false,
             CreateNoWindow = true
         };
