@@ -1,14 +1,10 @@
-﻿using System.Collections.Generic;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using TailwindCSSIntellisense.Initialization;
 
 namespace TailwindCSSIntellisense.Completions.V4;
-internal class ClassSubType
-{
-    [JsonPropertyName("ss")]
-    public string Stem { get; set; } = null!;
-    [JsonPropertyName("v")]
-    public List<string>? Variants { get; set; }
 
+internal class ClassSubType : ClassSubTypeBase
+{
     /// <summary>
     /// The absence of this property does not necessarily mean that arbitrary values are not supported.
     /// Colors, spacing, percentages, fractions, numbers all support this already, but theirs will be 

@@ -1,23 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using TailwindCSSIntellisense.Completions.V4;
 
-namespace TailwindCSSIntellisense.Completions.V4;
-internal class ClassType
+namespace TailwindCSSIntellisense.Initialization;
+
+/// <summary>
+/// v4+ ONLY
+/// </summary>
+internal class ClassType : ClassTypeBase
 {
-    [JsonPropertyName("s")]
-    public string Stem { get; set; } = null!;
-
     [JsonPropertyName("sv")]
     public List<ClassSubType>? Subvariants { get; set; }
-
-    [JsonPropertyName("dv")]
-    public List<string>? DirectVariants { get; set; }
-
-    [JsonPropertyName("c")]
-    public bool? UseColors { get; set; }
-
-    [JsonPropertyName("sp")]
-    public bool? UseSpacing { get; set; }
 
     [JsonPropertyName("p")]
     public bool? UsePercent { get; set; }
@@ -27,9 +20,6 @@ internal class ClassType
 
     [JsonPropertyName("d")]
     public bool? UseNumbers { get; set; }
-
-    [JsonPropertyName("n")]
-    public bool? HasNegative { get; set; }
 
     /// <summary>
     /// The absence of this property does not necessarily mean that arbitrary values are not supported.

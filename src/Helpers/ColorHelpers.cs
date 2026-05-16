@@ -5,6 +5,7 @@ using System.Linq;
 using Wacton.Unicolour;
 
 namespace TailwindCSSIntellisense.Helpers;
+
 internal static class ColorHelpers
 {
     public static bool IsHex(object value, out string? hex)
@@ -91,7 +92,7 @@ internal static class ColorHelpers
 
             var rgb = unicolour.Rgb;
 
-            return rgb.Byte255.ConstrainedHex;
+            return rgb.Byte255.Hex;
         }
 
         if (color.StartsWith("hsl"))
@@ -109,7 +110,7 @@ internal static class ColorHelpers
 
             var unicolour = new Unicolour(ColourSpace.Hsl, (values[0], values[1], values[2]));
 
-            return unicolour.Rgb.Byte255.ConstrainedHex;
+            return unicolour.Rgb.Byte255.Hex;
         }
 
         return null;
@@ -131,7 +132,7 @@ internal static class ColorHelpers
 
             // Unicolour does not accept 3-letter hex codes
             var unicolour = new Unicolour($"#{hex}");
-            return [unicolour.Rgb.Byte255.ConstrainedR, unicolour.Rgb.Byte255.ConstrainedG, unicolour.Rgb.Byte255.ConstrainedB];
+            return [unicolour.Rgb.Byte255.R, unicolour.Rgb.Byte255.G, unicolour.Rgb.Byte255.B];
         }
 
         if (color.StartsWith("oklch"))
@@ -149,7 +150,7 @@ internal static class ColorHelpers
 
             var unicolour = new Unicolour(ColourSpace.Oklch, values[0], values[1], values[2]);
 
-            return [unicolour.Rgb.Byte255.ConstrainedR, unicolour.Rgb.Byte255.ConstrainedG, unicolour.Rgb.Byte255.ConstrainedB];
+            return [unicolour.Rgb.Byte255.R, unicolour.Rgb.Byte255.G, unicolour.Rgb.Byte255.B];
         }
 
         if (color.StartsWith("hsl"))
@@ -167,7 +168,7 @@ internal static class ColorHelpers
 
             var unicolour = new Unicolour(ColourSpace.Hsl, values[0], values[1], values[2]);
 
-            return [unicolour.Rgb.Byte255.ConstrainedR, unicolour.Rgb.Byte255.ConstrainedG, unicolour.Rgb.Byte255.ConstrainedB];
+            return [unicolour.Rgb.Byte255.R, unicolour.Rgb.Byte255.G, unicolour.Rgb.Byte255.B];
         }
 
         if (color.StartsWith("rgb"))
