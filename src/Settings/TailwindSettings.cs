@@ -5,6 +5,10 @@ namespace TailwindCSSIntellisense.Settings;
 
 public class TailwindSettings
 {
+    /// <summary>
+    /// Note that this property is different from <see cref="TailwindSettingsProjectOnly.ConfigurationFiles"/>;
+    /// this list contains CSS configuration files located in <see cref="BuildFiles"/>.
+    /// </summary>
     public List<ConfigurationFile> ConfigurationFiles { get; set; } = [];
     public string DefaultOutputCssName { get; set; } = "";
     public string[] OnSaveTriggerFileExtensions { get; set; } = [];

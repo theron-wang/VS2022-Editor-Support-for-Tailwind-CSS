@@ -27,11 +27,11 @@ internal sealed class SortClassesInSolution : BaseCommand<SortClassesInSolution>
         Command.Enabled = !ClassSorter.Sorting;
     }
 
-    protected override void Execute(object sender, EventArgs e)
+    protected override async Task ExecuteAsync(OleMenuCmdEventArgs e)
     {
         if (!ClassSorter.Sorting)
         {
-            ThreadHelper.JoinableTaskFactory.RunAsync(ClassSorter.SortAllAsync).FireAndForget();
+            await ClassSorter.SortAllAsync();
         }
     }
 }

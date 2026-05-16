@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 
 namespace TailwindCSSIntellisense.Helpers;
+
 internal class DictionaryHelpers
 {
     /// <summary>
     /// Merges dict2 into dict1. dict1 values take precedence.
     /// </summary>
-    public static void MergeDictionaries<TKey, TValue>(Dictionary<TKey, TValue> dict1, Dictionary<TKey, TValue> dict2)
+    public static void MergeDictionaries<TKey, TValue>(Dictionary<TKey, TValue> dict1, Dictionary<TKey, TValue> dict2) where TKey : notnull
     {
         foreach (var kvp in dict2)
         {

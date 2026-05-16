@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Node;
 
 namespace TailwindCSSIntellisense.Configuration;
 
@@ -34,7 +35,7 @@ internal static class ConfigFileParser
     /// <exception cref="InvalidOperationException">Thrown if an error occurs while parsing the configuration file.</exception>
     private static async Task<JsonObject?> GetConfigJsonNodeAsync(string path, bool isAPlugin)
     {
-        var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", "parser.js");
+        var scriptLocation = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!, "Resources", "parser.js");
 
         var processInfo = new ProcessStartInfo()
         {
@@ -89,26 +90,6 @@ internal static class ConfigFileParser
         var fileText = file.ToString().Trim();
 
         return JsonSerializer.Deserialize<JsonObject>(fileText);
-    }
-
-    private static async Task<string> GetGlobalPackageLocationAsync()
-    {
-        ProcessStartInfo processStartInfo = new ProcessStartInfo
-        {
-            FileName = "cmd.exe",
-            Arguments = "/C npm root -g",
-            RedirectStandardOutput = true,
-            UseShellExecute = false,
-            CreateNoWindow = true
-        };
-
-        using Process process = Process.Start(processStartInfo);
-
-        var output = await process.StandardOutput.ReadToEndAsync();
-
-        await process.WaitForExitAsync();
-
-        return output.Trim();
     }
 
     /// <summary>
@@ -240,13 +221,24 @@ internal static class ConfigFileParser
 
                         // Handle these cases:
                         // @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
-                        // @import "tailwindcss";
+                        // @import "some-plugin";
                         if (import != "tailwindcss" && !directiveParameter.StartsWith("url"))
                         {
-                            import = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import);
-                            imports.Add($"@import{import}");
+                            var importPath = PathHelpers.GetAbsolutePath(Path.GetDirectoryName(path), import.EndsWith(".css") ? import : import + ".css");
+
+                            if (File.Exists(importPath))
+                            {
+                                imports.Add($"@import{importPath}");
+                            }
+                            else
+                            {
+                                // Look in node_modules
+                                var importPathFromPackage = await NpmHelpers.GetCssPluginMainFileAsync(Path.GetDirectoryName(path), import);
+                                // Use importPath in case the package CSS file cannot be found, so an exception will be thrown later down the line
+                                imports.Add($"@import{(string.IsNullOrEmpty(importPathFromPackage) ? importPath : importPathFromPackage)}");
+                            }
                         }
-                        // Handle @import "tailwindcss" source(...) and prefix(...)
+                        // Handle @import "tailwindcss" plus optional source(...) and prefix(...)
                         else if (import == "tailwindcss")
                         {
                             if (directiveParameter.IndexOf("source(", secondQuote) is int index && index != -1)
@@ -455,6 +447,12 @@ internal static class ConfigFileParser
         }
 
         var themeValuePairs = CssConfigSplitter.Split(themeTrimmed.ToString())
+            .Where(s =>
+            {
+                // Possible that there is a keyframes somewhere here, in that case ignore
+                var split = s.IndexOf(':');
+                return split != -1 && s.Trim().StartsWith("--");
+            })
             .Select(s =>
             {
                 var split = s.IndexOf(':');
@@ -519,7 +517,7 @@ internal static class ConfigFileParser
             ThemeVariables = [],
             PluginClasses = [.. utilities.Keys],
             PluginVariants = [.. variants.Keys],
-            PluginDescriptions = utilities,
+            PluginDescriptions = utilities.ToDictionary(v => v.Key, v => v.Value.Trim()),
             // For variants, put everything on the same line so it looks fine in completion tooltip
             PluginVariantDescriptions = variants.ToDictionary(v => v.Key, v =>
                 string.Join(" ", v.Value.Split(new char[] { }, StringSplitOptions.RemoveEmptyEntries))),
@@ -1064,7 +1062,7 @@ internal static class ConfigFileParser
     /// <returns>A task that represents the asynchronous operation.</returns>
     private static async Task SetupNodeProcessAsync(ProcessStartInfo nodeProcess, string? localNodePath)
     {
-        var globalPath = await GetGlobalPackageLocationAsync();
+        var globalPath = await NpmHelpers.GetGlobalNpmRootAsync();
 
         var nodePathEnvironmentVariable = nodeProcess.EnvironmentVariables["NODE_PATH"];
 

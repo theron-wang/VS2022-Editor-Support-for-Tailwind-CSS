@@ -50,7 +50,7 @@ internal sealed class SetUpAndUseTailwindGlobal : BaseCommand<SetUpAndUseTailwin
 
             settings.ConfigurationFiles.Add(new() { Path = configFile! });
             settings.BuildFiles.Add(new() { Input = configFile! });
-            await SettingsProvider.OverrideSettingsAsync(settings);
+            await SettingsProvider.OverrideSettingsAsync(settings, directory);
 
             var file = await PhysicalFile.FromFileAsync(SolutionExplorerSelection.CurrentSelectedItemFullPath);
 
