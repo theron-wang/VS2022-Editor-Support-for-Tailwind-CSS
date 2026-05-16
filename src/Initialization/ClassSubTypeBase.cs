@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace TailwindCSSIntellisense.Completions;
+namespace TailwindCSSIntellisense.Initialization;
 
-internal class Subvariant
+internal abstract class ClassSubTypeBase
 {
     [JsonPropertyName("ss")]
     public string Stem { get; set; } = null!;

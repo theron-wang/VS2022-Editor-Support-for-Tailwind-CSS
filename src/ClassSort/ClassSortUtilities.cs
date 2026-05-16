@@ -1,9 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using Microsoft.VisualStudio.Shell;
+using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.IO;
-using System.Reflection;
-using System.Text.Json;
 using TailwindCSSIntellisense.Completions;
+using TailwindCSSIntellisense.Initialization;
 
 namespace TailwindCSSIntellisense.ClassSort;
 
@@ -21,13 +20,7 @@ internal sealed class ClassSortUtilities
             return;
         }
 
-        var folder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
-
-        List<string> order;
-        using (var fs = File.Open(Path.Combine(folder, "order.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-        {
-            order = JsonSerializer.Deserialize<List<string>>(fs)!;
-        }
+        var order = ThreadHelper.JoinableTaskFactory.Run(() => ResourcesLoader.LoadOrderForVersionAsync(version));
 
         var classToOrderIndex = new Dictionary<string, int>();
         for (int i = 0; i < order.Count; i++)
@@ -45,13 +38,7 @@ internal sealed class ClassSortUtilities
             return;
         }
 
-        var folder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources", version.ToString());
-
-        List<string> order;
-        using (var fs = File.Open(Path.Combine(folder, "variantorder.json"), FileMode.Open, FileAccess.Read, FileShare.Read))
-        {
-            order = JsonSerializer.Deserialize<List<string>>(fs)!;
-        }
+        var order = ThreadHelper.JoinableTaskFactory.Run(() => ResourcesLoader.LoadOrderForVersionAsync(version, true));
 
         var variantToOrderIndex = new Dictionary<string, int>();
         for (int i = 0; i < order.Count; i++)

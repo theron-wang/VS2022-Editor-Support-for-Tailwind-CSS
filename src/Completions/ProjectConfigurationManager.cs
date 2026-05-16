@@ -4,16 +4,14 @@ using Microsoft.VisualStudio.Threading;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using TailwindCSSIntellisense.Completions.V4;
 using TailwindCSSIntellisense.Configuration;
+using TailwindCSSIntellisense.Initialization;
 using TailwindCSSIntellisense.Node;
 using TailwindCSSIntellisense.Settings;
 
@@ -319,50 +317,26 @@ public sealed class ProjectConfigurationManager
             return;
         }
 
-        var project = new UnsetProjectCompletionValues
-        {
-            Version = TailwindVersion.V3
-        };
+        var result = await ResourcesLoader.LoadResourcesForVersionAsync(TailwindVersion.V3);
 
-        var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
-        var versionFolder = Path.Combine(baseFolder, TailwindVersion.V3.ToString());
-        List<Variant> variants = [];
-
-        var loadTasks = new List<Task>
-        {
-            LoadJsonAsync<List<Variant>>(Path.Combine(versionFolder, "classes.json"), v => variants = v),
-            LoadJsonAsync<List<string>>(Path.Combine(versionFolder, "variants.json"), m => project.Variants = m),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "colors.json"), c => project.ColorMapper = c),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "spacing.json"), spacing =>
-            {
-                project.SpacingMapper = [];
-                foreach (var s in spacing)
-                {
-                    project.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
-                }
-            }),
-            LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "opacity.json"), o => Opacity = o),
-            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => project.ConfigurationValueToClassStems = c),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "descriptions.json"), d => project.DescriptionMapper = d)
-        };
-
-        await Task.WhenAll(loadTasks);
+        var project = result.UnsetProject;
 
         project.Classes = [];
+        Opacity = result.Opacity;
 
-        foreach (var variant in variants)
+        foreach (var classType in result.ClassTypes.Cast<ClassTypeV3>())
         {
             var classes = new List<TailwindClass>();
 
-            if (variant.DirectVariants != null && variant.DirectVariants.Count > 0)
+            if (classType.DirectVariants != null && classType.DirectVariants.Count > 0)
             {
-                foreach (var v in variant.DirectVariants)
+                foreach (var v in classType.DirectVariants)
                 {
                     if (string.IsNullOrWhiteSpace(v))
                     {
                         classes.Add(new TailwindClass()
                         {
-                            Name = variant.Stem
+                            Name = classType.Stem
                         });
                     }
                     else
@@ -371,7 +345,7 @@ public sealed class ProjectConfigurationManager
                         {
                             classes.Add(new TailwindClass()
                             {
-                                Name = variant.Stem + "-" + v.Replace("{s}", "{0}"),
+                                Name = classType.Stem + "-" + v.Replace("{s}", "{0}"),
                                 UseSpacing = true
                             });
                         }
@@ -379,27 +353,27 @@ public sealed class ProjectConfigurationManager
                         {
                             classes.Add(new TailwindClass()
                             {
-                                Name = variant.Stem + "-" + v.Replace("{c}", "{0}"),
+                                Name = classType.Stem + "-" + v.Replace("{c}", "{0}"),
                                 UseColors = true,
-                                UseOpacity = variant.UseOpacity == true
+                                UseOpacity = classType.UseOpacity == true
                             });
                         }
                         else
                         {
                             classes.Add(new TailwindClass()
                             {
-                                Name = variant.Stem + "-" + v
+                                Name = classType.Stem + "-" + v
                             });
                         }
                     }
                 }
             }
 
-            if (variant.Subvariants != null && variant.Subvariants.Count > 0)
+            if (classType.Subvariants != null && classType.Subvariants.Count > 0)
             {
                 // Do the same check for each of the subvariants as above
 
-                foreach (var subvariant in variant.Subvariants)
+                foreach (var subvariant in classType.Subvariants)
                 {
                     if (subvariant.Variants != null)
                     {
@@ -409,14 +383,14 @@ public sealed class ProjectConfigurationManager
                             {
                                 classes.Add(new TailwindClass()
                                 {
-                                    Name = variant.Stem + "-" + subvariant.Stem
+                                    Name = classType.Stem + "-" + subvariant.Stem
                                 });
                             }
                             else
                             {
                                 classes.Add(new TailwindClass()
                                 {
-                                    Name = variant.Stem + "-" + subvariant.Stem + "-" + v
+                                    Name = classType.Stem + "-" + subvariant.Stem + "-" + v
                                 });
                             }
                         }
@@ -426,17 +400,17 @@ public sealed class ProjectConfigurationManager
                     {
                         classes.Add(new TailwindClass()
                         {
-                            Name = variant.Stem + "-" + subvariant.Stem.Replace("{c}", "{0}"),
+                            Name = classType.Stem + "-" + subvariant.Stem.Replace("{c}", "{0}"),
                             // Notify the completion provider to show color options
                             UseColors = true,
-                            UseOpacity = variant.UseOpacity == true
+                            UseOpacity = classType.UseOpacity == true
                         });
                     }
                     else if (subvariant.Stem.Contains("{s}"))
                     {
                         classes.Add(new TailwindClass()
                         {
-                            Name = variant.Stem + "-" + subvariant.Stem.Replace("{s}", "{0}"),
+                            Name = classType.Stem + "-" + subvariant.Stem.Replace("{s}", "{0}"),
                             // Notify the completion provider to show spacing options
                             UseSpacing = true
                         });
@@ -444,19 +418,19 @@ public sealed class ProjectConfigurationManager
                 }
             }
 
-            if ((variant.DirectVariants == null || variant.DirectVariants.Count == 0) && (variant.Subvariants == null || variant.Subvariants.Count == 0))
+            if ((classType.DirectVariants == null || classType.DirectVariants.Count == 0) && (classType.Subvariants == null || classType.Subvariants.Count == 0))
             {
                 var newClass = new TailwindClass()
                 {
-                    Name = variant.Stem
+                    Name = classType.Stem
                 };
-                if (variant.UseColors == true)
+                if (classType.UseColors == true)
                 {
                     newClass.UseColors = true;
-                    newClass.UseOpacity = variant.UseOpacity == true;
+                    newClass.UseOpacity = classType.UseOpacity == true;
                     newClass.Name += "-{0}";
                 }
-                else if (variant.UseSpacing == true)
+                else if (classType.UseSpacing == true)
                 {
                     newClass.UseSpacing = true;
                     newClass.Name += "-{0}";
@@ -466,7 +440,7 @@ public sealed class ProjectConfigurationManager
 
             project.Classes.AddRange(classes);
 
-            if (variant.HasNegative == true)
+            if (classType.HasNegative == true)
             {
                 var negativeClasses = classes.Select(c =>
                 {
@@ -539,40 +513,14 @@ public sealed class ProjectConfigurationManager
             return;
         }
 
-        var project = new UnsetProjectCompletionValues
-        {
-            Version = version
-        };
+        var result = await ResourcesLoader.LoadResourcesForVersionAsync(version);
 
-        var baseFolder = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Resources");
-        var versionFolder = Path.Combine(baseFolder, version.ToString());
-
-        List<ClassType> classTypes = [];
-
-        var loadTasks = new List<Task>
-        {
-            LoadJsonAsync<List<ClassType>>(Path.Combine(versionFolder, "classes.json"), v => classTypes = v),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "colors.json"), c => project.ColorMapper = c),
-            LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "spacing.json"), spacing =>
-            {
-                project.SpacingMapper = [];
-                foreach (var s in spacing)
-                {
-                    project.SpacingMapper[s] = s == "px" ? "1px" : $"{float.Parse(s, CultureInfo.InvariantCulture) / 4}rem";
-                }
-            }),
-            LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "opacity.json"), o => Opacity = o),
-            LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => project.ConfigurationValueToClassStems = c),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "descriptions.json"), d => project.DescriptionMapper = d),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "theme.json"), d => project.CssVariables = d),
-            LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "variants.json"), d => project.VariantsToDescriptions = d)
-        };
-
-        await Task.WhenAll(loadTasks);
+        var project = result.UnsetProject;
 
         project.Variants = [.. project.VariantsToDescriptions.Keys];
 
         project.Classes = [];
+        Opacity = result.Opacity;
 
         var fractions = new[] { 2, 3, 4, 6, 12 }
             .SelectMany(d => Enumerable.Range(1, d - 1)
@@ -581,7 +529,7 @@ public sealed class ProjectConfigurationManager
             .Select(f => $"{f.Numerator}/{f.Denominator}")
             .ToList();
 
-        foreach (var classType in classTypes)
+        foreach (var classType in result.ClassTypes.Cast<ClassType>())
         {
             var classes = new List<TailwindClass>();
 
@@ -828,12 +776,5 @@ public sealed class ProjectConfigurationManager
         project.ThemeStems = [.. stems.OrderBy(s => s)];
 
         _unsetProjectCompletionConfigurations[version] = project;
-    }
-
-    private async Task LoadJsonAsync<T>(string path, Action<T> process)
-    {
-        using var fs = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-        var data = await JsonSerializer.DeserializeAsync<T>(fs);
-        process(data!);
     }
 }
