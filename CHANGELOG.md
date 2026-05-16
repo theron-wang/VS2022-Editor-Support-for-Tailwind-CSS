@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.13.7 (May 15th, 2026)
+
+- Add support for Tailwind v4.3
+- Use a diff-based system for Tailwind resources to minimize extension size
+
 ## 1.13.6 (April 23rd, 2026)
 
 - `tailwind.extension.json` should be generated in the project the user right-clicks to set up Tailwind in
@@ -386,20 +391,20 @@ Upcoming --> 1.10.x:
 ### Fixes
 
 - Class sorting did not work for `.jsx` files
-- Downgrade `System.Text.Json` to `6.0.10` to match .NET Framework compatibility ([#70](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/70))
+- Downgrade `System.Text.Json` to `6.0.10` to match .NET Framework compatibility ([#71](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/71))
 
 ## 1.5.5.2 (October 4th, 2024)
 
 ### Fixes
 
-- Correct `.vsixmanifest` assembly versions to prevent version mismatch ([#70](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/70))
+- Correct `.vsixmanifest` assembly versions to prevent version mismatch ([#71](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/71))
 - Actually include all DLLs in output
 
 ## 1.5.5.1 (September 27th, 2024)
 
 ### Fixes
 
-- Include all `System.Text.Json` dependencies in the extension to prevent an error ([#70](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/70))
+- Include all `System.Text.Json` dependencies in the extension to prevent an error ([#71](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/71))
 
 ## 1.5.5 (September 22nd, 2024)
 

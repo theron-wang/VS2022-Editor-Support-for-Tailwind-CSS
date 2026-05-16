@@ -13,6 +13,9 @@ using TailwindCSSIntellisense.Configuration;
 
 namespace TailwindCSSIntellisense.Initialization;
 
+/// <summary>
+/// For tests, see https://github.com/theron-wang/Tailwind-Class-Generator/blob/master/tests/AllTailwindClassesGenerator.Tests/V4DiffRevertTests.cs
+/// </summary>
 internal static class ResourcesLoader
 {
     /// <summary>
@@ -95,7 +98,6 @@ internal static class ResourcesLoader
 
         var loadTasks = new List<Task>
         {
-            LoadJsonAsync<List<ClassTypeBase>>(Path.Combine(versionFolder, "classes.json"), v => classTypes = v),
             LoadJsonAsync<List<string>>(Path.Combine(versionFolder, "variants.json"), m => project.Variants = m),
             LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "colors.json"), c => project.ColorMapper = c),
             LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "spacing.json"), spacing =>
@@ -113,8 +115,13 @@ internal static class ResourcesLoader
 
         if (version >= TailwindVersion.V4)
         {
+            loadTasks.Add(LoadJsonAsync<List<ClassType>>(Path.Combine(versionFolder, "classes.json"), v => classTypes = [.. v.Cast<ClassTypeBase>()]));
             loadTasks.Add(LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "theme.json"), d => project.CssVariables = d));
             loadTasks.Add(LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "variants.json"), d => project.VariantsToDescriptions = d));
+        }
+        else
+        {
+            loadTasks.Add(LoadJsonAsync<List<ClassTypeV3>>(Path.Combine(versionFolder, "classes.json"), v => classTypes = [.. v.Cast<ClassTypeBase>()]));
         }
 
         await Task.WhenAll(loadTasks);
@@ -159,7 +166,6 @@ internal static class ResourcesLoader
             }),
             LoadJsonAsync<List<int>>(Path.Combine(baseFolder, "opacity.json"), o => opacity = o),
             LoadJsonAsync<Dictionary<string, List<string>>>(Path.Combine(baseFolder, "tailwindconfig.json"), c => project.ConfigurationValueToClassStems = c)
-
         };
 
         if (File.Exists(Path.Combine(minorVersionFolder, "classes.json")))
@@ -186,12 +192,6 @@ internal static class ResourcesLoader
             }
         }
 
-        loadTasks.Add(LoadVersionedJsonAsync<List<string>>(
-            majorVersionFolder,
-            minorVersionFolder,
-            "variants.json",
-            v => project.Variants = v));
-
         loadTasks.Add(LoadVersionedJsonAsync<Dictionary<string, string>>(
             majorVersionFolder,
             minorVersionFolder,
@@ -217,6 +217,14 @@ internal static class ResourcesLoader
                 minorVersionFolder,
                 "variants.json",
                 v => project.VariantsToDescriptions = v));
+        }
+        else
+        {
+            loadTasks.Add(LoadVersionedJsonAsync<List<string>>(
+                majorVersionFolder,
+                minorVersionFolder,
+                "variants.json",
+                v => project.Variants = v));
         }
 
         await Task.WhenAll(loadTasks);
@@ -273,15 +281,14 @@ internal static class ResourcesLoader
 
         var result = original;
         var add = diff["add"] as JsonObject ?? [];
-        var remove = diff["remove"] as JsonObject ?? [];
-        var @override = diff["override"] as JsonObject ?? [];
+        var remove = diff["remove"] as JsonArray ?? [];
 
-        foreach (var pair in remove)
+        foreach (var key in remove)
         {
-            result.Remove(pair.Key);
+            result.Remove(key!.ToString());
         }
 
-        foreach (var pair in add.Concat(@override).ToList())
+        foreach (var pair in add.ToList())
         {
             DetachJsonNode(pair.Value!);
             result[pair.Key] = pair.Value;
@@ -312,23 +319,18 @@ internal static class ResourcesLoader
 
         var add = diff["add"] as JsonArray ?? [];
         var remove = diff["remove"] as JsonArray ?? [];
-        var @override = diff["override"] as JsonArray ?? [];
 
-        foreach (var node in remove)
+        foreach (var key in remove)
         {
-            if (node is not JsonObject obj)
-            {
-                continue;
-            }
+            var keyAsString = key!.ToString();
 
-            var key = obj[keyProperty]?.GetValue<string>();
-            if (!string.IsNullOrWhiteSpace(key))
+            if (!string.IsNullOrWhiteSpace(keyAsString))
             {
-                originalByKey.Remove(key!);
+                originalByKey.Remove(keyAsString);
             }
         }
 
-        foreach (var node in add.Concat(@override).ToList())
+        foreach (var node in add.ToList())
         {
             if (node is not JsonObject obj)
             {
