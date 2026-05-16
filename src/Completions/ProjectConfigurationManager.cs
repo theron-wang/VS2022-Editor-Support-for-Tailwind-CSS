@@ -322,6 +322,7 @@ public sealed class ProjectConfigurationManager
         var project = result.UnsetProject;
 
         project.Classes = [];
+        Opacity = result.Opacity;
 
         foreach (var classType in result.ClassTypes.Cast<ClassTypeV3>())
         {
@@ -519,6 +520,7 @@ public sealed class ProjectConfigurationManager
         project.Variants = [.. project.VariantsToDescriptions.Keys];
 
         project.Classes = [];
+        Opacity = result.Opacity;
 
         var fractions = new[] { 2, 3, 4, 6, 12 }
             .SelectMany(d => Enumerable.Range(1, d - 1)

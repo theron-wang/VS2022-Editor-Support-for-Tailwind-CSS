@@ -98,7 +98,6 @@ internal static class ResourcesLoader
 
         var loadTasks = new List<Task>
         {
-            LoadJsonAsync<List<string>>(Path.Combine(versionFolder, "variants.json"), m => project.Variants = m),
             LoadJsonAsync<Dictionary<string, string>>(Path.Combine(versionFolder, "colors.json"), c => project.ColorMapper = c),
             LoadJsonAsync<List<string>>(Path.Combine(baseFolder, "spacing.json"), spacing =>
             {
@@ -122,6 +121,7 @@ internal static class ResourcesLoader
         else
         {
             loadTasks.Add(LoadJsonAsync<List<ClassTypeV3>>(Path.Combine(versionFolder, "classes.json"), v => classTypes = [.. v.Cast<ClassTypeBase>()]));
+            loadTasks.Add(LoadJsonAsync<List<string>>(Path.Combine(versionFolder, "variants.json"), m => project.Variants = m));
         }
 
         await Task.WhenAll(loadTasks);
