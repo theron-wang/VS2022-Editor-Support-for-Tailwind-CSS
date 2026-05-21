@@ -91,8 +91,7 @@ internal static class ColorHelpers
             var unicolour = new Unicolour(ColourSpace.Oklch, values[0], values[1], values[2]);
 
             var rgb = unicolour.Rgb;
-
-            return rgb.Byte255.Hex;
+            return rgb.Clipped.Byte255.Hex;
         }
 
         if (color.StartsWith("hsl"))
@@ -110,7 +109,7 @@ internal static class ColorHelpers
 
             var unicolour = new Unicolour(ColourSpace.Hsl, (values[0], values[1], values[2]));
 
-            return unicolour.Rgb.Byte255.Hex;
+            return unicolour.Rgb.Clipped.Byte255.Hex;
         }
 
         return null;
@@ -132,7 +131,7 @@ internal static class ColorHelpers
 
             // Unicolour does not accept 3-letter hex codes
             var unicolour = new Unicolour($"#{hex}");
-            return [unicolour.Rgb.Byte255.R, unicolour.Rgb.Byte255.G, unicolour.Rgb.Byte255.B];
+            return [unicolour.Rgb.Clipped.Byte255.R, unicolour.Rgb.Clipped.Byte255.G, unicolour.Rgb.Clipped.Byte255.B];
         }
 
         if (color.StartsWith("oklch"))
@@ -150,7 +149,7 @@ internal static class ColorHelpers
 
             var unicolour = new Unicolour(ColourSpace.Oklch, values[0], values[1], values[2]);
 
-            return [unicolour.Rgb.Byte255.R, unicolour.Rgb.Byte255.G, unicolour.Rgb.Byte255.B];
+            return [unicolour.Rgb.Clipped.Byte255.R, unicolour.Rgb.Clipped.Byte255.G, unicolour.Rgb.Clipped.Byte255.B];
         }
 
         if (color.StartsWith("hsl"))
@@ -168,7 +167,7 @@ internal static class ColorHelpers
 
             var unicolour = new Unicolour(ColourSpace.Hsl, values[0], values[1], values[2]);
 
-            return [unicolour.Rgb.Byte255.R, unicolour.Rgb.Byte255.G, unicolour.Rgb.Byte255.B];
+            return [unicolour.Rgb.Clipped.Byte255.R, unicolour.Rgb.Clipped.Byte255.G, unicolour.Rgb.Clipped.Byte255.B];
         }
 
         if (color.StartsWith("rgb"))

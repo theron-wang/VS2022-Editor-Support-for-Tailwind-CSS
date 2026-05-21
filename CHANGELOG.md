@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.13.8 (May 21st, 2026)
+
+- Fix incorrect color descriptions for oklch colors out of the normal RGB space ([#142](https://github.com/theron-wang/Tailwind-CSS-for-Visual-Studio/issues/142))
+
 ## 1.13.7 (May 15th, 2026)
 
 - Add support for Tailwind v4.3
